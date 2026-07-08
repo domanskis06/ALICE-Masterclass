@@ -16,11 +16,10 @@ build_website_teacher:
     - tags
   except:
     - branches
-  image: node:fermium-bullseye
+  image: node:22-bookworm
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-teacher"
-    - npm install -g @angular/cli
-    - npm install -g npm@latest
+    - npm install -g npm@11
   script:
     - npm ci
     - export VERSION=$CI_COMMIT_TAG

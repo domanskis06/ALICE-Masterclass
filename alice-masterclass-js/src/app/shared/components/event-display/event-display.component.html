@@ -4,7 +4,7 @@
       <ng-content></ng-content>
     </span>
     @if (showControls) {
-      <button mat-icon-button aria-label="Options for Event Display" (click)="drawer.toggle()">
+      <button mat-icon-button aria-label="Options for Event Display" (click)="sidebarOpened = !sidebarOpened">
         <mat-icon>filter_list</mat-icon>
       </button>
     }

@@ -100,7 +100,7 @@ build_website_js:
   image: node:22-bookworm
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-js"
-    - npm install -g @angular/cli@21.0.0
+    - npm install -g npm@11
   script:
     - npm ci
     - export VERSION=$CI_COMMIT_TAG
