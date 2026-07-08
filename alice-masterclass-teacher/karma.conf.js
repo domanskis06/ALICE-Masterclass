@@ -38,8 +38,10 @@ module.exports = function (config) {
         flags: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--disable-gpu',
-          '--disable-dev-shm-usage'
+          '--disable-dev-shm-usage',
+          '--use-gl=angle',
+          '--use-angle=swiftshader',
+          '--enable-unsafe-swiftshader'
         ]
       }
     },

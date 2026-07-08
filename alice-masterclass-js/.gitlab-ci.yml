@@ -39,15 +39,15 @@ unit_tests_js:
     artifacts: true
   - job: convert_strangeness_invariant
     artifacts: true
-  image: node:22-bookworm
-  variables:
-    CHROME_BIN: "/usr/bin/chromium"
+  image: mcr.microsoft.com/playwright:v1.59.1-noble
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-js"
-    - apt-get update && apt-get install -y chromium
     - npm install -g npm@11
   script:
     - npm ci
+    - export CHROME_BIN="$(ls /ms-playwright/chromium-*/chrome-linux*/chrome 2>/dev/null | head -1)"
+    - '[ -n "$CHROME_BIN" ] || export CHROME_BIN="$(ls /ms-playwright/chromium_headless_shell-*/chrome-linux*/headless_shell 2>/dev/null | head -1)"'
+    - 'echo "Using CHROME_BIN=$CHROME_BIN"'
     - npm run build
     - npm run test:ci
 
