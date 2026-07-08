@@ -18,6 +18,16 @@ from masterclass.models import Event, sessionByPassword, Session
 
 error_logger = logging.getLogger('masterclass_error')
 
+def _has_unique_error(serializer):
+    def _walk(errors):
+        if isinstance(errors, dict):
+            return any(_walk(value) for value in errors.values())
+        if isinstance(errors, list):
+            return any(_walk(item) for item in errors)
+        return getattr(errors, 'code', None) == 'unique'
+
+    return _walk(serializer.errors)
+
 class OAuthAPI(APIView):
     def get(self, request):
         params = {
@@ -71,6 +81,9 @@ class EventCreateListAPI(APIView):
             except ValidationError as e:
                 return Response(status=status.HTTP_409_CONFLICT)
 
+        if _has_unique_error(event):
+            return Response(status=status.HTTP_409_CONFLICT)
+
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class EventDeleteAPI(APIView):
@@ -118,6 +131,9 @@ class SessionCreateListAPI(APIView):
                         return Response(status=status.HTTP_201_CREATED)
                     except ValidationError as e:
                         return Response(status=status.HTTP_409_CONFLICT)
+
+                if _has_unique_error(session):
+                    return Response(status=status.HTTP_409_CONFLICT)
 
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
