@@ -1,13 +1,8 @@
-stages:
-  - test
-  - build
-  - dockerize
-  - openshift_redeploy
-
-unit_tests:
+unit_tests_teacher:
   stage: test
   image: timbru31/node-chrome:fermium
   before_script:
+    - cd "$CI_PROJECT_DIR/alice-masterclass-teacher"
     - npm install -g @angular/cli
     - npm install -g npm@latest
   script:
@@ -15,7 +10,7 @@ unit_tests:
     - npm run build
     - npm run test:ci
 
-build_website:
+build_website_teacher:
   stage: build
   only:
     - tags
@@ -23,6 +18,7 @@ build_website:
     - branches
   image: node:fermium-bullseye
   before_script:
+    - cd "$CI_PROJECT_DIR/alice-masterclass-teacher"
     - npm install -g @angular/cli
     - npm install -g npm@latest
   script:
@@ -34,48 +30,48 @@ build_website:
     - cp .htaccess ./dist/
   artifacts:
     paths:
-      - dist/
+      - alice-masterclass-teacher/dist/
 
-build_docker:
+build_docker_teacher:
   stage: dockerize
   only:
     - tags
   except:
     - branches
   needs:
-    - job: build_website
+    - job: build_website_teacher
       artifacts: true
-  tags: 
-    - docker-privileged
+  tags:
+    - docker-privileged-xl
   image: docker:19.03.1
   services:
     - docker:19.03.1-dind
   variables:
       DOCKER_TLS_CERTDIR: "/certs"
-      CONTAINER_VERSION_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
-      CONTAINER_LATEST_IMAGE: $CI_REGISTRY_IMAGE:latest
+      CONTAINER_VERSION_IMAGE: $CI_REGISTRY_IMAGE/alice-masterclass-teacher:$CI_COMMIT_TAG
+      CONTAINER_LATEST_IMAGE: $CI_REGISTRY_IMAGE/alice-masterclass-teacher:latest
   before_script:
    - docker info
    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-   - docker build --pull -f Dockerfile -t $CONTAINER_VERSION_IMAGE .
+   - docker build --pull -f alice-masterclass-teacher/Dockerfile -t $CONTAINER_VERSION_IMAGE alice-masterclass-teacher
    - docker push $CONTAINER_VERSION_IMAGE
    - docker tag $CONTAINER_VERSION_IMAGE $CONTAINER_LATEST_IMAGE
    - docker push $CONTAINER_LATEST_IMAGE
 
-update_imagestream_and_redeploy:
+redeploy_teacher:
   stage: openshift_redeploy
   only:
     - tags
   except:
     - branches
   needs:
-    - job: build_docker
+    - job: build_docker_teacher
       artifacts: false
   image: gitlab-registry.cern.ch/paas-tools/openshift-client:latest
   environment:
-    name: production
-    url: https://masterclass-test-alice.web.cern.ch/
+    name: dev
+    url: https://alice-web-masterclass-dev.app.cern.ch/
   script:
     - "oc import-image $APP_NAME --all --server=$SERVER --namespace $NAMESPACE --token=$IMAGE_IMPORT_TOKEN"
     - "sleep 30s && oc rollout status dc/$APP_NAME --server=$SERVER --namespace $NAMESPACE --token=$IMAGE_IMPORT_TOKEN"
