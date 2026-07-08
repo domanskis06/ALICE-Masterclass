@@ -1,10 +1,12 @@
 unit_tests_teacher:
   stage: test
-  image: timbru31/node-chrome:fermium
+  image: node:22-bookworm
+  variables:
+    CHROME_BIN: "/usr/bin/chromium"
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-teacher"
-    - npm install -g @angular/cli
-    - npm install -g npm@latest
+    - apt-get update && apt-get install -y chromium
+    - npm install -g npm@11
   script:
     - npm ci
     - npm run build

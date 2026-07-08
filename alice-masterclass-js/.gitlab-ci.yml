@@ -45,7 +45,7 @@ unit_tests_js:
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-js"
     - apt-get update && apt-get install -y chromium
-    - npm install -g @angular/cli@21.0.0
+    - npm install -g npm@11
   script:
     - npm ci
     - npm run build
