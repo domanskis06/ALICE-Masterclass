@@ -145,7 +145,7 @@ The source-of-truth manifests now live in `openshift/dev/`:
 | Service | one per component + `masterclass-database` |
 | Route | student, api, teacher (edge TLS, redirect to HTTPS) |
 | ImageStream | `alice-masterclass`, `alice-masterclass-django`, `alice-masterclass-teacher` |
-| PersistentVolumeClaim | `masterclass-database` (1Gi, `cephfs-ah2-ssd`) |
+| PersistentVolumeClaim | `masterclass-database-v2` (1Gi, `cephfs-ah2-ssd`, PostgreSQL 15) |
 | ServiceAccount | `gitlab-ci` (role `edit`) + token secret `gitlab-ci-token` |
 
 A registry pull secret is configured and linked to the `default` service account so
@@ -219,6 +219,10 @@ build and pipeline pass:
 - Frontend runtime images (`alice-masterclass-js` and `alice-masterclass-teacher`) now
   use `registry.cern.ch/quay.io/sclorg/httpd-24-c9s` to align with OpenShift non-root
   behavior and avoid runtime crash loops seen with `httpd:2.4-alpine`.
+- Teacher SPA uses Angular `@angular/build:application`, which writes the site under
+  `dist/browser/`. The teacher Dockerfile copies `./dist/browser/` into `/var/www/html/`,
+  and CI places `.htaccess` in `dist/browser/` so Apache DocumentRoot serves the SPA
+  (not the CentOS default test page).
 - Teacher build job: image `node:22-bookworm`, pinned `npm@11`.
 - Student build job: pinned `npm@11` so `npm ci` matches the npm 11 lockfile.
 - `event-display.component.html`: replaced an out-of-scope `#drawer` template reference
@@ -284,7 +288,7 @@ database errors.
 ```bash
 oc get pods -n alice-web-masterclass-dev
 oc rollout status dc/alice-masterclass-django -n alice-web-masterclass-dev
-oc logs -n alice-web-masterclass-dev deploy/alice-masterclass-django
+oc logs -n alice-web-masterclass-dev dc/alice-masterclass-django
 ```
 
 ---
@@ -293,8 +297,16 @@ oc logs -n alice-web-masterclass-dev deploy/alice-masterclass-django
 
 - Repository, CI/CD pipeline, OKD workload manifests, secrets, PVC, service account,
   GitLab CI/CD variables, and CERN OAuth registration are all in place.
-- Dev runtime issue was narrowed down to frontend container runtime compatibility
-  (`httpd:2.4-alpine` on OKD), not to Kyverno admission or ImageStream triggers.
-- Frontend Dockerfiles were switched to an OpenShift-ready HTTPD base image.
-- Next step is to cut a new dev tag, run the deployment pipeline, and verify:
-  1) student app rollout, 2) teacher app rollout, 3) Django migrations, 4) OAuth flow.
+- Frontend Dockerfiles use OpenShift-ready HTTPD (`registry.cern.ch/quay.io/sclorg/httpd-24-c9s`).
+- Teacher DocumentRoot is `dist/browser/` (Angular application builder); student remains flat `dist/`.
+- Dev database was upgraded from PostgreSQL 10.6 to PostgreSQL 15.12
+  (`registry.cern.ch/quay.io/sclorg/postgresql-15-c9s:latest` on PVC
+  `masterclass-database-v2`). Django 5.2 requires PostgreSQL 14+.
+- Django migrations were applied successfully on the new PG15 instance.
+- Smoke checks:
+  - student app: HTTP 200
+  - teacher app: after `v0.1.5-dev`, expect SPA HTML (not CentOS test page), then SSO login
+  - API `/api/v1/sessions/` and `/api/v1/events/`: HTTP 401 (auth required; DB reachable)
+- Remaining manual verification: teacher CERN SSO login and creating a student session.
+- Production (`alice-web-masterclass`) database CrashLoop (`role "admin" does not exist`)
+  is a separate incident and was not modified by this work.

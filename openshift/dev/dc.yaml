@@ -213,7 +213,7 @@ items:
         spec:
           containers:
             - name: postgresql
-              image: registry.cern.ch/docker.io/centos/postgresql-10-centos8:latest
+              image: registry.cern.ch/quay.io/sclorg/postgresql-15-c9s:latest
               imagePullPolicy: IfNotPresent
               env:
                 - name: POSTGRESQL_USER
@@ -240,6 +240,6 @@ items:
           volumes:
             - name: masterclass-database-data
               persistentVolumeClaim:
-                claimName: masterclass-database
+                claimName: masterclass-database-v2
       triggers:
         - type: ConfigChange

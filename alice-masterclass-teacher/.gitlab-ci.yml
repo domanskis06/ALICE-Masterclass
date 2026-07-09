@@ -28,7 +28,7 @@ build_website_teacher:
     - node -p "let data = require('./package.json'); data.version='$VERSION'; JSON.stringify(data, null, 2)" > package_version.json
     - mv package_version.json package.json
     - npm run build
-    - cp .htaccess ./dist/
+    - cp .htaccess ./dist/browser/
   artifacts:
     paths:
       - alice-masterclass-teacher/dist/
