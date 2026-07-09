@@ -17,6 +17,7 @@ build_docker_django:
    - tags
   except:
    - branches
+  needs: []
   tags:
     - docker-privileged-xl
   image: docker:24.0.5

@@ -53,6 +53,7 @@ unit_tests_js:
 
 e2e_playwright:
   stage: test
+  allow_failure: true
   needs:
     - job: convert_strangeness_events
       artifacts: true

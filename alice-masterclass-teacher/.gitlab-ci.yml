@@ -13,7 +13,7 @@ unit_tests_teacher:
     - npm run test:ci
 
 build_website_teacher:
-  stage: build
+  stage: build_website
   only:
     - tags
   except:

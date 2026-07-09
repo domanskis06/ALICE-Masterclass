@@ -2,7 +2,6 @@ stages:
   - convert
   - test
   - build_website
-  - build
   - dockerize
   - openshift_redeploy
 

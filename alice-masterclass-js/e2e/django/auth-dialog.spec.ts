@@ -13,6 +13,8 @@ test.describe('Django auth dialog', () => {
     await page.getByTestId('auth-session-password').fill(password);
     await page.getByTestId('auth-dialog-proceed').click();
     await expect(page).toHaveTitle(new RegExp(SESSION_NAME));
-    expect(await page.evaluate(() => sessionStorage.getItem('passwordDialogDismissed'))).toBe('true');
+    await expect.poll(async () =>
+      page.evaluate(() => sessionStorage.getItem('passwordDialogDismissed'))
+    ).toBe('true');
   });
 });
