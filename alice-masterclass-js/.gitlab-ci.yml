@@ -123,14 +123,18 @@ build_docker_js:
       artifacts: true
   tags:
     - docker-privileged-xl
-  image: docker:19.03.1
+  image: docker:24.0.5
   services:
-    - docker:19.03.1-dind
+    - name: docker:24.0.5-dind
+      alias: docker
   variables:
-      DOCKER_TLS_CERTDIR: "/certs"
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_DRIVER: overlay2
       CONTAINER_VERSION_IMAGE: $CI_REGISTRY_IMAGE/alice-masterclass:$CI_COMMIT_TAG
       CONTAINER_LATEST_IMAGE: $CI_REGISTRY_IMAGE/alice-masterclass:latest
   before_script:
+   - for i in $(seq 1 30); do docker info >/dev/null 2>&1 && break || (echo "waiting for docker daemon ($i/30)"; sleep 2); done
    - docker info
    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
