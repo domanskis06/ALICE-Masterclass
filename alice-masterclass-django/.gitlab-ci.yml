@@ -54,8 +54,7 @@ redeploy_django:
     name: dev
     url: https://alice-web-masterclass-dev.app.cern.ch/
   script:
-   - "oc import-image $APP_NAME --all --server=$SERVER --namespace $NAMESPACE --token=$IMAGE_IMPORT_TOKEN"
-   - "sleep 30s && oc rollout status dc/$APP_NAME --server=$SERVER --namespace $NAMESPACE --token=$IMAGE_IMPORT_TOKEN"
+    - sh ci/redeploy-openshift.sh "$APP_NAME"
   variables:
     SERVER: https://api.paas.okd.cern.ch
     APP_NAME: alice-masterclass-django

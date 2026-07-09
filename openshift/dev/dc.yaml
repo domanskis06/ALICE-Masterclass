@@ -1,0 +1,245 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      name: alice-masterclass
+      namespace: alice-web-masterclass-dev
+      labels:
+        app: alice-masterclass
+        app.kubernetes.io/component: alice-masterclass
+        app.kubernetes.io/instance: alice-masterclass
+        app.kubernetes.io/part-of: alice-masterclass
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        app: alice-masterclass
+        deploymentconfig: alice-masterclass
+      strategy:
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: alice-masterclass
+            deploymentconfig: alice-masterclass
+        spec:
+          containers:
+            - name: alice-masterclass
+              image: image-registry.openshift-image-registry.svc:5000/alice-web-masterclass-dev/alice-masterclass:latest
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+                - containerPort: 8443
+                  protocol: TCP
+      triggers:
+        - type: ImageChange
+          imageChangeParams:
+            automatic: true
+            containerNames:
+              - alice-masterclass
+            from:
+              kind: ImageStreamTag
+              name: alice-masterclass:latest
+              namespace: alice-web-masterclass-dev
+        - type: ConfigChange
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      name: alice-masterclass-django
+      namespace: alice-web-masterclass-dev
+      labels:
+        app: alice-masterclass-django
+        app.kubernetes.io/component: alice-masterclass-django
+        app.kubernetes.io/instance: alice-masterclass-django
+        app.kubernetes.io/part-of: alice-masterclass-django
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        app: alice-masterclass-django
+        deploymentconfig: alice-masterclass-django
+      strategy:
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: alice-masterclass-django
+            deploymentconfig: alice-masterclass-django
+        spec:
+          containers:
+            - name: alice-masterclass-django
+              image: image-registry.openshift-image-registry.svc:5000/alice-web-masterclass-dev/alice-masterclass-django:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: DATABASE_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: masterclass-database
+                      key: database-name
+                - name: DATABASE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: masterclass-database
+                      key: database-user
+                - name: DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: masterclass-database
+                      key: database-password
+                - name: SERVICE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: SERVICE_HOST
+                - name: SERVICE_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: SERVICE_PORT
+                - name: DJANGO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: DJANGO_SECRET_KEY
+                - name: ALLOWED_HOSTS
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: ALLOWED_HOSTS
+                - name: CORS_ALLOWED_ORIGINS
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: CORS_ALLOWED_ORIGINS
+                - name: REDIRECT_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: REDIRECT_URI
+                - name: FRONTEND_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: django-config
+                      key: FRONTEND_URL
+                - name: CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: oidc-client-secret
+                      key: clientID
+                - name: CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: oidc-client-secret
+                      key: clientSecret
+              ports:
+                - containerPort: 8000
+                  protocol: TCP
+      triggers:
+        - type: ImageChange
+          imageChangeParams:
+            automatic: true
+            containerNames:
+              - alice-masterclass-django
+            from:
+              kind: ImageStreamTag
+              name: alice-masterclass-django:latest
+              namespace: alice-web-masterclass-dev
+        - type: ConfigChange
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      name: alice-masterclass-teacher
+      namespace: alice-web-masterclass-dev
+      labels:
+        app: alice-masterclass-teacher
+        app.kubernetes.io/component: alice-masterclass-teacher
+        app.kubernetes.io/instance: alice-masterclass-teacher
+        app.kubernetes.io/part-of: alice-masterclass-teacher
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        app: alice-masterclass-teacher
+        deploymentconfig: alice-masterclass-teacher
+      strategy:
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: alice-masterclass-teacher
+            deploymentconfig: alice-masterclass-teacher
+        spec:
+          containers:
+            - name: alice-masterclass-teacher
+              image: image-registry.openshift-image-registry.svc:5000/alice-web-masterclass-dev/alice-masterclass-teacher:latest
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 8080
+                  protocol: TCP
+                - containerPort: 8443
+                  protocol: TCP
+      triggers:
+        - type: ImageChange
+          imageChangeParams:
+            automatic: true
+            containerNames:
+              - alice-masterclass-teacher
+            from:
+              kind: ImageStreamTag
+              name: alice-masterclass-teacher:latest
+              namespace: alice-web-masterclass-dev
+        - type: ConfigChange
+  - apiVersion: apps.openshift.io/v1
+    kind: DeploymentConfig
+    metadata:
+      name: masterclass-database
+      namespace: alice-web-masterclass-dev
+      labels:
+        template: postgresql-persistent-template
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        name: masterclass-database
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            name: masterclass-database
+        spec:
+          containers:
+            - name: postgresql
+              image: registry.cern.ch/docker.io/centos/postgresql-10-centos8:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: POSTGRESQL_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: masterclass-database
+                      key: database-user
+                - name: POSTGRESQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: masterclass-database
+                      key: database-password
+                - name: POSTGRESQL_DATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: masterclass-database
+                      key: database-name
+              ports:
+                - containerPort: 5432
+                  protocol: TCP
+              volumeMounts:
+                - name: masterclass-database-data
+                  mountPath: /var/lib/pgsql/data
+          volumes:
+            - name: masterclass-database-data
+              persistentVolumeClaim:
+                claimName: masterclass-database
+      triggers:
+        - type: ConfigChange

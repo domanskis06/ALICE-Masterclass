@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: alice-masterclass
+      namespace: alice-web-masterclass-dev
+      labels:
+        app: alice-masterclass
+    spec:
+      selector:
+        app: alice-masterclass
+        deploymentconfig: alice-masterclass
+      ports:
+        - name: 8080-tcp
+          protocol: TCP
+          port: 8080
+          targetPort: 8080
+        - name: 8443-tcp
+          protocol: TCP
+          port: 8443
+          targetPort: 8443
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: alice-masterclass-django
+      namespace: alice-web-masterclass-dev
+      labels:
+        app: alice-masterclass-django
+    spec:
+      selector:
+        app: alice-masterclass-django
+        deploymentconfig: alice-masterclass-django
+      ports:
+        - name: 8000-tcp
+          protocol: TCP
+          port: 8000
+          targetPort: 8000
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: alice-masterclass-teacher
+      namespace: alice-web-masterclass-dev
+      labels:
+        app: alice-masterclass-teacher
+    spec:
+      selector:
+        app: alice-masterclass-teacher
+        deploymentconfig: alice-masterclass-teacher
+      ports:
+        - name: 8080-tcp
+          protocol: TCP
+          port: 8080
+          targetPort: 8080
+        - name: 8443-tcp
+          protocol: TCP
+          port: 8443
+          targetPort: 8443
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: masterclass-database
+      namespace: alice-web-masterclass-dev
+      labels:
+        name: masterclass-database
+    spec:
+      selector:
+        name: masterclass-database
+      ports:
+        - name: postgresql
+          protocol: TCP
+          port: 5432
+          targetPort: 5432
