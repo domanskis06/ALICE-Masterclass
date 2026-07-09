@@ -14,10 +14,11 @@ unit_tests_teacher:
 
 build_website_teacher:
   stage: build_website
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
+  needs:
+    - job: unit_tests_teacher
+      artifacts: false
   image: node:22-bookworm
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-teacher"
@@ -35,13 +36,13 @@ build_website_teacher:
 
 build_docker_teacher:
   stage: dockerize
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
   needs:
     - job: build_website_teacher
       artifacts: true
+    - job: unit_tests_teacher
+      artifacts: false
   tags:
     - docker-privileged-xl
   image: docker:24.0.5
@@ -66,10 +67,8 @@ build_docker_teacher:
 
 redeploy_teacher:
   stage: openshift_redeploy
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
   needs:
     - job: build_docker_teacher
       artifacts: false

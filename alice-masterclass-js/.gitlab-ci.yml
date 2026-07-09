@@ -89,15 +89,15 @@ e2e_playwright:
 
 build_website_js:
   stage: build_website
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
   needs:
     - job: convert_strangeness_events
       artifacts: true
     - job: convert_strangeness_invariant
       artifacts: true
+    - job: unit_tests_js
+      artifacts: false
   image: node:22-bookworm
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-js"
@@ -115,13 +115,13 @@ build_website_js:
 
 build_docker_js:
   stage: dockerize
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
   needs:
     - job: build_website_js
       artifacts: true
+    - job: unit_tests_js
+      artifacts: false
   tags:
     - docker-privileged-xl
   image: docker:24.0.5
@@ -146,10 +146,8 @@ build_docker_js:
 
 redeploy_js:
   stage: openshift_redeploy
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
   needs:
     - job: build_docker_js
       artifacts: false

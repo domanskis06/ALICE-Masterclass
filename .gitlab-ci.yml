@@ -4,6 +4,7 @@ stages:
   - build_website
   - dockerize
   - openshift_redeploy
+  - migrate
 
 include:
   - local: 'alice-masterclass-django/.gitlab-ci.yml'

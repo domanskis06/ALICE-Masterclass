@@ -13,11 +13,11 @@ unit_tests_django:
 
 build_docker_django:
   stage: dockerize
-  only:
-   - tags
-  except:
-   - branches
-  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
+  needs:
+    - job: unit_tests_django
+      artifacts: false
   tags:
     - docker-privileged-xl
   image: docker:24.0.5
@@ -42,10 +42,8 @@ build_docker_django:
 
 redeploy_django:
   stage: openshift_redeploy
-  only:
-    - tags
-  except:
-    - branches
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
   needs:
     - job: build_docker_django
       artifacts: false
@@ -58,3 +56,25 @@ redeploy_django:
   variables:
     SERVER: https://api.paas.okd.cern.ch
     APP_NAME: alice-masterclass-django
+
+migrate_django:
+  stage: migrate
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-dev$/
+      when: manual
+      allow_failure: false
+  needs:
+    - job: redeploy_django
+      artifacts: false
+  image: gitlab-registry.cern.ch/paas-tools/openshift-client:latest
+  environment:
+    name: dev
+    url: https://api-alice-web-masterclass-dev.app.cern.ch/
+  variables:
+    SERVER: https://api.paas.okd.cern.ch
+    APP_NAME: alice-masterclass-django
+  script:
+    - |
+      oc exec "dc/${APP_NAME}" \
+        --server="$SERVER" --namespace="$NAMESPACE" --token="$IMAGE_IMPORT_TOKEN" \
+        -- python manage.py migrate --noinput

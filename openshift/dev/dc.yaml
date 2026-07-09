@@ -127,12 +127,12 @@ items:
                 - name: CLIENT_ID
                   valueFrom:
                     secretKeyRef:
-                      name: oidc-client-secret
+                      name: oidc-app-credentials
                       key: clientID
                 - name: CLIENT_SECRET
                   valueFrom:
                     secretKeyRef:
-                      name: oidc-client-secret
+                      name: oidc-app-credentials
                       key: clientSecret
               ports:
                 - containerPort: 8000

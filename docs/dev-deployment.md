@@ -105,23 +105,34 @@ tag-only (`only: tags`) and run on the `docker-privileged-xl` runner (Docker-in-
 ### 3.3 Deployment jobs
 
 The `openshift_redeploy` stage jobs call a shared script at
-`ci/redeploy-openshift.sh`:
+[`ci/redeploy-openshift.sh`](../ci/redeploy-openshift.sh):
 
 ```
-oc import-image <app> --all --server=$SERVER --namespace $NAMESPACE --token=$IMAGE_IMPORT_TOKEN
-sleep 30s
-oc rollout status dc/<app> --server=$SERVER --namespace $NAMESPACE --token=$IMAGE_IMPORT_TOKEN
+oc import-image <app>:latest --confirm ...
+oc rollout status dc/<app> --timeout=10m
+# if ImageChange did not finish: oc rollout latest, then status again
 ```
 
-This matches the production flow. `import-image` refreshes `ImageStreamTag:latest`;
-the `ImageChange` trigger on each DeploymentConfig creates the new rollout.
+This matches the production flow without a fixed `sleep`. `import-image` refreshes
+`ImageStreamTag:latest`; the `ImageChange` trigger on each DeploymentConfig creates
+the new rollout. If that does not complete in time, the script triggers an explicit
+`rollout latest`.
 
-### 3.4 Pipeline flow (on a tag)
+After a successful Django redeploy, a **manual** job `migrate_django` (stage
+`migrate`) can run `python manage.py migrate --noinput` in the API pod. Use it after
+schema changes; skip it when the image has no new migrations.
+
+### 3.4 Pipeline flow (on a protected tag `v*-dev`)
 
 ```
-convert ─▶ build_website ─▶ dockerize ─▶ openshift_redeploy
-                    (unit_tests_*, e2e_playwright run in parallel; they do not block deploy)
+convert ─▶ unit_tests_* ─▶ build_website ─▶ dockerize ─▶ openshift_redeploy ─▶ migrate_django (manual)
+              ▲
+              └── e2e_playwright runs in parallel (allow_failure; does not block deploy)
 ```
+
+Deploy jobs use `rules: if: $CI_COMMIT_TAG =~ /^v.*-dev$/` so only protected-style
+dev tags build and redeploy. Unit tests must succeed before dockerize/redeploy
+(`needs`).
 
 ---
 
@@ -139,6 +150,11 @@ The source-of-truth manifests now live in `openshift/dev/`:
 - `openshift/dev/route.yaml`
 - `openshift/dev/README.md`
 
+**Cluster drift rule:** any manual `oc` change (env, image, PVC, routes) must be
+followed by a PR updating `openshift/dev/`. Otherwise the next `oc apply -f
+openshift/dev/` can silently revert production-like fixes (OAuth secret mapping,
+PG15 claim, etc.).
+
 | Kind | Names |
 |------|-------|
 | DeploymentConfig | `alice-masterclass`, `alice-masterclass-django`, `alice-masterclass-teacher`, `masterclass-database` |
@@ -151,25 +167,58 @@ The source-of-truth manifests now live in `openshift/dev/`:
 A registry pull secret is configured and linked to the `default` service account so
 that pods can pull images from the private GitLab registry.
 
+> DeploymentConfig is deprecated in OKD 4.14+. Migrating to `Deployment` is a
+> separate follow-up (dev first, then prod); keep DC until that epik lands.
+
 ---
 
 ## 5. Configuration
 
 ### 5.1 GitLab CI/CD variables
 
-Set under **Settings → CI/CD → Variables**:
+Set under **Settings → CI/CD → Variables**. Deploy/build config is available only on
+**protected tags** matching `v*-dev` (see below).
 
-| Key | Value | Notes |
-|-----|-------|-------|
-| `NAMESPACE` | `alice-web-masterclass-dev` | Target OKD namespace |
-| `IMAGE_IMPORT_TOKEN` | *(secret)* | `gitlab-ci` service-account token; Masked |
-| `API_URL` | `https://api-alice-web-masterclass-dev.app.cern.ch/api/v1/` | Injected into both SPAs at build |
-| `MASTERCLASS_HOST` | `https://alice-web-masterclass-dev.app.cern.ch/` | Student host (used by teacher app) |
-| `OPENID_CONFIG_URL` | `https://auth.cern.ch/auth/realms/cern/.well-known/openid-configuration` | Teacher OIDC discovery |
-| `REDIRECT_URI` | `https://api-alice-web-masterclass-dev.app.cern.ch/oauth` | Must match Application Portal |
-| `CLIENT_ID` | *(from Application Portal)* | OAuth client id |
+| Key | Value | Masked | Protected | Expand | Notes |
+|-----|-------|--------|-----------|--------|-------|
+| `NAMESPACE` | `alice-web-masterclass-dev` | no | **yes** | **no** | Target OKD namespace |
+| `IMAGE_IMPORT_TOKEN` | *(secret)* | **yes** | **yes** | **no** | `gitlab-ci` SA token (`edit`); only real CI secret |
+| `API_URL` | `https://api-alice-web-masterclass-dev.app.cern.ch/api/v1/` | no | **yes** | **no** | Injected into both SPAs at build |
+| `MASTERCLASS_HOST` | `https://alice-web-masterclass-dev.app.cern.ch/` | no | **yes** | **no** | Student host (teacher app) |
+| `OPENID_CONFIG_URL` | `https://auth.cern.ch/auth/realms/cern/.well-known/openid-configuration` | no | **yes** | **no** | Teacher OIDC discovery |
+| `REDIRECT_URI` | `https://api-alice-web-masterclass-dev.app.cern.ch/oauth` | no | **yes** | **no** | Must match Application Portal |
+| `CLIENT_ID` | `alice-masterclass-dev` | no | **yes** | **no** | Portal app id; baked into teacher SPA |
+
+Do **not** store `CLIENT_SECRET` in GitLab CI variables. The teacher SPA only needs
+`CLIENT_ID`; Django reads the confidential secret from OKD secret
+`oidc-app-credentials` (see §5.2).
 
 > `API_URL` must end with `/api/v1/`: both SPAs append endpoint paths without that prefix.
+> Leave **Expand variable reference** unchecked for all of the above (raw URL/token strings).
+
+#### Protected tags and who can deploy
+
+| Setting | Value |
+|---------|--------|
+| Protected tags (Settings → Repository) | Wildcard `v*-dev` |
+| Allowed to create | **Maintainers** (and Owners) |
+| CI variables | Protected → exported only on protected tags/branches |
+
+Only group/project **Maintainers** (or **Owners**) can push tags such as
+`v0.1.7-dev`. **Developers** can push code but not release tags, so they do not
+receive `IMAGE_IMPORT_TOKEN` or bake/deploy with these variables.
+
+Membership is often inherited from group **ALICE MasterClass Dev**
+(`alice-masterclass-dev-group`). To grant deploy rights, raise the user to
+Maintainer on the **group** (Manage → Members), or invite them as Maintainer on
+the project.
+
+Release flow:
+
+```bash
+git tag v0.1.7-dev
+git push origin v0.1.7-dev   # must be Maintainer/Owner
+```
 
 ### 5.2 OpenShift secrets
 
@@ -177,7 +226,8 @@ Set under **Settings → CI/CD → Variables**:
 |--------|------|---------|
 | `masterclass-database` | `database-name`, `database-user`, `database-password` | PostgreSQL credentials (shared by DB pod and Django) |
 | `django-config` | `SERVICE_HOST`, `SERVICE_PORT`, `DJANGO_SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `REDIRECT_URI`, `FRONTEND_URL` | Django runtime configuration |
-| `oidc-client-secret` | `clientID`, `clientSecret` (+ CERN-managed `issuerURL`, `suggestedCookieSecret`) | OAuth client credentials |
+| `oidc-app-credentials` | `clientID`, `clientSecret` | **Django** OAuth credentials for Portal app `alice-masterclass-dev` |
+| `oidc-client-secret` | `clientID`, `clientSecret`, `issuerURL`, … | CERN-managed (AuthzOidcSecretImport); **do not use for Django** |
 
 `django-config` values (dev):
 
@@ -191,38 +241,77 @@ Set under **Settings → CI/CD → Variables**:
 | `FRONTEND_URL` | `https://teacher-alice-web-masterclass-dev.app.cern.ch/login` |
 | `DJANGO_SECRET_KEY` | *(random)* |
 
-> `oidc-client-secret` is provisioned and managed by the CERN SSO integration once the
-> application is registered in the Application Portal; it should not be deleted manually.
+#### OAuth credentials: why `oidc-app-credentials`
+
+OKD also creates `oidc-client-secret` for the PaaS webframeworks / Authz OIDC
+integration. That secret is owned by `AuthzOidcSecretImport` and typically holds
+the auto-provisioned client id `webframeworks-paas-alice-web-masterclass-dev`.
+Manual patches to it are **reverted**.
+
+The teacher SPA and Django must use the **user-managed** Application Portal app
+`alice-masterclass-dev` (matching redirect URI and confidential client secret).
+Store those credentials in an unmanaged secret and wire Django to it:
+
+```bash
+# Create / update (never commit the secret value)
+oc create secret generic oidc-app-credentials \
+  --from-literal=clientID=alice-masterclass-dev \
+  --from-literal=clientSecret='<portal-client-secret>' \
+  -n alice-web-masterclass-dev \
+  --dry-run=client -o yaml | oc apply -f -
+```
+
+Django DeploymentConfig env mapping (see `openshift/dev/dc.yaml`):
+
+| Env var | Secret / key |
+|---------|----------------|
+| `CLIENT_ID` | `oidc-app-credentials` / `clientID` |
+| `CLIENT_SECRET` | `oidc-app-credentials` / `clientSecret` |
+| `REDIRECT_URI` | `django-config` / `REDIRECT_URI` |
+| `FRONTEND_URL` | `django-config` / `FRONTEND_URL` |
+
+Leave `oidc-client-secret` alone; do not delete it or point Django at it.
+
+> When setting env from a secret, prefer an explicit JSON patch that sets env
+> **names** `CLIENT_ID` / `CLIENT_SECRET`. `oc set env --from=secret/...` can
+> invent names like `CLIENTID` / `CLIENTSECRET` (no underscores), which Django
+> does not read.
 
 ### 5.3 CERN Application Portal (OAuth)
 
-A dedicated dev application was registered:
+Use the dedicated Portal application **`alice-masterclass-dev`** (not the
+auto-created `webframeworks-paas-alice-web-masterclass-dev` client):
 
 - Category: **Test** (pre-production).
 - SSO registration: **OpenID Connect**, **confidential** client.
 - Redirect URI: `https://api-alice-web-masterclass-dev.app.cern.ch/oauth`
-  (must match `REDIRECT_URI` exactly).
-- `Client ID` → GitLab `CLIENT_ID` and OKD `oidc-client-secret.clientID`.
-- `Client Secret` → OKD `oidc-client-secret.clientSecret` only (never exposed to the browser).
+  (must match GitLab `REDIRECT_URI`, `django-config.REDIRECT_URI`, and the
+  teacher SPA build-time `redirectUri` exactly).
+- `Client ID` (`alice-masterclass-dev`) → GitLab `CLIENT_ID` **and**
+  `oidc-app-credentials.clientID`.
+- `Client Secret` → `oidc-app-credentials.clientSecret` only (never exposed to
+  the browser; the SPA only needs the public client id).
+
+All three must agree on the same client id and redirect URI: teacher build
+(GitLab vars), Django pod env, and Application Portal.
 
 ---
 
 ## 6. Migration Fixes Applied
 
 The applications were upgraded (Angular 21, Node 22, Django 5.2) but the build/test
-tooling had not been aligned. The following fixes were required to make the dev
-build and pipeline pass:
+tooling and runtime images had not been aligned. Subsections below cover the main
+runtime incidents; the bullet lists are the smaller CI/build fixes.
 
-**Deployment blockers**
+### 6.1 Build / CI blockers
+
 - `alice-masterclass-django/Dockerfile`: base image `python:3.12-slim-bookworm`, removed
   the `apt-get` layer (EOL Debian buster repos; `psycopg2-binary` needs no build deps).
-- Frontend runtime images (`alice-masterclass-js` and `alice-masterclass-teacher`) now
-  use `registry.cern.ch/quay.io/sclorg/httpd-24-c9s` to align with OpenShift non-root
-  behavior and avoid runtime crash loops seen with `httpd:2.4-alpine`.
-- Teacher SPA uses Angular `@angular/build:application`, which writes the site under
-  `dist/browser/`. The teacher Dockerfile copies `./dist/browser/` into `/var/www/html/`,
-  and CI places `.htaccess` in `dist/browser/` so Apache DocumentRoot serves the SPA
-  (not the CentOS default test page).
+- Frontend base image: EOL `quay.io/centos7/httpd-24-centos7` was replaced. Alpine
+  `httpd:2.4` built in CI but crash-looped on OKD (non-root / filesystem layout).
+  Final runtime image for both SPAs:
+  `registry.cern.ch/quay.io/sclorg/httpd-24-c9s` (DocumentRoot `/var/www/html/`,
+  port 8080, OpenShift-compatible).
 - Teacher build job: image `node:22-bookworm`, pinned `npm@11`.
 - Student build job: pinned `npm@11` so `npm ci` matches the npm 11 lockfile.
 - `event-display.component.html`: replaced an out-of-scope `#drawer` template reference
@@ -241,6 +330,104 @@ build and pipeline pass:
 
 Verified locally: Django 20/20, student 36/36, teacher 55/55.
 
+### 6.2 Teacher SPA: CentOS test page instead of Angular
+
+**Symptom.** After a successful teacher deploy,  
+`https://teacher-alice-web-masterclass-dev.app.cern.ch` returned HTTP 200 with the
+default CentOS “HTTP Server Test Page”, not the Angular app (`title` was not
+`ALICE Masterclass Teacher`).
+
+**Root cause.** Teacher uses Angular’s `@angular/build:application` builder, which
+writes the browser bundle under `dist/browser/` (not flat `dist/`). The Dockerfile
+and CI still treated the output like the student app:
+
+| Piece | Before (broken) | After (fixed) |
+|-------|-----------------|---------------|
+| CI | `cp .htaccess ./dist/` | `cp .htaccess ./dist/browser/` |
+| Dockerfile | `COPY ./dist/ /var/www/html/` | `COPY ./dist/browser/ /var/www/html/` |
+| Student (unchanged) | flat `dist/` | flat `dist/` |
+
+Apache’s DocumentRoot therefore contained only the builder’s parent folder layout
+(or was empty of `index.html` at the root), so sclorg httpd served its default
+welcome page.
+
+**Fix (shipped as tag `v0.1.5-dev`).**
+
+1. [`alice-masterclass-teacher/.gitlab-ci.yml`](../alice-masterclass-teacher/.gitlab-ci.yml)  
+   — after `npm run build`, copy `.htaccess` into `dist/browser/`.
+2. [`alice-masterclass-teacher/Dockerfile`](../alice-masterclass-teacher/Dockerfile)  
+   — `COPY ./dist/browser/ /var/www/html/`.
+
+**Verify.**
+
+```bash
+curl -sI https://teacher-alice-web-masterclass-dev.app.cern.ch | head -5
+curl -s https://teacher-alice-web-masterclass-dev.app.cern.ch | grep -o '<title>[^<]*</title>'
+# expect: <title>ALICE Masterclass Teacher</title>
+
+oc exec dc/alice-masterclass-teacher -n alice-web-masterclass-dev -- \
+  ls -la /var/www/html/ | head
+# expect index.html (and assets/) at DocumentRoot, not only a nested browser/ dir
+```
+
+### 6.3 PostgreSQL upgrade (10.6 → 15.12)
+
+**Symptom.** Django pod / `manage.py migrate` failed with PostgreSQL
+`NotSupportedError`: Django 5.2 requires PostgreSQL **14+**. The original
+`masterclass-database` DeploymentConfig still ran
+`centos/postgresql-10-centos8` (PG **10.6**) on PVC `masterclass-database`.
+
+**Approach on dev.** In-place major-version upgrade of the same data directory is
+unsafe/unsupported across 10→15. Dev used a **new empty PVC** and a new image;
+the old volume was kept for rollback. A logical dump of PG10 showed **no
+application tables** (migrations had never succeeded on PG10), so there was
+nothing useful to restore — fresh `migrate` on PG15 was correct.
+
+| Item | Before | After |
+|------|--------|-------|
+| Image | `registry.cern.ch/docker.io/centos/postgresql-10-centos8:latest` | `registry.cern.ch/quay.io/sclorg/postgresql-15-c9s:latest` (15.12) |
+| PVC | `masterclass-database` | `masterclass-database-v2` (1Gi, `cephfs-ah2-ssd`) |
+| Credentials secret | `masterclass-database` | unchanged (same secret keys) |
+
+**Procedure that was applied (dev only).**
+
+```bash
+oc project alice-web-masterclass-dev
+
+# 1) Optional: logical backup of old engine (dev dump was empty of app tables)
+oc scale dc/masterclass-database --replicas=1   # if needed to take a dump
+# oc exec dc/masterclass-database -- bash -lc 'pg_dumpall -U $POSTGRESQL_USER' > pg10-backup.sql
+
+# 2) Stop DB, create new PVC, switch image + claim
+oc scale dc/masterclass-database --replicas=0
+
+# PVC manifest (example): name masterclass-database-v2, 1Gi, storageClassName cephfs-ah2-ssd
+# oc apply -f masterclass-database-v2-pvc.yaml
+
+oc set image dc/masterclass-database \
+  postgresql=registry.cern.ch/quay.io/sclorg/postgresql-15-c9s:latest
+oc patch dc/masterclass-database --type=json -p='[
+  {"op":"replace",
+   "path":"/spec/template/spec/volumes/0/persistentVolumeClaim/claimName",
+   "value":"masterclass-database-v2"}
+]'
+
+oc scale dc/masterclass-database --replicas=1
+oc rollout status dc/masterclass-database --timeout=5m
+
+# 3) Confirm engine version, then apply Django schema
+oc exec dc/masterclass-database -- bash -lc 'psql -U $POSTGRESQL_USER -c "SELECT version();"'
+oc rollout latest dc/alice-masterclass-django   # or wait for healthy DB then restart API
+oc exec dc/alice-masterclass-django -- python manage.py migrate
+```
+
+After migrate, API endpoints that need auth return **401** (DB reachable) instead of
+**503** / version errors. Do **not** delete PVC `masterclass-database` until PG15 is
+accepted; rollback steps live in [`openshift/dev/README.md`](../openshift/dev/README.md).
+
+> Production (`alice-web-masterclass`) still had a separate DB CrashLoop
+> (`role "admin" does not exist`) and was **not** upgraded by this work.
+
 ---
 
 ## 7. Deployment Procedure
@@ -248,40 +435,50 @@ Verified locally: Django 20/20, student 36/36, teacher 55/55.
 ### 7.1 Trigger the pipeline
 
 ```bash
-git tag v0.1.0-dev
-git push origin v0.1.0-dev
+git tag v0.1.7-dev
+git push origin v0.1.7-dev   # Maintainer/Owner; tag must match protected wildcard v*-dev
 ```
 
-This builds and pushes the three images, imports them into the ImageStreams, and rolls
-out the student, teacher, and Django DeploymentConfigs.
+This runs unit tests, builds and pushes the three images, imports them into the
+ImageStreams, and rolls out the student, teacher, and Django DeploymentConfigs.
+If the tag introduces Django schema changes, play the manual `migrate_django` job
+in GitLab after `redeploy_django` succeeds.
 
 ### 7.2 First-deployment manual steps
 
-The database DeploymentConfig and Django migrations are not driven by CI and must be
-run once (and after schema changes):
+The database DeploymentConfig is not driven by CI and must be started once (and
+after DB engine changes). Prefer the pipeline `migrate_django` job for schema
+updates; the equivalent manual command is:
 
 ```bash
-# Start the PostgreSQL instance
+# Start / refresh the PostgreSQL instance
 oc rollout latest dc/masterclass-database -n alice-web-masterclass-dev
+oc rollout status dc/masterclass-database -n alice-web-masterclass-dev --timeout=5m
 
-# Apply Django migrations once the API pod is running
-oc exec -n alice-web-masterclass-dev deploy/alice-masterclass-django -- python manage.py migrate
+# Apply Django migrations once the API pod can reach the DB
+oc exec -n alice-web-masterclass-dev dc/alice-masterclass-django -- python manage.py migrate --noinput
 ```
 
 Until migrations run, the SPAs load but API-backed features (login, sessions) return
-database errors.
+database errors. Dev DB must already be on PostgreSQL 14+ (see §6.3).
 
 ---
 
 ## 8. Verification
 
-1. Pipeline is green in GitLab (deploy chain: `build_* → build_docker_* → redeploy_*`).
+1. Pipeline is green in GitLab on a `v*-dev` tag
+   (`unit_tests_* → build_* → build_docker_* → redeploy_*`; optional manual `migrate_django`).
 2. In the OKD Topology, all four workloads show running pods.
 3. Endpoints respond:
    - Student: `https://alice-web-masterclass-dev.app.cern.ch`
    - Teacher: `https://teacher-alice-web-masterclass-dev.app.cern.ch`
    - API: `https://api-alice-web-masterclass-dev.app.cern.ch`
-4. Teacher CERN SSO login succeeds and a student session can be created.
+4. Django OAuth env points at the Portal app (not webframeworks):
+   ```bash
+   oc exec dc/alice-masterclass-django -n alice-web-masterclass-dev -- printenv CLIENT_ID
+   # expect: alice-masterclass-dev
+   ```
+5. Teacher CERN SSO login succeeds (private window) and a student session can be created.
 
 ### Useful commands
 
@@ -289,6 +486,7 @@ database errors.
 oc get pods -n alice-web-masterclass-dev
 oc rollout status dc/alice-masterclass-django -n alice-web-masterclass-dev
 oc logs -n alice-web-masterclass-dev dc/alice-masterclass-django
+oc get dc alice-masterclass-django -o jsonpath='{range .spec.template.spec.containers[0].env[*]}{.name}{" -> "}{.valueFrom.secretKeyRef.name}{"/"}{.valueFrom.secretKeyRef.key}{"\n"}{end}' | grep -iE 'client|redirect|frontend'
 ```
 
 ---
@@ -297,16 +495,24 @@ oc logs -n alice-web-masterclass-dev dc/alice-masterclass-django
 
 - Repository, CI/CD pipeline, OKD workload manifests, secrets, PVC, service account,
   GitLab CI/CD variables, and CERN OAuth registration are all in place.
+- GitLab: CI variables are **Protected** (and `IMAGE_IMPORT_TOKEN` Masked); protected
+  tags wildcard `v*-dev` (create = Maintainers). Do not keep `CLIENT_SECRET` in GitLab.
+- CI: deploy only on `v*-dev`; unit tests gate dockerize; redeploy waits on rollout
+  (no `sleep 30`); manual `migrate_django` job available after Django redeploy.
 - Frontend Dockerfiles use OpenShift-ready HTTPD (`registry.cern.ch/quay.io/sclorg/httpd-24-c9s`).
-- Teacher DocumentRoot is `dist/browser/` (Angular application builder); student remains flat `dist/`.
-- Dev database was upgraded from PostgreSQL 10.6 to PostgreSQL 15.12
-  (`registry.cern.ch/quay.io/sclorg/postgresql-15-c9s:latest` on PVC
-  `masterclass-database-v2`). Django 5.2 requires PostgreSQL 14+.
-- Django migrations were applied successfully on the new PG15 instance.
+- Teacher DocumentRoot fix (`dist/browser/`): see §6.2; shipped as `v0.1.5-dev`.
+  Student remains flat `dist/`.
+- Dev database upgrade PG10 → PG15: see §6.3
+  (`postgresql-15-c9s` on PVC `masterclass-database-v2`; old PVC retained).
+  Django migrations applied on the new instance.
+- OAuth: Django uses unmanaged secret `oidc-app-credentials` for Portal app
+  `alice-masterclass-dev`; CERN-managed `oidc-client-secret` is left untouched
+  (see §5.2–5.3). Teacher SSO login on dev has been verified end-to-end.
+- Cluster vs `openshift/dev/` (OAuth env, PG15 image/PVC) audited in sync; keep them
+  aligned after every manual `oc` change (§4). DC→Deployment migration is backlog.
 - Smoke checks:
   - student app: HTTP 200
-  - teacher app: after `v0.1.5-dev`, expect SPA HTML (not CentOS test page), then SSO login
+  - teacher app: SPA HTML + CERN SSO login OK
   - API `/api/v1/sessions/` and `/api/v1/events/`: HTTP 401 (auth required; DB reachable)
-- Remaining manual verification: teacher CERN SSO login and creating a student session.
 - Production (`alice-web-masterclass`) database CrashLoop (`role "admin" does not exist`)
   is a separate incident and was not modified by this work.
