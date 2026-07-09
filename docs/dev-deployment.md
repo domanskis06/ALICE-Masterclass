@@ -514,5 +514,8 @@ oc get dc alice-masterclass-django -o jsonpath='{range .spec.template.spec.conta
   - student app: HTTP 200
   - teacher app: SPA HTML + CERN SSO login OK
   - API `/api/v1/sessions/` and `/api/v1/events/`: HTTP 401 (auth required; DB reachable)
-- Production (`alice-web-masterclass`) database CrashLoop (`role "admin" does not exist`)
-  is a separate incident and was not modified by this work.
+- Production (`alice-web-masterclass`) PostgreSQL runs on **CERN DBOD**
+  (`dbod-alice-masterclass.cern.ch:6625`, PG 15.15). Full cutover write-up:
+  [`docs/prod-database.md`](prod-database.md). The old in-cluster
+  `dc/masterclass-database` was scaled to 0 (CrashLoop retired; PVC retained).
+  Dev keeps a separate in-cluster PG15 — do not share prod DBOD with dev.
