@@ -3,8 +3,7 @@
 }
 
 :host {
-  // Opaque equivalent of --va-bg-panel (rgba(10, 24, 50, 0.88)) — used for page + 3D canvas
-  // so the whole dark mode reads as one flat panel tone instead of a separate gradient skybox.
+  // Solid dark panel tone (matches 3D clear color).
   --va-bg-panel-solid: #0a1832;
   --va-bg: var(--va-bg-panel-solid);
   --va-bg-elevated: var(--va-bg-panel-solid);
@@ -12,38 +11,31 @@
   --va-border: rgba(148, 163, 184, 0.28);
   --va-text: #e5edf7;
   --va-muted: rgba(226, 232, 240, 0.7);
+  --va-control-bg: rgba(15, 23, 42, 0.94);
 
   display: block;
+  width: 100%;
+  height: 100%;
   min-height: 100%;
+  box-sizing: border-box;
 }
 
 .container {
   position: relative;
   isolation: isolate;
-  min-height: calc(100vh - 64px);
+  box-sizing: border-box;
+  width: 100%;
+  // CERN toolbar 40px + app toolbar 64px
+  min-height: calc(100vh - 104px);
   padding: 10px;
 }
 
 .container.va-dark-mode {
-  overflow: hidden;
+  overflow-x: hidden;
   color: var(--va-text);
   background: var(--va-bg-panel-solid);
 }
 
-.container::before,
-.container::after {
-  content: "";
-  display: none;
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.container.va-dark-mode::before,
-.container.va-dark-mode::after {
-  display: none;
-}
 
 .container > * {
   position: relative;
@@ -233,6 +225,49 @@
       stroke: rgba(226, 232, 240, 0.72);
     }
   }
+
+  /* Calculator Select / Add — same dark panel tone as other VA controls */
+  app-calculator.calculator-dark-mode {
+    .calculator-particle-field {
+      .mdc-text-field--outlined {
+        background: var(--va-control-bg);
+      }
+
+      .mdc-notched-outline__leading,
+      .mdc-notched-outline__notch,
+      .mdc-notched-outline__trailing {
+        border-color: var(--va-border) !important;
+      }
+
+      .mat-mdc-form-field-label,
+      .mat-mdc-floating-label,
+      .mdc-floating-label,
+      .mat-mdc-select-value,
+      .mat-mdc-select-placeholder,
+      .mat-mdc-select-arrow,
+      .mat-mdc-select-min-line,
+      .mat-mdc-select,
+      .mat-mdc-select-value-text {
+        color: var(--va-text) !important;
+      }
+    }
+
+    .calculator-add-button.mat-mdc-raised-button:not(:disabled) {
+      --mdc-protected-button-container-color: var(--va-control-bg);
+      --mdc-protected-button-label-text-color: var(--va-text);
+      background-color: var(--va-control-bg) !important;
+      color: var(--va-text) !important;
+      border: 1px solid var(--va-border);
+    }
+
+    .calculator-add-button.mat-mdc-raised-button:disabled {
+      --mdc-protected-button-disabled-container-color: rgba(15, 23, 42, 0.45);
+      --mdc-protected-button-disabled-label-text-color: var(--va-muted);
+      background-color: rgba(15, 23, 42, 0.45) !important;
+      color: var(--va-muted) !important;
+      border: 1px solid var(--va-border);
+    }
+  }
 }
 
 @keyframes va-star-drift {
@@ -302,8 +337,11 @@
 }
 
 app-event-display {
-  height: 70vh;
-  min-height: 400px;
+  display: block;
+  width: 100%;
+  // Fill remaining viewport under toolbars; leave room for calculator + histograms.
+  height: calc(100vh - 104px - 12rem);
+  min-height: 520px;
 }
 
 #done {

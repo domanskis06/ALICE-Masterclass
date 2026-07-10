@@ -74,9 +74,9 @@
     "DETECTOR_TRD": "TRD",
     "DETECTOR_TOF": "TOF",
     "DETECTOR_L3": "L3",
-    "DETECTOR_EMCAL": "EMCal / DCal",
+    "DETECTOR_EMCAL": "EMCAL",
+    "DETECTOR_DCAL": "DCAL",
     "DETECTOR_PHOS": "PHOS",
-    "DETECTOR_FULL_MODEL": "Full detector",
     "DETECTOR_LAYER_FALLBACK": "{{name}}",
     "DETECTOR_ASSEMBLY_TITLE": "Build the detector",
     "DETECTOR_ASSEMBLY_HINT": "Drag each part from this panel onto the 3D view. When everything is placed, detector options (views, clusters, tracks) will appear here."

@@ -8,7 +8,6 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { SVGLoader, SVGResult } from 'three/examples/jsm/loaders/SVGLoader';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
@@ -18,7 +17,7 @@ import {
   neonTrackColor
 } from '../../globals';
 
-/** One imported GLB/GLTF root for detector layer visibility toggles. */
+/** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
   assetPath: string;
   labelKey: string;
@@ -41,31 +40,20 @@ export interface DetectorPaletteItem {
   standalone: false
 })
 export class EventDisplayComponent implements AfterViewInit, OnDestroy {
-  // Use GL_LINES primitive instead of meshes (faster, but can't set line width!)
-  private readonly TRACKS_USE_GL_LINES: boolean = false;
-  private readonly USE_LIVE_SIDE_VIEWS: boolean = true;
   private readonly SIDE_VIEW_PIXEL_RATIO_FACTOR: number = 0.65;
-
-  // Use points instead of spheres (faster)
   private readonly CLUSTERS_USE_POINTS: boolean = true;
-
-  private readonly CLUSTER_TEXTURE: string = 'assets/models/cluster.png';
-
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
   private readonly TRACK_DRAW_ANIMATION_MS = 4000;
 
-  /** GLB cloned for beam protons during the first-event intro. */
+  /** Proton GLB for the first-event collision intro. */
   @Input() protonModelUrl = 'assets/models/proton.glb';
 
-  // Constants
   @HostBinding("style.--primary-axis-ratio")
   readonly PRIMARY_AXIS_RATIO: number = 1 / 1.61803398875; // Golden ratio
   @HostBinding("style.--secondary-axis-ratio")
   readonly SECONDARY_AXIS_RATIO: number = 1 / 2;
 
   static readonly fieldOfView: number = 70;
-  // Tightened from 0.01/8000 to shrink the near/far ratio and reduce depth-buffer
-  // precision loss that caused detector shells to flicker/swap on rotation.
   static readonly nearClippingPlane: number = 0.05;
   static readonly farClippingPlane: number = 1500;
   static readonly objectScale: number = 1.0e-2;
@@ -81,9 +69,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       'tof.glb': 'EVENT_DISPLAY.DETECTOR_TOF',
       'l3.glb': 'EVENT_DISPLAY.DETECTOR_L3',
       'emcal_dcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
+      'dcal.glb': 'EVENT_DISPLAY.DETECTOR_DCAL',
       'phos.glb': 'EVENT_DISPLAY.DETECTOR_PHOS',
-      'alice.gltf': 'EVENT_DISPLAY.DETECTOR_FULL_MODEL',
-      'alice_complete.glb': 'EVENT_DISPLAY.DETECTOR_FULL_MODEL'
     };
     if (keys[file]) {
       return { labelKey: keys[file] };
@@ -96,35 +83,28 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   static readonly lineSegments: number = 50;
 
-  private static readonly VERTEX_MARKER_RADIUS = (0.35 * 2 / 3) * EventDisplayComponent.objectScale; // ~2.3 mm (1/3 smaller)
+  private static readonly VERTEX_MARKER_RADIUS = (0.35 * 2 / 3) * EventDisplayComponent.objectScale;
   private static readonly MARKER_PROXIMITY_PX = 155;
   private static readonly PAN_SPEED_FACTOR = 0.005;
   private static readonly WHEEL_PAN_FACTOR = 0.03;
   private static readonly MOUSE_DRAG_PAN_FACTOR = 0.0008;
   private static readonly FADE_OPACITY = 0.25;
   private static readonly DETECTOR_FADE_OPACITY = 0.08;
-  private static readonly DETECTOR_COMPONENT_OPACITY = 0.35;
-  private static readonly DETECTOR_INNER_OPACITY = 0.38;
-  private static readonly DETECTOR_OUTER_OPACITY = 0.30;
-  // Real (geometric) per-layer radial inflation. With logarithmicDepthBuffer enabled,
-  // the fragment shader overwrites gl_FragDepth from a manually computed log value and
-  // ignores the hardware polygonOffset entirely, so touching shells still z-fight.
-  // Nudging each successive layer's own scale slightly larger pushes its vertices a hair
-  // further from the origin than the previous layer, which genuinely separates the depth
-  // values instead of relying on a depth-buffer trick that log depth silently discards.
+  /** Slider default; materials load solid (opacity 1) then sync via setDetectorPartOpacity. */
+  private static readonly DETECTOR_COMPONENT_OPACITY = 0.78;
+  private static readonly DETECTOR_INNER_OPACITY = 0.80;
+  private static readonly DETECTOR_OUTER_OPACITY = 0.75;
+  /** Separates nested detector shells in depth (log-depth ignores polygonOffset). */
   private static readonly DETECTOR_LAYER_RADIAL_INFLATE_STEP = 0.0009;
 
-  /**
-   * When set in sessionStorage, multipart detector skips drag-and-drop for this tab session.
-   * New browser tab = new session → student goes through assembly again. Reload in same tab keeps the flag.
-   */
+  /** sessionStorage: multipart assembly completed for this tab session. */
   static readonly DETECTOR_ASSEMBLY_DONE_STORAGE_KEY = 'alice_mc_visualAnalysis_detectorAssembledPaths_v1';
 
   private static detectorAssemblyPathsSignature(paths: string[]): string {
     return paths.join('\u0000');
   }
 
-  /** Used by VA page to gate the assembly coach wizard. */
+  /** True when VA can skip the assembly coach for this session. */
   static isMultipartDetectorStoredComplete(paths: string[]): boolean {
     if (!paths?.length || paths.length < 2) return true;
     try {
@@ -164,16 +144,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly bachelorTrackColor: THREE.Color = new THREE.Color(bachelorTrackColor);
   static readonly highlightColor: THREE.Color = new THREE.Color(highlightColor);
 
-  // Dark-mode variant of the generic track color only (see applyDarkModeStyling()).
   static readonly neonTrackColor: THREE.Color = new THREE.Color(neonTrackColor);
 
-  // Bloom tuning: high threshold so only the white generic track (and bright highlights)
-  // bloom — emissive detector shells must not wash the viewport background lighter
-  // than the UI panel color.
   private static readonly BLOOM_STRENGTH = 0.22;
   private static readonly BLOOM_RADIUS = 0.28;
   private static readonly BLOOM_THRESHOLD = 0.72;
-  // How strongly detector shells self-illuminate (glow with their own color) in dark mode.
   private static readonly DETECTOR_NEON_EMISSIVE_INTENSITY = 0.12;
 
   private trackMaterial: THREE.Material = null;
@@ -254,7 +229,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (this.cascadeProtonMaterial) (this.cascadeProtonMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
     }
   }
-  private _trackWidth: number = 1;
+  private _trackWidth: number = 2;
 
   @Input()
   get clusterSize(): number { return this._clusterSize; }
@@ -322,11 +297,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private camRhozVP: THREE.Vector4 = new THREE.Vector4();
   private renderer: THREE.WebGLRenderer;
   private controls: OrbitControls;
-  // Neon dark-mode glow. Only used for the main (non split-side-view) 3D render:
-  // the composer's render targets have a fixed size independent of the manual
-  // viewport/scissor rects used to tile the rho-z/r-phi side views onto the same
-  // canvas, so mixing the two would need per-viewport render targets. Side views
-  // keep rendering straight to the canvas as before, bloom or not.
+  // Bloom only on the main 3D view (not tiled side views).
   private composer: EffectComposer | null = null;
   private bloomPass: UnrealBloomPass | null = null;
 
@@ -360,16 +331,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   // Loaders
   private loaderGLTF: GLTFLoader = new GLTFLoader();
-  private loaderSVG: SVGLoader = new SVGLoader();
 
   // Detector
   private detector: THREE.Group = new THREE.Group();
   private detectorScene: THREE.Group | null = null;
   private detectorPartRootByPath = new Map<string, THREE.Object3D>();
-
-  private detectorSideViews: THREE.Group = new THREE.Group();
-  private detectorSideViewsRphi: THREE.Group = new THREE.Group();
-  private detectorSideViewsRhoz: THREE.Group = new THREE.Group();
 
   @Input()
   get landscape(): boolean { return this._landscape; }
@@ -497,7 +463,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const detectorOpacity =
         EventDisplayComponent.DETECTOR_INNER_OPACITY * (1 - t) +
         EventDisplayComponent.DETECTOR_OUTER_OPACITY * t;
-      const isCalorimeterLayer = /(^|[/\\])(emcal_dcal|phos)\.glb($|\?)/i.test(modelPath);
+      const isCalorimeterLayer = /(^|[/\\])(emcal_dcal|dcal|phos)\.glb($|\?)/i.test(modelPath);
       const defaultPartOpacity = isCalorimeterLayer
         ? Math.max(detectorOpacity, 0.45)
         : detectorOpacity;
@@ -640,6 +606,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.detectorLayersPanelOpened = true;
     }
     this.sidebarOpened = false;
+    this.applyUiDetectorOpacities();
     this.cdr.markForCheck();
     this.resize(true);
   }
@@ -671,6 +638,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  /** Push each part's UI opacity through setDetectorPartOpacity (identical to moving the slider). */
+  private applyUiDetectorOpacities(): void {
+    for (const part of this.detectorPartsForUi) {
+      this.setDetectorPartOpacity(part, part.opacity);
+    }
+  }
+
   private getDetectorPartOpacity(root: THREE.Object3D): number {
     let found: number | null = null;
     root.traverse((o: THREE.Object3D) => {
@@ -685,18 +659,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return found ?? EventDisplayComponent.DETECTOR_OUTER_OPACITY;
   }
 
-  // Large enough that no single detector part can realistically contain this many
-  // meshes, so per-layer renderOrder buckets below never collide with each other.
   private static readonly DETECTOR_RENDER_ORDER_LAYER_STRIDE = 10000;
-  // Physics objects (tracks, decay lines, vertex markers, clusters) must always
-  // paint on top of every detector mesh. This sits comfortably above the highest
-  // renderOrder the detector buckets above can reach even for the full multipart
-  // model (7 parts * 10000 stride), so the two ranges can never collide.
   static readonly PHYSICS_RENDER_ORDER_BASE = 200000;
 
   private setDetectorMaterialsWithPolygonOffset(object: THREE.Object3D, opacity: number, layerIndex = 0) {
-    // Per-layer offset so outer shells reliably win the depth test against inner
-    // ones with a near-identical radius, preventing z-fighting flicker on rotation.
     const layerOffset = -(layerIndex + 1) * 2;
     const layerRenderOrderBase = layerIndex * EventDisplayComponent.DETECTOR_RENDER_ORDER_LAYER_STRIDE;
     object.renderOrder = layerRenderOrderBase;
@@ -713,23 +679,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       return da - db;
     });
     meshes.forEach((mesh, meshIndex) => {
-      // Every mesh gets its OWN renderOrder (layer bucket + stable rank by distance
-      // from the detector axis, computed once here at load time) instead of sharing
-      // one value per part. A single detector "layer" is usually made of several
-      // meshes (barrel wall, end-caps, support struts, ...) that visually overlap.
-      // When siblings share a renderOrder, Three.js falls back to its per-frame,
-      // camera-relative z as a tiebreak - and for meshes whose depth from the camera
-      // is nearly identical (mirrored halves, touching parts), that tiebreak flips
-      // from floating-point noise every frame, which is the flicker seen even with
-      // only one layer visible, worst right as the view sweeps through the model's
-      // symmetry axis (where the ambiguity is largest). A unique, static renderOrder
-      // per mesh removes the ambiguity entirely, independent of camera angle.
+      // Unique static renderOrder per mesh avoids z-flicker between sibling shells.
       mesh.renderOrder = layerRenderOrderBase + meshIndex;
       const subOffset = layerOffset - meshIndex * 0.01;
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       materials.forEach((mat: THREE.Material) => {
         if (!mat) return;
-        // Default mode: shells are solid so detector layers do not see-through each other.
         (mat as any).transparent = false;
         (mat as any).opacity = 1;
         (mat as any).userData = { ...((mat as any).userData || {}), baseOpacity: opacity };
@@ -751,14 +706,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.bloomPass.enabled = this._darkMode;
     }
     if (this.renderer) {
-      // No tone mapping in dark mode: Reinhard + exposure was lifting the near-black
-      // clear color into the gray-blue wash visible behind the 3D model.
       this.renderer.toneMapping = THREE.NoToneMapping;
       this.renderer.toneMappingExposure = 1;
     }
     this.syncSceneBackground();
-    // Only the generic track switches color in dark mode (to white). Every other
-    // track type and the clusters keep their normal-mode color unchanged.
     if (this.trackMaterial) {
       (this.trackMaterial as any).color.copy(
         this._darkMode ? EventDisplayComponent.neonTrackColor : EventDisplayComponent.trackColor
@@ -843,7 +794,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   ): void {
     let index = 0;
     const revealNext = () => {
-      if (index >= modelPaths.length) return;
+      if (index >= modelPaths.length) {
+        this.applyUiDetectorOpacities();
+        return;
+      }
       const path = modelPaths[index++];
       const scene = this.detectorPartRootByPath.get(path);
       if (scene) {
@@ -851,68 +805,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
       if (index < modelPaths.length) {
         setTimeout(revealNext, staggerMs);
+      } else {
+        setTimeout(() => this.applyUiDetectorOpacities(), fadeDurationMs);
       }
     };
     revealNext();
-  }
-
-  @Input()
-  get detectorRphi(): string { return this._detectorRphi; }
-  set detectorRphi(detectorRphi: string) {
-    this._detectorRphi = detectorRphi;
-    this.detectorSideViewsRphi.clear();
-    if (this.USE_LIVE_SIDE_VIEWS) return;
-    const finalize_rphi = (group: THREE.Group) => {
-      group.scale.set(0.18, 0.18, 0.18);
-      group.renderOrder = -1;
-      this.detectorSideViewsRphi.add(group);
-    };
-    this.loading = true;
-    this.loaderSVG.load(this._detectorRphi, (data: SVGResult) => {
-      this.addSVGToScene(data, finalize_rphi);
-      this.loading = false;
-    });
-  }
-  private _detectorRphi: string;
-
-  @Input()
-  get detectorRhoz(): string { return this._detectorRhoz; }
-  set detectorRhoz(detectorRhoz: string) {
-    this._detectorRhoz = detectorRhoz;
-    this.detectorSideViewsRhoz.clear();
-    if (this.USE_LIVE_SIDE_VIEWS) return;
-    const finalize_rhoz = (group: THREE.Group) => {
-      group.rotateY(0.5 * Math.PI);
-      group.scale.set(0.15, 0.15, 0.15);
-      group.renderOrder = -1;
-      this.detectorSideViewsRhoz.add(group);
-    };
-    this.loading = true;
-    this.loaderSVG.load(this._detectorRhoz, (data: SVGResult) => {
-      this.addSVGToScene(data, finalize_rhoz);
-      this.loading = false;
-    });
-  }
-  private _detectorRhoz: string;
-
-  private addSVGToScene(data: SVGResult, finalize: (g: THREE.Group) => void) {
-    const paths = data.paths;
-    const group = new THREE.Group();
-    for (let path of paths) {
-      const fillColor = path.userData?.style?.fill;
-      const material = new THREE.MeshBasicMaterial({
-        color: new THREE.Color().setStyle(fillColor),
-        side: THREE.DoubleSide,
-        depthWrite: false
-      });
-      const shapes = path.toShapes(true);
-      for (let shape of shapes) {
-        const geometry = new THREE.ShapeGeometry(shape);
-        const mesh = new THREE.Mesh(geometry, material);
-        group.add(mesh);
-      }
-    }
-    finalize(group);
   }
 
   @Input()
@@ -933,7 +830,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get detectorShown(): boolean { return this.detector.visible; }
   set detectorShown(detectorShown: boolean) {
     this.detector.visible = detectorShown;
-    this.detectorSideViews.visible = !this.USE_LIVE_SIDE_VIEWS && detectorShown;
   }
 
   private desiredTracksShown = true;
@@ -982,7 +878,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const last = track[track.length - 1];
     const firstR2 = first[0] * first[0] + first[1] * first[1] + first[2] * first[2];
     const lastR2 = last[0] * last[0] + last[1] * last[1] + last[2] * last[2];
-    // Draw from the collision side outward: whichever endpoint is closer to (0,0,0).
     const orderedTrack = firstR2 <= lastR2 ? track : [...track].reverse();
     const points: Array<THREE.Vector3> = [];
     for (let point of orderedTrack) {
@@ -994,14 +889,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     const spline = new THREE.CatmullRomCurve3(points);
     const vertices = spline.getPoints(EventDisplayComponent.lineSegments);
-    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
-    mesh = new THREE.Line(geometry, material);
-    const lineUserData = { ...((mesh as any).userData || {}), drawMode: 'line', drawTotal: vertices.length };
-    (mesh as any).userData = lineUserData;
-    geometry.setDrawRange(0, 2);
-    if (this.TRACKS_USE_GL_LINES) {
-      return mesh;
-    }
     const points2 = [];
     for (let v of vertices) {
       points2.push(v.x, v.y, v.z);
@@ -1438,10 +1325,35 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.pointsMaterial = new THREE.PointsMaterial({
       color: EventDisplayComponent.clusterColor,
       size: this.clusterSize,
+      map: EventDisplayComponent.createCirclePointTexture(),
       transparent: true,
       alphaTest: 0.5,
       depthTest: false,
+      sizeAttenuation: true,
     });
+  }
+
+  /** Circular point sprite for cluster PointsMaterial. */
+  private static createCirclePointTexture(): THREE.CanvasTexture {
+    const size = 64;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.clearRect(0, 0, size, size);
+      const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      gradient.addColorStop(0, 'rgba(255,255,255,1)');
+      gradient.addColorStop(0.65, 'rgba(255,255,255,1)');
+      gradient.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
   }
 
   private resize(force: boolean): void {
@@ -1460,8 +1372,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
       if (force || this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
         this.renderer.setSize(displayWidth, displayHeight);
-        // Composer render targets always cover the full canvas; only used for the
-        // main view when side views aren't tiled onto the same canvas (see render()).
         this.composer?.setSize(displayWidth, displayHeight);
         if (this.effectiveSideViewsShown) {
           if (this.landscape) {
@@ -1662,15 +1572,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.camRphiVP.set(oldVP.x, oldVP.y, width, height);
         this.camRhozVP.set(oldVP.x + width, oldVP.y, width, height);
       }
-      const isDetectorVisible = this.detector.visible;
-      const isDetectorSideviewVisible = this.detectorSideViews.visible;
-      if (this.USE_LIVE_SIDE_VIEWS) {
-        this.detector.visible = isDetectorVisible;
-        this.detectorSideViews.visible = false;
-      } else {
-        this.detector.visible = false;
-        this.detectorSideViews.visible = isDetectorSideviewVisible;
-      }
       this.renderer.setViewport(this.camRphiVP);
       this.renderer.setScissor(this.camRphiVP);
       const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial, this.cascadeHoverTrackMaterial, this.cascadeProtonMaterial];
@@ -1683,13 +1584,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.renderer.setScissor(this.camRhozVP);
       materials.forEach((m: any) => m.resolution?.set(this.camRhozVP.z, this.camRhozVP.w));
       this.renderer.render(this.scene, this.cameraRhoz);
-      this.detector.visible = isDetectorVisible;
-      this.detectorSideViews.visible = isDetectorSideviewVisible;
     } else {
       this.cam3DVP.set(oldVP.x, oldVP.y, oldVP.z, oldVP.w);
     }
-    const isDetectorSideviewVisible = this.detectorSideViews.visible;
-    this.detectorSideViews.visible = false;
     this.renderer.setViewport(this.cam3DVP);
     this.renderer.setScissor(this.cam3DVP);
     const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial, this.cascadeHoverTrackMaterial, this.cascadeProtonMaterial];
@@ -1702,7 +1599,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     } else {
       this.renderer.render(this.scene, this.camera3D);
     }
-    this.detectorSideViews.visible = isDetectorSideviewVisible;
     this.renderer.setViewport(oldVP);
     this.renderer.setScissor(oldVP);
   }
@@ -2158,13 +2054,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const intersects: THREE.Intersection[] = [];
     const zoomz = this.controls.target.distanceTo(this.controls.object.position);
     const raycaster = new THREE.Raycaster();
-    // Raycaster params typings require `threshold` when Line2 is present.
     if (!raycaster.params.Line2) {
       raycaster.params.Line2 = { threshold: zoomz / 55 };
     } else {
       raycaster.params.Line2.threshold = zoomz / 55;
     }
-    // Standard Line support (older three / different primitives)
     (raycaster.params as any).Line = (raycaster.params as any).Line || { threshold: zoomz / 55 };
     (raycaster.params as any).Line.threshold = zoomz / 55;
     const windowOffset = this.renderer.domElement.getBoundingClientRect();
@@ -2214,7 +2108,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private createScene(): void {
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, logarithmicDepthBuffer: true, antialias: true });
     this.renderer.shadowMap.enabled = false;
-    // Ensure per-mesh renderOrder (set per detector layer) is respected during draw.
     this.renderer.sortObjects = true;
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(1, 1);
@@ -2279,11 +2172,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.scene.add(this.axes);
     this.scene.add(this.lights);
     this.syncGridBackground();
-    this.detectorSideViewsRhoz.clear();
-    this.detectorSideViews.add(this.detectorSideViewsRphi);
-    this.detectorSideViews.add(this.detectorSideViewsRhoz);
     this.scene.add(this.detector);
-    this.scene.add(this.detectorSideViews);
     this.scene.add(this.tracks);
     this.scene.add(this.cascadeVertexMarkers);
     this.scene.add(this.clusters);

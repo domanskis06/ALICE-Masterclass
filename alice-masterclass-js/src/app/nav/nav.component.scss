@@ -10,6 +10,12 @@
   background: inherit;
 }
 
+mat-sidenav-content > div {
+  min-height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .sticky {
   position: sticky;
   top: 0;

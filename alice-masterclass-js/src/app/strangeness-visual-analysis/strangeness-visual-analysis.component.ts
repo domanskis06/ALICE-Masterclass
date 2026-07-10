@@ -45,29 +45,24 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
-  /** Guided coach (welcome + hint per detector piece); only when multipart assembly is still required this session. */
+  /** Guided coach while multipart detector assembly is still required this session. */
   vaCoachOverlayVisible = false;
   vaCoachWelcomePhase = true;
-  /** After the last hinted piece has been successfully placed — show acknowledgement before hiding the coach UI. */
   vaCoachVictoryPhase = false;
   vaCoachPieceHintIndex = 0;
   private vaCoachScheduleSub: Subscription | null = null;
   private vaCoachOpenScheduled = false;
 
   readonly ALICE_DETECTOR_MODEL = [
-    // Core tracker / inner detectors
     'assets/models/alice components/its.glb',
     'assets/models/alice components/tpc.glb',
     'assets/models/alice components/TRD.glb',
     'assets/models/alice components/TOF.glb',
-    // Magnet
-    'assets/models/alice components/L3.glb',
-    // Calorimeters
     'assets/models/alice components/EMCal_Dcal.glb',
+    'assets/models/alice components/DCAL.glb',
     'assets/models/alice components/PHOS.glb',
+    'assets/models/alice components/L3.glb',
   ];
-  readonly ALICE_DETECTOR_RPHI = "assets/models/alice_rphi.svg";
-  readonly ALICE_DETECTOR_RHOZ = "assets/models/alice_rhoz.svg";
 
   datasetID: number = SelectDatasetDialogComponent.DEMO;
   eventID: number = 0;
@@ -112,7 +107,6 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       return;
     }
 
-    /** Overlay after stability + defer; extra timeout catches rare cases where stable stays false briefly. */
     this.vaCoachScheduleSub = this.appRef.isStable
       .pipe(filter((stable) => stable), take(1))
       .subscribe(() => {
@@ -128,13 +122,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.flightParticleTimeouts = [];
   }
 
-  /** Null when overlay hidden or phases where highlight is meaningless. */
   get assemblyCoachHighlightPath(): string | null {
     if (!this.vaCoachOverlayVisible || this.vaCoachWelcomePhase || this.vaCoachVictoryPhase) return null;
     return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
   }
 
-  /** Name of the detector piece currently requested by the guided sequence. */
   get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
     const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
     return EventDisplayComponent.detectorPartPresentation(path);
