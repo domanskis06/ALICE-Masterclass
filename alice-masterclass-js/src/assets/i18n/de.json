@@ -4,6 +4,19 @@
     "ALICE_MASTERCLASS": "ALICE MasterClass",
     "PASSWORD": "Kennwort"
   },
+  "VA_COACH": {
+    "WELCOME_TITLE": "Willkommen, angehender Physiker!",
+    "WELCOME_P1": "Sie erkunden Teilchenkollisionen am ALICE-Detektor.",
+    "WELCOME_P2": "Die Strahlen laufen im Strahlrohr — einem ultrahochvakuum — bis zum Wechselwirkungspunkt im Zentrum von ALICE.",
+    "WELCOME_P3": "Sie bauen den Detektor Teil für Teil zusammen — wir zeigen immer das nächste Fragment. Tipps auf »Weiter«, wenn Sie starten möchten.",
+    "WELCOME_CONTINUE": "Weiter",
+    "DRAG_TITLE": "Nächstes Teil platzieren",
+    "DRAG_STEP": "Schritt {{current}} von {{total}}",
+    "DRAG_INSTRUCTION": "Ziehen Sie rechts das hervorgehobene Teil in die Bildmitte der 3D-Ansicht, bis es einrastet.",
+    "DONE_TITLE": "Detector fertig montiert",
+    "DONE_BODY": "Alle Teile sind platziert. Sichtbarkeit und Bahneinstellungen finden Sie im rechten Panel.",
+    "DONE_BUTTON": "Alles klar"
+  },
   "HOME": {
     "HOME": "Home",
     "HOME_MENU": "Home",

@@ -1,0 +1,2037 @@
+{
+  "main.ts": {
+    "mtime": 1769109260.3462243,
+    "ast_hash": "7402933d8dc590cf3703cd44343d988e",
+    "semantic_hash": ""
+  },
+  ".eslintrc.json": {
+    "mtime": 1769109260.3025866,
+    "ast_hash": "dd71a26ffea150ea3714ed2b856b3be3",
+    "semantic_hash": ""
+  },
+  ".vscode/launch.json": {
+    "mtime": 1769109260.3033125,
+    "ast_hash": "1387ca51eb4673d66bc4a7bc23790baa",
+    "semantic_hash": ""
+  },
+  ".vscode/tasks.json": {
+    "mtime": 1769109260.3034446,
+    "ast_hash": "7addd83a60da8101238aad84114b5a0b",
+    "semantic_hash": ""
+  },
+  "angular.json": {
+    "mtime": 1772451019.6961777,
+    "ast_hash": "cb89121fc82695182a3d050137a028b6",
+    "semantic_hash": ""
+  },
+  "angular.webpack.js": {
+    "mtime": 1771697082.4726546,
+    "ast_hash": "62eae66f1a395afa00021c715d887215",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_0_0.json": {
+    "mtime": 1769165428.5733218,
+    "ast_hash": "45d1b6dd9586f14afc05ac714190dc0a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_0_1.json": {
+    "mtime": 1769165428.6145372,
+    "ast_hash": "25e435b5ec3a0af601b625dac43ffdec",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_0_2.json": {
+    "mtime": 1769165428.6646805,
+    "ast_hash": "446990b0f6f9106ce38b946c7c04277d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_0_3.json": {
+    "mtime": 1769165428.7421699,
+    "ast_hash": "d4f173c81d5914924213103b4e9634e1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_0.json": {
+    "mtime": 1769165432.305996,
+    "ast_hash": "ad86c22644d40532bdf7df30e1c24d6f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_1.json": {
+    "mtime": 1769165432.3380008,
+    "ast_hash": "fa94f6f330d1b9d88a254fb550d98580",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_10.json": {
+    "mtime": 1769165432.622292,
+    "ast_hash": "6fa98e60984e584d7de2502360c46d59",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_11.json": {
+    "mtime": 1769165432.6390193,
+    "ast_hash": "e7035cc2684382e43409df05c0049acc",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_12.json": {
+    "mtime": 1769165432.6613467,
+    "ast_hash": "4f4d564b571ac08d1327a8ee88ab807a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_13.json": {
+    "mtime": 1769165432.740547,
+    "ast_hash": "80ec63c798765844c14ff0b034d39e9c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_14.json": {
+    "mtime": 1769165432.7741108,
+    "ast_hash": "55c6f5ca7a5b826c25b6fd357a700a1d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_2.json": {
+    "mtime": 1769165432.3604355,
+    "ast_hash": "c2044c9a25fb72b792b38745f2765911",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_3.json": {
+    "mtime": 1769165432.3835006,
+    "ast_hash": "bfd93a5996b8c007973a91583c5668a9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_4.json": {
+    "mtime": 1769165432.4028654,
+    "ast_hash": "16ffa324d8d8f8c9eb082c39e51e8833",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_5.json": {
+    "mtime": 1769165432.4276438,
+    "ast_hash": "7d7628147270dc480ac8e91eee7c1bf3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_6.json": {
+    "mtime": 1769165432.4558985,
+    "ast_hash": "610243c6b14f9d22c119129a864346d3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_7.json": {
+    "mtime": 1769165432.478878,
+    "ast_hash": "0356bf97c49c2df89fb4221466295f06",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_8.json": {
+    "mtime": 1769165432.561734,
+    "ast_hash": "264f14fe8c8090b3099212e3a5886cd1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_10_9.json": {
+    "mtime": 1769165432.5873194,
+    "ast_hash": "76ea7bce9b594465ae6f10f39c88de29",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_0.json": {
+    "mtime": 1769165432.796522,
+    "ast_hash": "5890f70f895fceddc3686ff2a6c14570",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_1.json": {
+    "mtime": 1769165432.8155792,
+    "ast_hash": "173fda20f7dc0d423942cdf766932091",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_10.json": {
+    "mtime": 1769165433.2535229,
+    "ast_hash": "3c27e94be506d60d49ecc18c65679fff",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_11.json": {
+    "mtime": 1769165433.2942863,
+    "ast_hash": "a1eb93c982173a84f383bb13bd16a61b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_12.json": {
+    "mtime": 1769165433.3217206,
+    "ast_hash": "c37c8903b090114e014d7a368d166e04",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_13.json": {
+    "mtime": 1769165433.3438685,
+    "ast_hash": "9e7700ed9030e01a12972d59a4230d0a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_14.json": {
+    "mtime": 1769165433.3684146,
+    "ast_hash": "20c34635be6030931ded58427b020209",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_2.json": {
+    "mtime": 1769165432.8376672,
+    "ast_hash": "820babdcb06cbdc93d369a7a99748990",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_3.json": {
+    "mtime": 1769165432.8645663,
+    "ast_hash": "a5c4c709c8b4207cbb2f98290087522d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_4.json": {
+    "mtime": 1769165432.9181073,
+    "ast_hash": "043438bf2ca8b4d0f3e7f4b5a74d30f3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_5.json": {
+    "mtime": 1769165433.0906034,
+    "ast_hash": "9cc891703b74f3394690499cb194b86b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_6.json": {
+    "mtime": 1769165433.1151836,
+    "ast_hash": "77abf7ecbc4ffd09e3349c21f6232952",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_7.json": {
+    "mtime": 1769165433.1488743,
+    "ast_hash": "90923fc9560ca5bf7aed84f7d40a4a12",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_8.json": {
+    "mtime": 1769165433.18711,
+    "ast_hash": "ff42049759c3eaecb22c4ffbe35f0cf7",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_11_9.json": {
+    "mtime": 1769165433.2244895,
+    "ast_hash": "034761c649ba90c704f2abe53528e65b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_0.json": {
+    "mtime": 1769165433.3951378,
+    "ast_hash": "c369fdc4460fdf23a144e7210067ebf1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_1.json": {
+    "mtime": 1769165433.4173644,
+    "ast_hash": "e369e9af7e1fc0c1c3b82e732f32ba5b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_10.json": {
+    "mtime": 1769165433.6063368,
+    "ast_hash": "ba1ecef5126ab52ca1ecb95efc4f286d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_11.json": {
+    "mtime": 1769165433.6204922,
+    "ast_hash": "504b4ccee6fda5ec37abed2de180161e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_12.json": {
+    "mtime": 1769165433.6355186,
+    "ast_hash": "39ae315a4573f0d0396f622bc2bac095",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_13.json": {
+    "mtime": 1769165433.64979,
+    "ast_hash": "7741a185538acd1a26743c07a6e73287",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_14.json": {
+    "mtime": 1769165433.6694727,
+    "ast_hash": "a47c497ff41bf5c10d8f34df43667e4e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_2.json": {
+    "mtime": 1769165433.4360921,
+    "ast_hash": "92f3913fd7634769913ee5e255f0f530",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_3.json": {
+    "mtime": 1769165433.4565756,
+    "ast_hash": "7e785230f65449c01e8e1759494ec537",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_4.json": {
+    "mtime": 1769165433.4828498,
+    "ast_hash": "59cc2aeee092493e34c198e8f49ea5b3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_5.json": {
+    "mtime": 1769165433.4963484,
+    "ast_hash": "47ed85912490eb3717ae9f92575fd073",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_6.json": {
+    "mtime": 1769165433.5148294,
+    "ast_hash": "fb0d1c91016b92fad357c5050a68247b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_7.json": {
+    "mtime": 1769165433.532474,
+    "ast_hash": "8567e4a0a3918a6ac97f11d8f83e3b7d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_8.json": {
+    "mtime": 1769165433.569854,
+    "ast_hash": "cf962efffbdfddfe6d6b038ce4531520",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_12_9.json": {
+    "mtime": 1769165433.5933917,
+    "ast_hash": "d79011f128447d55cdbf971db18992f4",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_0.json": {
+    "mtime": 1769165433.6880352,
+    "ast_hash": "3b27884009ab2393b292c2cea8d2290d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_1.json": {
+    "mtime": 1769165433.7103863,
+    "ast_hash": "6b99719033ca9f0416b89ce1c7b22a3e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_10.json": {
+    "mtime": 1769165433.9424605,
+    "ast_hash": "03928f0735dcf1a091e34b14966ba312",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_11.json": {
+    "mtime": 1769165433.9614131,
+    "ast_hash": "6a540cd4d1706b809507f87f49e2e5ca",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_12.json": {
+    "mtime": 1769165433.9833422,
+    "ast_hash": "bccdbea777f0ee3d8700d0c7b6e8a45b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_13.json": {
+    "mtime": 1769165434.003991,
+    "ast_hash": "385815b2553608073faa75fd47f73e5a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_2.json": {
+    "mtime": 1769165433.7439098,
+    "ast_hash": "ab6b53226ae14c7d332fa78cbfd6c267",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_3.json": {
+    "mtime": 1769165433.7699902,
+    "ast_hash": "73e10c887268f1b0eee6bfecf2355906",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_4.json": {
+    "mtime": 1769165433.8076437,
+    "ast_hash": "4967dd45e01d387fde9cbaab8a9b36e5",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_5.json": {
+    "mtime": 1769165433.8366227,
+    "ast_hash": "ed627b32373fbff2d58cf5cbde98276d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_6.json": {
+    "mtime": 1769165433.8500469,
+    "ast_hash": "b1c35d2b0ffbf8825c81bcf5710e6c33",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_7.json": {
+    "mtime": 1769165433.8785343,
+    "ast_hash": "70adbd6b56376ea0e17c081ef4fc6e4b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_8.json": {
+    "mtime": 1769165433.8986373,
+    "ast_hash": "e572c10a51228307da88f38520b60d8b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_13_9.json": {
+    "mtime": 1769165433.9238906,
+    "ast_hash": "317cbed503cd9c4f1b1dfb418aa9da3d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_0.json": {
+    "mtime": 1769165434.0268896,
+    "ast_hash": "843dda03d376e4c56df3d0d4b236ceaa",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_1.json": {
+    "mtime": 1769165434.0503502,
+    "ast_hash": "c9ab4b11ebc472348d43dad82b5ef05a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_10.json": {
+    "mtime": 1769165434.2132416,
+    "ast_hash": "1fc449237023d5d3160662afef94bb78",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_11.json": {
+    "mtime": 1769165434.2297688,
+    "ast_hash": "f76196642bcdee3a02fd4e9596358693",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_12.json": {
+    "mtime": 1769165434.251565,
+    "ast_hash": "c9feb2559aaa78de67417d644101539a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_13.json": {
+    "mtime": 1769165434.269007,
+    "ast_hash": "215df20b06e875cd26314db969b10b44",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_14.json": {
+    "mtime": 1769165434.304176,
+    "ast_hash": "7c3207f32b035502e69a20c8195223af",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_2.json": {
+    "mtime": 1769165434.0686293,
+    "ast_hash": "41e494b47ea1a0ece173e3577e96a5c9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_3.json": {
+    "mtime": 1769165434.085644,
+    "ast_hash": "a579e4583c6380e99f463bc4f328d7bb",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_4.json": {
+    "mtime": 1769165434.1026266,
+    "ast_hash": "92805ea8ded4ce36fb3746085c1be993",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_5.json": {
+    "mtime": 1769165434.1174974,
+    "ast_hash": "dbf13e3817bf8d006277d5ef191c6797",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_6.json": {
+    "mtime": 1769165434.1332395,
+    "ast_hash": "1b98b8eeaaddb32e81e37d1f00a61793",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_7.json": {
+    "mtime": 1769165434.1510296,
+    "ast_hash": "333ded7f0f55078c2c4c90f80b99c868",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_8.json": {
+    "mtime": 1769165434.18439,
+    "ast_hash": "7b5e45d3d4c052c0b1cac75624abfaf4",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_14_9.json": {
+    "mtime": 1769165434.2019978,
+    "ast_hash": "968ef9cdc202be405f6cf6ba696e614e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_0.json": {
+    "mtime": 1769165434.3720982,
+    "ast_hash": "36afa2448fb0c9cd6b4eb2b63fba2d9c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_1.json": {
+    "mtime": 1769165434.3929107,
+    "ast_hash": "481d4f28c294182ac28a1f500af22be2",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_10.json": {
+    "mtime": 1769165434.6418514,
+    "ast_hash": "4e8301ab287b7b244040af7423acaa48",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_11.json": {
+    "mtime": 1769165434.6708734,
+    "ast_hash": "6f59307e97d98838feb8869aa515bd9a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_12.json": {
+    "mtime": 1769165434.687094,
+    "ast_hash": "c6e3e27cb296200104eeb9a255636956",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_13.json": {
+    "mtime": 1769165434.7040892,
+    "ast_hash": "f3c113433539f0cbf7635d03df75bbff",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_14.json": {
+    "mtime": 1769165434.742764,
+    "ast_hash": "be9b1e9108a17c712c88212a3c06cae4",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_2.json": {
+    "mtime": 1769165434.4459813,
+    "ast_hash": "001cd12c9d9e88f6039522605cab5ab6",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_3.json": {
+    "mtime": 1769165434.4756427,
+    "ast_hash": "0e47304c0dbe454106fb091bad72eaff",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_4.json": {
+    "mtime": 1769165434.498269,
+    "ast_hash": "de77f6839999e0c644a3fb6d840f92f2",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_5.json": {
+    "mtime": 1769165434.5235515,
+    "ast_hash": "57a7ace16a47bab4e2ad6615927d8e6f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_6.json": {
+    "mtime": 1769165434.5479777,
+    "ast_hash": "d248bf34898a0a4db67669f7ca51264a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_7.json": {
+    "mtime": 1769165434.56949,
+    "ast_hash": "fda522849b9d06ba9ca65caffea3cf5b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_8.json": {
+    "mtime": 1769165434.5815773,
+    "ast_hash": "8cf26a556dc8a34939173cdeac437dd0",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_15_9.json": {
+    "mtime": 1769165434.6180003,
+    "ast_hash": "6c8a74e9722be5d8f09ce3ce85a1b477",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_0.json": {
+    "mtime": 1769165434.7826831,
+    "ast_hash": "2a7fcf7711e65a4a052597034e1e1e51",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_1.json": {
+    "mtime": 1769165434.811048,
+    "ast_hash": "d00d1f9ff2b25afcb9c939de35000b05",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_10.json": {
+    "mtime": 1769165434.9936798,
+    "ast_hash": "d44bdbe0687453c56565a9e9be5e121d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_11.json": {
+    "mtime": 1769165435.0060246,
+    "ast_hash": "334dec1ba11b9063ead43f3b6e5d25d1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_12.json": {
+    "mtime": 1769165435.0272994,
+    "ast_hash": "798aeee07c117cc80ece6c13c046011e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_13.json": {
+    "mtime": 1769165435.0533297,
+    "ast_hash": "c57155721a26cdf8619fca9ded54607d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_14.json": {
+    "mtime": 1769165435.0748675,
+    "ast_hash": "5f03a35d1a1fbc24f56fed56da2e6e9d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_2.json": {
+    "mtime": 1769165434.8270695,
+    "ast_hash": "c7adb053ca5b0db96c97ef062ef464c5",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_3.json": {
+    "mtime": 1769165434.8584566,
+    "ast_hash": "77d1ae0aa5fee84f02c8cd457d65b533",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_4.json": {
+    "mtime": 1769165434.885459,
+    "ast_hash": "d0f2002a09ab769f7411af9fb0e67432",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_5.json": {
+    "mtime": 1769165434.902391,
+    "ast_hash": "fee07b644ac10bef53137958701f8ca8",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_6.json": {
+    "mtime": 1769165434.9153543,
+    "ast_hash": "8f2f006c966288321e721accd6af987c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_7.json": {
+    "mtime": 1769165434.9365273,
+    "ast_hash": "96b848486afc164d2e1f285ccacc61d8",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_8.json": {
+    "mtime": 1769165434.9584198,
+    "ast_hash": "e60c8df0f5d00516ac6f9a83115cbd53",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_16_9.json": {
+    "mtime": 1769165434.9716027,
+    "ast_hash": "63ad7a7f07c9981a6275087f8796ccc3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_0.json": {
+    "mtime": 1769165435.0935745,
+    "ast_hash": "4923376952cfcebb08232e8e967bd5ed",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_1.json": {
+    "mtime": 1769165435.120313,
+    "ast_hash": "50f5aedc6689ea0d8d3cec6d640bea38",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_10.json": {
+    "mtime": 1769165435.3593848,
+    "ast_hash": "29b0b85c7b98cc95eb2ac07dc650d420",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_11.json": {
+    "mtime": 1769165435.3807826,
+    "ast_hash": "dacc0011269081ca8214755622da7887",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_12.json": {
+    "mtime": 1769165435.4005103,
+    "ast_hash": "19dc40c829f4caf08d53ccebb78a73b5",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_13.json": {
+    "mtime": 1769165435.423325,
+    "ast_hash": "d5a00d067606baa2d5826c084dfe829f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_14.json": {
+    "mtime": 1769165435.4539747,
+    "ast_hash": "e562fff179972e49e837e079daac7656",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_2.json": {
+    "mtime": 1769165435.1517727,
+    "ast_hash": "908f145e6806952b73297e09486440fd",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_3.json": {
+    "mtime": 1769165435.171099,
+    "ast_hash": "7617eb7dfca4a2b903d8688dfdc4d033",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_4.json": {
+    "mtime": 1769165435.2003007,
+    "ast_hash": "632abd349b99db62748aa159b295873b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_5.json": {
+    "mtime": 1769165435.2297184,
+    "ast_hash": "b87ed8f3a1b4c9a55b71ac7abca7931d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_6.json": {
+    "mtime": 1769165435.254579,
+    "ast_hash": "418735ab3689b2d30c8a32f5f8d2ac80",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_7.json": {
+    "mtime": 1769165435.2806263,
+    "ast_hash": "9f5bb1c5031e36ce5d497f90924a2795",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_8.json": {
+    "mtime": 1769165435.3146138,
+    "ast_hash": "bb8d2de6e8e44e17a2e8be7e30137819",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_17_9.json": {
+    "mtime": 1769165435.3395772,
+    "ast_hash": "db3eae793fc4d940155f0f4263322d56",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_0.json": {
+    "mtime": 1769165435.4778275,
+    "ast_hash": "d7ff5ebe322a80ede9ac6336a8b75e02",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_1.json": {
+    "mtime": 1769165435.4956872,
+    "ast_hash": "2f0ed20e5f7d1c48228e79108b75f869",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_10.json": {
+    "mtime": 1769165435.681954,
+    "ast_hash": "a586369b591f1c929ee90bb29e2e724d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_11.json": {
+    "mtime": 1769165435.70295,
+    "ast_hash": "a6a0ecd5e4b50634606edbe7e4cd530e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_12.json": {
+    "mtime": 1769165435.7314467,
+    "ast_hash": "c465cff5e43ecb4a171145adb745790c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_13.json": {
+    "mtime": 1769165435.7505126,
+    "ast_hash": "a5f56f50b344b3c2a5317a0241d79241",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_14.json": {
+    "mtime": 1769165435.7697775,
+    "ast_hash": "76921a8d2b358b01914cd1cfa07741d9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_2.json": {
+    "mtime": 1769165435.5189018,
+    "ast_hash": "0b5e6d20699c29516a2d2730004931a3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_3.json": {
+    "mtime": 1769165435.54625,
+    "ast_hash": "da092fa565e3bdb97b60f20cc5f5773e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_4.json": {
+    "mtime": 1769165435.5674314,
+    "ast_hash": "1191216e679016fc8300ad6f78ed570b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_5.json": {
+    "mtime": 1769165435.5808406,
+    "ast_hash": "f855b49a0028d29fbc2416fd57053438",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_6.json": {
+    "mtime": 1769165435.6010094,
+    "ast_hash": "ea7017bf3a09daf71ad46e380a129c15",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_7.json": {
+    "mtime": 1769165435.6216822,
+    "ast_hash": "6541b4db5af156d1c003251726a40924",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_8.json": {
+    "mtime": 1769165435.6512218,
+    "ast_hash": "b7312d04914e83a10c2be0be92988523",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_18_9.json": {
+    "mtime": 1769165435.6716425,
+    "ast_hash": "7c28fd7d81fd44b7161755249be6e342",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_0.json": {
+    "mtime": 1769165435.8202379,
+    "ast_hash": "3e954ca933ef2e82d189ae2c2a1630c5",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_1.json": {
+    "mtime": 1769165435.8483324,
+    "ast_hash": "e1156e0b65de478c1217a91ffc9e7d4f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_10.json": {
+    "mtime": 1769165436.2281716,
+    "ast_hash": "9529a0e7fe86d11aed89653a0a3e91fe",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_11.json": {
+    "mtime": 1769165436.2781446,
+    "ast_hash": "e2b1418e9487bd312a647582402f3d70",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_12.json": {
+    "mtime": 1769165436.3468227,
+    "ast_hash": "b85f4d129f86cf3c032e0a3f4c8ab240",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_13.json": {
+    "mtime": 1769165436.535752,
+    "ast_hash": "a2f9367043a261a8b4524032347f74d7",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_14.json": {
+    "mtime": 1769165437.0159535,
+    "ast_hash": "988aa9f59a943be37f45eddf9f5dc1de",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_2.json": {
+    "mtime": 1769165435.8845975,
+    "ast_hash": "f8ace3446cd21994b05db9a9decf9406",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_3.json": {
+    "mtime": 1769165435.9106472,
+    "ast_hash": "453693d64200194fc7059b8fca9781d5",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_4.json": {
+    "mtime": 1769165435.9402864,
+    "ast_hash": "ad90ccf9cee50c41b3fd310970159542",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_5.json": {
+    "mtime": 1769165435.9701674,
+    "ast_hash": "b1cf3139eff745faf6dae7442e3a0315",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_6.json": {
+    "mtime": 1769165436.0136003,
+    "ast_hash": "d2c16a4655fbc162dc96178cde924587",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_7.json": {
+    "mtime": 1769165436.0542414,
+    "ast_hash": "4be69a90577cc0125713af3b2d19b1a7",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_8.json": {
+    "mtime": 1769165436.1417565,
+    "ast_hash": "ed1dba722c8b4ab7c511678ee521988e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_19_9.json": {
+    "mtime": 1769165436.179564,
+    "ast_hash": "388e51d54e614319b0ee00bb2bd963d4",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_0.json": {
+    "mtime": 1769165428.7747653,
+    "ast_hash": "1472acc5447f3312a6ccb9bed6f15a8a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_1.json": {
+    "mtime": 1769165428.7916799,
+    "ast_hash": "916d366456e3366765131f0edf75641c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_10.json": {
+    "mtime": 1769165428.9657393,
+    "ast_hash": "f846eeeffa7f8d22cc19ec2d8b2027b2",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_11.json": {
+    "mtime": 1769165428.9937532,
+    "ast_hash": "3b39fbe61c88e51f7cf4332ea270b799",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_12.json": {
+    "mtime": 1769165429.0265498,
+    "ast_hash": "d86b2dcdf643919825bd85d6bf1564fc",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_13.json": {
+    "mtime": 1769165429.055494,
+    "ast_hash": "9a3b1cbd9f6b86f9e4ad713a800d9f19",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_14.json": {
+    "mtime": 1769165429.07032,
+    "ast_hash": "63f256b69081d369b1f2429407ad31e2",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_2.json": {
+    "mtime": 1769165428.82182,
+    "ast_hash": "f72c2b6b07c3d903692d9b62b4bbc118",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_3.json": {
+    "mtime": 1769165428.8409824,
+    "ast_hash": "900f7756cbb48817ce88586782ce0b8f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_4.json": {
+    "mtime": 1769165428.8596895,
+    "ast_hash": "b46dbb6a8d3eb331a7090d66e0b88f50",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_5.json": {
+    "mtime": 1769165428.8739042,
+    "ast_hash": "d51be38cb1494ac30d00b157a7ac62f1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_6.json": {
+    "mtime": 1769165428.9020452,
+    "ast_hash": "521825e5bdb9f972446f75aad2c02909",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_7.json": {
+    "mtime": 1769165428.916573,
+    "ast_hash": "890a33d8c74ec3de184783638f4de982",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_8.json": {
+    "mtime": 1769165428.9380486,
+    "ast_hash": "89fa3336577282576f524bd850260aa9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_1_9.json": {
+    "mtime": 1769165428.954476,
+    "ast_hash": "40ce99731d21c0ac14607a3ea4ae2c25",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_20_0.json": {
+    "mtime": 1769165440.1413825,
+    "ast_hash": "b0c80e4fef065d5314a4f5322dffc32d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_20_1.json": {
+    "mtime": 1769165441.2298605,
+    "ast_hash": "b8d5662ffa69fe944e043b9e668c3aad",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_20_2.json": {
+    "mtime": 1769165443.0404038,
+    "ast_hash": "87ca06a9cb214836ef81658177b16eaf",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_20_3.json": {
+    "mtime": 1769165445.4236846,
+    "ast_hash": "d574d09d125a1669436c8167f5242770",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_0.json": {
+    "mtime": 1769165429.0830748,
+    "ast_hash": "6db15e96904e8f751556945914b77fd9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_1.json": {
+    "mtime": 1769165429.1030338,
+    "ast_hash": "4738894bb1769ba2d8080652134c275b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_10.json": {
+    "mtime": 1769165429.2963414,
+    "ast_hash": "a6dedf4e37edbc72f3a3e8934a4746fe",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_11.json": {
+    "mtime": 1769165429.316454,
+    "ast_hash": "8905f8302a5963741a769216fedcec45",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_12.json": {
+    "mtime": 1769165429.3313098,
+    "ast_hash": "d70a169a822e2ca5e423cb238aaf548e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_13.json": {
+    "mtime": 1769165429.3433266,
+    "ast_hash": "eb70fd90d80c54b0789bd763f22fcb8d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_14.json": {
+    "mtime": 1769165429.3624024,
+    "ast_hash": "6daa0a6001d75194965d39944f1285ca",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_2.json": {
+    "mtime": 1769165429.119993,
+    "ast_hash": "871929fd793a075abc51fd238da5073f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_3.json": {
+    "mtime": 1769165429.1347582,
+    "ast_hash": "e56d9610db28e6b8f04df4c3fb2af58a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_4.json": {
+    "mtime": 1769165429.1574593,
+    "ast_hash": "daacb92a6c6a4a444679a8e5c83bad1a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_5.json": {
+    "mtime": 1769165429.1709077,
+    "ast_hash": "e0a8f7545add0bd5db0863a375e89f5a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_6.json": {
+    "mtime": 1769165429.1906025,
+    "ast_hash": "0a56c46f1e16ce142540386aa4653e04",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_7.json": {
+    "mtime": 1769165429.220478,
+    "ast_hash": "6a0757dc2def87d00badfeeebc1b0e4b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_8.json": {
+    "mtime": 1769165429.246043,
+    "ast_hash": "a65f3dc442f57cde14ee8b0b0593dfda",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_2_9.json": {
+    "mtime": 1769165429.2751472,
+    "ast_hash": "f6380fc7e6a7f58b28e40f250081f0c2",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_0.json": {
+    "mtime": 1769165429.379415,
+    "ast_hash": "63ad7a7f07c9981a6275087f8796ccc3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_1.json": {
+    "mtime": 1769165429.406455,
+    "ast_hash": "d44bdbe0687453c56565a9e9be5e121d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_10.json": {
+    "mtime": 1769165429.6131415,
+    "ast_hash": "632abd349b99db62748aa159b295873b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_11.json": {
+    "mtime": 1769165429.6408415,
+    "ast_hash": "b87ed8f3a1b4c9a55b71ac7abca7931d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_12.json": {
+    "mtime": 1769165429.6670368,
+    "ast_hash": "418735ab3689b2d30c8a32f5f8d2ac80",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_13.json": {
+    "mtime": 1769165429.6911328,
+    "ast_hash": "9f5bb1c5031e36ce5d497f90924a2795",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_14.json": {
+    "mtime": 1769165429.7234116,
+    "ast_hash": "bb8d2de6e8e44e17a2e8be7e30137819",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_2.json": {
+    "mtime": 1769165429.4202693,
+    "ast_hash": "334dec1ba11b9063ead43f3b6e5d25d1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_3.json": {
+    "mtime": 1769165429.443541,
+    "ast_hash": "798aeee07c117cc80ece6c13c046011e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_4.json": {
+    "mtime": 1769165429.46913,
+    "ast_hash": "c57155721a26cdf8619fca9ded54607d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_5.json": {
+    "mtime": 1769165429.4906,
+    "ast_hash": "5f03a35d1a1fbc24f56fed56da2e6e9d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_6.json": {
+    "mtime": 1769165429.507614,
+    "ast_hash": "4923376952cfcebb08232e8e967bd5ed",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_7.json": {
+    "mtime": 1769165429.5351036,
+    "ast_hash": "50f5aedc6689ea0d8d3cec6d640bea38",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_8.json": {
+    "mtime": 1769165429.5640776,
+    "ast_hash": "908f145e6806952b73297e09486440fd",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_3_9.json": {
+    "mtime": 1769165429.5835235,
+    "ast_hash": "7617eb7dfca4a2b903d8688dfdc4d033",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_0.json": {
+    "mtime": 1769165429.7478082,
+    "ast_hash": "db3eae793fc4d940155f0f4263322d56",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_1.json": {
+    "mtime": 1769165429.7676096,
+    "ast_hash": "f5ee0b752fb479bb106f3e4a7caf9e70",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_10.json": {
+    "mtime": 1769165429.986785,
+    "ast_hash": "104935716cd14e9253063e82631b3413",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_11.json": {
+    "mtime": 1769165430.0051558,
+    "ast_hash": "fb15f0cd633c8447afabc2c7cce05a01",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_12.json": {
+    "mtime": 1769165430.0319622,
+    "ast_hash": "b20dfe3813ce0ce6f218ce5271a8ded4",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_13.json": {
+    "mtime": 1769165430.0478168,
+    "ast_hash": "9d768720e022f48a4c9c46b5685a5fa9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_2.json": {
+    "mtime": 1769165429.7917078,
+    "ast_hash": "dacc0011269081ca8214755622da7887",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_3.json": {
+    "mtime": 1769165429.8175113,
+    "ast_hash": "d9f1b00a154a681a38732ba9cb272d23",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_4.json": {
+    "mtime": 1769165429.8413014,
+    "ast_hash": "d5a00d067606baa2d5826c084dfe829f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_5.json": {
+    "mtime": 1769165429.8744955,
+    "ast_hash": "e562fff179972e49e837e079daac7656",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_6.json": {
+    "mtime": 1769165429.9065564,
+    "ast_hash": "c7b7f52a6c05d0614b1e0e124af7fb2f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_7.json": {
+    "mtime": 1769165429.9257574,
+    "ast_hash": "48e33c024d0c5371a680f1ddd63636f0",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_8.json": {
+    "mtime": 1769165429.948402,
+    "ast_hash": "43db5aced25991b054c7a78ac28b08c2",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_4_9.json": {
+    "mtime": 1769165429.964026,
+    "ast_hash": "1859269f731b862e3a96eb6762dffce1",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_0.json": {
+    "mtime": 1769165430.0760105,
+    "ast_hash": "9e8ae0c47f14745d2e96be00add6d3ab",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_1.json": {
+    "mtime": 1769165430.1014576,
+    "ast_hash": "1ddb77d7a032f7b83f6de2350994beec",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_10.json": {
+    "mtime": 1769165430.2794273,
+    "ast_hash": "1191216e679016fc8300ad6f78ed570b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_11.json": {
+    "mtime": 1769165430.2940173,
+    "ast_hash": "f855b49a0028d29fbc2416fd57053438",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_12.json": {
+    "mtime": 1769165430.3175447,
+    "ast_hash": "23c86f7cbfddbab2c302c0711b298562",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_13.json": {
+    "mtime": 1769165430.338899,
+    "ast_hash": "6541b4db5af156d1c003251726a40924",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_14.json": {
+    "mtime": 1769165430.3671675,
+    "ast_hash": "b7312d04914e83a10c2be0be92988523",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_2.json": {
+    "mtime": 1769165430.1249607,
+    "ast_hash": "f3078f941026ba13bffab82d5df1a5f5",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_3.json": {
+    "mtime": 1769165430.1391082,
+    "ast_hash": "08cda112ae55ff7d0dae9e0a23a4aef3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_4.json": {
+    "mtime": 1769165430.1504772,
+    "ast_hash": "8a93c2aa7d92b8745bc7353299370de0",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_5.json": {
+    "mtime": 1769165430.1682591,
+    "ast_hash": "a0b6ef2a37d21879e1492354423b8430",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_6.json": {
+    "mtime": 1769165430.1900244,
+    "ast_hash": "d7ff5ebe322a80ede9ac6336a8b75e02",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_7.json": {
+    "mtime": 1769165430.208728,
+    "ast_hash": "2f0ed20e5f7d1c48228e79108b75f869",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_8.json": {
+    "mtime": 1769165430.2319963,
+    "ast_hash": "0b5e6d20699c29516a2d2730004931a3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_5_9.json": {
+    "mtime": 1769165430.259725,
+    "ast_hash": "da092fa565e3bdb97b60f20cc5f5773e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_0.json": {
+    "mtime": 1769165430.388977,
+    "ast_hash": "7c28fd7d81fd44b7161755249be6e342",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_1.json": {
+    "mtime": 1769165430.3998213,
+    "ast_hash": "a586369b591f1c929ee90bb29e2e724d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_10.json": {
+    "mtime": 1769165430.6296842,
+    "ast_hash": "479d548f25d5120e2b1527e57fb0f8d6",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_11.json": {
+    "mtime": 1769165430.6615813,
+    "ast_hash": "43880e9f1afa28dddb53cc3a0d6a8d4c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_12.json": {
+    "mtime": 1769165430.7210054,
+    "ast_hash": "b91280e2562cdfe8c5ebb055c4c75616",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_13.json": {
+    "mtime": 1769165430.7627494,
+    "ast_hash": "c73b16d522d14fb813d919d0b8b2f658",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_14.json": {
+    "mtime": 1769165430.8133004,
+    "ast_hash": "069975cb6ea5cbed07ec63f30b12e078",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_2.json": {
+    "mtime": 1769165430.4192185,
+    "ast_hash": "a6a0ecd5e4b50634606edbe7e4cd530e",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_3.json": {
+    "mtime": 1769165430.4485824,
+    "ast_hash": "c465cff5e43ecb4a171145adb745790c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_4.json": {
+    "mtime": 1769165430.468344,
+    "ast_hash": "a5f56f50b344b3c2a5317a0241d79241",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_5.json": {
+    "mtime": 1769165430.4880962,
+    "ast_hash": "76921a8d2b358b01914cd1cfa07741d9",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_6.json": {
+    "mtime": 1769165430.5189419,
+    "ast_hash": "788cf39d466d03e1ce25bcf070a61730",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_7.json": {
+    "mtime": 1769165430.55308,
+    "ast_hash": "b3ca9d5cb0526e5740512c52f3dc7c63",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_8.json": {
+    "mtime": 1769165430.5765023,
+    "ast_hash": "a1121573637c15220759daa4c0223c79",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_6_9.json": {
+    "mtime": 1769165430.6027246,
+    "ast_hash": "277c1c92341016e10aa0f3bce32e836c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_0.json": {
+    "mtime": 1769165430.8325574,
+    "ast_hash": "0a521aefe871b34b182a9d15e936d821",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_1.json": {
+    "mtime": 1769165430.8632398,
+    "ast_hash": "8c55912e7b227100d0d21f0e9892faad",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_10.json": {
+    "mtime": 1769165431.3815584,
+    "ast_hash": "25b5d947c964d0eda5d756d7a8669bdf",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_11.json": {
+    "mtime": 1769165431.4630744,
+    "ast_hash": "371df53ce71766b7ee284e4a858902eb",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_12.json": {
+    "mtime": 1769165431.4977665,
+    "ast_hash": "6462da8ee335e1963758e02e85291c83",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_13.json": {
+    "mtime": 1769165431.5298514,
+    "ast_hash": "a36748cca81152bfedf6ccc1d8b8e2e0",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_14.json": {
+    "mtime": 1769165431.5531194,
+    "ast_hash": "aa25ff6a30ab7c2fb66ee88671a5cd4f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_2.json": {
+    "mtime": 1769165430.9186912,
+    "ast_hash": "f3ba52199cf64b47e5cca73599ba6d42",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_3.json": {
+    "mtime": 1769165430.9621856,
+    "ast_hash": "4286dce8ab619eaaa4ff172fe758f8b0",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_4.json": {
+    "mtime": 1769165431.0390038,
+    "ast_hash": "77d86591eb4f3f952d55cfa79c29855f",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_5.json": {
+    "mtime": 1769165431.112505,
+    "ast_hash": "169d5ad8979434cd531d12792b40ad64",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_6.json": {
+    "mtime": 1769165431.162024,
+    "ast_hash": "57c002114e1e5e89f9dc68ceeede9acf",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_7.json": {
+    "mtime": 1769165431.2212243,
+    "ast_hash": "63ba908569c0bdd9baf2460a13f1dea7",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_8.json": {
+    "mtime": 1769165431.2762473,
+    "ast_hash": "fecadeff93ce259e37f83773f593fc78",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_7_9.json": {
+    "mtime": 1769165431.326036,
+    "ast_hash": "d41b0c78386d7920a54ad4eb64d2b5d3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_0.json": {
+    "mtime": 1769165431.5729496,
+    "ast_hash": "ce068b9950eae7cf91562cf29c5e7ac0",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_1.json": {
+    "mtime": 1769165431.5902555,
+    "ast_hash": "36b25b523475bd24ba8f251651d8e4ba",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_10.json": {
+    "mtime": 1769165431.822578,
+    "ast_hash": "1a3ad5b2630d6046e8eac5c59f6d605d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_11.json": {
+    "mtime": 1769165431.8347163,
+    "ast_hash": "993a84159eebb39a923a3bcc3b99301a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_12.json": {
+    "mtime": 1769165431.8686507,
+    "ast_hash": "a6030bb8aed2d8aed0a3108419e5b2db",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_13.json": {
+    "mtime": 1769165431.8998945,
+    "ast_hash": "21c1b99cc6e5483e59f92ac98623d439",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_14.json": {
+    "mtime": 1769165431.9304078,
+    "ast_hash": "7c9e49d38c2a4d7d49d81e6539fa6dbb",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_2.json": {
+    "mtime": 1769165431.615147,
+    "ast_hash": "6a92fc4d22da8cedb73be057a00b3783",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_3.json": {
+    "mtime": 1769165431.6407602,
+    "ast_hash": "216a18346c0bcc2f28b232f061d2807a",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_4.json": {
+    "mtime": 1769165431.6696541,
+    "ast_hash": "dd36d96c7c515345004dd8c660ff5b2b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_5.json": {
+    "mtime": 1769165431.68422,
+    "ast_hash": "7659b14ead40d8b21b6b978135034fcf",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_6.json": {
+    "mtime": 1769165431.695969,
+    "ast_hash": "de2b172206f49cfcb88b376430e2aead",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_7.json": {
+    "mtime": 1769165431.7181833,
+    "ast_hash": "504b1d93f0675108f75aa1620a1d2c21",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_8.json": {
+    "mtime": 1769165431.7572086,
+    "ast_hash": "334ed71d75affa95801324830747ae9b",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_8_9.json": {
+    "mtime": 1769165431.8018131,
+    "ast_hash": "3eec9932b47cf66d9d6a26814a750948",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_0.json": {
+    "mtime": 1769165431.9526253,
+    "ast_hash": "733741b29dc1e3f63f60912d8b887726",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_1.json": {
+    "mtime": 1769165431.9780958,
+    "ast_hash": "7c785deeabd82004691e60b4fefa3523",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_10.json": {
+    "mtime": 1769165432.169855,
+    "ast_hash": "ee137cf2aeb1192457913d1b767a5104",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_11.json": {
+    "mtime": 1769165432.1968732,
+    "ast_hash": "df85afd387a760420ceb99a491649545",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_12.json": {
+    "mtime": 1769165432.2148154,
+    "ast_hash": "cbb612d713c555e0431ecb1a1095d0ec",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_13.json": {
+    "mtime": 1769165432.2437892,
+    "ast_hash": "937972a2d50f182941f8077cba3c8a6d",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_14.json": {
+    "mtime": 1769165432.2817075,
+    "ast_hash": "433d1392bb3b32eb73ff379865ca49ec",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_2.json": {
+    "mtime": 1769165431.9930449,
+    "ast_hash": "d2e9fb3752b77a2a0a1c8326e6895165",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_3.json": {
+    "mtime": 1769165432.0130434,
+    "ast_hash": "d1041bc7db5369db1eab5429191a10c3",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_4.json": {
+    "mtime": 1769165432.0340552,
+    "ast_hash": "3f7b2377db3bb6ffe6eb308f2baafa71",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_5.json": {
+    "mtime": 1769165432.0631607,
+    "ast_hash": "000e9c0fdeebd0ed739c0eb603df7016",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_6.json": {
+    "mtime": 1769165432.085182,
+    "ast_hash": "a86d28ea2afc9c2a80f3e6dd94a98c32",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_7.json": {
+    "mtime": 1769165432.1032007,
+    "ast_hash": "216db5cc40421f6fcccadb7929321749",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_8.json": {
+    "mtime": 1769165432.1209528,
+    "ast_hash": "8d6ceb22e640016e80a8dca0ecdea03c",
+    "semantic_hash": ""
+  },
+  "data/src/assets/exercises/strangeness/part1/event_9_9.json": {
+    "mtime": 1769165432.1499884,
+    "ast_hash": "c86d9812671b494de1825164af2e3109",
+    "semantic_hash": ""
+  },
+  "data/strangeness/part1/convert_events.C": {
+    "mtime": 1769109260.3047526,
+    "ast_hash": "cc0280e5e39049c6f19ba9b89d78634f",
+    "semantic_hash": ""
+  },
+  "data/strangeness/part2/convert.py": {
+    "mtime": 1769109260.3288739,
+    "ast_hash": "779cf9330259a8782c572ede10ffb603",
+    "semantic_hash": ""
+  },
+  "data/strangeness/part2/generate_hints.C": {
+    "mtime": 1769109260.3289905,
+    "ast_hash": "529f35e8b508e74472cafc5e744b4682",
+    "semantic_hash": ""
+  },
+  "e2e/common-setup.ts": {
+    "mtime": 1769109260.3457444,
+    "ast_hash": "7dfc6d1278196bb4588a2895a08d6998",
+    "semantic_hash": ""
+  },
+  "e2e/main.e2e.ts": {
+    "mtime": 1769109260.3458576,
+    "ast_hash": "1ade46f117851560e81e2a10a4db01af",
+    "semantic_hash": ""
+  },
+  "e2e/tsconfig.e2e.json": {
+    "mtime": 1769109260.3459904,
+    "ast_hash": "c13a5a56a2603a00f0ba2d479cc4cc11",
+    "semantic_hash": ""
+  },
+  "electron-builder.json": {
+    "mtime": 1769109260.3461044,
+    "ast_hash": "4bb44b46a683c0517e6fc2884d8cb4ce",
+    "semantic_hash": ""
+  },
+  "make-prod.mjs": {
+    "mtime": 1769109260.3463416,
+    "ast_hash": "9ee3df99cb6e483f323e85a70f28a0ec",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1778414098.171902,
+    "ast_hash": "a898a7bb9631a93e3ce8aa9c9a10ebfd",
+    "semantic_hash": ""
+  },
+  "src/app/about/about-routing.module.ts": {
+    "mtime": 1769109260.3498845,
+    "ast_hash": "ac9f57c8bbdf7b10b686c11a350e8ef8",
+    "semantic_hash": ""
+  },
+  "src/app/about/about.component.spec.ts": {
+    "mtime": 1769109260.350718,
+    "ast_hash": "b399e6901d27dbc9aba5c4b8b5d05911",
+    "semantic_hash": ""
+  },
+  "src/app/about/about.component.ts": {
+    "mtime": 1769109260.3508434,
+    "ast_hash": "c73dbd15940b71032e91db8194ae853b",
+    "semantic_hash": ""
+  },
+  "src/app/about/about.module.ts": {
+    "mtime": 1769109260.3509486,
+    "ast_hash": "20e6703f7842bfb14d490503dd4c7a49",
+    "semantic_hash": ""
+  },
+  "src/app/app-routing.module.ts": {
+    "mtime": 1769109260.3510447,
+    "ast_hash": "d6250f292ec321b039318f2b0f6aa7d7",
+    "semantic_hash": ""
+  },
+  "src/app/app.component.spec.ts": {
+    "mtime": 1778436473.1065302,
+    "ast_hash": "2f40194fce537a4fbc19ec7e75727f02",
+    "semantic_hash": ""
+  },
+  "src/app/app.component.ts": {
+    "mtime": 1778436472.7837393,
+    "ast_hash": "2d400fa8e5759ef35457764a753e5927",
+    "semantic_hash": ""
+  },
+  "src/app/app.module.ts": {
+    "mtime": 1778436472.0874627,
+    "ast_hash": "79c4dec69cebe987f342ee694f037f70",
+    "semantic_hash": ""
+  },
+  "src/app/auth-dialog/auth-dialog.component.spec.ts": {
+    "mtime": 1769109260.35205,
+    "ast_hash": "755e7d9d975c3d8766c1b7b269867c1b",
+    "semantic_hash": ""
+  },
+  "src/app/auth-dialog/auth-dialog.component.ts": {
+    "mtime": 1769109260.3521938,
+    "ast_hash": "0b780981daacaa07c48e376670dee92a",
+    "semantic_hash": ""
+  },
+  "src/app/core/core.module.ts": {
+    "mtime": 1769109260.3539307,
+    "ast_hash": "97e5108247d56f3297d9e2c7068c8371",
+    "semantic_hash": ""
+  },
+  "src/app/core/services/electron/electron.service.spec.ts": {
+    "mtime": 1769109260.3541985,
+    "ast_hash": "2e288f98cc0c2ed885a9aff018eddb50",
+    "semantic_hash": ""
+  },
+  "src/app/core/services/electron/electron.service.ts": {
+    "mtime": 1769164167.264794,
+    "ast_hash": "b99ba54671e31cfdc2ed48ffcb32f4f4",
+    "semantic_hash": ""
+  },
+  "src/app/core/services/index.ts": {
+    "mtime": 1769109260.3544276,
+    "ast_hash": "72042cfdf5979bd3a3c1ae0868d10d26",
+    "semantic_hash": ""
+  },
+  "src/app/home/home-routing.module.ts": {
+    "mtime": 1769109260.3545966,
+    "ast_hash": "190ff8593f01e23d3a250dd9388372bb",
+    "semantic_hash": ""
+  },
+  "src/app/home/home.component.spec.ts": {
+    "mtime": 1769109260.3549504,
+    "ast_hash": "e4251553030db6d2b3b3eb4ed44ff469",
+    "semantic_hash": ""
+  },
+  "src/app/home/home.component.ts": {
+    "mtime": 1769109260.3550644,
+    "ast_hash": "52acb99520fc589b91d1e0c2bf293e6d",
+    "semantic_hash": ""
+  },
+  "src/app/home/home.module.ts": {
+    "mtime": 1769109260.355183,
+    "ast_hash": "b90a9aaa8908a06c582cb520dadc26dc",
+    "semantic_hash": ""
+  },
+  "src/app/instructions-dialog/instructions-dialog.component.spec.ts": {
+    "mtime": 1769109260.3556077,
+    "ast_hash": "3e7ac7abaabf1a15f5d7d4d8b1839a79",
+    "semantic_hash": ""
+  },
+  "src/app/instructions-dialog/instructions-dialog.component.ts": {
+    "mtime": 1769109260.3557332,
+    "ast_hash": "715194f61d3bafc3316ea4444e579af2",
+    "semantic_hash": ""
+  },
+  "src/app/nav/nav.component.spec.ts": {
+    "mtime": 1769109260.3561704,
+    "ast_hash": "beaaae26fe28388467a71984ad654746",
+    "semantic_hash": ""
+  },
+  "src/app/nav/nav.component.ts": {
+    "mtime": 1769109260.3564172,
+    "ast_hash": "7d572bc13300f4f15dfaa91553919381",
+    "semantic_hash": ""
+  },
+  "src/app/nav/nav.module.ts": {
+    "mtime": 1769109260.3565385,
+    "ast_hash": "95b892449ff4d02462203392036ba493",
+    "semantic_hash": ""
+  },
+  "src/app/select-dataset-dialog/select-dataset-dialog.component.spec.ts": {
+    "mtime": 1769109260.3569422,
+    "ast_hash": "8502d685cdc7d4e74b03e40c89efa677",
+    "semantic_hash": ""
+  },
+  "src/app/select-dataset-dialog/select-dataset-dialog.component.ts": {
+    "mtime": 1769109260.3570592,
+    "ast_hash": "05f2a2f493a261c505220cfa2446f420",
+    "semantic_hash": ""
+  },
+  "src/app/services/strangeness-data.service.spec.ts": {
+    "mtime": 1769109260.3572733,
+    "ast_hash": "36c5d780207dcbd9d37e99ae724fe6ef",
+    "semantic_hash": ""
+  },
+  "src/app/services/strangeness-data.service.ts": {
+    "mtime": 1769109260.3574812,
+    "ast_hash": "e45af61f9c4992223e26e2b64174d7e7",
+    "semantic_hash": ""
+  },
+  "src/app/shared/angular.module.ts": {
+    "mtime": 1783490783.118246,
+    "ast_hash": "c46747266041d227fe44374b19a524d3",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/cern-toolbar/cern-toolbar.component.spec.ts": {
+    "mtime": 1779021721.7426157,
+    "ast_hash": "4cd09aca1da7236838746720bfc526e2",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/cern-toolbar/cern-toolbar.component.ts": {
+    "mtime": 1769109260.3582737,
+    "ast_hash": "63c117489454885aaf1f6ba20df633d0",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/event-display/event-display.component.spec.ts": {
+    "mtime": 1769109260.358913,
+    "ast_hash": "1eb2348e9ce84ef335a052a64f27a079",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/event-display/event-display.component.ts": {
+    "mtime": 1783613675.148771,
+    "ast_hash": "3c8c84d39c917d87f4d2ccecc0957816",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/fit-histogram/fit-histogram.component.spec.ts": {
+    "mtime": 1769109260.3595874,
+    "ast_hash": "d7aa688460f75c93572dd53ee257caec",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/fit-histogram/fit-histogram.component.ts": {
+    "mtime": 1769164294.9685948,
+    "ast_hash": "4901d67dd455c2d1f33827e638926155",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/histogram/histogram.component.spec.ts": {
+    "mtime": 1769109260.360218,
+    "ast_hash": "1f773343e86c62cc98b25c81b8370576",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/histogram/histogram.component.ts": {
+    "mtime": 1783610624.410248,
+    "ast_hash": "9245f623d3494416667036a11a2e2fcb",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/index.ts": {
+    "mtime": 1769109260.3605802,
+    "ast_hash": "8ed14b1a7ce8ec9a3716f04552a356f0",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/page-not-found/page-not-found.component.spec.ts": {
+    "mtime": 1769109260.3609762,
+    "ast_hash": "eae979fcdc95982c26651f9f7642c42f",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/page-not-found/page-not-found.component.ts": {
+    "mtime": 1769109260.3610864,
+    "ast_hash": "3e1781f23bab458da9a0ffb0cf59abd8",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/spinner-container/spinner-container.component.spec.ts": {
+    "mtime": 1769109260.361515,
+    "ast_hash": "dfdaa5b5c2734192201eafa9c69f5724",
+    "semantic_hash": ""
+  },
+  "src/app/shared/components/spinner-container/spinner-container.component.ts": {
+    "mtime": 1769109260.3616385,
+    "ast_hash": "e03edc50db26da6bbc01e20f65b942a9",
+    "semantic_hash": ""
+  },
+  "src/app/shared/directives/index.ts": {
+    "mtime": 1769109260.3618207,
+    "ast_hash": "1f207aff2f646413d4de05b3218a2744",
+    "semantic_hash": ""
+  },
+  "src/app/shared/directives/webview/webview.directive.spec.ts": {
+    "mtime": 1769109260.3619874,
+    "ast_hash": "9ee595d624e742efb18adf0e3da2c954",
+    "semantic_hash": ""
+  },
+  "src/app/shared/directives/webview/webview.directive.ts": {
+    "mtime": 1769109260.3620994,
+    "ast_hash": "d6d0ead0b590aff19672a142318e2d4b",
+    "semantic_hash": ""
+  },
+  "src/app/shared/globals/colors/colors.ts": {
+    "mtime": 1783613489.9708292,
+    "ast_hash": "588188067ebc5c11aadd482765f26391",
+    "semantic_hash": ""
+  },
+  "src/app/shared/globals/index.ts": {
+    "mtime": 1769109260.3624887,
+    "ast_hash": "8e5ee0727db866a20a2e269f2dcfd5f9",
+    "semantic_hash": ""
+  },
+  "src/app/shared/interfaces/index.ts": {
+    "mtime": 1769109260.362653,
+    "ast_hash": "8a7212614229c78e4ca909b1fc75ac4f",
+    "semantic_hash": ""
+  },
+  "src/app/shared/interfaces/instructions/instructions.ts": {
+    "mtime": 1769109260.362829,
+    "ast_hash": "3957e66558eafc67b5ea0334490435b4",
+    "semantic_hash": ""
+  },
+  "src/app/shared/models/event/event.ts": {
+    "mtime": 1769109260.3630958,
+    "ast_hash": "dc43f31969ef53c116e01796bcc4732a",
+    "semantic_hash": ""
+  },
+  "src/app/shared/models/index.ts": {
+    "mtime": 1769109260.363212,
+    "ast_hash": "82568a6d2c514858c6ac5df5695b3494",
+    "semantic_hash": ""
+  },
+  "src/app/shared/models/lsa/lsa.ts": {
+    "mtime": 1769109260.3633862,
+    "ast_hash": "5aa33832e409484a7b4e42e7da350899",
+    "semantic_hash": ""
+  },
+  "src/app/shared/services/api.service.spec.ts": {
+    "mtime": 1769109260.3635764,
+    "ast_hash": "1cc597c5ac95f44560345576318b5eae",
+    "semantic_hash": ""
+  },
+  "src/app/shared/services/api.service.ts": {
+    "mtime": 1771939067.0405087,
+    "ast_hash": "107b95cfa8d8df6c2b8befbc9914233d",
+    "semantic_hash": ""
+  },
+  "src/app/shared/services/fit.service.spec.data.ts": {
+    "mtime": 1769109260.3648257,
+    "ast_hash": "b422c39fda2a15621f6eaba863333970",
+    "semantic_hash": ""
+  },
+  "src/app/shared/services/fit.service.spec.ts": {
+    "mtime": 1769109260.3649564,
+    "ast_hash": "7f11b4ed739b710496721975dd4a4510",
+    "semantic_hash": ""
+  },
+  "src/app/shared/services/fit.service.ts": {
+    "mtime": 1769109260.3652031,
+    "ast_hash": "a7926a29662cbcf1d5401e619baaed6f",
+    "semantic_hash": ""
+  },
+  "src/app/shared/services/mock-api.service.ts": {
+    "mtime": 1774906923.8440404,
+    "ast_hash": "95ef439e098195fc8f6760d1f0673e2a",
+    "semantic_hash": ""
+  },
+  "src/app/shared/shared.module.ts": {
+    "mtime": 1769109260.3653107,
+    "ast_hash": "f65ee47e7e6357e66b589f42f868d922",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/fit-selector/fit-selector.component.spec.ts": {
+    "mtime": 1769109260.3658686,
+    "ast_hash": "9be04fe0129fe26582f8f1369c44ab9f",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/fit-selector/fit-selector.component.ts": {
+    "mtime": 1769109260.3659704,
+    "ast_hash": "0738b4def2a8bc5a13289432cd044356",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/histogram-display/histogram-display.component.spec.ts": {
+    "mtime": 1769109260.3663564,
+    "ast_hash": "e53de4565b3ecc347d003a2720a52b44",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/histogram-display/histogram-display.component.ts": {
+    "mtime": 1769109260.3664613,
+    "ast_hash": "ca9ee0de6d659589deef957fa1c3fc02",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/histogram-selector/histogram-selector.component.spec.ts": {
+    "mtime": 1769109260.3668282,
+    "ast_hash": "465802a5358d57b6f6f4be40cd9fff5e",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/histogram-selector/histogram-selector.component.ts": {
+    "mtime": 1769109260.3669267,
+    "ast_hash": "caf1d8f520afcd538d2c1e5dbd028f71",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/instructions/instructions.component.spec.ts": {
+    "mtime": 1769109260.3672812,
+    "ast_hash": "0d6689472dddf11b35ff18905a1a5f2e",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/instructions/instructions.component.ts": {
+    "mtime": 1769109260.3673782,
+    "ast_hash": "de6983ed49a850b5e3a74bfd327d4dce",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/results/results.component.spec.ts": {
+    "mtime": 1769109260.367764,
+    "ast_hash": "a1aace3e33e83df9dec2725edf0054d7",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/results/results.component.ts": {
+    "mtime": 1769109260.367862,
+    "ast_hash": "ed7753ff24ee868bf14d51d473ad3567",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/strangeness-large-scale-analysis-routing.module.ts": {
+    "mtime": 1769109260.367967,
+    "ast_hash": "a6921098961c15461339957fd67aa3ac",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/strangeness-large-scale-analysis.component.spec.ts": {
+    "mtime": 1769109260.368297,
+    "ast_hash": "f6777f49d90e58cb4183f5ca3f7ce020",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/strangeness-large-scale-analysis.component.ts": {
+    "mtime": 1769109260.3684883,
+    "ast_hash": "3089abe53ce77baa26e48d77245ff9f4",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-large-scale-analysis/strangeness-large-scale-analysis.module.ts": {
+    "mtime": 1769109260.3686032,
+    "ast_hash": "423f4491d5290eddf639eb6d468b6cb1",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/calculator/calculator.component.spec.ts": {
+    "mtime": 1769109260.3690476,
+    "ast_hash": "1690da161933732c40f5d1190c61f611",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/calculator/calculator.component.ts": {
+    "mtime": 1772310294.8056393,
+    "ast_hash": "c2eb63778e341c435fbdb0c26aac16a2",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/instructions/instructions.component.spec.ts": {
+    "mtime": 1769109260.3695223,
+    "ast_hash": "3edc7362a9c49d6969cb55ce456eac1d",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/instructions/instructions.component.ts": {
+    "mtime": 1769109260.3696167,
+    "ast_hash": "de6983ed49a850b5e3a74bfd327d4dce",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/mass-histograms/mass-histograms.component.spec.ts": {
+    "mtime": 1769109260.3700058,
+    "ast_hash": "cbd10d16e31168f1005f6785af121c62",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/mass-histograms/mass-histograms.component.ts": {
+    "mtime": 1783610624.4073212,
+    "ast_hash": "048c5fca2b502f76e38ac92f8a3d8e8e",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/particle-mass/particle-mass.component.spec.ts": {
+    "mtime": 1769109260.3706176,
+    "ast_hash": "6718071c686cfb7ecf637c457f00ba0c",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/particle-mass/particle-mass.component.ts": {
+    "mtime": 1769109260.3707175,
+    "ast_hash": "fc7956257389f705fc6d6c1843663fa1",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/strangeness-visual-analysis-routing.module.ts": {
+    "mtime": 1769109260.3708215,
+    "ast_hash": "2f8fcd72b780ca8fd6dc473979342de0",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/strangeness-visual-analysis.component.spec.ts": {
+    "mtime": 1783490783.1180434,
+    "ast_hash": "738975f4ee04d6c333cf55389ebb7d14",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/strangeness-visual-analysis.component.ts": {
+    "mtime": 1783607402.8924134,
+    "ast_hash": "e5d671e28cc2eb0b6adf1ca9aa184627",
+    "semantic_hash": ""
+  },
+  "src/app/strangeness-visual-analysis/strangeness-visual-analysis.module.ts": {
+    "mtime": 1783490783.1033528,
+    "ast_hash": "40853b2de356288655a9694b74efcf52",
+    "semantic_hash": ""
+  },
+  "src/assets/i18n/de.json": {
+    "mtime": 1783490783.1034439,
+    "ast_hash": "d3c526184cb6dc788a95bd406e9cf5f8",
+    "semantic_hash": ""
+  },
+  "src/assets/i18n/en.json": {
+    "mtime": 1783579471.137496,
+    "ast_hash": "4f4d4ec5263bd9888eab8462b47411b0",
+    "semantic_hash": ""
+  },
+  "src/assets/i18n/es.json": {
+    "mtime": 1769109260.3797772,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": ""
+  },
+  "src/environments/environment.dev.ts": {
+    "mtime": 1774905158.0240786,
+    "ast_hash": "62a4e8837eaacd53c2bc0aee49ccd108",
+    "semantic_hash": ""
+  },
+  "src/environments/environment.prod.ts": {
+    "mtime": 1771697082.4824653,
+    "ast_hash": "28b60329d9eaed478deba539e09bee20",
+    "semantic_hash": ""
+  },
+  "src/environments/environment.ts": {
+    "mtime": 1769109260.3830218,
+    "ast_hash": "c532d4076dc440712835a1336bd087cc",
+    "semantic_hash": ""
+  },
+  "src/environments/environment.web.ts": {
+    "mtime": 1769109260.3831372,
+    "ast_hash": "9f4d61ac32fa48d132a34d1ea162ae44",
+    "semantic_hash": ""
+  },
+  "src/karma.conf.js": {
+    "mtime": 1778426168.1015918,
+    "ast_hash": "8924ffd181a5b1605f16747cbd39776d",
+    "semantic_hash": ""
+  },
+  "src/main.ts": {
+    "mtime": 1769109260.3835769,
+    "ast_hash": "b64fd34b12432a6651193bf65d19e5a5",
+    "semantic_hash": ""
+  },
+  "src/polyfills-test.ts": {
+    "mtime": 1783490783.1174452,
+    "ast_hash": "9fa2924fe615126bbf059e4eea0fc244",
+    "semantic_hash": ""
+  },
+  "src/polyfills.ts": {
+    "mtime": 1769173206.3353891,
+    "ast_hash": "19c0d16539f90842bd5d9d9df4eb999d",
+    "semantic_hash": ""
+  },
+  "src/test.ts": {
+    "mtime": 1783490783.1183035,
+    "ast_hash": "c691ebef9f2000ee28181c7c273e712e",
+    "semantic_hash": ""
+  },
+  "src/tsconfig.app.json": {
+    "mtime": 1771939067.0440128,
+    "ast_hash": "1dc8cd9505ff656e1d0aed014bdb2419",
+    "semantic_hash": ""
+  },
+  "src/tsconfig.spec.json": {
+    "mtime": 1779021721.7426631,
+    "ast_hash": "3dac7b093d203ad349396e7dd1790637",
+    "semantic_hash": ""
+  },
+  "src/typings.d.ts": {
+    "mtime": 1769109260.3843465,
+    "ast_hash": "a651c3ef8062072cf8055811dd26102e",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1769109260.3844569,
+    "ast_hash": "3068efc6de1b0299516474c3477c5181",
+    "semantic_hash": ""
+  },
+  "tsconfig.serve.json": {
+    "mtime": 1769109260.3845942,
+    "ast_hash": "93d54ac0a7188dc3fac0354ea3b5fc57",
+    "semantic_hash": ""
+  }
+}

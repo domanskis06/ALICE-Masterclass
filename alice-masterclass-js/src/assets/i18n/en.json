@@ -9,6 +9,19 @@
     "ALICE_MASTERCLASS": "ALICE Masterclass",
     "PASSWORD": "Password"
   },
+  "VA_COACH": {
+    "WELCOME_TITLE": "Welcome, young apprentice of physics!",
+    "WELCOME_P1": "You are about to explore particle collisions in the ALICE detector.",
+    "WELCOME_P2": "Beams travel through the beam pipe — an ultra-high-vacuum tube — until they meet at the interaction point inside ALICE.",
+    "WELCOME_P3": "You will build the detector piece by piece: we will tell you which fragment to drag next. When you are ready to start, tap Continue.",
+    "WELCOME_CONTINUE": "Continue",
+    "DRAG_TITLE": "Next piece to place",
+    "DRAG_STEP": "Step {{current}} of {{total}}",
+    "DRAG_INSTRUCTION": "From the strip on the right, drag the highlighted part into the centre of the 3D view until it snaps into place.",
+    "DONE_TITLE": "Detector complete",
+    "DONE_BODY": "All parts are placed. You now have visibility and track options in the right-hand panel. Explore the event when you are ready.",
+    "DONE_BUTTON": "Got it"
+  },
   "HOME": {
     "HOME_MENU": "Home",
     "TITLE": "Welcome to the ALICE Masterclass!",
@@ -54,7 +67,19 @@
     "L": "L",
     "CAMERA": "Camera",
     "CAMERA_CENTERED": "Centered camera",
-    "CAMERA_FREE": "Free camera"
+    "CAMERA_FREE": "Free camera",
+    "DETECTOR_PARTS": "Detector parts",
+    "DETECTOR_ITS": "ITS",
+    "DETECTOR_TPC": "TPC",
+    "DETECTOR_TRD": "TRD",
+    "DETECTOR_TOF": "TOF",
+    "DETECTOR_L3": "L3",
+    "DETECTOR_EMCAL": "EMCal / DCal",
+    "DETECTOR_PHOS": "PHOS",
+    "DETECTOR_FULL_MODEL": "Full detector",
+    "DETECTOR_LAYER_FALLBACK": "{{name}}",
+    "DETECTOR_ASSEMBLY_TITLE": "Build the detector",
+    "DETECTOR_ASSEMBLY_HINT": "Drag each part from this panel onto the 3D view. When everything is placed, detector options (views, clusters, tracks) will appear here."
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Please select dataset:",

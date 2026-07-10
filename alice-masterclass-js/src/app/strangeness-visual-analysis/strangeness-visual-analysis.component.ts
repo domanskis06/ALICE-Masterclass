@@ -1,10 +1,10 @@
-import { Component, OnInit, Type } from '@angular/core';
+import { AfterViewInit, ApplicationRef, Component, ElementRef, OnDestroy, OnInit, Type, ViewChild } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { InstructionsProvider } from '../shared/interfaces';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { forkJoin, Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { map, shareReplay, filter, take } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SelectDatasetDialogComponent } from '../select-dataset-dialog/select-dataset-dialog.component';
 import { Event, Track, TrackType } from '../shared/models';
@@ -13,11 +13,20 @@ import { StrangenessDataService } from '../services/strangeness-data.service';
 import { ParticleType, VisualAnalysisResultsEntry } from '../shared/services/api.service';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { TranslateService } from '@ngx-translate/core';
-import { SandboxModeDialogComponent, SandboxModeDialogData } from './sandbox-mode-dialog/sandbox-mode-dialog.component';
+import { DetectorPartToggleModel, EventDisplayComponent } from '../shared/components/event-display/event-display.component';
+import { MassHistogramBinIncrementedEvent } from './mass-histograms/mass-histograms.component';
 
 export interface SubmitHistogramEntry {
   type: ParticleType,
   mass: number
+}
+
+interface HistogramFlightParticle {
+  id: number;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
 }
 
 @Component({
@@ -26,11 +35,37 @@ export interface SubmitHistogramEntry {
     styleUrls: ['./strangeness-visual-analysis.component.scss'],
     standalone: false
 })
-export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsProvider {
+export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit, OnDestroy, InstructionsProvider {
+  @ViewChild('visualAnalysisContainer')
+  private visualAnalysisContainerRef!: ElementRef<HTMLElement>;
+
+  @ViewChild('eventDisplayHost', {read: ElementRef})
+  private eventDisplayHostRef!: ElementRef<HTMLElement>;
+
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
-  readonly ALICE_DETECTOR_MODEL = "assets/models/alice.glb";
+  /** Guided coach (welcome + hint per detector piece); only when multipart assembly is still required this session. */
+  vaCoachOverlayVisible = false;
+  vaCoachWelcomePhase = true;
+  /** After the last hinted piece has been successfully placed — show acknowledgement before hiding the coach UI. */
+  vaCoachVictoryPhase = false;
+  vaCoachPieceHintIndex = 0;
+  private vaCoachScheduleSub: Subscription | null = null;
+  private vaCoachOpenScheduled = false;
+
+  readonly ALICE_DETECTOR_MODEL = [
+    // Core tracker / inner detectors
+    'assets/models/alice components/its.glb',
+    'assets/models/alice components/tpc.glb',
+    'assets/models/alice components/TRD.glb',
+    'assets/models/alice components/TOF.glb',
+    // Magnet
+    'assets/models/alice components/L3.glb',
+    // Calorimeters
+    'assets/models/alice components/EMCal_Dcal.glb',
+    'assets/models/alice components/PHOS.glb',
+  ];
   readonly ALICE_DETECTOR_RPHI = "assets/models/alice_rphi.svg";
   readonly ALICE_DETECTOR_RHOZ = "assets/models/alice_rhoz.svg";
 
@@ -43,6 +78,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
   particleNeg: Track = null;
   particleBac: Track = null;
 
+  visualDarkMode = false;
+  readonly visualLightBackgroundColor = 0xFFFFFF;
+  readonly visualDarkBackgroundColor = 0x0a1832;
+  flightParticles: HistogramFlightParticle[] = [];
+  private nextFlightParticleId = 0;
+  private flightParticleTimeouts: number[] = [];
+
   uploadDisabledDatasets: Array<Number> = [SelectDatasetDialogComponent.DEMO];
   
   isLandscape$: Observable<boolean>;
@@ -54,16 +96,80 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
   constructor(
     private breakpointObserver: BreakpointObserver,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog,
     public dataService: StrangenessDataService,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private appRef: ApplicationRef
     ) { 
       this.isLandscape$ = this.breakpointObserver.observe('(orientation: landscape)')
     .pipe(
       map(result => result.matches),
       shareReplay()
     );
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      return;
     }
+
+    /** Overlay after stability + defer; extra timeout catches rare cases where stable stays false briefly. */
+    this.vaCoachScheduleSub = this.appRef.isStable
+      .pipe(filter((stable) => stable), take(1))
+      .subscribe(() => {
+        queueMicrotask(() => window.setTimeout(() => this.tryScheduleVaCoach(), 380));
+      });
+    window.setTimeout(() => this.tryScheduleVaCoach(), 1650);
+  }
+
+  ngOnDestroy(): void {
+    this.vaCoachScheduleSub?.unsubscribe();
+    this.vaCoachScheduleSub = null;
+    this.flightParticleTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    this.flightParticleTimeouts = [];
+  }
+
+  /** Null when overlay hidden or phases where highlight is meaningless. */
+  get assemblyCoachHighlightPath(): string | null {
+    if (!this.vaCoachOverlayVisible || this.vaCoachWelcomePhase || this.vaCoachVictoryPhase) return null;
+    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+  }
+
+  /** Name of the detector piece currently requested by the guided sequence. */
+  get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
+    const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    return EventDisplayComponent.detectorPartPresentation(path);
+  }
+
+  onVaCoachWelcomeContinue(): void {
+    this.vaCoachWelcomePhase = false;
+  }
+
+  onVaCoachVictoryDismiss(): void {
+    this.vaCoachOverlayVisible = false;
+    this.vaCoachVictoryPhase = false;
+  }
+
+  onDetectorAssemblyPiecePlaced(assetPath: string): void {
+    if (!this.vaCoachOverlayVisible || this.vaCoachVictoryPhase || this.vaCoachWelcomePhase) return;
+    const expected = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    if (assetPath !== expected) return;
+    const next = this.vaCoachPieceHintIndex + 1;
+    if (next >= this.ALICE_DETECTOR_MODEL.length) {
+      this.vaCoachVictoryPhase = true;
+      return;
+    }
+    this.vaCoachPieceHintIndex = next;
+  }
+
+  private tryScheduleVaCoach(): void {
+    if (this.vaCoachOpenScheduled) return;
+    if (EventDisplayComponent.isMultipartDetectorStoredComplete(this.ALICE_DETECTOR_MODEL)) return;
+    this.vaCoachOpenScheduled = true;
+    this.vaCoachOverlayVisible = true;
+    this.vaCoachWelcomePhase = true;
+    this.vaCoachVictoryPhase = false;
+    this.vaCoachPieceHintIndex = 0;
+  }
 
   ngOnInit(): void {
     this.maxEvents = this.dataService.EVENTS_IN_DEMO_DATASET;
@@ -75,29 +181,6 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
       (error: HttpErrorResponse) => {
       }
     );
-  }
-
-  onSandboxModeClicked(): void {
-    const config = new MatDialogConfig();
-    config.disableClose = false;
-    config.autoFocus = false;
-    config.panelClass = 'sandbox-mode-panel';
-    config.width = '100vw';
-    config.height = '100vh';
-    config.maxWidth = '100vw';
-    config.maxHeight = '100vh';
-    config.position = { top: '0', left: '0' };
-
-    const data: SandboxModeDialogData = {
-      event: this.event,
-      detectorModel: this.ALICE_DETECTOR_MODEL,
-      detectorRphi: this.ALICE_DETECTOR_RPHI,
-      detectorRhoz: this.ALICE_DETECTOR_RHOZ,
-      onTrackClicked: (track: Track) => this.onTrackClicked(track)
-    };
-
-    config.data = data;
-    this.dialog.open(SandboxModeDialogComponent, config);
   }
 
   private loadEvent() {
@@ -184,6 +267,35 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
     const value: VisualAnalysisResultsEntry = {particle: event.type, mass: event.mass};
 
     this.dataService.addVisualAnalysisResult(String(this.eventID), value);
+  }
+
+  onHistogramBinIncremented(event: MassHistogramBinIncrementedEvent): void {
+    this.spawnParticleFlight(event.targetX, event.targetY);
+  }
+
+  private spawnParticleFlight(targetX: number, targetY: number): void {
+    const container = this.visualAnalysisContainerRef?.nativeElement;
+    const renderArea = this.eventDisplayHostRef?.nativeElement.querySelector('#render-area') as HTMLElement | null;
+    if (!container || !renderArea) {
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const renderRect = renderArea.getBoundingClientRect();
+    const particle: HistogramFlightParticle = {
+      id: this.nextFlightParticleId++,
+      startX: renderRect.left + renderRect.width / 2 - containerRect.left,
+      startY: renderRect.top + renderRect.height / 2 - containerRect.top,
+      endX: targetX - containerRect.left,
+      endY: targetY - containerRect.top,
+    };
+
+    this.flightParticles = [...this.flightParticles, particle];
+    const timeoutId = window.setTimeout(() => {
+      this.flightParticles = this.flightParticles.filter((item) => item.id !== particle.id);
+      this.flightParticleTimeouts = this.flightParticleTimeouts.filter((item) => item !== timeoutId);
+    }, 850);
+    this.flightParticleTimeouts.push(timeoutId);
   }
 
   onUploadResults() {
