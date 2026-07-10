@@ -1,3 +1,6 @@
+# Cursor IDE local state / plans (not project source)
+.cursor/
+
 # Never commit OKD secret backups (contain credentials)
 okd-secrets-backup/
 *-BACKUP.yaml
