@@ -2,3 +2,4 @@ venv/
 .venv-e2e/
 .idea/
 masterclass.sqlite
+.env

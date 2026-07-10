@@ -277,6 +277,30 @@ Leave `oidc-client-secret` alone; do not delete it or point Django at it.
 > invent names like `CLIENTID` / `CLIENTSECRET` (no underscores), which Django
 > does not read.
 
+#### Django runtime mode (`DJANGO_ENV`)
+
+Django chooses local vs production mode via `DJANGO_ENV` in
+[`alice_masterclass_django/settings.py`](../alice-masterclass-django/alice_masterclass_django/settings.py):
+
+| Mode | Effect |
+|------|--------|
+| `local` | SQLite, `DEBUG=True`, dummy auth, skip CERN well-known fetch |
+| `production` | PostgreSQL, `DEBUG=False`, real SSO, strict CORS/hosts |
+
+OpenShift **does not require** a new secret key: if `DJANGO_ENV` is unset, Django
+treats the pod as production when both `DATABASE_NAME` and `SERVICE_HOST` are
+present (already true for `dc/alice-masterclass-django`). Legacy `DJANGO_LOCAL=1`
+still forces local mode (CI).
+
+Optional clarity on the cluster (not required for correctness):
+
+```bash
+oc set env dc/alice-masterclass-django DJANGO_ENV=production -n alice-web-masterclass-dev
+```
+
+If you do that, also update [`openshift/dev/dc.yaml`](../openshift/dev/dc.yaml) so
+manifests stay in sync (§4).
+
 ### 5.3 CERN Application Portal (OAuth)
 
 Use the dedicated Portal application **`alice-masterclass-dev`** (not the

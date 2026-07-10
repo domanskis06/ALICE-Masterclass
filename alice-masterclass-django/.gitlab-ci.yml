@@ -6,6 +6,7 @@ unit_tests_django:
     - pip install --no-cache-dir -r requirements.txt
   script:
     - export PYTHONUNBUFFERED=1
+    - export DJANGO_ENV=local
     - export DJANGO_LOCAL=1
     - python3 manage.py makemigrations
     - python3 manage.py migrate
