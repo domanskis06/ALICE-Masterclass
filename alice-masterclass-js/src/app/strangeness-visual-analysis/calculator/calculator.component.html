@@ -57,16 +57,20 @@
         class="calculator-form"
         fxLayout="column" fxLayout.xs="row" fxLayout.sm="row"
         fxLayoutGap="20px" fxLayoutAlign="start stretch" fxLayoutAlign.xs="end center" fxLayoutAlign.sm="end center">
-        <mat-form-field>
+        <mat-form-field class="calculator-particle-field" appearance="outline">
           <mat-label>{{ 'STRANGENESS.CALCULATOR.SELECT_PARTICLE' | translate }}</mat-label>
-          <mat-select formControlName="type">
+          <mat-select formControlName="type" [panelClass]="particleSelectPanelClass">
             @for (type of particleTypes; track type) {
               <mat-option [value]="type">{{ 'STRANGENESS.CALCULATOR.' + type | uppercase | translate }}</mat-option>
             }
           </mat-select>
         </mat-form-field>
         <input type="hidden" formControlName="mass"/>
-        <button [disabled]="calculatorForm.invalid || submitDisabled" mat-raised-button type="submit" color="primary">{{ 'STRANGENESS.CALCULATOR.ADD' | translate }}</button>
+        <button
+          class="calculator-add-button"
+          [disabled]="calculatorForm.invalid || submitDisabled"
+          mat-raised-button
+          type="submit">{{ 'STRANGENESS.CALCULATOR.ADD' | translate }}</button>
       </form>
     </div>
   </mat-card-content>

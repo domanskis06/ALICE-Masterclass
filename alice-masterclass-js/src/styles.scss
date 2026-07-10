@@ -51,3 +51,25 @@ html, body {
 
 @import './alice-theme.scss';
 
+/* VA calculator mat-select overlay (rendered outside component; needs global styles). */
+.calculator-particle-select-panel.calculator-particle-select-panel--dark {
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+
+  .mat-mdc-option {
+    color: #e5edf7;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background: rgba(148, 163, 184, 0.18);
+  }
+
+  .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+  .mat-mdc-option.mat-mdc-option-active {
+    background: rgba(148, 163, 184, 0.12);
+  }
+
+  .mat-mdc-option .mdc-list-item__primary-text {
+    color: #e5edf7;
+  }
+}

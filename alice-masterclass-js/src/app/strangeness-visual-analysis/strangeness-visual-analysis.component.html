@@ -1,19 +1,81 @@
 <div fxFlex="grow" data-testid="strangeness-visual-analysis-page">
-  <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
+  @if (vaCoachOverlayVisible) {
+    <div class="va-coach-layer" aria-live="polite">
+      @if (vaCoachWelcomePhase) {
+        <mat-card appearance="outlined" class="va-coach-card">
+          <mat-card-title>{{ 'VA_COACH.WELCOME_TITLE' | translate }}</mat-card-title>
+          <mat-card-content class="va-coach-text">
+            <p>{{ 'VA_COACH.WELCOME_P1' | translate }}</p>
+            <p>{{ 'VA_COACH.WELCOME_P2' | translate }}</p>
+            <p>{{ 'VA_COACH.WELCOME_P3' | translate }}</p>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-flat-button color="primary" type="button" (click)="onVaCoachWelcomeContinue()">
+              {{ 'VA_COACH.WELCOME_CONTINUE' | translate }}
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      } @else if (vaCoachVictoryPhase) {
+        <mat-card appearance="outlined" class="va-coach-card">
+          <mat-card-title>{{ 'VA_COACH.DONE_TITLE' | translate }}</mat-card-title>
+          <mat-card-content class="va-coach-text">
+            <p>{{ 'VA_COACH.DONE_BODY' | translate }}</p>
+          </mat-card-content>
+          <mat-card-actions align="end">
+            <button mat-flat-button color="primary" type="button" (click)="onVaCoachVictoryDismiss()">
+              {{ 'VA_COACH.DONE_BUTTON' | translate }}
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      } @else {
+        <mat-card appearance="outlined" class="va-coach-card">
+          <mat-card-title>{{ 'VA_COACH.DRAG_TITLE' | translate }}</mat-card-title>
+          <mat-card-content class="va-coach-text">
+            <p>{{ 'VA_COACH.DRAG_STEP' | translate:{ current: vaCoachPieceHintIndex + 1, total: ALICE_DETECTOR_MODEL.length } }}</p>
+            <p>{{ 'VA_COACH.DRAG_INSTRUCTION' | translate }}</p>
+            <p class="va-coach-part-name">
+              <strong
+                [translate]="vaCoachCurrentPiecePresentation.labelKey"
+                [translateParams]="vaCoachCurrentPiecePresentation.labelParams || {}"
+              ></strong>
+            </p>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+
+  <div #visualAnalysisContainer class="container" [class.va-dark-mode]="visualDarkMode" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
+    <div class="histogram-flight-layer" aria-hidden="true">
+      @for (particle of flightParticles; track particle.id) {
+        <span
+          class="histogram-flight-particle"
+          [style.--flight-start-x]="particle.startX + 'px'"
+          [style.--flight-start-y]="particle.startY + 'px'"
+          [style.--flight-end-x]="particle.endX + 'px'"
+          [style.--flight-end-y]="particle.endY + 'px'"
+        ></span>
+      }
+    </div>
     <app-event-display
-      [sideViewsShown]="true"
+      #eventDisplayHost
       [decaysShown]="true"
 
+      [backgroundColor]="visualDarkMode ? visualDarkBackgroundColor : visualLightBackgroundColor"
       [hasClusters]="event.clusters.length !== 0"
       [landscape]="(isLandscape$ | async)"
+      [assemblyCoachHighlightAssetPath]="assemblyCoachHighlightPath"
       [detectorModel]="ALICE_DETECTOR_MODEL"
-      [detectorRphi]="ALICE_DETECTOR_RPHI"
-      [detectorRhoz]="ALICE_DETECTOR_RHOZ"
+      [showThemeToggle]="true"
+      [darkMode]="visualDarkMode"
+      (darkModeChange)="visualDarkMode = $event"
+      [showProtonCollisionIntro]="eventID === 0"
       [event]="event"
       [previousEventButtonDisabled]="(eventID - 1) < 0"
       (previousEvent)="onPreviousEvent()"
       [nextEventButtonDisabled]="(eventID + 1) >= maxEvents"
       (nextEvent)="onNextEvent()"
+      (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
       (trackClickedEvent)="onTrackClicked($event)"
       >
       <div class="dataset-controls">
@@ -33,9 +95,6 @@
             }
           </mat-select>
         </mat-form-field>
-        <button mat-raised-button color="warn" class="sandbox-button" (click)="onSandboxModeClicked()">
-          Sandbox Mode
-        </button>
       </div>
       <span>{{ 'EVENT_DISPLAY.EVENT' | translate }} {{ eventID }}</span>
       @if (isCurrentEventDone) {
@@ -44,6 +103,7 @@
     </app-event-display>
     <div fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
       <app-calculator fxFlex="grow"
+        [darkMode]="visualDarkMode"
         [particlePos]="particlePos"
         [particleNeg]="particleNeg"
         [particleBac]="particleBac"
@@ -51,6 +111,6 @@
       ></app-calculator>
       <app-particle-mass fxFlex="grow"></app-particle-mass>
     </div>
-    <app-mass-histograms [uploadDisabled]="uploadDisabledDatasets.includes(datasetID)" [results]="dataService.visualAnalysisResults" (uploadResultsEvent)="onUploadResults()"></app-mass-histograms>
+    <app-mass-histograms [uploadDisabled]="uploadDisabledDatasets.includes(datasetID)" [results]="dataService.visualAnalysisResults" (binIncremented)="onHistogramBinIncremented($event)" (uploadResultsEvent)="onUploadResults()"></app-mass-histograms>
   </div>
 </div>

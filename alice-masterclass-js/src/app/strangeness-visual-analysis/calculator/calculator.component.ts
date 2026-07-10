@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, HostBinding } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Track, TrackType } from '../../shared/models';
 import { positiveTrackColor, negativeTrackColor, bachelorTrackColor } from '../../shared/globals';
@@ -32,6 +32,20 @@ export class CalculatorComponent implements OnInit {
 
   @Input()
   submitDisabled: boolean = false;
+
+  @Input()
+  darkMode = false;
+
+  @HostBinding('class.calculator-dark-mode')
+  get calculatorDarkModeClass(): boolean {
+    return this.darkMode;
+  }
+
+  get particleSelectPanelClass(): string | string[] {
+    return this.darkMode
+      ? ['calculator-particle-select-panel', 'calculator-particle-select-panel--dark']
+      : 'calculator-particle-select-panel';
+  }
 
   @Input()
   get particlePos(): Track { return this.tableRows[0].track; }

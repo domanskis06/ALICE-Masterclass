@@ -2,9 +2,6 @@
   line-height: 40px;
 }
 
-/* TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version. */
-/* TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version. */
-/* TODO(mdc-migration): The following rule targets internal classes of card that may no longer apply for the MDC version. */
 mat-card {
   box-sizing: border-box;
 }
@@ -32,4 +29,56 @@ mat-card {
 mat-form-field {
   width: 100%;
   min-width: 220px;
+}
+
+/* Dark mode: match VA panel controls (light mode keeps Material defaults). */
+:host.calculator-dark-mode {
+  --va-control-bg: rgba(15, 23, 42, 0.94);
+  --va-border: rgba(148, 163, 184, 0.28);
+  --va-text: #e5edf7;
+  --va-muted: rgba(226, 232, 240, 0.7);
+
+  .calculator-particle-field {
+    .mdc-text-field--outlined {
+      background: var(--va-control-bg);
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--va-border) !important;
+    }
+
+    .mat-mdc-form-field-label,
+    .mat-mdc-floating-label,
+    .mdc-floating-label,
+    .mat-mdc-select-value,
+    .mat-mdc-select-placeholder,
+    .mat-mdc-select-arrow,
+    .mat-mdc-select-min-line {
+      color: var(--va-text) !important;
+    }
+
+    &.mat-focused .mdc-notched-outline__leading,
+    &.mat-focused .mdc-notched-outline__notch,
+    &.mat-focused .mdc-notched-outline__trailing {
+      border-color: rgba(226, 232, 240, 0.55) !important;
+    }
+  }
+
+  .calculator-add-button.mat-mdc-raised-button:not(:disabled) {
+    --mdc-protected-button-container-color: var(--va-control-bg);
+    --mdc-protected-button-label-text-color: var(--va-text);
+    background-color: var(--va-control-bg);
+    color: var(--va-text);
+    border: 1px solid var(--va-border);
+  }
+
+  .calculator-add-button.mat-mdc-raised-button:disabled {
+    --mdc-protected-button-disabled-container-color: rgba(15, 23, 42, 0.45);
+    --mdc-protected-button-disabled-label-text-color: var(--va-muted);
+    background-color: rgba(15, 23, 42, 0.45);
+    color: var(--va-muted);
+    border: 1px solid var(--va-border);
+  }
 }

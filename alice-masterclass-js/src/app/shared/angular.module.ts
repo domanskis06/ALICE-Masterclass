@@ -18,6 +18,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LayoutModule } from '@angular/cdk/layout';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -31,6 +32,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     CommonModule,
     BrowserAnimationsModule,
     LayoutModule,
+    DragDropModule,
     FlexLayoutModule,
     MatToolbarModule,
     MatButtonModule,
@@ -56,6 +58,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
   ],
   exports: [
     LayoutModule,
+    DragDropModule,
     FlexLayoutModule,
     MatToolbarModule,
     MatButtonModule,

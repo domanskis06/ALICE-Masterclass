@@ -2,6 +2,11 @@ import { Component, AfterViewInit, ViewChild, ElementRef, Input, HostBinding, Ou
 import { BehaviorSubject, Subscription } from 'rxjs';
 import * as d3 from 'd3';
 
+export interface HistogramBinIncrementedEvent {
+  targetX: number;
+  targetY: number;
+}
+
 @Component({
     selector: 'app-histogram',
     templateUrl: './histogram.component.html',
@@ -140,6 +145,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       this.yDomain = [0, 1];
     }
 
+    this.pendingIncrementedBinIndex = this.detectIncrementedBin(bins);
+    this.previousBinCounts = bins.map((bin) => bin.length);
     this._data.next(data);
   }
   private _data: BehaviorSubject<Array<number>> = new BehaviorSubject<number[]>([]);
@@ -156,6 +163,13 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Output()
   zoomEvent: EventEmitter<[number, number]> = new EventEmitter<[number, number]>();
 
+  @Output()
+  binIncremented: EventEmitter<HistogramBinIncrementedEvent> = new EventEmitter<HistogramBinIncrementedEvent>();
+
+  private viewInitialized = false;
+  private previousBinCounts: number[] = [];
+  private pendingIncrementedBinIndex: number | null = null;
+
   protected binCenter(bin: d3.Bin<number, number>) {
     const x0 = bin.x0 ?? 0;
     const x1 = bin.x1 ?? x0;
@@ -165,6 +179,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   constructor() { }
 
   ngAfterViewInit(): void {
+    this.viewInitialized = true;
     this.xScale.range([0, this.CONTENT_AREA.W]);
     this.yScale.range([this.CONTENT_AREA.H, 0]);
 
@@ -258,6 +273,48 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       .attr('height', (d) => {
         return this.CONTENT_AREA.H - this.yScale(d.length);
       });
+
+    if (this.pendingIncrementedBinIndex === null && this.previousBinCounts.length !== bins.length) {
+      this.previousBinCounts = bins.map((bin) => bin.length);
+    }
+    this.tryEmitBinIncremented(bins);
+  }
+
+  private detectIncrementedBin(bins: d3.Bin<number, number>[]): number | null {
+    if (!this.viewInitialized || this.previousBinCounts.length !== bins.length) {
+      return null;
+    }
+
+    const index = bins.findIndex((bin, binIndex) => bin.length > (this.previousBinCounts[binIndex] ?? 0));
+    return index >= 0 ? index : null;
+  }
+
+  private tryEmitBinIncremented(bins: d3.Bin<number, number>[]): void {
+    if (this.pendingIncrementedBinIndex === null) {
+      return;
+    }
+
+    const bin = bins[this.pendingIncrementedBinIndex];
+    this.pendingIncrementedBinIndex = null;
+    if (!bin) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const svgRect = this.svg.getBoundingClientRect();
+      const scaleX = svgRect.width / this.SVG.W;
+      const scaleY = svgRect.height / this.SVG.H;
+      const x0 = bin.x0 ?? this.xDomain[0];
+      const x1 = bin.x1 ?? x0;
+      const binCenter = (x0 + x1) / 2;
+      const binTop = this.yScale(bin.length);
+      const binHeight = this.CONTENT_AREA.H - binTop;
+
+      this.binIncremented.emit({
+        targetX: svgRect.left + (this.CONTENT_AREA.X + this.xScale(binCenter)) * scaleX,
+        targetY: svgRect.top + (this.CONTENT_AREA.Y + binTop + Math.min(binHeight / 2, 16)) * scaleY,
+      });
+    });
   }
 
   protected onZoom(event: any): void {
