@@ -14,6 +14,7 @@ import os
 import requests
 import json
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 from rest_framework import status
 
 from pathlib import Path
@@ -22,26 +23,78 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def resolve_django_env() -> str:
+    """Resolve runtime mode: explicit DJANGO_ENV, then legacy fallbacks.
+
+    Fallback order (backward compatible with CI and OpenShift):
+    1. DJANGO_ENV=local|production
+    2. DJANGO_LOCAL=1 → local (CI / legacy)
+    3. DATABASE_NAME + SERVICE_HOST set → production (OpenShift pods)
+    4. otherwise → local (laptop zero-config)
+    """
+    explicit = os.getenv('DJANGO_ENV', '').strip().lower()
+    if explicit in ('local', 'production'):
+        return explicit
+    if explicit:
+        raise ImproperlyConfigured(
+            f"DJANGO_ENV must be 'local' or 'production', got {explicit!r}."
+        )
+    if os.getenv('DJANGO_LOCAL') == '1':
+        return 'local'
+    if os.getenv('DATABASE_NAME') and os.getenv('SERVICE_HOST'):
+        return 'production'
+    return 'local'
+
+
+DJANGO_ENV = resolve_django_env()
+IS_PRODUCTION = DJANGO_ENV == 'production'
+# Legacy alias kept for CI and any code that still checks DJANGO_LOCAL
+DJANGO_LOCAL = not IS_PRODUCTION
+
+REQUIRED_PRODUCTION_VARS = (
+    'DATABASE_NAME',
+    'DATABASE_USER',
+    'DATABASE_PASSWORD',
+    'SERVICE_HOST',
+    'SERVICE_PORT',
+    'ALLOWED_HOSTS',
+    'CORS_ALLOWED_ORIGINS',
+    'DJANGO_SECRET_KEY',
+)
+
+if IS_PRODUCTION:
+    missing = [k for k in REQUIRED_PRODUCTION_VARS if not os.getenv(k)]
+    if missing:
+        raise ImproperlyConfigured(
+            'Production mode requires these environment variables: '
+            + ', '.join(missing)
+        )
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-d@sohzq%*(9-g)%9zrkrau+d348@ao0b4d-5=gr49jq1uvki8t')
+SECRET_KEY = os.getenv(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-d@sohzq%*(9-g)%9zrkrau+d348@ao0b4d-5=gr49jq1uvki8t',
+)
 
-DJANGO_LOCAL = int(os.getenv('DJANGO_LOCAL', 0)) == 1
-_use_production_env = bool(os.getenv('ALLOWED_HOSTS') and os.getenv('CORS_ALLOWED_ORIGINS'))
-# Enable dummy auth when local or when production env not configured (avoids 401 for local dev)
-DJANGO_DUMMY_AUTH = int(os.getenv('DJANGO_DUMMY_AUTH', 1 if not _use_production_env else 0)) == 1
+# Dummy auth defaults on for local (avoids 401 without CERN SSO); off in production
+DJANGO_DUMMY_AUTH = int(
+    os.getenv('DJANGO_DUMMY_AUTH', '0' if IS_PRODUCTION else '1')
+) == 1
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if DJANGO_LOCAL == 1 or not _use_production_env:
+if IS_PRODUCTION:
+    DEBUG = False
+    ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS').split(',')]
+    CORS_ALLOWED_ORIGINS = [
+        o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS').split(',')
+    ]
+else:
     DEBUG = True
     CORS_ALLOW_ALL_ORIGINS = True
-    if not _use_production_env:
-        ALLOWED_HOSTS = ['localhost', '127.0.0.1']
-else:
-    ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS').split(',')]
-    CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS').split(',')]
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Auto-configure settings based on data returned by the well-known endpoint
 WELL_KNOWN_URL = os.getenv('WELL_KNOWN_URL', 'https://auth.cern.ch/auth/realms/cern/.well-known/openid-configuration')
@@ -50,9 +103,8 @@ LOGIN_URL = 'https://auth.cern.ch/auth/realms/cern/protocol/openid-connect/token
 LOGOUT_URL = 'https://auth.cern.ch/auth/realms/cern/protocol/openid-connect/logout'
 INFO_URL = 'https://auth.cern.ch/auth/realms/cern/account'
 
-# Skip CERN auth fetch when running locally (avoids proxy/network errors outside CERN)
-_skip_cern_fetch = not _use_production_env or (DJANGO_LOCAL and DJANGO_DUMMY_AUTH)
-if not _skip_cern_fetch:
+# Skip CERN auth fetch outside production (avoids proxy/network errors on a laptop)
+if IS_PRODUCTION:
     r = requests.get(WELL_KNOWN_URL)
     if r.status_code == status.HTTP_200_OK:
         data = json.loads(r.text)
@@ -142,14 +194,7 @@ WSGI_APPLICATION = 'alice_masterclass_django.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-if DJANGO_LOCAL or not _use_production_env:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': str(BASE_DIR / 'masterclass.sqlite')
-        }
-    }
-else:
+if IS_PRODUCTION:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -157,7 +202,14 @@ else:
             'USER': os.getenv('DATABASE_USER'),
             'PASSWORD': os.getenv('DATABASE_PASSWORD'),
             'HOST': os.getenv('SERVICE_HOST'),
-            'PORT': os.getenv('SERVICE_PORT')
+            'PORT': os.getenv('SERVICE_PORT'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'masterclass.sqlite'),
         }
     }
 # Password validation
