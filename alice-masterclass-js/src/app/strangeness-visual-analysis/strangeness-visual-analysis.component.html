@@ -1,4 +1,4 @@
-<div fxFlex="grow">
+<div fxFlex="grow" data-testid="strangeness-visual-analysis-page">
   @if (vaCoachOverlayVisible) {
     <div class="va-coach-layer" aria-live="polite">
       @if (vaCoachWelcomePhase) {
@@ -83,7 +83,7 @@
       <div class="dataset-controls">
         <mat-form-field appearance="outline" class="dataset-select">
           <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
-          <mat-select [value]="datasetID" (selectionChange)="onDatasetChange($event.value)">
+          <mat-select data-testid="va-dataset-select" [value]="datasetID" (selectionChange)="onDatasetChange($event.value)">
             @if (dataService.VA_DATASET.hasDemo) {
               <mat-option [value]="-1">{{ 'SELECT_DATASET_DIALOG.DEMO' | translate }}</mat-option>
             }

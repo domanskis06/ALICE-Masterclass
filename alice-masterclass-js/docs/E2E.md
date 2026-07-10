@@ -84,6 +84,13 @@ Dodane m.in. w:
 
 Zasada: w nowych testach preferuj **`getByTestId`** tam, gdzie tekst zależy od i18n.
 
+**Kontrakt visual analysis:** przy rewrite’cie
+[`strangeness-visual-analysis.component.html`](../src/app/strangeness-visual-analysis/strangeness-visual-analysis.component.html)
+**zostaw** `data-testid="strangeness-visual-analysis-page"` na rootcie strony oraz
+`data-testid="va-dataset-select"` na `mat-select` datasetu. Bez nich padają
+`e2e/django/strangeness-exercise.spec.ts` i `e2e/routing.spec.ts` (`element(s) not found`),
+nawet gdy UI wygląda poprawnie.
+
 ## CI (GitLab)
 
 W **`.gitlab-ci.yml`**, job **`e2e_playwright`**:
@@ -92,7 +99,7 @@ W **`.gitlab-ci.yml`**, job **`e2e_playwright`**:
 - Instalacja zależności Pythona w venv, `pip install` z `alice-masterclass-django/requirements.txt`.
 - **`npm ci`** w `alice-masterclass-js` oraz w **`../alice-masterclass-teacher`** (testy nauczyciela).
 - Kolejność: **`npm run e2e:django`**, potem **`npm run e2e:teacher`**.
-- Job **nie** ma już `allow_failure: true` — wynik wpływa na status pipeline’u.
+- Job ma **`allow_failure: true`** — czerwony e2e nie blokuje dockerize / deploy na OKD, ale warto go naprawiać (artefakty + lokalne `npm run e2e:django`).
 - **Artefakty** (`when: always`): raporty HTML i katalogi `test-results*` (m.in. trace przy retry), m.in. `playwright-report-django/`, `playwright-report-teacher/`.
 
 ## Aplikacja nauczyciela — zależności npm
@@ -107,6 +114,7 @@ W **`.gitlab-ci.yml`**, job **`e2e_playwright`**:
 | `ECONNREFUSED 127.0.0.1:8000` | Django nie wystartował albo port zajęty; zwolnij **8000** lub nie używaj `reuseExistingServer` w konflikcie z innym procesem. |
 | Brak Chromium Playwright | `npx playwright install chromium`. |
 | Tytuł bez nazwy sesji przy `e2e:django` | Sprawdź seed, hasło `E2E_SESSION_PASSWORD`, logi Django. |
+| `getByTestId('strangeness-visual-analysis-page')` → element(s) not found | W szablonie VA brakuje `data-testid` (częsty uboczny efekt rewrite’u HTML). Przywróć haki z sekcji **`data-testid`** powyżej; nie zmieniaj selektorów w teście. |
 | `cd alice_szymon/...` z już właściwego katalogu | Ścieżki są względne — wejdź do repo z właściwego poziomu (`alice-masterclass-js` obok `alice-masterclass-django`). |
 
 ## Dalszy rozwój (orientacyjnie)
