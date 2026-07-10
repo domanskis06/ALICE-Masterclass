@@ -52,7 +52,7 @@ Requires a Chrome/Chromium installation (set `CHROME_BIN` if the binary is not o
 
 ### End-to-end tests (Playwright)
 
-**Full E2E documentation (Polish):** [docs/E2E.md](docs/E2E.md) — layout, Django seed, CI, tags, troubleshooting.
+**Full E2E documentation:** [docs/E2E.md](../docs/E2E.md) — layout, Django seed, CI, tags, troubleshooting.
 
 First-time browser download:
 
@@ -62,7 +62,7 @@ npx playwright install chromium
 
 | Command | What it runs |
 | --- | --- |
-| `npm run e2e` | Student app: pliki w `e2e/*.spec.ts` **bez** `e2e/django/` (tylko `ng serve` na **4200**) |
+| `npm run e2e` | Student app: `e2e/*.spec.ts` **excluding** `e2e/django/` (`ng serve` on **4200** only) |
 | `npm run e2e:smoke` | Same config, only tests tagged **`@smoke`** (stubbed API, fast) |
 | `npm run e2e:django` | Student app + Django: `e2e/django/` (tags **`@django`**) |
 | `npm run e2e:teacher` | Teacher app on **4201** + Django: `e2e-teacher/` (tags **`@teacher`**) |
@@ -128,4 +128,4 @@ Prefer **`data-testid`** on stable hooks (auth dialog, nav, exercise shell, uplo
 
 ### CI artifacts
 
-GitLab job **`e2e_playwright`** uploads HTML reports and traces (**`when: always`**) under `playwright-report-django/`, `playwright-report-teacher/`, and matching `test-results-*` folders when tests fail or retries capture traces.
+GitLab job **`e2e_playwright`** currently has **`allow_failure: true`**. It uploads HTML reports and traces (**`when: always`**) under `playwright-report-django/`, `playwright-report-teacher/`, and matching `test-results-*` folders when tests fail or retries capture traces. See [docs/E2E.md](../docs/E2E.md) for the full CI layout.
