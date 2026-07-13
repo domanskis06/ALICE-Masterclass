@@ -40,6 +40,10 @@ npm run build:prod     # production (runs `make-prod.mjs` first)
 
 Output is written to `dist/`.
 
+## Architecture notes
+
+- [EventDisplay](../docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
+
 ## Tests
 
 ### Unit tests (Karma)
