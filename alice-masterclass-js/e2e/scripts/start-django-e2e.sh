@@ -10,8 +10,8 @@ DJANGO_ROOT="$(cd "$JS_ROOT/.." && pwd)/alice-masterclass-django"
 
 if [[ -n "${E2E_PYTHON:-}" ]]; then
   PYTHON="$E2E_PYTHON"
-elif [[ -x "$DJANGO_ROOT/.venv-e2e/bin/python" ]]; then
-  PYTHON="$DJANGO_ROOT/.venv-e2e/bin/python"
+elif [[ -x "$DJANGO_ROOT/venv/bin/python" ]]; then
+  PYTHON="$DJANGO_ROOT/venv/bin/python"
 else
   PYTHON="python3"
 fi

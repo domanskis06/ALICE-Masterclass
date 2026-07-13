@@ -2,15 +2,18 @@
 
 Angular application for the ALICE MasterClass student experience, served in the browser.
 
+Monorepo overview and running Django + teacher together: [`../README.md`](../README.md). Docs index: [`../docs/README.md`](../docs/README.md).
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) (LTS recommended)
+- Django API on port **8000** for real backend calls (see [`../alice-masterclass-django/README.md`](../alice-masterclass-django/README.md))
 
 ## Setup
 
+From this folder (or after cloning the monorepo):
+
 ```bash
-git clone https://gitlab.cern.ch/alice-masterclass/alice-masterclass-js.git
-cd alice-masterclass-js
 npm install
 ```
 
@@ -43,6 +46,19 @@ Output is written to `dist/`.
 ## Architecture notes
 
 - [EventDisplay](../docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
+
+## Third-party attribution
+
+The **Particle Propagation** module (`src/app/particle-propagation/physics/`) ports the ALICE magnetic
+field model (Chebyshev polynomial parametrization) and its binary lookup tables
+(`src/assets/field/*.bin`) from:
+
+- [pnwkw/gpu_propagator](https://github.com/pnwkw/gpu_propagator) — GPU propagation and visualisation of particle collisions with accurate model of ALICE detector magnetic field
+- [pnwkw/distributed_field](https://github.com/pnwkw/distributed_field) — Distributed Simulation And Visualization of The ALICE Detector Magnetic Field
+
+Both are licensed under **GPL-3.0**. The ported logic lives in
+`src/app/particle-propagation/physics/cheb-field-data.ts` and
+`src/app/particle-propagation/physics/magnetic-field.service.ts` (see file headers for details).
 
 ## Tests
 
@@ -101,8 +117,8 @@ Requirements:
 
 ```bash
 cd ../alice-masterclass-django
-python3 -m venv .venv-e2e
-. .venv-e2e/bin/activate
+python3 -m venv venv
+. venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate --noinput
 deactivate
@@ -110,7 +126,7 @@ cd ../alice-masterclass-js
 npm run e2e:django
 ```
 
-The start script uses `../alice-masterclass-django/.venv-e2e/bin/python` when present, or `E2E_PYTHON` if set. Optional `E2E_SESSION_PASSWORD` (default `playwright-e2e`) must match between the [seed_playwright_e2e](../alice-masterclass-django/masterclass/management/commands/seed_playwright_e2e.py) command and the browser test.
+The start script uses `../alice-masterclass-django/venv/bin/python` when present, or `E2E_PYTHON` if set. Optional `E2E_SESSION_PASSWORD` (default `playwright-e2e`) must match between the [seed_playwright_e2e](../alice-masterclass-django/masterclass/management/commands/seed_playwright_e2e.py) command and the browser test.
 
 Stop any other process on ports **8000** and **4200** (and **4201** for teacher) before running, or rely on Playwright’s `reuseExistingServer` when **not** in CI.
 
