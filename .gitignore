@@ -28,3 +28,6 @@ alice-masterclass-django/.venv/
 
 # Local venv at monorepo root (mistaken python3 -m venv .venv-e2e here)
 .venv-e2e/
+
+# Graphify local AI context
+graphify-out/
