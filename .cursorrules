@@ -1,0 +1,60 @@
+# Cursor Rules for ALICE MasterClass
+
+## Graphify Setup
+
+### Quick Start
+1. **Install Graphify globally:**
+   ```bash
+   npm install -g graphify
+   ```
+
+2. **Run Graphify analysis:**
+   ```bash
+   # From project root
+   node graphify-runner.js
+
+   # Or from alice-masterclass-js directory
+   npm run graphify
+   ```
+
+### Output Location
+- Analysis results: `alice-masterclass-js/graphify-out/`
+- Latest report: `alice-masterclass-js/graphify-out/GRAPH_REPORT.md`
+- Graph data: `alice-masterclass-js/graphify-out/graph.json`
+
+### Running from Cursor
+In Cursor terminal, use any of these:
+```bash
+node graphify-runner.js
+cd alice-masterclass-js && npm run graphify
+```
+
+### What Graphify Does
+- Analyzes code dependencies and relationships
+- Generates dependency graph (JSON format)
+- Creates visual reports (Markdown)
+- Identifies code communities and patterns
+- Shows token costs for analysis
+
+### Commands Reference
+| Command | Description |
+|---------|-------------|
+| `node graphify-runner.js` | Run analysis (from root) |
+| `npm run graphify` | Run analysis (from alice-masterclass-js) |
+| `graphify --help` | Show graphify help |
+| `graphify analyze <path>` | Analyze specific directory |
+
+### Troubleshooting
+
+**"graphify: command not found"**
+- Install globally: `npm install -g graphify`
+- Or use: `npx graphify analyze alice-masterclass-js`
+
+**Permission errors**
+- Use `sudo npm install -g graphify` (not recommended)
+- Or install locally: `cd alice-masterclass-js && npm install --save-dev graphify`
+
+### Notes
+- Graphify configuration: `.graphifyignore` file
+- Ignored patterns: node_modules, dist, .angular, etc.
+- Analysis is non-destructive (read-only)

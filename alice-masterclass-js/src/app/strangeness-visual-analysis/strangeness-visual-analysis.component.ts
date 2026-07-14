@@ -58,7 +58,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     'assets/models/alice components/tpc.glb',
     'assets/models/alice components/TRD.glb',
     'assets/models/alice components/TOF.glb',
-    'assets/models/alice components/EMCal_Dcal.glb',
+    'assets/models/alice components/EMCAL.glb',
     'assets/models/alice components/DCAL.glb',
     'assets/models/alice components/PHOS.glb',
     'assets/models/alice components/L3.glb',
@@ -132,6 +132,18 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     return EventDisplayComponent.detectorPartPresentation(path);
   }
 
+  /** i18n key under VA_COACH.PART_DESC for the piece currently highlighted (e.g. ITS). */
+  get vaCoachCurrentPartDescId(): string | null {
+    const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    if (!path) return null;
+    const file = path.replace(/^.*[/\\]/, '').toLowerCase();
+    const byFile: Record<string, string> = {
+      'its.glb': 'ITS',
+      // Add TPC, TRD, … here as descriptions are written.
+    };
+    return byFile[file] ?? null;
+  }
+
   onVaCoachWelcomeContinue(): void {
     this.vaCoachWelcomePhase = false;
   }
@@ -142,6 +154,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
+    if (EventDisplayComponent.isItsAssetPath(assetPath)) {
+      this.translateService.get('VA_COACH.ITS_UNLOCK_TIP').subscribe((msg: string) => {
+        this.snackBar.open(msg, null, { duration: 7000 });
+      });
+    }
     if (!this.vaCoachOverlayVisible || this.vaCoachVictoryPhase || this.vaCoachWelcomePhase) return;
     const expected = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
     if (assetPath !== expected) return;

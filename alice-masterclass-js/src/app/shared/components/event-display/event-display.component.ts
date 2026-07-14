@@ -37,6 +37,18 @@ export interface DetectorPaletteItem {
   placed: boolean;
 }
 
+/** Progressive detector assembly unlock flags (which multipart pieces are on the scene). */
+export interface AssemblyUnlockState {
+  hasIts: boolean;
+  hasTpc: boolean;
+  hasTrd: boolean;
+  hasTof: boolean;
+  hasEmcal: boolean;
+  hasDcal: boolean;
+  hasPhos: boolean;
+  hasL3: boolean;
+}
+
 @Component({
   selector: 'app-event-display',
   templateUrl: './event-display.component.html',
@@ -62,6 +74,61 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly farClippingPlane: number = 1500;
   static readonly objectScale: number = 1.0e-2;
   static readonly detectorModelScale: number = 1.0e-2;
+  /**
+   * ITS/TPC/TRD GLBs place the beam axis at local y=+30 (cm). After
+   * `detectorModelScale` that is +0.3 in scene units. L3 / TOF / calorimeters
+   * are already around the origin — only cancel the barrel offset so tracks
+   * at (0,0,0) sit on the detector axis.
+   */
+  static readonly DETECTOR_BEAM_AXIS_Y_OFFSET = -30 * EventDisplayComponent.detectorModelScale;
+
+  /**
+   * Max transverse radius (trajectory data units, ~cm) for ITS-only track stubs.
+   * Sparse event trajectories typically have ~1 point inside ITS; we interpolate
+   * the boundary so stubs remain readable (~10 cm).
+   */
+  static readonly ITS_STUB_RADIUS = 10;
+
+  /** Keeps trajectory points with R = sqrt(x²+y²) < rMax; interpolates the exit point. */
+  static clipTrajectoryToRadius(trajectory: number[][], rMax: number): number[][] {
+    if (!trajectory?.length || !(rMax > 0)) {
+      return [];
+    }
+    const rOf = (p: number[]) => Math.hypot(p[0], p[1]);
+    const out: number[][] = [];
+    for (let i = 0; i < trajectory.length; i++) {
+      const p = trajectory[i];
+      const r = rOf(p);
+      if (r < rMax) {
+        out.push([p[0], p[1], p[2]]);
+        continue;
+      }
+      if (i === 0) {
+        return [];
+      }
+      const prev = trajectory[i - 1];
+      const rPrev = rOf(prev);
+      if (rPrev >= rMax) {
+        break;
+      }
+      const t = r === rPrev ? 0 : (rMax - rPrev) / (r - rPrev);
+      out.push([
+        prev[0] + t * (p[0] - prev[0]),
+        prev[1] + t * (p[1] - prev[1]),
+        prev[2] + t * (p[2] - prev[2]),
+      ]);
+      break;
+    }
+    return out;
+  }
+
+  static isItsAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])its\.glb($|\?)/i.test(assetPath);
+  }
+
+  static isTpcAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])tpc\.glb($|\?)/i.test(assetPath);
+  }
 
   static detectorPartPresentation(assetPath: string): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
     const baseName = assetPath.replace(/^.*[/\\]/, '');
@@ -72,7 +139,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       'trd.glb': 'EVENT_DISPLAY.DETECTOR_TRD',
       'tof.glb': 'EVENT_DISPLAY.DETECTOR_TOF',
       'l3.glb': 'EVENT_DISPLAY.DETECTOR_L3',
-      'emcal_dcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
+      'emcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
       'dcal.glb': 'EVENT_DISPLAY.DETECTOR_DCAL',
       'phos.glb': 'EVENT_DISPLAY.DETECTOR_PHOS',
     };
@@ -86,14 +153,35 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   static isCalorimeterAssetPath(assetPath: string): boolean {
-    return /(^|[/\\])(emcal_dcal|dcal)\.glb($|\?)/i.test(assetPath);
+    return /(^|[/\\])(emcal|dcal)\.glb($|\?)/i.test(assetPath);
   }
 
   static calorimeterDetectorId(assetPath: string): CalorimeterDetectorId | null {
     const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
-    if (file.startsWith('emcal_dcal')) return 'emcal';
+    if (file.startsWith('emcal')) return 'emcal';
     if (file.startsWith('dcal')) return 'dcal';
     return null;
+  }
+
+  /** Barrel trackers (ITS/TPC/TRD) were exported with beam axis at y=+30. */
+  static needsBeamAxisYCorrection(assetPath: string): boolean {
+    return /(^|[/\\])(its|tpc|trd)\.glb($|\?)/i.test(assetPath);
+  }
+
+  /**
+   * Shift barrel parts onto the world origin and hide leftover CAD helper cubes.
+   * Calorimeter GLBs stay put — they are already coaxial with L3; readout bars
+   * are rebuilt from those meshes in world space.
+   */
+  static alignDetectorPartToBeamAxis(scene: THREE.Object3D, assetPath: string): void {
+    scene.traverse((o: THREE.Object3D) => {
+      if (/^Cube(\d+)?$/i.test(o.name || '')) {
+        o.visible = false;
+      }
+    });
+    if (EventDisplayComponent.needsBeamAxisYCorrection(assetPath)) {
+      scene.position.y = EventDisplayComponent.DETECTOR_BEAM_AXIS_Y_OFFSET;
+    }
   }
 
   static readonly lineSegments: number = 50;
@@ -331,6 +419,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** Radial energy-readout bars on EMCal / DCal surfaces. */
   private calorimeterReadouts: THREE.Group = new THREE.Group();
   private cascadeVertexMarkers: THREE.Object3D = new THREE.Object3D();
+  /** Primary vertex marker shown while ITS is unlocked but TPC is not yet placed. */
+  private primaryVertexMarkers: THREE.Object3D = new THREE.Object3D();
   private cascadeConnectorLine: Line2 | null = null;
   private cascadeXiLine: Line2 | null = null;
   private lambdaFlightLine2Track: Line2 | null = null;
@@ -491,7 +581,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const detectorOpacity =
         EventDisplayComponent.DETECTOR_INNER_OPACITY * (1 - t) +
         EventDisplayComponent.DETECTOR_OUTER_OPACITY * t;
-      const isCalorimeterLayer = /(^|[/\\])(emcal_dcal|dcal|phos)\.glb($|\?)/i.test(modelPath);
+      const isCalorimeterLayer = /(^|[/\\])(emcal|dcal|phos)\.glb($|\?)/i.test(modelPath);
       const defaultPartOpacity = isCalorimeterLayer
         ? Math.max(detectorOpacity, 0.45)
         : detectorOpacity;
@@ -504,6 +594,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           const scene = gltf.scene;
           const radialInflate = 1 + pathIndex * EventDisplayComponent.DETECTOR_LAYER_RADIAL_INFLATE_STEP;
           scene.scale.setScalar(EventDisplayComponent.detectorModelScale * radialInflate);
+          EventDisplayComponent.alignDetectorPartToBeamAxis(scene, modelPath);
           scene.updateMatrixWorld(true);
           scene.userData = {
             ...(scene.userData || {}),
@@ -596,6 +687,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.detectorAssemblyPiecePlaced.emit(item.assetPath);
 
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
+    this.refreshPhysicsForAssemblyUnlock();
 
     const allPlaced = this.detectorPaletteItems.every((row) => row.placed);
     if (allPlaced) {
@@ -637,6 +729,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.sidebarOpened = false;
     this.applyUiDetectorOpacities();
     this.rebuildCalorimeterReadouts();
+    this.refreshPhysicsForAssemblyUnlock();
     this.cdr.markForCheck();
     this.resize(true);
   }
@@ -1533,13 +1626,192 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.clusters.visible = false;
       this.calorimeterReadouts.visible = false;
       this.cascadeVertexMarkers.visible = false;
+      this.primaryVertexMarkers.visible = false;
       return;
     }
     this.tracks.visible = this.desiredTracksShown;
     this.decays.visible = this.desiredDecaysShown;
     this.clusters.visible = this.desiredClustersShown;
     this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
+    this.primaryVertexMarkers.visible = this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0;
     this.syncCalorimeterReadoutVisibility();
+  }
+
+  /** True while multipart drag-assembly is still in progress (progressive track reveal applies). */
+  private shouldUseProgressiveTrackReveal(): boolean {
+    return this.detectorMultipartAssemblyMode && !this._detectorInteractiveAssemblyDone;
+  }
+
+  private getAssemblyUnlockState(): AssemblyUnlockState {
+    const paths = [...this.detectorPartRootByPath.keys()];
+    const hasFile = (file: string) =>
+      paths.some((p) => new RegExp(`(^|[/\\\\])${file}\\.glb($|\\?)`, 'i').test(p));
+    return {
+      hasIts: hasFile('its'),
+      hasTpc: hasFile('tpc'),
+      hasTrd: hasFile('trd'),
+      hasTof: hasFile('tof'),
+      hasEmcal: hasFile('emcal'),
+      hasDcal: hasFile('dcal'),
+      hasPhos: hasFile('phos'),
+      hasL3: hasFile('l3'),
+    };
+  }
+
+  /** Rebuild tracks/markers when the set of snapped detector parts changes. */
+  private refreshPhysicsForAssemblyUnlock(): void {
+    if (!this._event) {
+      return;
+    }
+    const deferTrackDraw = this.isCollisionIntroBlockingPhysics();
+    this.trackDrawAnimations = [];
+    if (deferTrackDraw) {
+      this.pendingTrackDrawLines = [];
+    } else {
+      this.trackDrawAnimationStartMs = performance.now();
+    }
+    this.rebuildTracksFromEvent(deferTrackDraw);
+    this.applyDesiredPhysicsVisibility();
+    this.cdr.markForCheck();
+  }
+
+  private clearPrimaryVertexMarkers(): void {
+    while (this.primaryVertexMarkers.children.length > 0) {
+      const child = this.primaryVertexMarkers.children[0];
+      this.primaryVertexMarkers.remove(child);
+      if ((child as THREE.Mesh).geometry) {
+        (child as THREE.Mesh).geometry.dispose();
+      }
+      const mat = (child as THREE.Mesh).material;
+      if (mat) {
+        if (Array.isArray(mat)) {
+          mat.forEach((m) => m.dispose());
+        } else {
+          mat.dispose();
+        }
+      }
+    }
+  }
+
+  private estimatePrimaryVertexPosition(tracks: Track[]): number[] {
+    let sx = 0;
+    let sy = 0;
+    let sz = 0;
+    let n = 0;
+    for (const track of tracks || []) {
+      const traj = track.trajectory;
+      if (!traj?.length) {
+        continue;
+      }
+      const p0 = traj[0];
+      const r = Math.hypot(p0[0], p0[1]);
+      if (r > EventDisplayComponent.ITS_STUB_RADIUS) {
+        continue;
+      }
+      sx += p0[0];
+      sy += p0[1];
+      sz += p0[2];
+      n++;
+    }
+    if (n === 0) {
+      return [0, 0, 0];
+    }
+    return [sx / n, sy / n, sz / n];
+  }
+
+  private trajectoryForAssemblyMode(trajectory: number[][], stubOnly: boolean): number[][] | null {
+    if (!trajectory?.length) {
+      return null;
+    }
+    const points = stubOnly
+      ? EventDisplayComponent.clipTrajectoryToRadius(trajectory, EventDisplayComponent.ITS_STUB_RADIUS)
+      : trajectory;
+    return points.length >= 2 ? points : null;
+  }
+
+  /**
+   * Builds background + decay track meshes (and vertex markers) according to
+   * assembly unlock: ITS-only → stubs + primary vertex; TPC → full trajectories.
+   */
+  private rebuildTracksFromEvent(deferTrackDrawForIntro: boolean): void {
+    this.tracks.clear();
+    this.decays.clear();
+    this.cascadeVertexMarkers.clear();
+    this.clearPrimaryVertexMarkers();
+
+    if (!this._event) {
+      return;
+    }
+
+    const progressive = this.shouldUseProgressiveTrackReveal();
+    const unlock = this.getAssemblyUnlockState();
+    const showFull = !progressive || unlock.hasTpc;
+    const showStubs = progressive && unlock.hasIts && !unlock.hasTpc;
+
+    if (!showFull && !showStubs) {
+      return;
+    }
+
+    const stubOnly = showStubs;
+
+    if (showFull) {
+      const cascadeVertices = this.getCascadeVertices(this._event);
+      for (const v of cascadeVertices) {
+        this.cascadeVertexMarkers.add(this.createVertexMarker(v.pos, v.label));
+      }
+      this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
+    }
+
+    if (showStubs) {
+      const pv = this.estimatePrimaryVertexPosition(this._event.tracks);
+      this.primaryVertexMarkers.add(this.createVertexMarker(pv, 'Primary Vertex'));
+    }
+
+    for (const track of this._event.tracks) {
+      const traj = this.trajectoryForAssemblyMode(track.trajectory, stubOnly);
+      if (!traj) {
+        continue;
+      }
+      const line = this.createLine(traj, this.trackMaterial);
+      this.tracks.add(line);
+      if (deferTrackDrawForIntro) {
+        this.pendingTrackDrawLines.push(line);
+      } else {
+        this.queueTrackDrawAnimation(line);
+      }
+    }
+
+    for (const particleList of this._event.decays) {
+      const decayObject = new THREE.Object3D();
+      for (const track of particleList) {
+        const traj = this.trajectoryForAssemblyMode(track.trajectory, stubOnly);
+        if (!traj) {
+          continue;
+        }
+        let material: THREE.Material;
+        if (track.type === TrackType.CASCADE_BACHELOR) {
+          material = this.bachelorTrackMaterial;
+        } else if (track.sign < 0) {
+          material = this.negativeTrackMaterial;
+        } else if (track.sign > 0) {
+          material = this.postiveTrackMaterial;
+        } else {
+          material = this.trackMaterial;
+        }
+        const line = this.createLine(traj, material);
+        (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
+        decayObject.add(line);
+        if (deferTrackDrawForIntro) {
+          this.pendingTrackDrawLines.push(line);
+        } else {
+          this.queueTrackDrawAnimation(line);
+        }
+      }
+      if (decayObject.children.length > 0) {
+        this.decays.add(decayObject);
+      }
+      break;
+    }
   }
 
   private clearCollisionProtonModels(): void {
@@ -1760,6 +2032,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.decays.clear();
     this.clusters.clear();
     this.cascadeVertexMarkers.clear();
+    this.clearPrimaryVertexMarkers();
     if (this.cascadeConnectorLine) {
       this.scene.remove(this.cascadeConnectorLine);
       this.cascadeConnectorLine.geometry.dispose();
@@ -1799,45 +2072,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       : performance.now();
     this.loading = true;
     if (this._event !== null) {
-      const cascadeVertices = this.getCascadeVertices(this._event);
-      for (const v of cascadeVertices) {
-        this.cascadeVertexMarkers.add(this.createVertexMarker(v.pos, v.label));
-      }
-      this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
-      for (let track of this._event.tracks) {
-        const line = this.createLine(track.trajectory, this.trackMaterial);
-        this.tracks.add(line);
-        if (deferTrackDrawForIntro) {
-          this.pendingTrackDrawLines.push(line);
-        } else {
-          this.queueTrackDrawAnimation(line);
-        }
-      }
-      for (let particleList of this._event.decays) {
-        const decayObject = new THREE.Object3D();
-        for (let track of particleList) {
-          let material: THREE.Material;
-          if (track.type === TrackType.CASCADE_BACHELOR) {
-            material = this.bachelorTrackMaterial;
-          } else if (track.sign < 0) {
-            material = this.negativeTrackMaterial;
-          } else if (track.sign > 0) {
-            material = this.postiveTrackMaterial;
-          } else {
-            material = this.trackMaterial;
-          }
-          const line = this.createLine(track.trajectory, material);
-          (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
-          decayObject.add(line);
-          if (deferTrackDrawForIntro) {
-            this.pendingTrackDrawLines.push(line);
-          } else {
-            this.queueTrackDrawAnimation(line);
-          }
-        }
-        this.decays.add(decayObject);
-        break;
-      }
+      this.rebuildTracksFromEvent(deferTrackDrawForIntro);
       if (this._event.clusters && this._event.clusters.length > 0) {
         const points: Array<THREE.Vector3> = [];
         for (let point of this._event.clusters) {
@@ -2778,6 +3013,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.scene.add(this.detector);
     this.scene.add(this.tracks);
     this.scene.add(this.cascadeVertexMarkers);
+    this.scene.add(this.primaryVertexMarkers);
     this.scene.add(this.clusters);
     this.scene.add(this.calorimeterReadouts);
     this.scene.add(this.decays);
