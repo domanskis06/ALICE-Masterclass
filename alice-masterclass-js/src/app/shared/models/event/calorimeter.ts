@@ -12,13 +12,8 @@ export interface CaloPanelSpec {
   cellsZ: number;
 }
 
-/**
- * 6 plates on the EMCal arc, seams parallel to Z (side-by-side in φ):
- * five dense 12×48 supermodules + one narrow 4×48 strip.
- * Absolute Blender R/φ are reference for cell counts & ratios; scene placement
- * is anchored to the loaded EMCal mesh (see EventDisplay buildCalorimeterCellLayoutOnEmcal).
- */
-export const CALO_PANELS: readonly CaloPanelSpec[] = [
+/** EMCal: 5×(12×48) supermodules + 1×(4×48) strip, side-by-side in φ (long side || Z). */
+export const CALO_EMCAL_PANELS: readonly CaloPanelSpec[] = [
   { cellsPhi: 12, cellsZ: 48 },
   { cellsPhi: 12, cellsZ: 48 },
   { cellsPhi: 12, cellsZ: 48 },
@@ -27,50 +22,72 @@ export const CALO_PANELS: readonly CaloPanelSpec[] = [
   { cellsPhi: 4, cellsZ: 48 },
 ] as const;
 
-export const CALO_PANEL_COUNT = CALO_PANELS.length;
+/**
+ * DCal: inverted-U — two Z-bands of 3×(12×16), bridged at the outer φ end by 4×48.
+ * Panel order: band−Z (0..2), band+Z (3..5), connector (6).
+ */
+export const CALO_DCAL_PANELS: readonly CaloPanelSpec[] = [
+  { cellsPhi: 12, cellsZ: 16 },
+  { cellsPhi: 12, cellsZ: 16 },
+  { cellsPhi: 12, cellsZ: 16 },
+  { cellsPhi: 12, cellsZ: 16 },
+  { cellsPhi: 12, cellsZ: 16 },
+  { cellsPhi: 12, cellsZ: 16 },
+  { cellsPhi: 4, cellsZ: 48 },
+] as const;
 
-export const CALO_FLAT_SIZE = CALO_PANELS.reduce(
+/** @deprecated Prefer {@link CALO_EMCAL_PANELS}. */
+export const CALO_PANELS = CALO_EMCAL_PANELS;
+
+export const CALO_EMCAL_PANEL_COUNT = CALO_EMCAL_PANELS.length;
+export const CALO_DCAL_PANEL_COUNT = CALO_DCAL_PANELS.length;
+/** @deprecated Prefer {@link CALO_EMCAL_PANEL_COUNT}. */
+export const CALO_PANEL_COUNT = CALO_EMCAL_PANEL_COUNT;
+
+export const CALO_EMCAL_FLAT_SIZE = CALO_EMCAL_PANELS.reduce(
   (sum, p) => sum + p.cellsPhi * p.cellsZ,
   0
 );
+export const CALO_DCAL_FLAT_SIZE = CALO_DCAL_PANELS.reduce(
+  (sum, p) => sum + p.cellsPhi * p.cellsZ,
+  0
+);
+/** @deprecated Prefer {@link CALO_EMCAL_FLAT_SIZE}. */
+export const CALO_FLAT_SIZE = CALO_EMCAL_FLAT_SIZE;
 
-/** Dense pack index: panel-major, then φ within panel, then z along the beam. */
-export function caloFlatIndex(panel: number, phiIndex: number, zIndex: number): number {
-  let offset = 0;
-  for (let p = 0; p < panel; p++) {
-    offset += CALO_PANELS[p].cellsPhi * CALO_PANELS[p].cellsZ;
-  }
-  return offset + phiIndex * CALO_PANELS[panel].cellsZ + zIndex;
+export function caloPanelsFor(detector: CalorimeterDetectorId): readonly CaloPanelSpec[] {
+  return detector === 'dcal' ? CALO_DCAL_PANELS : CALO_EMCAL_PANELS;
 }
 
-export function caloPanelCellCount(panel: number): number {
-  const p = CALO_PANELS[panel];
+export function caloFlatSizeFor(detector: CalorimeterDetectorId): number {
+  return detector === 'dcal' ? CALO_DCAL_FLAT_SIZE : CALO_EMCAL_FLAT_SIZE;
+}
+
+/** Dense pack index: panel-major, then φ within panel, then z along the beam. */
+export function caloFlatIndex(
+  panel: number,
+  phiIndex: number,
+  zIndex: number,
+  panels: readonly CaloPanelSpec[] = CALO_EMCAL_PANELS
+): number {
+  let offset = 0;
+  for (let p = 0; p < panel; p++) {
+    offset += panels[p].cellsPhi * panels[p].cellsZ;
+  }
+  return offset + phiIndex * panels[panel].cellsZ + zIndex;
+}
+
+export function caloPanelCellCount(
+  panel: number,
+  panels: readonly CaloPanelSpec[] = CALO_EMCAL_PANELS
+): number {
+  const p = panels[panel];
   return p.cellsPhi * p.cellsZ;
 }
 
 /**
- * Reference World-Space geometry (single cube + arc layout) measured in Blender.
- * Bar box: X = pitch φ, Y = radial depth, Z = pitch along beam.
- */
-export const CALO_EMCAL_WORLD = {
-  /** Cylinder radius to bar centres (xy). */
-  radius: 811.6574,
-  /** φ of the first cell centre (panel 0, phiIndex 0), degrees. */
-  phi0Deg: -140.28,
-  /** z of the first cell centre (zIndex 0). */
-  z0: -48.0511,
-  /** Bounding-box pitches of one tower cube. */
-  pitchPhi: 12.7040,
-  pitchZ: 11.9521,
-  /** Radial extent of one cube (used as max readout height scale). */
-  radialDepth: 26.0017,
-  /** Reference world position of the first cell centre. */
-  origin: { x: -624.3343, y: -518.6467, z: -48.0511 },
-} as const;
-
-/**
  * Sparse cell activation from pp (or other) collision data.
- * Indices address {@link CALO_PANELS}; `energy` drives bar height (0..1 relative or GeV-scaled later).
+ * Indices address the detector’s panel list; `energy` drives bar height.
  */
 export interface CalorimeterCellHit {
   detector: CalorimeterDetectorId;
@@ -85,8 +102,8 @@ export interface CalorimeterEnergyPacks {
   caloDcal?: number[];
 }
 
-export function emptyCaloEnergyPack(): number[] {
-  return new Array(CALO_FLAT_SIZE).fill(0);
+export function emptyCaloEnergyPack(detector: CalorimeterDetectorId = 'emcal'): number[] {
+  return new Array(caloFlatSizeFor(detector)).fill(0);
 }
 
 /** Merges sparse hits into a dense pack for one detector (out-of-range hits ignored). */
@@ -94,11 +111,12 @@ export function packCalorimeterHits(
   hits: CalorimeterCellHit[] | undefined,
   detector: CalorimeterDetectorId
 ): number[] {
-  const pack = emptyCaloEnergyPack();
+  const panels = caloPanelsFor(detector);
+  const pack = emptyCaloEnergyPack(detector);
   if (!hits?.length) return pack;
   for (const hit of hits) {
     if (hit.detector !== detector) continue;
-    const panel = CALO_PANELS[hit.panel];
+    const panel = panels[hit.panel];
     if (
       !panel ||
       hit.phiIndex < 0 || hit.phiIndex >= panel.cellsPhi ||
@@ -106,15 +124,15 @@ export function packCalorimeterHits(
     ) {
       continue;
     }
-    const idx = caloFlatIndex(hit.panel, hit.phiIndex, hit.zIndex);
+    const idx = caloFlatIndex(hit.panel, hit.phiIndex, hit.zIndex, panels);
     pack[idx] = Math.max(pack[idx], hit.energy);
   }
   return pack;
 }
 
-/** @deprecated Use CALO_PANELS — kept as a summary for older call sites. */
+/** @deprecated Use CALO_EMCAL_PANELS — kept as a summary for older call sites. */
 export const CALO_GRID = {
-  panelCount: CALO_PANEL_COUNT,
+  panelCount: CALO_EMCAL_PANEL_COUNT,
   cellsPhi: 12,
   cellsZ: 48,
 } as const;

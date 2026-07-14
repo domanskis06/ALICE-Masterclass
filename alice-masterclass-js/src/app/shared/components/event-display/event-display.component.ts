@@ -13,7 +13,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
 import {
   Event, Track, TrackType, CalorimeterDetectorId,
-  CALO_PANELS, CALO_FLAT_SIZE, caloFlatIndex, packCalorimeterHits
+  CALO_PANELS, CALO_DCAL_PANELS, caloFlatSizeFor,
+  caloFlatIndex, caloPanelsFor, packCalorimeterHits
 } from '../../models';
 import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
@@ -169,15 +170,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private static readonly CALO_BAR_MAX_COUNT = 3200;
   private static readonly CALO_BAR_PITCH_FILL = 0.96;
   private static readonly CALO_BAR_MIN_HEIGHT = 0.01;
-  private static readonly CALO_BAR_MAX_HEIGHT = 0.25;
+  private static readonly CALO_BAR_MAX_HEIGHT = 0.35;
   private static readonly CALO_BAR_DARK_EMISSIVE = 0.9;
-  /**
-   * Pulls the algorithmic grid onto the loaded EMCal face (user-tuned).
-   * Absolute Blender R×0.01 alone sits far outside the visible calorimeter.
-   */
-  private static readonly CALO_BAR_SURFACE_OUTSET = 0.63;
-  /** Visible seam between neighbouring plates as a fraction of one cell φ pitch. */
-  private static readonly CALO_PANEL_SEAM_CELLS = 0.85;
 
   private trackMaterial: THREE.Material = null;
   private postiveTrackMaterial: THREE.Material = null;
@@ -840,14 +834,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     for (const [assetPath, root] of this.detectorPartRootByPath.entries()) {
       const detector = EventDisplayComponent.calorimeterDetectorId(assetPath);
-      if (detector !== 'emcal') continue;
+      if (!detector) continue;
 
-      // Structure from CALO_PANELS (5×12×48 + 1×4×48); position from live EMCal mesh.
-      const cells = this.buildCalorimeterCellLayoutOnEmcal(root);
+      const cells = detector === 'emcal'
+        ? this.buildCalorimeterCellLayoutOnEmcal(root)
+        : this.buildCalorimeterCellLayoutOnDcal(root);
       if (cells.length === 0) continue;
 
       const energies = this.resolveCalorimeterEnergies(detector, cells);
-      const mesh = this.createCalorimeterBarInstances(cells, energies);
+      const mesh = this.createCalorimeterBarInstances(cells, energies, detector);
       mesh.userData = { ...(mesh.userData || {}), detectorAssetPath: assetPath, calorimeterDetector: detector };
       mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 200;
       this.calorimeterReadouts.add(mesh);
@@ -865,9 +860,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     cells: Array<{ position: THREE.Vector3; panel: number; phiIndex: number; zIndex: number }>
   ): Float32Array {
     const cellCount = cells.length;
+    const flatSize = caloFlatSizeFor(detector);
     const ev = this._event;
     const dense = detector === 'emcal' ? ev?.caloEmcal : ev?.caloDcal;
-    if (dense && dense.length >= Math.min(cellCount, CALO_FLAT_SIZE)) {
+    if (dense && dense.length >= Math.min(cellCount, flatSize)) {
       const out = new Float32Array(cellCount);
       for (let i = 0; i < cellCount; i++) {
         out[i] = dense[i] ?? 0;
@@ -955,10 +951,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Places the algorithmic panel grid (5×12×48 + 1×4×48) onto the loaded EMCal
-   * surface. Panel seams run parallel to Z (plates sit side-by-side in φ).
-   * Radius/φ/z come from the live mesh so bars sit on the visible calorimeter;
-   * cell counts and relative pitches come from {@link CALO_PANELS} / survey ratios.
+   * Places the EMCal readout grid (5×12×48 + 1×4×48) on the loaded detector face.
+   * Flat plates fold about Z; seams between plates run parallel to Z.
    */
   private buildCalorimeterCellLayoutOnEmcal(root: THREE.Object3D): Array<{
     position: THREE.Vector3;
@@ -967,30 +961,37 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     zIndex: number;
     pitchPhi: number;
     pitchZ: number;
+    outwardX: number;
+    outwardY: number;
+    tangentX: number;
+    tangentY: number;
   }> {
     const coverage = this.measureCalorimeterCylindricalCoverage(root);
     if (!coverage) return [];
 
     const { radius, zMin, zMax, phiStart, phiEnd } = coverage;
-    const surfaceR = radius * EventDisplayComponent.CALO_BAR_SURFACE_OUTSET;
+    // Final fit onto the live EMCal mesh (settled values).
+    const surfaceR = radius * 0.63;
     const phiMid = (phiStart + phiEnd) * 0.5;
-    const zLo = zMin;
-    const zHi = zMax;
+    const zMid = (zMin + zMax) * 0.5;
+    const zHalf = (zMax - zMin) * 0.5 * 0.7;
+    const zLo = zMid - zHalf;
+    const zHi = zMid + zHalf;
 
-    const cellsZ = CALO_PANELS[0].cellsZ; // 48 — long axis along Z for every plate
-    const totalPhiCells = CALO_PANELS.reduce((s, p) => s + p.cellsPhi, 0); // 64
-    const seamCells = EventDisplayComponent.CALO_PANEL_SEAM_CELLS;
-    const seamCount = Math.max(0, CALO_PANELS.length - 1);
-    // Unit slots along φ: real cells + seams between plates (gaps || Z).
-    const phiSlots = totalPhiCells + seamCount * seamCells;
-    const phiSpan = phiEnd - phiStart;
-    const dPhi = phiSpan / phiSlots;
-    const pitchPhi = surfaceR * Math.abs(dPhi);
+    const cellsZ = CALO_PANELS[0].cellsZ;
+    const nPanels = CALO_PANELS.length;
+    const foldRad = (20 * Math.PI) / 180;
+    const cellAngle = foldRad / CALO_PANELS[0].cellsPhi;
+    const shiftRad = 3 * cellAngle;
+    const pitchPhi = ((surfaceR * foldRad) / CALO_PANELS[0].cellsPhi) * 0.88;
     const pitchZ = (zHi - zLo) / cellsZ;
+    const seam = 0.92 * pitchPhi;
 
-    // Centre the pack on the EMCal mid-φ (plane containing the beam / Z axis).
-    const packHalf = phiSpan * 0.5;
-    const phiPack0 = phiMid - packHalf;
+    let angle = phiMid - foldRad * (nPanels - 1) * 0.5 + shiftRad;
+
+    const w0 = CALO_PANELS[0].cellsPhi * pitchPhi;
+    let hingeX = surfaceR * Math.cos(angle) - (-Math.sin(angle)) * (w0 * 0.5);
+    let hingeY = surfaceR * Math.sin(angle) - Math.cos(angle) * (w0 * 0.5);
 
     const cells: Array<{
       position: THREE.Vector3;
@@ -999,35 +1000,175 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       zIndex: number;
       pitchPhi: number;
       pitchZ: number;
+      outwardX: number;
+      outwardY: number;
+      tangentX: number;
+      tangentY: number;
     }> = [];
 
-    let slot = 0;
-    for (let p = 0; p < CALO_PANELS.length; p++) {
-      if (p > 0) slot += seamCells; // empty gap → visible plate boundary || Z
+    for (let p = 0; p < nPanels; p++) {
       const panel = CALO_PANELS[p];
+      const panelWidth = panel.cellsPhi * pitchPhi;
+      const outwardX = Math.cos(angle);
+      const outwardY = Math.sin(angle);
+      const tangentX = -Math.sin(angle);
+      const tangentY = Math.cos(angle);
+
       for (let i = 0; i < panel.cellsPhi; i++) {
-        const phi = phiPack0 + (slot + 0.5) * dPhi;
-        const cos = Math.cos(phi);
-        const sin = Math.sin(phi);
+        const along = (i + 0.5) * pitchPhi;
+        const x = hingeX + tangentX * along;
+        const y = hingeY + tangentY * along;
         for (let j = 0; j < panel.cellsZ; j++) {
           const z = zLo + (j + 0.5) * pitchZ;
           cells.push({
-            position: new THREE.Vector3(surfaceR * cos, surfaceR * sin, z),
+            position: new THREE.Vector3(x, y, z),
             panel: p,
             phiIndex: i,
             zIndex: j,
             pitchPhi,
-            pitchZ
+            pitchZ,
+            outwardX,
+            outwardY,
+            tangentX,
+            tangentY
           });
         }
-        slot += 1;
       }
+
+      hingeX += tangentX * (panelWidth + seam);
+      hingeY += tangentY * (panelWidth + seam);
+      angle += foldRad;
     }
     return cells;
   }
 
-  /** Measures the loaded EMCal barrel face in scene space: radius, z span, contiguous φ arc. */
-  private measureCalorimeterCylindricalCoverage(root: THREE.Object3D): {
+  /**
+   * Places the DCal readout as an inverted U:
+   * two Z-bands of 3×(12×16) folded in φ, bridged at the outer φ end by a 4×48 strip.
+   */
+  private buildCalorimeterCellLayoutOnDcal(root: THREE.Object3D): Array<{
+    position: THREE.Vector3;
+    panel: number;
+    phiIndex: number;
+    zIndex: number;
+    pitchPhi: number;
+    pitchZ: number;
+    outwardX: number;
+    outwardY: number;
+    tangentX: number;
+    tangentY: number;
+  }> {
+    const coverage = this.measureCalorimeterCylindricalCoverage(root, 'dcal');
+    if (!coverage) return [];
+
+    const { radius, zMin, zMax, phiStart, phiEnd } = coverage;
+    // Final fit onto the live DCal mesh (settled values).
+    const surfaceR = radius * 0.329;
+    const phiMid = (phiStart + phiEnd) * 0.5;
+    const zMid = (zMin + zMax) * 0.5;
+    const zHalf = (zMax - zMin) * 0.5 * 0.95;
+    const zLo = zMid - zHalf;
+    const zHi = zMid + zHalf;
+    const zSpan = zHi - zLo;
+    const gapZ = zSpan * 0.35;
+    const bandSpan = Math.max(1e-4, (zSpan - gapZ) * 0.5);
+    const band0Lo = zLo;
+    const band0Hi = zLo + bandSpan;
+    const band1Lo = zHi - bandSpan;
+    const band1Hi = zHi;
+
+    const panels = CALO_DCAL_PANELS;
+    const bandCount = 3;
+    const mainCellsPhi = panels[0].cellsPhi;
+    const foldRad = (20 * Math.PI) / 180;
+    const cellAngle = foldRad / mainCellsPhi;
+    const shiftRad = 0.75 * cellAngle;
+    const pitchPhi = ((surfaceR * foldRad) / mainCellsPhi) * 0.987;
+    const seam = 0.9 * pitchPhi;
+
+    // 3 band plates + 1 connector in φ.
+    const nPhiSlots = bandCount + 1;
+    let angle = phiMid - foldRad * (nPhiSlots - 1) * 0.5 + shiftRad;
+    const w0 = mainCellsPhi * pitchPhi;
+    let hingeX = surfaceR * Math.cos(angle) - (-Math.sin(angle)) * (w0 * 0.5);
+    let hingeY = surfaceR * Math.sin(angle) - Math.cos(angle) * (w0 * 0.5);
+
+    type Cell = {
+      position: THREE.Vector3;
+      panel: number;
+      phiIndex: number;
+      zIndex: number;
+      pitchPhi: number;
+      pitchZ: number;
+      outwardX: number;
+      outwardY: number;
+      tangentX: number;
+      tangentY: number;
+    };
+    const cells: Cell[] = [];
+
+    const pushPanel = (
+      panelIndex: number,
+      cellsPhi: number,
+      cellsZ: number,
+      zPanelLo: number,
+      zPanelHi: number,
+      ang: number,
+      hx: number,
+      hy: number
+    ) => {
+      const pitchZ = (zPanelHi - zPanelLo) / cellsZ;
+      const outwardX = Math.cos(ang);
+      const outwardY = Math.sin(ang);
+      const tangentX = -Math.sin(ang);
+      const tangentY = Math.cos(ang);
+      for (let i = 0; i < cellsPhi; i++) {
+        const along = (i + 0.5) * pitchPhi;
+        const x = hx + tangentX * along;
+        const y = hy + tangentY * along;
+        for (let j = 0; j < cellsZ; j++) {
+          const z = zPanelLo + (j + 0.5) * pitchZ;
+          cells.push({
+            position: new THREE.Vector3(x, y, z),
+            panel: panelIndex,
+            phiIndex: i,
+            zIndex: j,
+            pitchPhi,
+            pitchZ,
+            outwardX,
+            outwardY,
+            tangentX,
+            tangentY
+          });
+        }
+      }
+    };
+
+    // Two Z-bands share the same 3 φ plates (inverted-U arms).
+    for (let b = 0; b < bandCount; b++) {
+      const panelWidth = mainCellsPhi * pitchPhi;
+      const tX = -Math.sin(angle);
+      const tY = Math.cos(angle);
+      pushPanel(b, mainCellsPhi, 16, band0Lo, band0Hi, angle, hingeX, hingeY);
+      pushPanel(b + bandCount, mainCellsPhi, 16, band1Lo, band1Hi, angle, hingeX, hingeY);
+
+      hingeX += tX * (panelWidth + seam);
+      hingeY += tY * (panelWidth + seam);
+      angle += foldRad;
+    }
+
+    // Outer φ connector: same seam as between band plates (no extra centering gap).
+    const connector = panels[6];
+    pushPanel(6, connector.cellsPhi, connector.cellsZ, zLo, zHi, angle, hingeX, hingeY);
+
+    return cells;
+  }
+
+  /** Measures EMCal/DCal barrel face in scene space: radius, z span, contiguous φ arc. */
+  private measureCalorimeterCylindricalCoverage(
+    root: THREE.Object3D,
+    detector: CalorimeterDetectorId = 'emcal'
+  ): {
     radius: number;
     zMin: number;
     zMax: number;
@@ -1040,8 +1181,29 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const radii: number[] = [];
     const worldPos = new THREE.Vector3();
 
+    const isTower = (o: THREE.Object3D): boolean => {
+      let p: THREE.Object3D | null = o;
+      while (p) {
+        const n = (p.name || '').toUpperCase();
+        if (detector === 'dcal') {
+          if (n.startsWith('DCSM_') || n.startsWith('DCEXT_')) return true;
+        } else if (n.startsWith('SMOD_') || n.startsWith('SM3RD_')) {
+          return true;
+        }
+        p = p.parent;
+      }
+      return false;
+    };
+
+    let towerMeshes = 0;
+    root.traverse((o: THREE.Object3D) => {
+      if ((o as THREE.Mesh).isMesh && isTower(o)) towerMeshes += 1;
+    });
+    const preferTower = towerMeshes >= 16;
+
     root.traverse((o: THREE.Object3D) => {
       if (!(o as THREE.Mesh).isMesh) return;
+      if (preferTower && !isTower(o)) return;
       o.getWorldPosition(worldPos);
       const r = Math.hypot(worldPos.x, worldPos.y);
       if (r < 0.4) return;
@@ -1050,6 +1212,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       zs.push(worldPos.z);
     });
     if (radii.length < 16) return null;
+
 
     const sortedR = radii.slice().sort((a, b) => a - b);
     const medianR = sortedR[Math.floor(sortedR.length / 2)];
@@ -1109,34 +1272,39 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       zIndex: number;
       pitchPhi: number;
       pitchZ: number;
+      outwardX: number;
+      outwardY: number;
+      tangentX: number;
+      tangentY: number;
     }>,
-    energies: Float32Array
+    energies: Float32Array,
+    detector: CalorimeterDetectorId = 'emcal'
   ): THREE.InstancedMesh {
     const mesh = new THREE.InstancedMesh(this.caloBarGeometry, this.caloBarMaterial, cells.length);
     const matrix = new THREE.Matrix4();
     const position = new THREE.Vector3();
     const outward = new THREE.Vector3();
     const tangential = new THREE.Vector3();
-    const beam = new THREE.Vector3();
+    const beam = new THREE.Vector3(0, 0, 1);
     const colX = new THREE.Vector3();
     const colY = new THREE.Vector3();
     const colZ = new THREE.Vector3();
-    const worldZ = new THREE.Vector3(0, 0, 1);
     const fill = EventDisplayComponent.CALO_BAR_PITCH_FILL;
     const minH = EventDisplayComponent.CALO_BAR_MIN_HEIGHT;
     const maxH = EventDisplayComponent.CALO_BAR_MAX_HEIGHT;
+    const panels = caloPanelsFor(detector);
 
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       const base = cell.position;
-      outward.set(base.x, base.y, 0);
-      if (outward.lengthSq() < 1e-8) {
-        outward.set(0, 1, 0);
-      } else {
-        outward.normalize();
-      }
+      // Same normal for every cell on a flat rectangular plate.
+      outward.set(cell.outwardX, cell.outwardY, 0).normalize();
+      tangential.set(cell.tangentX, cell.tangentY, 0).normalize();
 
-      const energy = Math.max(0, energies[caloFlatIndex(cell.panel, cell.phiIndex, cell.zIndex)] ?? energies[i] ?? 0);
+      const energy = Math.max(
+        0,
+        energies[caloFlatIndex(cell.panel, cell.phiIndex, cell.zIndex, panels)] ?? energies[i] ?? 0
+      );
       const height = energy <= 0 ? 0 : minH + Math.min(1, energy) * (maxH - minH);
       if (height <= 0) {
         matrix.makeScale(0, 0, 0);
@@ -1147,15 +1315,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const sizePhi = Math.max(1e-4, cell.pitchPhi * fill);
       const sizeZ = Math.max(1e-4, cell.pitchZ * fill);
 
-      tangential.crossVectors(outward, worldZ);
-      if (tangential.lengthSq() < 1e-10) {
-        tangential.set(1, 0, 0);
-      } else {
-        tangential.normalize();
-      }
-      beam.crossVectors(tangential, outward).normalize();
-
       position.copy(base).addScaledVector(outward, height * 0.5);
+      // Basis: X = flat panel width, Y = panel normal (bar height), Z = beam.
       matrix.makeBasis(
         colX.copy(tangential).multiplyScalar(sizePhi),
         colY.copy(outward).multiplyScalar(height),
@@ -2580,7 +2741,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cameraRhoz.lookAt(new THREE.Vector3(0, 0, 0));
     this.controls = new OrbitControls(this.camera3D, this.renderer.domElement);
     this.controls.target.set(0.0, 0.0, 0.0);
-    this.controls.maxPolarAngle = 0.5 * Math.PI;
+    this.controls.minPolarAngle = 0;
+    this.controls.maxPolarAngle = Math.PI;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.composer = new EffectComposer(this.renderer);

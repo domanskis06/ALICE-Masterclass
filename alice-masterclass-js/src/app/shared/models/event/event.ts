@@ -25,11 +25,11 @@ export interface Event {
   clusters: number[][];
   decays: Track[][];
   /**
-   * Optional dense EMCal cell energies (length = CALO_FLAT_SIZE).
+   * Optional dense EMCal cell energies (length = CALO_EMCAL_FLAT_SIZE).
    * When set, readout bars use these values instead of the procedural preview.
    */
   caloEmcal?: number[];
-  /** Optional dense DCal cell energies (same layout as {@link caloEmcal}). */
+  /** Optional dense DCal cell energies (length = CALO_DCAL_FLAT_SIZE). */
   caloDcal?: number[];
   /**
    * Optional sparse calorimeter hits. Applied when the matching dense pack is absent;
