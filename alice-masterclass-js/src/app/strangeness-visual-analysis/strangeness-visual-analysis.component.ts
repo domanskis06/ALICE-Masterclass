@@ -55,6 +55,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   readonly ALICE_DETECTOR_MODEL = [
     'assets/models/alice components/its.glb',
+    'assets/models/alice components/FIT.glb',
     'assets/models/alice components/tpc.glb',
     'assets/models/alice components/TRD.glb',
     'assets/models/alice components/TOF.glb',
@@ -158,6 +159,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     const file = path.replace(/^.*[/\\]/, '').toLowerCase();
     const byFile: Record<string, string> = {
       'its.glb': 'ITS',
+      'fit.glb': 'FIT',
       'tpc.glb': 'TPC',
       'trd.glb': 'TRD',
       'tof.glb': 'TOF',

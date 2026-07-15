@@ -10,7 +10,7 @@ import { ApiService } from './shared/services/api.service';
     standalone: false
 })
 export class AppComponent {
-  readonly LANGUAGES: Array<string> = ['en'];//, 'de', 'es'];
+  readonly LANGUAGES: Array<string> = ['en', 'de']; // 'es' omitted: assets/i18n/es.json is empty
   readonly languageKey: string = 'language';
 
   constructor(private translateService: TranslateService, private apiService: ApiService) {
@@ -18,7 +18,7 @@ export class AppComponent {
 
     let language = localStorage.getItem(this.languageKey);
 
-    if (language === null) {
+    if (language === null || !this.LANGUAGES.includes(language)) {
       language = this.LANGUAGES[0];
     }
 

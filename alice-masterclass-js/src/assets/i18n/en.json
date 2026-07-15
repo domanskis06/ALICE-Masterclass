@@ -12,22 +12,31 @@
   "VA_COACH": {
     "WELCOME_TITLE": "Welcome, young apprentice of physics!",
     "WELCOME_P1": "You are about to explore particle collisions in the ALICE detector.",
-    "WELCOME_P2": "Beams travel through the beam pipe — an ultra-high-vacuum tube — until they meet at the interaction point inside ALICE.",
+    "WELCOME_P2": "Beams travel through the beam pipe - an ultra-high-vacuum tube — until they meet at the interaction point inside ALICE.",
     "WELCOME_P3": "You will build the detector piece by piece: we will tell you which fragment to drag next. When you are ready to start, tap Continue.",
     "WELCOME_CONTINUE": "Continue",
     "DRAG_TITLE": "Next piece to place",
     "DONE_TITLE": "Detector complete",
-    "DONE_BODY": "All parts are placed. You now have visibility and track options in the right-hand panel. Explore the event when you are ready.",
+    "DONE_BODY": "All parts are placed. You now have visibility and track options in the right-hand panel. Have fun!",
     "DONE_BUTTON": "Got it",
     "PART_DESC": {
       "ITS": {
         "TITLE": "ITS (Inner Tracking System)",
-        "BODY": "The ITS (Inner Tracking System) is the innermost particle tracking detector, located closest to the point where protons or heavy ions collide. It is built from extremely thin silicon sensors that record the passage of charged particles with a precision of just a few micrometres — less than the thickness of a human hair. This allows physicists to determine the exact point where particles are produced and to detect particles that decay almost immediately after their creation, before they can reach the outer detectors.",
+        "BODY": "The ITS is the innermost particle tracking detector, located closest to the point where protons or heavy ions collide. It is built from extremely thin silicon sensors that record the passage of charged particles with a precision of just a few micrometres - less than the thickness of a human hair. This allows physicists to determine the exact point where particles are produced and to detect particles that decay almost immediately after their creation, before they can reach the outer detectors.",
         "LETS_US": "ITS lets us:",
         "B1": "determine the primary vertex with a resolution better than 100 micrometres",
         "B2": "reconstruct secondary vertices needed for charm and hyperon decays",
         "B3": "track and identify low-momentum particles",
         "B4": "improve the momentum and angle resolution for particles reconstructed by the Time Projection Chamber (TPC)"
+      },
+      "FIT": {
+        "TITLE": "FIT (Fast Interaction Trigger)",
+        "BODY": "The FIT is one of the first detectors to respond after a particle collision in the ALICE experiment. It is designed to detect collisions almost instantly and provide a precise timing signal that tells the data acquisition system when an interesting event has occurred. This allows ALICE to record only the most relevant collisions while rejecting background events that are not useful for physics analysis.\n\nIn addition to its triggering role, the FIT detector measures the exact time of the collision and helps determine important properties such as the collision time and the event's centrality in heavy-ion collisions. These measurements are essential for the correct operation of other ALICE detectors, especially those that rely on precise timing, such as the TOF detector.",
+        "LETS_US": "FIT lets us:",
+        "B1": "Detect collisions in real time and trigger the data recording system.",
+        "B2": "Measure the collision time with very high precision.",
+        "B3": "Reject background events that are not true particle collisions.",
+        "B4": "Support other detectors, such as TOF, by providing accurate timing information."
       },
       "TPC": {
         "TITLE": "TPC (Time Projection Chamber)",
@@ -40,11 +49,11 @@
       },
       "TRD": {
         "TITLE": "TRD (Transition Radiation Detector)",
-        "BODY": "The TRD (Transition Radiation Detector) is a detector designed mainly to identify electrons among the many different particles produced in high-energy collisions. It uses a phenomenon called transition radiation, which occurs when a very fast charged particle passes through the boundary between two different materials and emits X-ray radiation. Electrons produce this radiation much more efficiently than heavier particles, allowing the TRD to distinguish them from particles such as pions. The TRD plays an important role in studying processes that involve electrons, including the investigation of the quark–gluon plasma created in heavy-ion collisions. By providing precise information about electron production and behavior, it helps physicists understand the conditions of matter under extreme temperatures and densities shortly after a collision.",
+        "BODY": "The TRD is a detector designed mainly to identify electrons among the many different particles produced in high-energy collisions. It uses a phenomenon called transition radiation, which occurs when a very fast charged particle passes through the boundary between two different materials and emits X-ray radiation. Electrons produce this radiation much more efficiently than heavier particles, allowing the TRD to distinguish them from particles such as pions. The TRD plays an important role in studying processes that involve electrons, including the investigation of the quark-gluon plasma created in heavy-ion collisions. By providing precise information about electron production and behavior, it helps physicists understand the conditions of matter under extreme temperatures and densities shortly after a collision.",
         "LETS_US": "TRD lets us:",
         "B1": "Identify electrons and separate them from other types of particles.",
         "B2": "Study electron production in high-energy proton and heavy-ion collisions.",
-        "B3": "Investigate the quark–gluon plasma and the extreme conditions created after collisions.",
+        "B3": "Investigate the quark-gluon plasma and the extreme conditions created after collisions.",
         "B4": "Improve event reconstruction by providing additional information about detected particles."
       },
       "TOF": {
@@ -58,15 +67,15 @@
       },
       "EMCAL": {
         "TITLE": "EMCAL (Electromagnetic Calorimeter)",
-        "BODY": "The EMCAL (Electromagnetic Calorimeter) measures the energy of electrons and photons produced in particle collisions. When one of these particles enters the detector, it creates an electromagnetic shower—a cascade of secondary particles that gradually deposit all of their energy inside the calorimeter. By measuring this cascade, physicists can determine the energy of the original particle with high precision.\n\nEMCAL also plays a key role in the study of jets—collimated sprays of particles produced when high-energy quarks and gluons are created in collisions. Measuring the energy of electrons, photons, and jets helps scientists investigate how matter behaves under the extreme conditions produced inside the ALICE experiment.",
+        "BODY": "The EMCAL measures the energy of electrons and photons produced in particle collisions. When one of these particles enters the detector, it creates an electromagnetic shower-a cascade of secondary particles that gradually deposit all of their energy inside the calorimeter. By measuring this cascade, physicists can determine the energy of the original particle with high precision.\n\nEMCAL also plays a key role in the study of jets—collimated sprays of particles produced when high-energy quarks and gluons are created in collisions. Measuring the energy of electrons, photons, and jets helps scientists investigate how matter behaves under the extreme conditions produced inside the ALICE experiment.",
         "LETS_US": "EMCAL lets us:",
         "B1": "Measure the energy of electrons and photons with high precision.",
         "B2": "Study jets produced in high-energy collisions.",
-        "B3": "Investigate how particles lose energy while passing through the quark–gluon plasma."
+        "B3": "Investigate how particles lose energy while passing through the quark-gluon plasma."
       },
       "DCAL": {
         "TITLE": "DCAL (Di-jet Calorimeter)",
-        "BODY": "The DCAL (Di-jet Calorimeter) is an extension of the EMCAL detector and operates on the same principle, measuring the energy of electrons and photons. Its main purpose is to increase the detector's coverage, allowing ALICE to observe more jets, especially pairs of jets produced in opposite directions during high-energy collisions.\n\nWith its larger acceptance, DCAL improves the study of di-jet events, where comparing the energies of two opposing jets reveals how they interact with the quark–gluon plasma. This extremely hot and dense state of matter filled the Universe for a tiny fraction of a second after the Big Bang, making these measurements an important tool for understanding the earliest moments of our Universe.",
+        "BODY": "The DCAL is an extension of the EMCAL detector and operates on the same principle, measuring the energy of electrons and photons. Its main purpose is to increase the detector's coverage, allowing ALICE to observe more jets, especially pairs of jets produced in opposite directions during high-energy collisions.\n\nWith its larger acceptance, DCAL improves the study of di-jet events, where comparing the energies of two opposing jets reveals how they interact with the quark–gluon plasma. This extremely hot and dense state of matter filled the Universe for a tiny fraction of a second after the Big Bang, making these measurements an important tool for understanding the earliest moments of our Universe.",
         "LETS_US": "DCAL lets us:",
         "B1": "Extend the jet detection area of the ALICE experiment.",
         "B2": "Study pairs of jets (di-jets) produced in opposite directions.",
@@ -74,7 +83,7 @@
       },
       "L3": {
         "TITLE": "L3 (Solenoid Magnet)",
-        "BODY": "The L3 magnet is the large solenoid that surrounds the ALICE detectors and creates a strong magnetic field along the beam axis. When a charged particle travels through this field, the Lorentz force bends its path into a curve. The direction of the bend reveals the sign of the particle’s charge, while the radius of curvature is related to its momentum: faster, higher-momentum particles bend less than slower ones.\n\nWithout the magnetic field, reconstructed tracks appear as straight lines. Turning on L3 transforms them into the curved trajectories used to measure momentum — a key step in understanding the particles produced in high-energy collisions.",
+        "BODY": "The L3 magnet is the large solenoid that surrounds the ALICE detectors and creates a strong magnetic field along the beam axis. When a charged particle travels through this field, the Lorentz force bends its path into a curve. The direction of the bend reveals the sign of the particle’s charge, while the radius of curvature is related to its momentum: faster, higher-momentum particles bend less than slower ones.\n\nWithout the magnetic field, reconstructed tracks appear as straight lines. Turning on L3 transforms them into the curved trajectories used to measure momentum - a key step in understanding the particles produced in high-energy collisions.",
         "LETS_US": "L3 lets us:",
         "B1": "Bend the paths of charged particles in a magnetic field.",
         "B2": "Infer particle charge from the direction of track curvature.",
@@ -138,6 +147,7 @@
     "DETECTOR_EMCAL": "EMCAL",
     "DETECTOR_DCAL": "DCAL",
     "DETECTOR_PHOS": "PHOS",
+    "DETECTOR_FIT": "FIT",
     "DETECTOR_LAYER_FALLBACK": "{{name}}",
     "MAGNETIC_FIELD": "Magnetic field",
     "DETECTOR_ASSEMBLY_TITLE": "Build the detector",

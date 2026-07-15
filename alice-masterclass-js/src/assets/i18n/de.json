@@ -17,16 +17,25 @@
     "PART_DESC": {
       "ITS": {
         "TITLE": "ITS (Inner Tracking System)",
-        "BODY": "Das ITS (Inner Tracking System) ist der innerste Spurdetektor, am nächsten am Punkt, an dem Protonen oder schwere Ionen kollidieren. Es besteht aus extrem dünnen Siliziumsensoren, die den Durchgang geladener Teilchen mit einer Genauigkeit von wenigen Mikrometern erfassen — dünner als ein menschliches Haar. Damit bestimmen Physiker den genauen Entstehungsort der Teilchen und finden Teilchen, die fast sofort nach ihrer Erzeugung zerfallen, bevor sie die äußeren Detektoren erreichen.",
+        "BODY": "Das ITS ist der innerste Spurdetektor, am nächsten am Punkt, an dem Protonen oder schwere Ionen kollidieren. Es besteht aus extrem dünnen Siliziumsensoren, die den Durchgang geladener Teilchen mit einer Genauigkeit von wenigen Mikrometern erfassen — dünner als ein menschliches Haar. Damit bestimmen Physiker den genauen Entstehungsort der Teilchen und finden Teilchen, die fast sofort nach ihrer Erzeugung zerfallen, bevor sie die äußeren Detektoren erreichen.",
         "LETS_US": "Mit dem ITS können wir:",
         "B1": "den Primary Vertex mit einer Auflösung besser als 100 Mikrometer bestimmen",
         "B2": "sekundäre Vertices rekonstruieren, die für Charm- und Hyperon-Zerfälle nötig sind",
         "B3": "Teilchen mit niedrigem Impuls verfolgen und identifizieren",
         "B4": "Impuls- und Winkelauflösung für Teilchen verbessern, die in der Time Projection Chamber (TPC) rekonstruiert werden"
       },
+      "FIT": {
+        "TITLE": "FIT (Fast Interaction Trigger)",
+        "BODY": "Der FIT ist einer der ersten Detektoren, die nach einer Teilchenkollision im ALICE-Experiment reagieren. Er erkennt Kollisionen praktisch sofort und liefert ein präzises Zeitsignal, das dem Datenerfassungssystem mitteilt, wann ein interessantes Ereignis stattgefunden hat. So kann ALICE nur die relevanten Kollisionen aufzeichnen und Hintergrundereignisse verwerfen, die für die Physikanalyse nicht nützlich sind.\n\nNeben seiner Trigger-Rolle misst der FIT den genauen Zeitpunkt der Kollision und hilft, wichtige Eigenschaften wie die Kollisionszeit und die Zentralität in Schwerionenkollisionen zu bestimmen. Diese Messungen sind für den korrekten Betrieb anderer ALICE-Detektoren wesentlich — besonders für solche, die auf präzise Zeitmessung angewiesen sind, etwa den TOF-Detektor.",
+        "LETS_US": "Mit dem FIT können wir:",
+        "B1": "Kollisionen in Echtzeit erkennen und die Datenaufzeichnung auslösen.",
+        "B2": "die Kollisionszeit mit sehr hoher Präzision messen.",
+        "B3": "Hintergrundereignisse verwerfen, die keine echten Teilchenkollisionen sind.",
+        "B4": "andere Detektoren wie den TOF durch genaue Zeitinformation unterstützen."
+      },
       "TPC": {
         "TITLE": "TPC (Time Projection Chamber)",
-        "BODY": "Die TPC (Time Projection Chamber) ist der größte Spurdetektor im ALICE-Experiment und einer der größten Gasdetektoren, die je für die Teilchenphysik gebaut wurden. Sie ist mit einer sorgfältig gewählten Gasmischung gefüllt, durch die geladene Teilchen nach einer Kollision fliegen. Dabei ionisieren sie das Gas und hinterlassen Spuren freier Elektronen. Diese Elektronen driften in einem homogenen elektrischen Feld zu den Auslesekammern, so dass Physiker die dreidimensionalen Trajektorien der Teilchen mit hoher Präzision rekonstruieren können. Eine einzelne Schwerionenkollision kann Zehntausende geladener Teilchen erzeugen — die TPC kann ihre Spuren gleichzeitig aufzeichnen. Neben den Bahnen hilft sie auch bei der Teilchenidentifikation, indem sie misst, wie viel Energie die Teilchen beim Durchqueren des Gases verlieren.",
+        "BODY": "Die TPC ist der größte Spurdetektor im ALICE-Experiment und einer der größten Gasdetektoren, die je für die Teilchenphysik gebaut wurden. Sie ist mit einer sorgfältig gewählten Gasmischung gefüllt, durch die geladene Teilchen nach einer Kollision fliegen. Dabei ionisieren sie das Gas und hinterlassen Spuren freier Elektronen. Diese Elektronen driften in einem homogenen elektrischen Feld zu den Auslesekammern, so dass Physiker die dreidimensionalen Trajektorien der Teilchen mit hoher Präzision rekonstruieren können. Eine einzelne Schwerionenkollision kann Zehntausende geladener Teilchen erzeugen — die TPC kann ihre Spuren gleichzeitig aufzeichnen. Neben den Bahnen hilft sie auch bei der Teilchenidentifikation, indem sie misst, wie viel Energie die Teilchen beim Durchqueren des Gases verlieren.",
         "LETS_US": "Mit der TPC können wir:",
         "B1": "Teilchenspuren rekonstruieren und die Bahnen Tausender Teilchen aus einer einzigen Kollision sichtbar machen",
         "B2": "verschiedene Teilchenarten identifizieren, indem wir ihren Energieverlust im Gas messen",
@@ -35,7 +44,7 @@
       },
       "TRD": {
         "TITLE": "TRD (Transition Radiation Detector)",
-        "BODY": "Der TRD (Transition Radiation Detector) ist ein Detektor, der vor allem Elektronen unter den vielen verschiedenen Teilchen aus Hochenergiekollisionen identifizieren soll. Er nutzt die sogenannte Übergangsstrahlung: Wenn ein sehr schnelles geladenes Teilchen die Grenze zwischen zwei verschiedenen Materialien durchquert, sendet es Röntgenstrahlung aus. Elektronen erzeugen diese Strahlung deutlich effizienter als schwerere Teilchen — so kann der TRD sie von Teilchen wie Pionen unterscheiden. Der TRD spielt eine wichtige Rolle bei der Untersuchung von Prozessen mit Elektronen, auch beim Quark-Gluon-Plasma in Schwerionenkollisionen. Mit präzisen Informationen über Elektronenproduktion und -verhalten hilft er Physikern, die Bedingungen der Materie bei extremen Temperaturen und Dichten kurz nach einer Kollision zu verstehen.",
+        "BODY": "Der TRD ist ein Detektor, der vor allem Elektronen unter den vielen verschiedenen Teilchen aus Hochenergiekollisionen identifizieren soll. Er nutzt die sogenannte Übergangsstrahlung: Wenn ein sehr schnelles geladenes Teilchen die Grenze zwischen zwei verschiedenen Materialien durchquert, sendet es Röntgenstrahlung aus. Elektronen erzeugen diese Strahlung deutlich effizienter als schwerere Teilchen — so kann der TRD sie von Teilchen wie Pionen unterscheiden. Der TRD spielt eine wichtige Rolle bei der Untersuchung von Prozessen mit Elektronen, auch beim Quark-Gluon-Plasma in Schwerionenkollisionen. Mit präzisen Informationen über Elektronenproduktion und -verhalten hilft er Physikern, die Bedingungen der Materie bei extremen Temperaturen und Dichten kurz nach einer Kollision zu verstehen.",
         "LETS_US": "Mit dem TRD können wir:",
         "B1": "Elektronen identifizieren und von anderen Teilchenarten trennen.",
         "B2": "die Elektronenproduktion in hochenergetischen Proton- und Schwerionenkollisionen untersuchen.",
@@ -53,7 +62,7 @@
       },
       "EMCAL": {
         "TITLE": "EMCAL (Electromagnetic Calorimeter)",
-        "BODY": "Der EMCAL (Electromagnetic Calorimeter) misst die Energie von Elektronen und Photonen aus Teilchenkollisionen. Wenn ein solches Teilchen in den Detektor eintritt, entsteht ein elektromagnetischer Schauer — eine Kaskade sekundärer Teilchen, die ihre gesamte Energie im Kalorimeter deponieren. Aus diesem Schauer bestimmen Physiker die Energie des ursprünglichen Teilchens mit hoher Präzision.\n\nDer EMCAL spielt auch eine zentrale Rolle bei der Untersuchung von Jets — gebündelten Teilchenstrahlen, die entstehen, wenn hochenergetische Quarks und Gluonen in Kollisionen erzeugt werden. Die Messung der Energie von Elektronen, Photonen und Jets hilft zu verstehen, wie sich Materie unter den extremen Bedingungen im ALICE-Experiment verhält.",
+        "BODY": "Der EMCAL misst die Energie von Elektronen und Photonen aus Teilchenkollisionen. Wenn ein solches Teilchen in den Detektor eintritt, entsteht ein elektromagnetischer Schauer — eine Kaskade sekundärer Teilchen, die ihre gesamte Energie im Kalorimeter deponieren. Aus diesem Schauer bestimmen Physiker die Energie des ursprünglichen Teilchens mit hoher Präzision.\n\nDer EMCAL spielt auch eine zentrale Rolle bei der Untersuchung von Jets — gebündelten Teilchenstrahlen, die entstehen, wenn hochenergetische Quarks und Gluonen in Kollisionen erzeugt werden. Die Messung der Energie von Elektronen, Photonen und Jets hilft zu verstehen, wie sich Materie unter den extremen Bedingungen im ALICE-Experiment verhält.",
         "LETS_US": "Mit dem EMCAL können wir:",
         "B1": "die Energie von Elektronen und Photonen mit hoher Präzision messen.",
         "B2": "Jets aus Hochenergiekollisionen untersuchen.",
@@ -61,7 +70,7 @@
       },
       "DCAL": {
         "TITLE": "DCAL (Di-jet Calorimeter)",
-        "BODY": "Der DCAL (Di-jet Calorimeter) ist eine Erweiterung des EMCAL und arbeitet nach demselben Prinzip: Er misst die Energie von Elektronen und Photonen. Sein Hauptzweck ist eine größere Abdeckung, sodass ALICE mehr Jets erfassen kann — besonders Jet-Paare, die in Hochenergiekollisionen in entgegengesetzte Richtungen entstehen.\n\nMit seiner größeren Akzeptanz verbessert der DCAL die Untersuchung von Di-Jet-Ereignissen: Der Vergleich der Energien zweier gegenüberliegender Jets zeigt, wie sie mit dem Quark-Gluon-Plasma wechselwirken. Dieser extrem heiße und dichte Zustand der Materie erfüllte das Universum für einen winzigen Bruchteil einer Sekunde nach dem Urknall — solche Messungen sind daher ein wichtiges Werkzeug, um die frühesten Momente unseres Universums zu verstehen.",
+        "BODY": "Der DCAL ist eine Erweiterung des EMCAL und arbeitet nach demselben Prinzip: Er misst die Energie von Elektronen und Photonen. Sein Hauptzweck ist eine größere Abdeckung, sodass ALICE mehr Jets erfassen kann — besonders Jet-Paare, die in Hochenergiekollisionen in entgegengesetzte Richtungen entstehen.\n\nMit seiner größeren Akzeptanz verbessert der DCAL die Untersuchung von Di-Jet-Ereignissen: Der Vergleich der Energien zweier gegenüberliegender Jets zeigt, wie sie mit dem Quark-Gluon-Plasma wechselwirken. Dieser extrem heiße und dichte Zustand der Materie erfüllte das Universum für einen winzigen Bruchteil einer Sekunde nach dem Urknall — solche Messungen sind daher ein wichtiges Werkzeug, um die frühesten Momente unseres Universums zu verstehen.",
         "LETS_US": "Mit dem DCAL können wir:",
         "B1": "den Jet-Nachweisbereich des ALICE-Experiments erweitern.",
         "B2": "Jet-Paare (Di-Jets) untersuchen, die in entgegengesetzte Richtungen entstehen.",
@@ -85,7 +94,8 @@
     "P1": "Die ALICE Collaboration hat einen speziellen Detektor gebaut, um das einzigartige physikalische Potenzial von Kern-Kern-Kollisionen bei LHC-Energienenergien auszuschöpfen. Unser Ziel ist es, die Physik stark wechselwirkender Materie bei den höchsten bisher im Labor erreichten Energiedichten zu untersuchen. In einem solchen Zustand bildet sich eine extreme Phase der Materie - das sogenannte Quark-Gluon-Plasma.",
     "P2": "Es wird angenommen, dass sich unser Universum in den ersten Millionstelsekunden nach dem Urknall in einem so ursprünglichen Zustand befunden hat. Die Eigenschaften einer solchen Phase sind Schlüsselthemen für Quantum Chromo Dynamics, das Verständnis von Confinement-Deconfinement und chiralen Phasenübergängen.",
     "P3": "Zu diesem Zweck führen wir eine umfassende Untersuchung der Hadronen, Elektronen, Myonen und Photonen durch, die bei Kollisionen schwerer Kerne entstehen. ALICE untersucht auch Protonen-Protonen- und Protonen-Kern-Kollisionen sowohl als Vergleich mit Kern-Kern-Kollisionen als auch für sich.",
-    "DOWNLOAD": "Wenn Sie möchten, können Sie eine Desktop-Version der MasterClass herunterladen und verwenden:"
+    "DOWNLOAD": "Wenn Sie möchten, können Sie eine Desktop-Version der MasterClass herunterladen und verwenden:",
+    "COMING_SOON": "Demnächst!"
   },
   "ABOUT": {
     "ABOUT_MENU": "Über ALICE"
@@ -95,11 +105,134 @@
     "P1": "Bitte geben Sie Ihre Schülernummer und das Sitzungskennwort ein (beide sollten Ihnen von Ihrem Vorgesetzten mitgeteilt werden).",
     "P2": "Sie können dies überspringen, indem Sie auf Abbrechen klicken, aber Sie können Ihre Ergebnisse nicht teilen!",
     "P3": "Sie können später zu diesem Fenster zurückkehren, indem Sie im Menü die Option Kennwort auswählen.",
-    "TEXT_ERROR": "Das eingegebene Kennwort ist falsch.",
     "STUDENT_NUMBER": "Schülernummer",
     "SESSION_PASSWORD": "Sitzungskennwort",
     "BUTTON_PROCEED": "Vorgehen",
     "BUTTON_CANCEL": "Abbrechen",
-    "NO_TOKEN_TOOLTIP": "Geben Sie zum Aktivieren des Daten-Uploads das Kennwort mit der Option Kennwort im Menü ein."
+    "NO_TOKEN_TOOLTIP": "Geben Sie zum Aktivieren des Daten-Uploads das Kennwort mit der Option Kennwort im Menü ein.",
+    "ERROR": "Das eingegebene Kennwort ist falsch.",
+    "UPLOADING": "Daten werden hochgeladen...",
+    "COMPLETED": "Upload abgeschlossen!"
+  },
+  "LANGUAGES": {
+    "en": "English",
+    "de": "Deutsch",
+    "es": "Español"
+  },
+  "EVENT_DISPLAY": {
+    "VIEW_3D": "3D-Ansicht",
+    "VIEW_1": "Ansicht 1",
+    "VIEW_2": "Ansicht 2",
+    "EVENT": "Ereignis",
+    "SIDE_VIEWS": "Seitenansichten",
+    "AXES": "Achsen",
+    "DETECTOR": "Detektor",
+    "CLUSTERS": "Cluster",
+    "TRACKS": "Spuren",
+    "DECAYS": "Zerfälle",
+    "VISIBILITY": "Sichtbarkeit",
+    "TRACK_WIDTH": "Spurbreite",
+    "CLUSTER_SIZE": "Clustergröße",
+    "S": "S",
+    "M": "M",
+    "L": "L",
+    "CAMERA": "Kamera",
+    "CAMERA_CENTERED": "Zentrierte Kamera",
+    "CAMERA_FREE": "Freie Kamera",
+    "DETECTOR_PARTS": "Detektorteile",
+    "DETECTOR_ITS": "ITS",
+    "DETECTOR_TPC": "TPC",
+    "DETECTOR_TRD": "TRD",
+    "DETECTOR_TOF": "TOF",
+    "DETECTOR_L3": "L3",
+    "DETECTOR_EMCAL": "EMCAL",
+    "DETECTOR_DCAL": "DCAL",
+    "DETECTOR_PHOS": "PHOS",
+    "DETECTOR_FIT": "FIT",
+    "DETECTOR_LAYER_FALLBACK": "{{name}}",
+    "MAGNETIC_FIELD": "Magnetfeld",
+    "DETECTOR_ASSEMBLY_TITLE": "Detektor zusammenbauen",
+    "DETECTOR_ASSEMBLY_HINT": "Ziehen Sie jedes Teil aus diesem Panel in die 3D-Ansicht. Wenn alles platziert ist, erscheinen hier die Detektoroptionen (Ansichten, Cluster, Spuren)."
+  },
+  "SELECT_DATASET_DIALOG": {
+    "TEXT": "Bitte wählen Sie den Datensatz:",
+    "BUTTON_PROCEED": "Weiter",
+    "DATASET": "Datensatz",
+    "DATASET_VAL": "Datensatz {{dataset}}",
+    "DEMO": "Demo",
+    "FULL_EVENT": "Pb-Pb-Ereignis"
+  },
+  "INSTRUCTIONS_DIALOG": {
+    "BUTTON_DISMISS": "Schließen"
+  },
+  "STRANGENESS": {
+    "TITLE": "Strangeness",
+    "VISUAL_ANALYSIS_MENU": "Visuelle Analyse",
+    "LARGE_SCALE_ANALYSIS_MENU": "Großskalige Analyse",
+    "CALCULATOR": {
+      "TITLE": "Rechner",
+      "TOTAL": "Gesamt",
+      "CHARGE": "Ladung",
+      "MASS": "Masse",
+      "BACKGROUND": "Untergrund",
+      "K0": "Kaon",
+      "LAMBDA": "Lambda",
+      "ANTILAMBDA": "Anti-Lambda",
+      "XI": "Xi",
+      "SELECT_PARTICLE": "Teilchenart auswählen",
+      "ADD": "Hinzufügen"
+    },
+    "PARTICLE_MASS": {
+      "TITLE": "Teilchen",
+      "TYPE": "Typ",
+      "MASS": "Masse"
+    },
+    "HISTOGRAMS": {
+      "TITLE": "Histogramme",
+      "COUNTS": "Anzahl",
+      "INVARIANT_MASS": "Invariante Masse",
+      "SIGNAL": "Signal",
+      "BACKGROUND": "Untergrund",
+      "TOTAL": "Gesamt"
+    },
+    "HISTOGRAM_SELECTOR": {
+      "TITLE": "Histogrammauswahl",
+      "SELECT_PARTICLE": "Teilchenart auswählen",
+      "SELECT_COLLISION": "Kollision & Zentralität auswählen",
+      "OPEN_HISTOGRAM": "Histogramm öffnen",
+      "K0": "Kaon",
+      "LAMBDA": "Lambda",
+      "ANTILAMBDA": "Anti-Lambda",
+      "PP": "pp",
+      "PBPB": "Pb-Pb",
+      "000_000": "0%",
+      "000_010": "0% - 10%",
+      "010_020": "10% - 20%",
+      "020_030": "20% - 30%",
+      "030_040": "30% - 40%",
+      "040_050": "40% - 50%",
+      "050_060": "50% - 60%",
+      "060_070": "60% - 70%",
+      "070_080": "70% - 80%",
+      "080_090": "80% - 90%",
+      "090_100": "90% - 100%"
+    },
+    "HISTOGRAM_DISPLAY": {
+      "TITLE": "Histogrammanzeige"
+    },
+    "RESULTS": {
+      "TITLE": "Ergebnisse",
+      "TYPE": "Typ",
+      "COLLISION": "Kollision",
+      "CENTRALITY": "Zentralität",
+      "SIGNAL": "Signal"
+    },
+    "FIT_SELECTOR": {
+      "TITLE": "Fit-Auswahl",
+      "SIGNAL": "Signal",
+      "BACKGROUND": "Untergrund",
+      "FIT": "Fit",
+      "ACCEPT": "Übernehmen"
+    }
   }
 }

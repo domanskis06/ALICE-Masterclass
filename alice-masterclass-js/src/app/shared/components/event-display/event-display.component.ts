@@ -1,7 +1,5 @@
 import { Component, ElementRef, Input, Output, AfterViewInit, ViewChild, EventEmitter, HostBinding, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CdkDragEnd } from '@angular/cdk/drag-drop';
-import { Observable, Subscription, animationFrameScheduler, scheduled } from 'rxjs';
-import { repeat } from 'rxjs/operators';
 import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
@@ -46,6 +44,7 @@ export interface AssemblyUnlockState {
   hasEmcal: boolean;
   hasDcal: boolean;
   hasPhos: boolean;
+  hasFit: boolean;
   hasL3: boolean;
 }
 
@@ -56,7 +55,11 @@ export interface AssemblyUnlockState {
   standalone: false
 })
 export class EventDisplayComponent implements AfterViewInit, OnDestroy {
-  private readonly SIDE_VIEW_PIXEL_RATIO_FACTOR: number = 0.65;
+  /** Side views: lower backing store (allows sub-1× DPR). Antialias is also disabled via renderer recreate. */
+  private readonly SIDE_VIEW_PIXEL_RATIO_FACTOR: number = 0.4;
+  private readonly SIDE_VIEW_MIN_PIXEL_RATIO: number = 0.5;
+  /** Main 3D view renders every demand-frame; side views every Nth frame (scissor preserves prior pixels). */
+  private readonly SIDE_VIEW_RENDER_INTERVAL: number = 5;
   private readonly CLUSTERS_USE_POINTS: boolean = true;
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
   private readonly TRACK_DRAW_ANIMATION_MS = 4000;
@@ -82,7 +85,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   static readonly CAMERA_3D_ASSEMBLY_START = { x: -2.0, y: 2.0, z: 0.7 } as const;
   /**
-   * ITS/TPC/TRD GLBs place the beam axis at local y=+30 (cm). After
+   * ITS/TPC/TRD/FIT GLBs place the beam axis at local y=+30 (cm). After
    * `detectorModelScale` that is +0.3 in scene units. L3 / TOF / calorimeters
    * are already around the origin — only cancel the barrel offset so tracks
    * at (0,0,0) sit on the detector axis.
@@ -404,6 +407,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       'emcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
       'dcal.glb': 'EVENT_DISPLAY.DETECTOR_DCAL',
       'phos.glb': 'EVENT_DISPLAY.DETECTOR_PHOS',
+      'fit.glb': 'EVENT_DISPLAY.DETECTOR_FIT',
     };
     if (keys[file]) {
       return { labelKey: keys[file] };
@@ -425,13 +429,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return null;
   }
 
-  /** Barrel trackers (ITS/TPC/TRD) were exported with beam axis at y=+30. */
+  /**
+   * Parts exported with beam axis at local y≈+30 (cm): ITS/TPC/TRD and FIT.
+   * FIT keeps its physical Z (FT0/FV0 near IP, FDD far along the beam).
+   */
   static needsBeamAxisYCorrection(assetPath: string): boolean {
-    return /(^|[/\\])(its|tpc|trd)\.glb($|\?)/i.test(assetPath);
+    return /(^|[/\\])(its|tpc|trd|fit)\.glb($|\?)/i.test(assetPath);
   }
 
   /**
-   * Shift barrel parts onto the world origin and hide leftover CAD helper cubes.
+   * Shift barrel/FIT parts onto the beam axis (world Y) and hide leftover CAD helper cubes.
    * Calorimeter GLBs stay put — they are already coaxial with L3; readout bars
    * are rebuilt from those meshes in world space.
    */
@@ -550,6 +557,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set backgroundColor(backgroundColor: number) {
     this._backgroundColor = backgroundColor;
     this.syncSceneBackground();
+    this.requestRender();
   }
 
   /** Keeps WebGL clear color and scene.background in lockstep with the UI panel tone. */
@@ -571,6 +579,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set darkMode(darkMode: boolean) {
     this._darkMode = darkMode;
     this.applyDarkModeStyling();
+    this.requestRender();
   }
   @Output() darkModeChange: EventEmitter<boolean> = new EventEmitter<boolean>();
 
@@ -593,6 +602,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     if (!this.scene) return;
     this.syncGridBackground();
+    this.requestRender();
   }
 
   @Input()
@@ -604,6 +614,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set trackWidth(trackWidth: number) {
     this._trackWidth = trackWidth;
     this.applyTrackMaterialWidths();
+    this.requestRender();
   }
   private _trackWidth: number = 2;
 
@@ -621,9 +632,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     (this.negativeTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     (this.bachelorTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     (this.highlightTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
-    (this.cascadeHoverTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
+    // Cascade hover keeps decay track width — emphasis comes from fading the background, not thicker lines.
+    (this.cascadeHoverTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     if (this.cascadeProtonMaterial) {
-      (this.cascadeProtonMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
+      (this.cascadeProtonMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     }
   }
 
@@ -636,6 +648,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     } else {
       this.setSizeRecursive(this.clusters, this.clusterSize);
     }
+    this.requestRender();
   }
   private _clusterSize: number = 0.1;
 
@@ -728,6 +741,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** World-space approximate radius after scaling (bounding sphere). */
   private protonRadiusWorld = 0.014;
   private lastRenderWallMs = 0;
+  private sideViewFrameCounter = 0;
+  private forceSideViewsRender = false;
+  private renderDirty = true;
+  private rafPending = false;
+  private rafId: number | null = null;
+  private viewDestroyed = false;
+  private resizeObserver: ResizeObserver | null = null;
+  private rendererAntialias = true;
   private protonHalfSeparationStart = 0.42;
   private readonly protonApproachSpeed = 1.35e-4;
   private keysDown: { [key: string]: boolean } = {};
@@ -751,6 +772,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set landscape(landscape: boolean) {
     this._landscape = landscape;
     this.resize(true);
+    this.requestRender();
   }
   private _landscape: boolean;
 
@@ -825,6 +847,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.resize(true);
       this.staggeredRevealDetectorParts(modelPaths);
       this.rebuildCalorimeterReadouts();
+      this.requestRender();
       // Event may have loaded before GLBs finished — rebuild tracks now that parts exist.
       this.refreshPhysicsForAssemblyUnlock();
     };
@@ -857,6 +880,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_ASSEMBLY_START);
       this.cdr.markForCheck();
       this.resize(true);
+      this.requestRender();
     };
 
     const finishOne = () => {
@@ -989,6 +1013,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
     this.refreshPhysicsForAssemblyUnlock();
+    this.requestRender();
 
     const allPlaced = this.detectorPaletteItems.every((row) => row.placed);
     if (allPlaced) {
@@ -1035,7 +1060,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.rebuildCalorimeterReadouts();
     this.refreshPhysicsForAssemblyUnlock();
     this.cdr.markForCheck();
-    this.resize(true);
+    this.syncRendererSideViewQuality();
+    this.requestRender();
   }
 
   /** Frames the 3D orbit camera (no-op until WebGL scene exists). */
@@ -1053,6 +1079,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       root.visible = visible;
     }
     this.syncCalorimeterReadoutVisibility();
+    this.requestRender();
   }
 
   setDetectorPartOpacity(part: DetectorPartToggleModel, value: number | string): void {
@@ -1072,6 +1099,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         (m as any).needsUpdate = true;
       }
     });
+    this.requestRender();
   }
 
   /** Push each part's UI opacity through setDetectorPartOpacity (identical to moving the slider). */
@@ -1811,6 +1839,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           });
         }
       });
+      this.requestRender();
       if (t < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -1845,7 +1874,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get sideViewsShown(): boolean { return this._sideViewsShown; }
   set sideViewsShown(sideViewsShown: boolean) {
     this._sideViewsShown = sideViewsShown;
-    this.resize(true);
+    this.forceSideViewsRender = !!sideViewsShown;
+    this.sideViewFrameCounter = 0;
+    this.syncRendererSideViewQuality();
+    this.requestRender();
   }
   private _sideViewsShown: boolean = false;
 
@@ -1853,6 +1885,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get axesShown(): boolean { return this.axes.visible; }
   set axesShown(axesShown: boolean) {
     this.axes.visible = axesShown;
+    this.requestRender();
   }
 
   @Input()
@@ -1863,6 +1896,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (detectorShown) {
       this.syncCalorimeterReadoutVisibility();
     }
+    this.requestRender();
   }
 
   private desiredTracksShown = true;
@@ -1875,6 +1909,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set tracksShown(tracksShown: boolean) {
     this.desiredTracksShown = tracksShown;
     this.applyDesiredPhysicsVisibility();
+    this.requestRender();
   }
 
   @Input()
@@ -1885,6 +1920,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set clustersShown(clustersShown: boolean) {
     this.desiredClustersShown = clustersShown;
     this.applyDesiredPhysicsVisibility();
+    this.requestRender();
   }
 
   @Input()
@@ -1892,6 +1928,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set decaysShown(decaysShown: boolean) {
     this.desiredDecaysShown = decaysShown;
     this.applyDesiredPhysicsVisibility();
+    this.requestRender();
   }
 
   @Input()
@@ -2112,6 +2149,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       hasEmcal: hasFile('emcal'),
       hasDcal: hasFile('dcal'),
       hasPhos: hasFile('phos'),
+      hasFit: hasFile('fit'),
       hasL3: hasFile('l3'),
     };
   }
@@ -2413,6 +2451,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.protonPlusZMesh = plus;
       this.collisionProtonsGroup.visible = true;
       this.collisionIntroPhase = 'animating';
+      this.requestRender();
     },
       undefined,
       () => {
@@ -2427,6 +2466,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           this.trackDrawAnimationStartMs = performance.now();
         }
         this.applyDesiredPhysicsVisibility();
+        this.requestRender();
       }
     );
   }
@@ -2453,6 +2493,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.pendingTrackDrawLines = [];
     this.trackDrawAnimationStartMs = performance.now();
     this.applyDesiredPhysicsVisibility();
+    this.requestRender();
   }
 
   private cancelProtonCollisionIntroAndRevealTracks(): void {
@@ -2469,6 +2510,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.trackDrawAnimationStartMs = performance.now();
     }
     this.applyDesiredPhysicsVisibility();
+    this.requestRender();
   }
 
   private updateProtonCollisionIntro(deltaWallMs: number): void {
@@ -2641,6 +2683,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.beginProtonCollisionIntroLoad();
     }
     this.loading = false;
+    this.requestRender();
   }
   private _event: Event;
 
@@ -2673,9 +2716,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   @Input()
   assemblyAllowedDragAssetPath: string | null = null;
-
-  private rendernig: Observable<number> = scheduled([0], animationFrameScheduler).pipe(repeat());
-  private renderingSubscription: Subscription = null;
 
   constructor(private cdr: ChangeDetectorRef) {
     const lineParams = {
@@ -2710,12 +2750,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cascadeHoverTrackMaterial = new LineMaterial({
       color: 0x000000,
       ...lineParams,
-      linewidth: this.trackHighlightWidth,
+      linewidth: this.trackDecayWidth,
     });
     this.cascadeProtonMaterial = new LineMaterial({
       color: 0x000080,
       ...lineParams,
-      linewidth: this.trackHighlightWidth,
+      linewidth: this.trackDecayWidth,
     });
     this.pointsMaterial = new THREE.PointsMaterial({
       color: EventDisplayComponent.clusterColor,
@@ -2767,7 +2807,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const displayHeight = parent.clientHeight;
       const basePixelRatio = window.devicePixelRatio || 1;
       const targetPixelRatio = this.effectiveSideViewsShown
-        ? Math.max(1, basePixelRatio * this.SIDE_VIEW_PIXEL_RATIO_FACTOR)
+        ? Math.max(this.SIDE_VIEW_MIN_PIXEL_RATIO, basePixelRatio * this.SIDE_VIEW_PIXEL_RATIO_FACTOR)
         : basePixelRatio;
       if (Math.abs(this.renderer.getPixelRatio() - targetPixelRatio) > 0.01) {
         this.renderer.setPixelRatio(targetPixelRatio);
@@ -2778,6 +2818,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.renderer.setSize(displayWidth, displayHeight);
         this.composer?.setSize(displayWidth, displayHeight);
         if (this.effectiveSideViewsShown) {
+          this.forceSideViewsRender = true;
+          this.sideViewFrameCounter = 0;
           if (this.landscape) {
             const width3D = Math.ceil(this.canvas.clientWidth * this.PRIMARY_AXIS_RATIO);
             const width = this.canvas.clientWidth - width3D;
@@ -2797,17 +2839,122 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           this.camera3D.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
         }
         this.camera3D.updateProjectionMatrix();
+        this.requestRender();
       }
     }
   }
 
-  ngAfterViewInit(): void {
-    this.createScene();
-    this.renderingSubscription = this.rendernig.subscribe(() => this.render());
+  /** Schedules a frame; no-ops while a RAF is already queued or the GL renderer is not ready. */
+  private requestRender = (): void => {
+    if (this.viewDestroyed) return;
+    this.renderDirty = true;
+    if (!this.renderer || this.rafPending) return;
+    this.rafPending = true;
+    this.rafId = requestAnimationFrame(() => {
+      this.rafPending = false;
+      this.rafId = null;
+      if (this.viewDestroyed || !this.renderer) return;
+      if (!this.renderDirty && !this.isRenderActivityPending()) return;
+      this.renderDirty = false;
+      this.render();
+      if (this.renderDirty || this.isRenderActivityPending()) {
+        this.requestRender();
+      }
+    });
+  };
+
+  /** True while input/animations still need continuous frames (OrbitControls damping uses 'change'). */
+  private isRenderActivityPending(): boolean {
+    if (this.collisionIntroPhase === 'animating') return true;
+    if (this.trackDrawAnimations.length > 0) return true;
+    if (this.isMousePanning) return true;
+    if (this.cameraMode === 'free' && this.hasPanKeysDown()) return true;
+    return false;
   }
 
+  private hasPanKeysDown(): boolean {
+    const k = this.keysDown;
+    return !!(k['w'] || k['W'] || k['ArrowUp'] || k['s'] || k['S'] || k['ArrowDown'] ||
+      k['a'] || k['A'] || k['ArrowLeft'] || k['d'] || k['D'] || k['ArrowRight'] ||
+      k['q'] || k['Q'] || k['e'] || k['E']);
+  }
+
+  private onControlsChange = (): void => {
+    this.requestRender();
+  };
+
+  /**
+   * Side views: disable MSAA (recreate GL context) and use a lower pixel ratio.
+   * Antialias is a context-creation flag, so it cannot be toggled in place.
+   */
+  private syncRendererSideViewQuality(): void {
+    if (!this.renderer || !this.canvas || !this.camera3D) return;
+    const wantAntialias = !this.effectiveSideViewsShown;
+    if (this.rendererAntialias !== wantAntialias) {
+      this.rendererAntialias = wantAntialias;
+      this.composer?.dispose();
+      this.composer = null;
+      this.bloomPass = null;
+      this.renderer.dispose();
+      this.renderer = new THREE.WebGLRenderer({
+        canvas: this.canvas,
+        logarithmicDepthBuffer: true,
+        antialias: wantAntialias
+      });
+      this.renderer.shadowMap.enabled = false;
+      this.renderer.sortObjects = true;
+      this.renderer.setClearColor(this._backgroundColor, 1);
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera3D));
+      this.bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(1, 1),
+        EventDisplayComponent.BLOOM_STRENGTH,
+        EventDisplayComponent.BLOOM_RADIUS,
+        EventDisplayComponent.BLOOM_THRESHOLD
+      );
+      this.bloomPass.enabled = this._darkMode;
+      this.composer.addPass(this.bloomPass);
+      this.forceSideViewsRender = this.effectiveSideViewsShown;
+      this.sideViewFrameCounter = 0;
+    }
+    this.resize(true);
+  }
+
+  ngAfterViewInit(): void {
+    this.createScene();
+    if (this.controls) {
+      this.controls.addEventListener('change', this.onControlsChange);
+      this.controls.addEventListener('start', this.onControlsChange);
+    }
+    const parent = this.canvas?.parentElement;
+    if (parent && typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.resize(false);
+      });
+      this.resizeObserver.observe(parent);
+    }
+    window.addEventListener('resize', this.onWindowResize);
+    // Inputs may already enable side views before the canvas exists.
+    this.syncRendererSideViewQuality();
+    this.requestRender();
+  }
+
+  private onWindowResize = (): void => {
+    this.resize(false);
+  };
+
   ngOnDestroy(): void {
-    this.renderingSubscription?.unsubscribe();
+    this.viewDestroyed = true;
+    if (this.rafId != null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.rafPending = false;
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    window.removeEventListener('resize', this.onWindowResize);
+    this.controls?.removeEventListener('change', this.onControlsChange);
+    this.controls?.removeEventListener('start', this.onControlsChange);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('pointerup', this.onPointerUp);
@@ -2864,6 +3011,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   onCameraModeChange(): void {
     this.updateCameraMode();
+    this.requestRender();
   }
 
   private updateCameraMode(): void {
@@ -2883,6 +3031,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const t = e.target as HTMLElement;
     if (t?.tagName === 'INPUT' || t?.tagName === 'TEXTAREA' || t?.isContentEditable) return;
     this.keysDown[e.key] = true;
+    this.requestRender();
   };
 
   private onKeyUp = (e: KeyboardEvent) => {
@@ -2897,10 +3046,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.panDir.subVectors(this.controls.target, this.camera3D.position).normalize();
     this.panVec.copy(this.panDir).multiplyScalar(step);
     this.camera3D.position.add(this.panVec);
+    this.requestRender();
   };
 
   private onPointerUp = () => {
     this.isMousePanning = false;
+    this.requestRender();
   };
 
   private applyMousePan(deltaX: number, deltaY: number): void {
@@ -2915,6 +3066,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.panVec.addScaledVector(up, deltaY * scale);
     this.camera3D.position.add(this.panVec);
     this.controls.target.add(this.panVec);
+    this.requestRender();
   }
 
   private applyKeyboardPan(): void {
@@ -2944,6 +3096,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private render(): void {
+    if (!this.renderer || !this.camera3D || !this.controls) return;
     const nowWall = performance.now();
     const deltaWall = this.lastRenderWallMs ? nowWall - this.lastRenderWallMs : 0;
     this.lastRenderWallMs = nowWall;
@@ -2957,9 +3110,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.controls.update();
     const zoomz = this.controls.target.distanceTo(this.controls.object.position);
-    this.cameraRphi.zoom = this.cameraRhoz.zoom = 10 / zoomz;
-    this.cameraRphi.updateProjectionMatrix();
-    this.cameraRhoz.updateProjectionMatrix();
     this.renderer.setScissorTest(this.effectiveSideViewsShown);
     const oldVP = new THREE.Vector4();
     this.renderer.getViewport(oldVP);
@@ -2979,19 +3129,34 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.camRphiVP.set(oldVP.x, oldVP.y, width, height);
         this.camRhozVP.set(oldVP.x + width, oldVP.y, width, height);
       }
-      this.renderer.setViewport(this.camRphiVP);
-      this.renderer.setScissor(this.camRphiVP);
-      const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial, this.cascadeHoverTrackMaterial, this.cascadeProtonMaterial];
-      if (this.cascadeConnectorLine?.material) materials.push(this.cascadeConnectorLine.material);
-      if (this.cascadeXiLine?.material) materials.push(this.cascadeXiLine.material);
-      if (this.lambdaFlightLine2Track?.material) materials.push(this.lambdaFlightLine2Track.material);
-      materials.forEach((m: any) => m.resolution?.set(this.camRphiVP.z, this.camRphiVP.w));
-      this.renderer.render(this.scene, this.cameraRphi);
-      this.renderer.setViewport(this.camRhozVP);
-      this.renderer.setScissor(this.camRhozVP);
-      materials.forEach((m: any) => m.resolution?.set(this.camRhozVP.z, this.camRhozVP.w));
-      this.renderer.render(this.scene, this.cameraRhoz);
+      // Viewport layout stays fresh for picking every frame; GPU work for side
+      // views runs only every SIDE_VIEW_RENDER_INTERVAL frames (scissor autoClear
+      // leaves the previous side-view pixels intact between refreshes).
+      this.sideViewFrameCounter++;
+      const shouldRenderSideViews =
+        this.forceSideViewsRender || this.sideViewFrameCounter >= this.SIDE_VIEW_RENDER_INTERVAL;
+      if (shouldRenderSideViews) {
+        this.sideViewFrameCounter = 0;
+        this.forceSideViewsRender = false;
+        this.cameraRphi.zoom = this.cameraRhoz.zoom = 10 / zoomz;
+        this.cameraRphi.updateProjectionMatrix();
+        this.cameraRhoz.updateProjectionMatrix();
+        const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial, this.cascadeHoverTrackMaterial, this.cascadeProtonMaterial];
+        if (this.cascadeConnectorLine?.material) materials.push(this.cascadeConnectorLine.material);
+        if (this.cascadeXiLine?.material) materials.push(this.cascadeXiLine.material);
+        if (this.lambdaFlightLine2Track?.material) materials.push(this.lambdaFlightLine2Track.material);
+        this.renderer.setViewport(this.camRphiVP);
+        this.renderer.setScissor(this.camRphiVP);
+        materials.forEach((m: any) => m.resolution?.set(this.camRphiVP.z, this.camRphiVP.w));
+        this.renderer.render(this.scene, this.cameraRphi);
+        this.renderer.setViewport(this.camRhozVP);
+        this.renderer.setScissor(this.camRhozVP);
+        materials.forEach((m: any) => m.resolution?.set(this.camRhozVP.z, this.camRhozVP.w));
+        this.renderer.render(this.scene, this.cameraRhoz);
+      }
     } else {
+      this.sideViewFrameCounter = 0;
+      this.forceSideViewsRender = false;
       this.cam3DVP.set(oldVP.x, oldVP.y, oldVP.z, oldVP.w);
     }
     this.renderer.setViewport(this.cam3DVP);
@@ -3015,6 +3180,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.isMousePanning = true;
       this.lastMousePanX = event.clientX;
       this.lastMousePanY = event.clientY;
+      this.requestRender();
       return;
     }
     const intersects = this.findIntersect(event);
@@ -3045,8 +3211,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           }
           this.trackHoverObj = null;
           this.trackHoverOrigMaterial = null;
+          this.requestRender();
         };
         setTimeout(highlightStop, this.CLICK_HIGHLIGHT_DURATION);
+        this.requestRender();
       }
       this.trackClickedEvent.emit((obj as any).userData);
     }
@@ -3264,9 +3432,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.scene.add(line);
       this.lambdaFlightLine2Track = line;
     }
+    this.requestRender();
   }
 
   private clearCascadeHover() {
+    const hadHover = !!(
+      this.decayGroupHovered ||
+      this.cascadeHoverActive ||
+      this.cascadeMarkerEnhanced ||
+      this.cascadeConnectorLine ||
+      this.cascadeXiLine ||
+      this.lambdaFlightLine2Track
+    );
     if (this.decayGroupHovered) {
       const children = this.decayGroupHovered.children;
       for (let i = 0; i < children.length && i < this.decayHoverOrigMaterials.length; i++) {
@@ -3319,6 +3496,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.lambdaFlightLine2Track.geometry.dispose();
       (this.lambdaFlightLine2Track.material as THREE.Material).dispose();
       this.lambdaFlightLine2Track = null;
+    }
+    if (hadHover) {
+      this.requestRender();
     }
   }
 
@@ -3513,6 +3693,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private createScene(): void {
+    this.rendererAntialias = true;
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, logarithmicDepthBuffer: true, antialias: true });
     this.renderer.shadowMap.enabled = false;
     this.renderer.sortObjects = true;
