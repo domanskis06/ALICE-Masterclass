@@ -39,7 +39,7 @@ export function detectorPartLabel(assetPath: string): string {
     'tpc.glb': 'TPC',
     'trd.glb': 'TRD',
     'tof.glb': 'TOF',
-    'emcal_dcal.glb': 'EMCal / DCal',
+    'emcal.glb': 'EMCal',
     'dcal.glb': 'DCal',
     'phos.glb': 'PHOS',
     'l3.glb': 'L3 magnet',
@@ -57,7 +57,7 @@ const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
   'tpc.glb': '#22C4FF',
   'trd.glb': '#FFAA32',
   'tof.glb': '#FF5E1C',
-  'emcal_dcal.glb': '#2B1FFF',
+  'emcal.glb': '#2B1FFF',
   'dcal.glb': '#FF2FC0',
   'phos.glb': '#D1C30C',
   'l3.glb': '#FF0D12',
@@ -70,7 +70,7 @@ export function detectorPartAccentColor(assetPath: string): string {
 }
 
 function isCalorimeter(assetPath: string): boolean {
-  return /(^|[/\\])(emcal_dcal|dcal|phos)\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])(emcal|dcal|phos)\.glb($|\?)/i.test(assetPath);
 }
 
 /** Outer L3 magnet yoke — large screen coverage under the PP camera. */

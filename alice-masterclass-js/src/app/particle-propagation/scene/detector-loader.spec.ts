@@ -25,7 +25,7 @@ describe('loadDetectorModel', () => {
       'assets/models/alice components/tpc.glb',
       'assets/models/alice components/TRD.glb',
       'assets/models/alice components/TOF.glb',
-      'assets/models/alice components/EMCal_Dcal.glb',
+      'assets/models/alice components/EMCAL.glb',
       'assets/models/alice components/DCAL.glb',
       'assets/models/alice components/PHOS.glb',
       'assets/models/alice components/L3.glb',

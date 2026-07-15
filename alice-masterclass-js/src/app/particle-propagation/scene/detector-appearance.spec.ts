@@ -34,7 +34,7 @@ describe('detectorPartLabel', () => {
   it('maps known GLB filenames to short human labels', () => {
     expect(detectorPartLabel('assets/models/alice components/its.glb')).toBe('ITS');
     expect(detectorPartLabel('assets/models/alice components/L3.glb')).toBe('L3 magnet');
-    expect(detectorPartLabel('assets/models/alice components/EMCal_Dcal.glb')).toBe('EMCal / DCal');
+    expect(detectorPartLabel('assets/models/alice components/EMCAL.glb')).toBe('EMCal');
   });
 
   it('falls back to the bare filename (minus extension) for unknown parts', () => {
