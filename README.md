@@ -53,3 +53,5 @@ npm start
 ## Documentation
 
 See [`docs/README.md`](docs/README.md) for the full index (E2E, EventDisplay, deployment, database).
+
+Dev redeploy (tag → CI → OpenShift): [`docs/dev-deployment.md`](docs/dev-deployment.md) §7.1.
