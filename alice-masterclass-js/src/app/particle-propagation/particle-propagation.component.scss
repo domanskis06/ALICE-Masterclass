@@ -149,6 +149,34 @@ canvas {
   }
 }
 
+.field-colorbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.field-colorbar-bar {
+  flex: 1 1 auto;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--pp-border);
+  min-width: 0;
+}
+
+.field-colorbar-label {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--pp-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.field-colorbar-caption {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
 .slider-label {
   display: block;
   margin: 10px 0 4px;
@@ -184,12 +212,26 @@ canvas {
     color: var(--pp-text);
   }
 
-  .part-opacity-slider {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    box-sizing: border-box;
-    accent-color: var(--part-accent, var(--pp-accent));
+  // Per-part GLB accent on Material slider (same control as Time / Playback speed).
+  .part-opacity-mat-slider {
+    --mdc-slider-handle-color: var(--part-accent, var(--pp-accent));
+    --mdc-slider-focus-handle-color: var(--part-accent, var(--pp-accent));
+    --mdc-slider-hover-handle-color: var(--part-accent, var(--pp-accent));
+    --mdc-slider-active-track-color: var(--part-accent, var(--pp-accent));
+    --mdc-slider-inactive-track-color: color-mix(
+      in srgb,
+      var(--part-accent, var(--pp-accent)) 32%,
+      transparent
+    );
+    --mat-slider-handle-color: var(--part-accent, var(--pp-accent));
+    --mat-slider-focus-handle-color: var(--part-accent, var(--pp-accent));
+    --mat-slider-hover-handle-color: var(--part-accent, var(--pp-accent));
+    --mat-slider-active-track-color: var(--part-accent, var(--pp-accent));
+    --mat-slider-inactive-track-color: color-mix(
+      in srgb,
+      var(--part-accent, var(--pp-accent)) 32%,
+      transparent
+    );
   }
 }
 

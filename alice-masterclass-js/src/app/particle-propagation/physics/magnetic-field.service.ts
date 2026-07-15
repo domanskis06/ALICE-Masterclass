@@ -20,7 +20,12 @@ import { firstValueFrom } from 'rxjs';
 
 import { ChebFieldEvaluator } from './cheb-field-eval';
 import { ChebFieldBuffers, parseChebFieldData } from './cheb-field-data';
-import { FIELD_DATA_BASE_PATH, FIELD_SCALE } from './constants';
+import {
+  FIELD_DATA_BASE_PATH,
+  FIELD_SCALE,
+  FIELD_STRENGTH_DEFAULT_T,
+  NOMINAL_SOLENOID_B_T,
+} from './constants';
 import { Vec3 } from './propagation-types';
 
 @Injectable({ providedIn: 'root' })
@@ -28,12 +33,32 @@ export class MagneticFieldService {
   private evaluator: ChebFieldEvaluator | null = null;
   private rawBuffers: ChebFieldBuffers | null = null;
   private loadPromise: Promise<void> | null = null;
+  /** Selected plateau |B| in Tesla (UI slider); scales the spatial Chebyshev map. */
+  private targetStrengthT = FIELD_STRENGTH_DEFAULT_T;
 
   constructor(private readonly http: HttpClient) {}
 
   /** True once the field map has been fetched and parsed. */
   get isLoaded(): boolean {
     return this.evaluator !== null;
+  }
+
+  /** Currently selected solenoid plateau strength (Tesla). */
+  get fieldStrengthT(): number {
+    return this.targetStrengthT;
+  }
+
+  /**
+   * Multiplier applied on top of {@link FIELD_SCALE} so the map's plateau tracks
+   * {@link fieldStrengthT} while keeping the axial fall-off shape.
+   */
+  get fieldStrengthScale(): number {
+    return this.targetStrengthT / NOMINAL_SOLENOID_B_T;
+  }
+
+  /** Updates the selected plateau strength (Tesla). Does not reload the LUT. */
+  setFieldStrengthT(tesla: number): void {
+    this.targetStrengthT = tesla;
   }
 
   /**
@@ -77,7 +102,8 @@ export class MagneticFieldService {
       );
     }
     const raw = this.evaluator.field(pos);
-    return { x: raw.x * FIELD_SCALE, y: raw.y * FIELD_SCALE, z: raw.z * FIELD_SCALE };
+    const scale = FIELD_SCALE * this.fieldStrengthScale;
+    return { x: raw.x * scale, y: raw.y * scale, z: raw.z * scale };
   }
 
   /**

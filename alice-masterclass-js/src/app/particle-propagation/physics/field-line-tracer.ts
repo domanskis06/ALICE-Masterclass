@@ -15,6 +15,8 @@
  * `z = 0`; since B is strong and near-uniform along z inside the solenoid,
  * tracing each seed both ways already sweeps the whole longitudinal extent
  * of the sampled volume, so a single seed layer is enough.
+ *
+ * Each polyline vertex also stores `|B|` (Tesla) for downstream colour-mapping.
  */
 
 import { Vec3 } from './propagation-types';
@@ -32,11 +34,23 @@ export interface FieldLineTracerOptions {
 export interface FieldLinePolyline {
   /** Flat `[x0,y0,z0, x1,y1,z1, ...]` positions, in cm. */
   positions: Float32Array;
+  /** `|B|` in Tesla at each vertex; `length === pointCount`. */
+  magnitudes: Float32Array;
   pointCount: number;
 }
 
 export interface FieldLineTraceResult {
   lines: FieldLinePolyline[];
+}
+
+interface FieldSample {
+  tangent: Vec3;
+  magnitude: number;
+}
+
+interface WalkedPoint {
+  pos: Vec3;
+  magnitude: number;
 }
 
 /** Transverse (xy) radius within which seeds are placed, in cm. */
@@ -88,8 +102,11 @@ function outOfBounds(r: Vec3): boolean {
   return transverseRadius(r) > MAX_SAMPLE_RADIUS_CM || Math.abs(r.z) > MAX_SAMPLE_Z_CM;
 }
 
-/** Unit tangent `B(r)/|B(r)|`, or `null` once the field is too weak to trace further. */
-function unitTangent(sample: FieldSampler, r: Vec3): Vec3 | null {
+/**
+ * Unit tangent `B(r)/|B(r)|` plus `|B|`, or `null` once the field is too weak
+ * to trace further.
+ */
+function sampleTangent(sample: FieldSampler, r: Vec3): FieldSample | null {
   let b: Vec3;
   try {
     b = sample(r);
@@ -98,43 +115,47 @@ function unitTangent(sample: FieldSampler, r: Vec3): Vec3 | null {
   }
   const magnitude = length(b);
   if (!Number.isFinite(magnitude) || magnitude < MIN_FIELD_T) return null;
-  return normalize(b);
+  return { tangent: normalize(b), magnitude };
 }
 
 /**
  * Walks a single field line starting at `seed`, one arc-length step at a time,
  * via a 4-stage RK4 on `dr/ds = direction * B(r)/|B(r)|`. Returns the points
- * walked (seed excluded), in order away from the seed.
+ * walked (seed excluded), in order away from the seed, each with `|B|` at that
+ * vertex.
  */
-function walkDirection(sample: FieldSampler, seed: Vec3, direction: 1 | -1): Vec3[] {
-  const points: Vec3[] = [];
+function walkDirection(sample: FieldSampler, seed: Vec3, direction: 1 | -1): WalkedPoint[] {
+  const points: WalkedPoint[] = [];
   let r = seed;
   const h = STEP_CM * direction;
 
   for (let step = 0; step < MAX_STEPS_PER_DIRECTION; step++) {
-    const k1 = unitTangent(sample, r);
+    const k1 = sampleTangent(sample, r);
     if (!k1) break;
-    const k2 = unitTangent(sample, add(r, k1, h / 2));
+    const k2 = sampleTangent(sample, add(r, k1.tangent, h / 2));
     if (!k2) break;
-    const k3 = unitTangent(sample, add(r, k2, h / 2));
+    const k3 = sampleTangent(sample, add(r, k2.tangent, h / 2));
     if (!k3) break;
-    const k4 = unitTangent(sample, add(r, k3, h));
+    const k4 = sampleTangent(sample, add(r, k3.tangent, h));
     if (!k4) break;
 
     const next = add(
       r,
       {
-        x: k1.x + 2 * k2.x + 2 * k3.x + k4.x,
-        y: k1.y + 2 * k2.y + 2 * k3.y + k4.y,
-        z: k1.z + 2 * k2.z + 2 * k3.z + k4.z,
+        x: k1.tangent.x + 2 * k2.tangent.x + 2 * k3.tangent.x + k4.tangent.x,
+        y: k1.tangent.y + 2 * k2.tangent.y + 2 * k3.tangent.y + k4.tangent.y,
+        z: k1.tangent.z + 2 * k2.tangent.z + 2 * k3.tangent.z + k4.tangent.z,
       },
       h / 6
     );
 
     if (outOfBounds(next)) break;
 
+    const atNext = sampleTangent(sample, next);
+    if (!atNext) break;
+
     r = next;
-    points.push(r);
+    points.push({ pos: r, magnitude: atNext.magnitude });
   }
 
   return points;
@@ -169,6 +190,9 @@ export function traceFieldLines(
   const lines: FieldLinePolyline[] = [];
 
   for (const seed of seeds) {
+    const seedSample = sampleTangent(sample, seed);
+    if (!seedSample) continue;
+
     const forward = walkDirection(sample, seed, 1);
     const backward = walkDirection(sample, seed, -1);
 
@@ -176,23 +200,28 @@ export function traceFieldLines(
     if (pointCount < 2) continue;
 
     const positions = new Float32Array(pointCount * 3);
+    const magnitudes = new Float32Array(pointCount);
     let i = 0;
+    let m = 0;
     for (let j = backward.length - 1; j >= 0; j--) {
       const p = backward[j];
-      positions[i++] = p.x;
-      positions[i++] = p.y;
-      positions[i++] = p.z;
+      positions[i++] = p.pos.x;
+      positions[i++] = p.pos.y;
+      positions[i++] = p.pos.z;
+      magnitudes[m++] = p.magnitude;
     }
     positions[i++] = seed.x;
     positions[i++] = seed.y;
     positions[i++] = seed.z;
+    magnitudes[m++] = seedSample.magnitude;
     for (const p of forward) {
-      positions[i++] = p.x;
-      positions[i++] = p.y;
-      positions[i++] = p.z;
+      positions[i++] = p.pos.x;
+      positions[i++] = p.pos.y;
+      positions[i++] = p.pos.z;
+      magnitudes[m++] = p.magnitude;
     }
 
-    lines.push({ positions, pointCount });
+    lines.push({ positions, magnitudes, pointCount });
   }
 
   return { lines };

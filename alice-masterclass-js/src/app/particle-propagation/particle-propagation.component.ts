@@ -25,7 +25,13 @@ import { MagneticFieldService } from './physics/magnetic-field.service';
 import { Rk4PropagatorService } from './physics/rk4-propagator.service';
 import { ParticleDataService, EventRef } from './data/particle-data.service';
 import { BufferedTrack, PropagationParticle } from './physics/propagation-types';
-import { PROTON_MODEL_PATH } from './physics/constants';
+import {
+  FIELD_STRENGTH_DEFAULT_T,
+  FIELD_STRENGTH_MAX_T,
+  FIELD_STRENGTH_MIN_T,
+  FIELD_STRENGTH_STEP_T,
+  PROTON_MODEL_PATH,
+} from './physics/constants';
 import { PropagationScene } from './scene/propagation-scene';
 import { DetectorLoaderService } from './scene/detector-loader.service';
 import { CollisionIntro } from './scene/collision-intro';
@@ -40,6 +46,10 @@ import {
   setFieldLinesResolution,
 } from './scene/field-line-visualizer';
 import { FieldLineDensity } from './physics/field-line-tracer';
+import {
+  fieldColorbarCssGradient,
+  fieldColorRangeForStrength,
+} from './physics/field-colormap';
 import {
   COLLISION_FLASH_DURATION_MS,
   COLLISION_FLASH_PEAK_INTENSITY,
@@ -107,18 +117,30 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   minTimeMs = -1;
   maxTimeMs = 1;
   playbackSpeed = 1;
-  /**
-   * Field overlay is opt-in (off by default) so the idle detector matches the
-   * smooth EventDisplay / Visual Analysis profile — no always-on line overlay.
-   */
-  fieldVisible = false;
-  fieldOpacity = 0.35;
+  /** Field overlay on by default so students see |B|-coloured streamlines. */
+  fieldVisible = true;
+  fieldOpacity = 0.65;
   /**
    * 0 = sparse (default), 1 = medium, 2 = dense — drives {@link fieldDensity}.
    */
   fieldDensityLevel = 0;
   /** Stored line-width preference (native WebGL lines ignore linewidth). */
   fieldLinewidth = DEFAULT_FIELD_LINEWIDTH;
+  /** Selected solenoid plateau |B| (Tesla); scales the Chebyshev map spatially. */
+  fieldStrengthT = FIELD_STRENGTH_DEFAULT_T;
+  readonly fieldStrengthMinT = FIELD_STRENGTH_MIN_T;
+  readonly fieldStrengthMaxT = FIELD_STRENGTH_MAX_T;
+  readonly fieldStrengthStepT = FIELD_STRENGTH_STEP_T;
+  readonly fieldColorbarGradient = fieldColorbarCssGradient();
+
+  /** Colorbar scale ends (Tesla) — track the selected field strength. */
+  get fieldColorMinT(): number {
+    return fieldColorRangeForStrength(this.fieldStrengthT).minT;
+  }
+
+  get fieldColorMaxT(): number {
+    return fieldColorRangeForStrength(this.fieldStrengthT).maxT;
+  }
 
   private scene: PropagationScene | null = null;
   private readonly detectorPartRootByPath = new Map<string, THREE.Object3D>();
@@ -153,6 +175,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       label: `Event ${ref.event + 1}`,
     }));
     this.selectedEventIndex = this.eventOptions[0]?.id ?? 0;
+    // Keep the shared field service in sync with this instance's default slider.
+    this.magneticField.setFieldStrengthT(this.fieldStrengthT);
   }
 
   get controlsEnabled(): boolean {
@@ -272,6 +296,19 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.rebuildFieldVisualization();
   }
 
+  onFieldStrengthChange(tesla: number): void {
+    const next = Number(tesla);
+    if (!Number.isFinite(next) || next === this.magneticField.fieldStrengthT) return;
+    this.fieldStrengthT = next;
+    this.magneticField.setFieldStrengthT(next);
+    this.rebuildFieldVisualization();
+    // Stronger |B| → tighter curvature: re-precompute tracks and replay.
+    if (this.hasStarted) {
+      this.runPrecomputePipeline();
+    }
+    this.cdr.markForCheck();
+  }
+
   onDarkModeChange(darkMode: boolean): void {
     this.isDarkMode = darkMode;
     this.scene?.setDarkMode(darkMode);
@@ -329,6 +366,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       density: this.fieldDensity,
       opacity: this.fieldOpacity,
       linewidth: this.fieldLinewidth,
+      colorRange: fieldColorRangeForStrength(this.fieldStrengthT),
       resolution: {
         width: host?.clientWidth || 1,
         height: host?.clientHeight || 1,

@@ -68,6 +68,11 @@ export interface PropagationWorkerRequest {
   particles: PropagationParticle[];
   fieldBuffers: import('./cheb-field-data').ChebFieldBuffers;
   options?: import('./rk4-integrator').RK4Options;
+  /**
+   * Extra scale on top of {@link import('./constants').FIELD_SCALE}, so the worker
+   * matches the selected UI field strength (`B_ui / NOMINAL_SOLENOID_B_T`). Defaults to 1.
+   */
+  fieldStrengthScale?: number;
 }
 
 /** Messages posted *from* the worker back to the main thread. */

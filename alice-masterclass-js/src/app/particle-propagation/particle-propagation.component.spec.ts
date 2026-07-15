@@ -62,7 +62,15 @@ describe('ParticlePropagationComponent', () => {
   beforeEach(async () => {
     const fakeMagneticField = {
       isLoaded: false,
+      fieldStrengthT: 0.5,
+      fieldStrengthScale: 1,
       load: jasmine.createSpy('load').and.returnValue(Promise.resolve()),
+      setFieldStrengthT: jasmine.createSpy('setFieldStrengthT').and.callFake((t: number) => {
+        fakeMagneticField.fieldStrengthT = t;
+        fakeMagneticField.fieldStrengthScale = t / 0.5;
+      }),
+      field: jasmine.createSpy('field').and.returnValue({ x: 0, y: 0, z: 0.5 }),
+      getRawBuffers: jasmine.createSpy('getRawBuffers').and.returnValue(null),
     };
     const fakeParticleData = {
       listAvailableEvents: () => [{ event: 0 }, { event: 1 }],
@@ -131,6 +139,29 @@ describe('ParticlePropagationComponent', () => {
     component.onStartAnimation();
     expect(precomputeSpy).not.toHaveBeenCalled(); // still stuck at loading-field; second call is a no-op.
   });
+
+  it('onFieldStrengthChange() updates the field service and re-runs precompute after start', async () => {
+    const magneticField = TestBed.inject(MagneticFieldService) as unknown as {
+      setFieldStrengthT: jasmine.Spy;
+      fieldStrengthT: number;
+    };
+
+    component.onFieldStrengthChange(2);
+    expect(component.fieldStrengthT).toBe(2);
+    expect(magneticField.setFieldStrengthT).toHaveBeenCalledWith(2);
+    expect(precomputeSpy).not.toHaveBeenCalled(); // animation not started yet
+
+    component.onStartAnimation();
+    await flushAsyncChain();
+    expect(precomputeSpy).toHaveBeenCalledTimes(1);
+
+    component.onFieldStrengthChange(1);
+    await flushAsyncChain();
+    expect(component.fieldStrengthT).toBe(1);
+    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(component.fieldColorMinT).toBeCloseTo(0.97, 6);
+    expect(component.fieldColorMaxT).toBeCloseTo(1.01, 6);
+  }, 15000);
 
   it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', () => {
     expect(() => fixture.destroy()).not.toThrow();

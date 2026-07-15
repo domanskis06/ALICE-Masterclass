@@ -136,6 +136,23 @@
 
       <section class="controls-section">
         <h4>Magnetic field</h4>
+        <label class="slider-label" for="pp-field-strength">
+          Field strength: {{ fieldStrengthT | number: '1.1-1' }} T
+        </label>
+        <mat-slider
+          class="full-width"
+          [min]="fieldStrengthMinT"
+          [max]="fieldStrengthMaxT"
+          [step]="fieldStrengthStepT"
+          [discrete]="true"
+          [disabled]="isBusy">
+          <input
+            id="pp-field-strength"
+            matSliderThumb
+            [ngModel]="fieldStrengthT"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onFieldStrengthChange($event)" />
+        </mat-slider>
         <mat-slide-toggle
           [(ngModel)]="fieldVisible"
           [ngModelOptions]="{ standalone: true }"
@@ -171,6 +188,18 @@
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onFieldDensityLevelChange($event)" />
         </mat-slider>
+        @if (fieldVisible) {
+          <div class="field-colorbar" aria-label="Magnetic field strength colour scale">
+            <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
+            <div
+              class="field-colorbar-bar"
+              [style.background]="fieldColorbarGradient"
+              role="img"
+              [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
+            <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
+          </div>
+          <p class="slider-label field-colorbar-caption">Line colour encodes |B| (weak → strong)</p>
+        }
       </section>
 
       @if (detectorPartsForUi.length > 0) {
@@ -187,25 +216,27 @@
           </div>
           <div class="detector-parts-list">
             @for (part of detectorPartsForUi; track part.assetPath) {
-              <div class="detector-part-controls">
+              <div class="detector-part-controls" [style.--part-accent]="part.accentColor">
                 <mat-slide-toggle
                   [ngModel]="part.visible"
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="onDetectorPartVisibility(part, $event)">
                   {{ part.label }}
                 </mat-slide-toggle>
-                <input
-                  type="range"
-                  class="part-opacity-slider"
-                  min="0.05"
-                  max="0.95"
-                  step="0.01"
+                <mat-slider
+                  class="full-width part-opacity-mat-slider"
+                  [min]="0.01"
+                  [max]="0.99"
+                  [step]="0.01"
+                  [discrete]="true"
                   [disabled]="!part.visible"
-                  [ngModel]="part.opacity"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="onDetectorPartOpacity(part, $event)"
-                  [style.--part-accent]="part.accentColor"
-                  [attr.aria-label]="part.label + ' opacity'" />
+                  [attr.aria-label]="part.label + ' opacity'">
+                  <input
+                    matSliderThumb
+                    [ngModel]="part.opacity"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onDetectorPartOpacity(part, $event)" />
+                </mat-slider>
               </div>
             }
           </div>

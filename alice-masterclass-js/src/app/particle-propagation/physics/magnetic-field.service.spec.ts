@@ -34,6 +34,29 @@ describe('MagneticFieldService', () => {
     expect(Math.abs(b.z)).toBeCloseTo(magnitude, 2);
   });
 
+  it('scales the spatially varying map when the selected field strength changes', async () => {
+    await service.load();
+    const atOrigin = (s: MagneticFieldService) => {
+      const b = s.field({ x: 0, y: 0, z: 0 });
+      return Math.hypot(b.x, b.y, b.z);
+    };
+    const atFarZ = (s: MagneticFieldService) => {
+      const b = s.field({ x: 0, y: 0, z: 400 });
+      return Math.hypot(b.x, b.y, b.z);
+    };
+
+    const nominal = atOrigin(service);
+    service.setFieldStrengthT(2);
+    expect(service.fieldStrengthScale).toBeCloseTo(4, 6);
+    expect(atOrigin(service) / nominal).toBeCloseTo(4, 2);
+
+    // Far along z the map is weaker, but the scale factor still applies.
+    service.setFieldStrengthT(0.5);
+    const farNominal = atFarZ(service);
+    service.setFieldStrengthT(2);
+    expect(atFarZ(service) / farNominal).toBeCloseTo(4, 2);
+  });
+
   it('exposes the raw parsed buffers once loaded, for handing off to the Web Worker', async () => {
     expect(service.getRawBuffers()).toBeNull();
     await service.load();

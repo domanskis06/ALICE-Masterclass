@@ -101,6 +101,7 @@ export class Rk4PropagatorService {
         particles,
         fieldBuffers: cloneFieldBuffers(fieldBuffers),
         options,
+        fieldStrengthScale: this.magneticField.fieldStrengthScale,
       };
       const transferables: Transferable[] = [
         request.fieldBuffers.solSegments,
@@ -139,9 +140,10 @@ export class Rk4PropagatorService {
   ): Promise<void> {
     const fieldData = parseChebFieldData(fieldBuffers);
     const evaluator = new ChebFieldEvaluator(fieldData);
+    const scale = FIELD_SCALE * this.magneticField.fieldStrengthScale;
     const fieldTesla: FieldFn = (pos) => {
       const raw = evaluator.field(pos);
-      return { x: raw.x * FIELD_SCALE, y: raw.y * FIELD_SCALE, z: raw.z * FIELD_SCALE };
+      return { x: raw.x * scale, y: raw.y * scale, z: raw.z * scale };
     };
 
     const bounded = particles.slice(0, MAX_TRACKED_PARTICLES);

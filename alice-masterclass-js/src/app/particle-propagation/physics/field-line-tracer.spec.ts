@@ -68,4 +68,15 @@ describe('traceFieldLines', () => {
       expect(seed.z).toBe(0);
     }
   });
+
+  it('stores |B| per vertex matching pointCount (uniform 0.5 T → all ≈ 0.5)', () => {
+    const { lines } = traceFieldLines(uniformZField, { density: 'sparse' });
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      expect(line.magnitudes.length).toBe(line.pointCount);
+      for (let i = 0; i < line.pointCount; i++) {
+        expect(line.magnitudes[i]).toBeCloseTo(0.5, 6);
+      }
+    }
+  });
 });

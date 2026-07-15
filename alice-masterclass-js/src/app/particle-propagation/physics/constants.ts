@@ -32,6 +32,21 @@ export const B2C = 0.299792458e-2;
  */
 export const FIELD_SCALE = 0.1;
 
+/**
+ * Nominal |B| plateau of the ALICE solenoid in the Chebyshev map (~0.5 T at the IP).
+ * The UI field-strength slider is expressed in Tesla relative to this value: selecting
+ * `B_ui` multiplies the spatially varying map by `B_ui / NOMINAL_SOLENOID_B_T`, so the
+ * axial fall-off at the detector ends is preserved while the plateau tracks the slider.
+ */
+export const NOMINAL_SOLENOID_B_T = 0.5;
+
+/** Inclusive UI range for the magnetic-field strength slider (Tesla). */
+export const FIELD_STRENGTH_MIN_T = 0.5;
+export const FIELD_STRENGTH_MAX_T = 2;
+export const FIELD_STRENGTH_STEP_T = 0.1;
+/** Default slider / initial strength (matches the nominal map). */
+export const FIELD_STRENGTH_DEFAULT_T = NOMINAL_SOLENOID_B_T;
+
 /** Detector "wall": particles are stopped once |r| (from origin, in cm) exceeds this radius. */
 export const MAX_DETECTOR_R_CM = 500;
 
