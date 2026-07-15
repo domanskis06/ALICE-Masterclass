@@ -53,6 +53,19 @@
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="setDetectorPartOpacity(part, $event)"
                   aria-label="Detector part opacity slider" />
+                @if (isL3AssetPath(part.assetPath)) {
+                  <input
+                    type="range"
+                    class="magnetic-field-slider"
+                    min="0"
+                    [max]="magneticFieldStrengthMax"
+                    step="0.01"
+                    [disabled]="!part.visible"
+                    [ngModel]="magneticFieldStrength"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onMagneticFieldStrengthChange($event)"
+                    [attr.aria-label]="'EVENT_DISPLAY.MAGNETIC_FIELD' | translate" />
+                }
               </div>
             }
           </div>

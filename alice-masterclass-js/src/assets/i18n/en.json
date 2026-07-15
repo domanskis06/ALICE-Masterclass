@@ -139,6 +139,7 @@
     "DETECTOR_DCAL": "DCAL",
     "DETECTOR_PHOS": "PHOS",
     "DETECTOR_LAYER_FALLBACK": "{{name}}",
+    "MAGNETIC_FIELD": "Magnetic field",
     "DETECTOR_ASSEMBLY_TITLE": "Build the detector",
     "DETECTOR_ASSEMBLY_HINT": "Drag each part from this panel onto the 3D view. When everything is placed, detector options (views, clusters, tracks) will appear here."
   },

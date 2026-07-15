@@ -209,6 +209,169 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     ];
   }
 
+  /**
+   * Rescales bend as R → R₀/k (solenoid B ∥ z): 0 → straight, 1 → data, 10 → 10× B₀.
+   * Rebuilds the transverse helix; z follows path length.
+   */
+  static applyMagneticFieldStrength(
+    bent: number[][],
+    straight: number[][],
+    strength: number,
+    sign = 0,
+    startOverride?: number[] | null
+  ): number[][] {
+    const eps = EventDisplayComponent.STRAIGHT_TRACK_EPS;
+    if (!(strength > 0) || straight.length < 2) {
+      return straight.length >= 2
+        ? [[...straight[0]], [...straight[straight.length - 1]]]
+        : (bent || []).map((p) => [...p]);
+    }
+
+    const ordered = EventDisplayComponent.orderTrajectoryFromIp(bent);
+    if (ordered.length < 2) {
+      return ordered.map((p) => [...p]);
+    }
+    if (Math.abs(strength - 1) < 1e-6) {
+      return ordered.map((p) => [...p]);
+    }
+
+    const helix = EventDisplayComponent.estimateTransverseHelix(ordered, sign);
+    if (!helix) {
+      // Nearly straight in data — keep chord morph as last resort.
+      return EventDisplayComponent.lerpTrajectoryTowardStraight(ordered, straight, strength);
+    }
+
+    const origin =
+      startOverride && startOverride.length >= 3
+        ? [startOverride[0], startOverride[1], startOverride[2]]
+        : [ordered[0][0], ordered[0][1], ordered[0][2]];
+
+    const { cx: cx0, cy: cy0, r: r0, sense } = helix;
+    const nx = (cx0 - ordered[0][0]) / r0;
+    const ny = (cy0 - ordered[0][1]) / r0;
+    const r = r0 / strength;
+    const cx = origin[0] + r * nx;
+    const cy = origin[1] + r * ny;
+
+    const sXY: number[] = [0];
+    for (let i = 1; i < ordered.length; i++) {
+      const d = Math.hypot(ordered[i][0] - ordered[i - 1][0], ordered[i][1] - ordered[i - 1][1]);
+      sXY.push(sXY[i - 1] + d);
+    }
+    const sTotal = sXY[sXY.length - 1];
+    if (sTotal < eps) {
+      return [[...origin], [...straight[straight.length - 1]]];
+    }
+
+    const theta0 = Math.atan2(origin[1] - cy, origin[0] - cx);
+    const z0 = origin[2];
+    const z1 = ordered[ordered.length - 1][2];
+    const dzds = (z1 - z0) / sTotal;
+
+    const out: number[][] = [];
+    for (let i = 0; i < ordered.length; i++) {
+      const theta = theta0 + sense * (sXY[i] / r);
+      out.push([
+        cx + r * Math.cos(theta),
+        cy + r * Math.sin(theta),
+        z0 + dzds * sXY[i],
+      ]);
+    }
+    return out;
+  }
+
+  /** Circumcircle through 3 xy points; null if nearly collinear. */
+  private static circumcenterXY(
+    a: number[],
+    b: number[],
+    c: number[]
+  ): { cx: number; cy: number; r: number } | null {
+    const ax = a[0];
+    const ay = a[1];
+    const bx = b[0];
+    const by = b[1];
+    const cx_ = c[0];
+    const cy_ = c[1];
+    const d = 2 * (ax * (by - cy_) + bx * (cy_ - ay) + cx_ * (ay - by));
+    if (Math.abs(d) < 1e-8) {
+      return null;
+    }
+    const a2 = ax * ax + ay * ay;
+    const b2 = bx * bx + by * by;
+    const c2 = cx_ * cx_ + cy_ * cy_;
+    const cx = (a2 * (by - cy_) + b2 * (cy_ - ay) + c2 * (ay - by)) / d;
+    const cy = (a2 * (cx_ - bx) + b2 * (ax - cx_) + c2 * (bx - ax)) / d;
+    const r = Math.hypot(ax - cx, ay - cy);
+    if (!(r > 1e-3) || !Number.isFinite(r)) {
+      return null;
+    }
+    return { cx, cy, r };
+  }
+
+  /** Fit R₀ / center / rotation sense from bent trajectory in xy (B ∥ z). */
+  private static estimateTransverseHelix(
+    ordered: number[][],
+    sign: number
+  ): { cx: number; cy: number; r: number; sense: number } | null {
+    const n = ordered.length;
+    if (n < 3) {
+      return null;
+    }
+    const i1 = Math.max(1, Math.floor((n - 1) / 3));
+    const i2 = Math.max(i1 + 1, Math.floor((2 * (n - 1)) / 3));
+    const circle =
+      EventDisplayComponent.circumcenterXY(ordered[0], ordered[i1], ordered[i2]) ||
+      EventDisplayComponent.circumcenterXY(ordered[0], ordered[i1], ordered[n - 1]) ||
+      EventDisplayComponent.circumcenterXY(ordered[0], ordered[Math.floor(n / 2)], ordered[n - 1]);
+    if (!circle) {
+      return null;
+    }
+
+    const { cx, cy, r } = circle;
+    let dAng = 0;
+    let prev = Math.atan2(ordered[0][1] - cy, ordered[0][0] - cx);
+    for (let i = 1; i < n; i++) {
+      let ang = Math.atan2(ordered[i][1] - cy, ordered[i][0] - cx);
+      let step = ang - prev;
+      while (step > Math.PI) step -= 2 * Math.PI;
+      while (step < -Math.PI) step += 2 * Math.PI;
+      dAng += step;
+      prev = ang;
+    }
+    let sense = Math.sign(dAng);
+    if (sense === 0) {
+      sense = sign >= 0 ? 1 : -1;
+    }
+    return { cx, cy, r, sense };
+  }
+
+  /** Fallback when the track is too straight to fit a circle. */
+  private static lerpTrajectoryTowardStraight(
+    ordered: number[][],
+    straight: number[][],
+    strength: number
+  ): number[][] {
+    const a = straight[0];
+    const b = straight[straight.length - 1];
+    const last = ordered.length - 1;
+    const out: number[][] = [];
+    // Only blend toward data (no chord exaggeration beyond k=1).
+    const k = Math.min(Math.max(strength, 0), 1);
+    for (let i = 0; i <= last; i++) {
+      const t = i / last;
+      const sx = a[0] + (b[0] - a[0]) * t;
+      const sy = a[1] + (b[1] - a[1]) * t;
+      const sz = a[2] + (b[2] - a[2]) * t;
+      const p = ordered[i];
+      out.push([
+        sx + k * (p[0] - sx),
+        sy + k * (p[1] - sy),
+        sz + k * (p[2] - sz),
+      ]);
+    }
+    return out;
+  }
+
   static isItsAssetPath(assetPath: string): boolean {
     return /(^|[/\\])its\.glb($|\?)/i.test(assetPath);
   }
@@ -489,6 +652,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   detectorLayersPanelOpened: boolean = true;
   detectorPartsForUi: DetectorPartToggleModel[] = [];
   detectorPaletteItems: DetectorPaletteItem[] = [];
+  /** 0 = magnet off (straight), 1 = trajectory data (B₀), 5 = 5× B₀. */
+  static readonly MAGNETIC_FIELD_STRENGTH_MAX = 5;
+  magneticFieldStrength = 1;
+  readonly isL3AssetPath = EventDisplayComponent.isL3AssetPath;
+  readonly magneticFieldStrengthMax = EventDisplayComponent.MAGNETIC_FIELD_STRENGTH_MAX;
   /** Multiple GLBs: user drags pieces from the palette before the normal options sidebar is shown. */
   detectorMultipartAssemblyMode = false;
   private _detectorInteractiveAssemblyDone = true;
@@ -1910,7 +2078,26 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private shouldRenderStraightTracks(): boolean {
-    return !this.isL3MagnetActive();
+    return !this.isL3MagnetActive() || this.magneticFieldStrength <= 0;
+  }
+
+  onMagneticFieldStrengthChange(value: number | string): void {
+    const next = Number(value);
+    const max = EventDisplayComponent.MAGNETIC_FIELD_STRENGTH_MAX;
+    this.magneticFieldStrength = Number.isFinite(next)
+      ? Math.min(Math.max(next, 0), max)
+      : 0;
+    if (!this._event) {
+      return;
+    }
+    const deferTrackDraw = this.isCollisionIntroBlockingPhysics();
+    this.trackDrawAnimations = [];
+    if (deferTrackDraw) {
+      this.pendingTrackDrawLines = [];
+    } else {
+      this.trackDrawAnimationStartMs = performance.now();
+    }
+    this.rebuildTracksFromEvent(deferTrackDraw);
   }
 
   private getAssemblyUnlockState(): AssemblyUnlockState {
@@ -2019,6 +2206,27 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
     } else {
       points = track.trajectory.length >= 2 ? track.trajectory : null;
+      if (points) {
+        const strength = this.magneticFieldStrength;
+        if (strength !== 1) {
+          const straightPts = EventDisplayComponent.buildStraightTrajectory(
+            track.trajectory,
+            track.px,
+            track.py,
+            track.pz,
+            startOverride
+          );
+          if (straightPts) {
+            points = EventDisplayComponent.applyMagneticFieldStrength(
+              points,
+              straightPts,
+              strength,
+              track.sign,
+              startOverride
+            );
+          }
+        }
+      }
     }
 
     if (!points) {
