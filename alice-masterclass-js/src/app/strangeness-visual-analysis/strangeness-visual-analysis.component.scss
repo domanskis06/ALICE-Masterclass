@@ -313,6 +313,21 @@
 
 .va-coach-card {
   pointer-events: auto;
+  max-height: min(70vh, 560px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* ALICE theme primary = Material red 900 */
+  border: 4px solid #b71c1c;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(183, 28, 28, 0.12),
+    0 4px 18px rgba(183, 28, 28, 0.16);
+}
+
+.va-coach-card .mat-mdc-card-content,
+.va-coach-card mat-card-content {
+  overflow-y: auto;
 }
 
 .va-coach-text {
@@ -322,6 +337,43 @@
 
 .va-coach-part-name strong {
   font-size: 1.05rem;
+}
+
+.va-coach-part-desc {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.va-coach-part-desc-title {
+  font-weight: 600;
+  margin-bottom: 0.35em;
+}
+
+.va-coach-lets-us {
+  font-weight: 600;
+  margin: 0.75em 0 0.35em;
+}
+
+.va-coach-lets-us-list {
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+.va-coach-lets-us-list li {
+  margin-bottom: 0.25em;
+}
+
+.va-dark-mode .va-coach-part-desc,
+.va-coach-layer--dark .va-coach-part-desc {
+  border-top-color: rgba(255, 255, 255, 0.18);
+}
+
+.va-coach-layer--dark .va-coach-card {
+  border-color: #ef5350;
+  box-shadow:
+    0 0 0 1px rgba(239, 83, 80, 0.2),
+    0 4px 18px rgba(239, 83, 80, 0.22);
 }
 
 @media (max-width: 900px) {

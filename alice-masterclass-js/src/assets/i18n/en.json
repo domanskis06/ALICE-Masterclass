@@ -20,7 +20,19 @@
     "DRAG_INSTRUCTION": "From the strip on the right, drag the highlighted part into the centre of the 3D view until it snaps into place.",
     "DONE_TITLE": "Detector complete",
     "DONE_BODY": "All parts are placed. You now have visibility and track options in the right-hand panel. Explore the event when you are ready.",
-    "DONE_BUTTON": "Got it"
+    "DONE_BUTTON": "Got it",
+    "ITS_UNLOCK_TIP": "ITS: silicon layers closest to the collision point — here tracks begin and the primary vertex is measured.",
+    "PART_DESC": {
+      "ITS": {
+        "TITLE": "ITS (Inner Tracking System)",
+        "BODY": "The ITS (Inner Tracking System) is the innermost particle tracking detector, located closest to the point where protons or heavy ions collide. It is built from extremely thin silicon sensors that record the passage of charged particles with a precision of just a few micrometres — less than the thickness of a human hair. This allows physicists to determine the exact point where particles are produced and to detect particles that decay almost immediately after their creation, before they can reach the outer detectors.",
+        "LETS_US": "ITS lets us:",
+        "B1": "determine the primary vertex with a resolution better than 100 micrometres",
+        "B2": "reconstruct secondary vertices needed for charm and hyperon decays",
+        "B3": "track and identify low-momentum particles",
+        "B4": "improve the momentum and angle resolution for particles reconstructed by the Time Projection Chamber (TPC)"
+      }
+    }
   },
   "HOME": {
     "HOME_MENU": "Home",

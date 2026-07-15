@@ -1,6 +1,6 @@
 <div fxFlex="grow" data-testid="strangeness-visual-analysis-page">
   @if (vaCoachOverlayVisible) {
-    <div class="va-coach-layer" aria-live="polite">
+    <div class="va-coach-layer" [class.va-coach-layer--dark]="visualDarkMode" aria-live="polite">
       @if (vaCoachWelcomePhase) {
         <mat-card appearance="outlined" class="va-coach-card">
           <mat-card-title>{{ 'VA_COACH.WELCOME_TITLE' | translate }}</mat-card-title>
@@ -39,6 +39,19 @@
                 [translateParams]="vaCoachCurrentPiecePresentation.labelParams || {}"
               ></strong>
             </p>
+            @if (vaCoachCurrentPartDescId; as partDescId) {
+              <div class="va-coach-part-desc">
+                <p class="va-coach-part-desc-title">{{ ('VA_COACH.PART_DESC.' + partDescId + '.TITLE') | translate }}</p>
+                <p>{{ ('VA_COACH.PART_DESC.' + partDescId + '.BODY') | translate }}</p>
+                <p class="va-coach-lets-us">{{ ('VA_COACH.PART_DESC.' + partDescId + '.LETS_US') | translate }}</p>
+                <ul class="va-coach-lets-us-list">
+                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B1') | translate }}</li>
+                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B2') | translate }}</li>
+                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B3') | translate }}</li>
+                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B4') | translate }}</li>
+                </ul>
+              </div>
+            }
           </mat-card-content>
         </mat-card>
       }
