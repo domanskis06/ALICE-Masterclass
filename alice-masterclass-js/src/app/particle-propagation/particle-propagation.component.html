@@ -1,0 +1,247 @@
+<div class="particle-propagation-host" [class.pp-dark]="isDarkMode" [class.pp-sidebar-collapsed]="sidebarCollapsed">
+  <div class="scene-column" #sceneHost>
+    <canvas #canvas></canvas>
+
+    @if (phase === 'loading-field' || phase === 'loading-event' || phase === 'precomputing') {
+      <div class="loading-overlay">
+        <mat-spinner [diameter]="56"></mat-spinner>
+        @if (phase === 'loading-field') {
+          <p class="loading-label">{{ 'STRANGENESS.PARTICLE_PROPAGATION.LOADING_FIELD' | translate }}</p>
+        }
+        @if (phase === 'loading-event') {
+          <p class="loading-label">{{ 'STRANGENESS.PARTICLE_PROPAGATION.LOADING_EVENT' | translate }}</p>
+        }
+        @if (phase === 'precomputing') {
+          <p class="loading-label">{{ 'STRANGENESS.PARTICLE_PROPAGATION.PRECOMPUTING' | translate }}</p>
+          @if (progressTotal > 0) {
+            <p class="loading-progress">{{ progressDone }} / {{ progressTotal }}</p>
+          }
+        }
+      </div>
+    }
+
+    @if (phase === 'error') {
+      <div class="error-overlay">
+        <p>{{ 'STRANGENESS.PARTICLE_PROPAGATION.ERROR' | translate }}</p>
+        @if (errorMessage) {
+          <p class="error-detail">{{ errorMessage }}</p>
+        }
+        <button mat-raised-button color="primary" type="button" (click)="onStartAnimation()">
+          {{ 'STRANGENESS.PARTICLE_PROPAGATION.RETRY' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+
+  <aside class="controls-sidebar" aria-label="Particle propagation controls">
+    <div class="sidebar-header">
+      <button
+        mat-icon-button
+        type="button"
+        class="sidebar-toggle"
+        [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        [attr.aria-expanded]="!sidebarCollapsed"
+        (click)="sidebarCollapsed = !sidebarCollapsed">
+        <mat-icon>{{ sidebarCollapsed ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+      </button>
+    </div>
+
+    <div class="sidebar-body" [attr.aria-hidden]="sidebarCollapsed">
+      <section class="controls-section">
+        <h4>Event</h4>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Event</mat-label>
+          <mat-select
+            [(ngModel)]="selectedEventIndex"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onEventChange($event)"
+            [panelClass]="eventSelectPanelClass"
+            [disabled]="isBusy">
+            @for (opt of eventOptions; track opt.id) {
+              <mat-option [value]="opt.id">{{ opt.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (!hasStarted) {
+          <button mat-raised-button color="primary" type="button" class="full-width" (click)="onStartAnimation()">
+            Start animation
+          </button>
+        }
+      </section>
+
+      <section class="controls-section">
+        <h4>Playback</h4>
+        <div class="playback-buttons">
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Play"
+            [disabled]="!controlsEnabled || isPlaying"
+            (click)="onPlay()">
+            <mat-icon>play_arrow</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Pause"
+            [disabled]="!controlsEnabled || !isPlaying"
+            (click)="onPause()">
+            <mat-icon>pause</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            type="button"
+            aria-label="Replay"
+            [disabled]="!controlsEnabled"
+            (click)="onReplay()">
+            <mat-icon>replay</mat-icon>
+          </button>
+        </div>
+        <label class="slider-label" for="pp-speed">Playback speed</label>
+        <mat-slider
+          class="full-width"
+          [min]="0.2"
+          [max]="2"
+          [step]="0.2"
+          [discrete]="true"
+          [disabled]="!controlsEnabled">
+          <input
+            id="pp-speed"
+            matSliderThumb
+            [(ngModel)]="playbackSpeed"
+            [ngModelOptions]="{ standalone: true }" />
+        </mat-slider>
+      </section>
+
+      <section class="controls-section">
+        <h4>Time</h4>
+        @if (controlsEnabled) {
+          <div class="time-readout">{{ currentTimeMs | number: '1.0-0' }} ms</div>
+          <mat-slider
+            class="full-width"
+            [min]="minTimeMs"
+            [max]="maxTimeMs"
+            [step]="1"
+            [discrete]="true">
+            <input
+              matSliderThumb
+              [(ngModel)]="currentTimeMs"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onTimeChange($event)" />
+          </mat-slider>
+        } @else {
+          <p class="slider-label">Start the animation to scrub time.</p>
+        }
+      </section>
+
+      <section class="controls-section">
+        <h4>Magnetic field</h4>
+        <label class="slider-label" for="pp-field-strength">
+          Field strength: {{ fieldStrengthT | number: '1.1-1' }} T
+        </label>
+        <mat-slider
+          class="full-width"
+          [min]="fieldStrengthMinT"
+          [max]="fieldStrengthMaxT"
+          [step]="fieldStrengthStepT"
+          [discrete]="true"
+          [disabled]="isBusy">
+          <input
+            id="pp-field-strength"
+            matSliderThumb
+            [ngModel]="fieldStrengthT"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onFieldStrengthChange($event)" />
+        </mat-slider>
+        <mat-slide-toggle
+          [(ngModel)]="fieldVisible"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onFieldShowChange($event)">
+          Show field
+        </mat-slide-toggle>
+        <label class="slider-label">Field opacity</label>
+        <mat-slider
+          class="full-width"
+          [min]="0.05"
+          [max]="1"
+          [step]="0.05"
+          [discrete]="true"
+          [disabled]="!fieldVisible">
+          <input
+            matSliderThumb
+            [(ngModel)]="fieldOpacity"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onFieldOpacityChange($event)" />
+        </mat-slider>
+        <label class="slider-label">Field line density (sparse → dense)</label>
+        <mat-slider
+          class="full-width"
+          [min]="0"
+          [max]="2"
+          [step]="1"
+          [discrete]="true"
+          [displayWith]="densityLabel"
+          [disabled]="!fieldVisible">
+          <input
+            matSliderThumb
+            [(ngModel)]="fieldDensityLevel"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onFieldDensityLevelChange($event)" />
+        </mat-slider>
+        @if (fieldVisible) {
+          <div class="field-colorbar" aria-label="Magnetic field strength colour scale">
+            <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
+            <div
+              class="field-colorbar-bar"
+              [style.background]="fieldColorbarGradient"
+              role="img"
+              [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
+            <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
+          </div>
+          <p class="slider-label field-colorbar-caption">Line colour encodes |B| (weak → strong)</p>
+        }
+      </section>
+
+      @if (detectorPartsForUi.length > 0) {
+        <section class="controls-section detector-parts-section">
+          <div class="section-heading-row">
+            <h4>Detector parts</h4>
+            <mat-slide-toggle
+              [ngModel]="isDarkMode"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onDarkModeChange($event)"
+              aria-label="Toggle dark visual theme">
+              <mat-icon aria-hidden="true">dark_mode</mat-icon>
+            </mat-slide-toggle>
+          </div>
+          <div class="detector-parts-list">
+            @for (part of detectorPartsForUi; track part.assetPath) {
+              <div class="detector-part-controls" [style.--part-accent]="part.accentColor">
+                <mat-slide-toggle
+                  [ngModel]="part.visible"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="onDetectorPartVisibility(part, $event)">
+                  {{ part.label }}
+                </mat-slide-toggle>
+                <mat-slider
+                  class="full-width part-opacity-mat-slider"
+                  [min]="0.05"
+                  [max]="1"
+                  [step]="0.01"
+                  [discrete]="true"
+                  [disabled]="!part.visible"
+                  [attr.aria-label]="part.label + ' opacity'">
+                  <input
+                    matSliderThumb
+                    [ngModel]="part.opacity"
+                    [ngModelOptions]="{ standalone: true }"
+                    (ngModelChange)="onDetectorPartOpacity(part, $event)" />
+                </mat-slider>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </aside>
+</div>

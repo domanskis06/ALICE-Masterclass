@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>{{ 'STRANGENESS.PARTICLE_PROPAGATION.WELCOME_TITLE' | translate }}</h2>
+<mat-dialog-content class="welcome-body">
+  <p>{{ 'STRANGENESS.PARTICLE_PROPAGATION.WELCOME_BODY_1' | translate }}</p>
+  <p>{{ 'STRANGENESS.PARTICLE_PROPAGATION.WELCOME_BODY_2' | translate }}</p>
+  <p>{{ 'STRANGENESS.PARTICLE_PROPAGATION.WELCOME_BODY_3' | translate }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="skip()">
+    {{ 'STRANGENESS.PARTICLE_PROPAGATION.SKIP_BUTTON' | translate }}
+  </button>
+  <button mat-raised-button color="primary" type="button" (click)="start()">
+    {{ 'STRANGENESS.PARTICLE_PROPAGATION.START_BUTTON' | translate }}
+  </button>
+</mat-dialog-actions>

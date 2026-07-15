@@ -2,7 +2,6 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "module": "es2015",
     "baseUrl": "",
     "types": []
   },
@@ -13,7 +12,8 @@
     "environments/**/*.ts"
   ],
   "exclude": [
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "**/*.worker.ts"
   ],
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,

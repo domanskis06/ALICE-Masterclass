@@ -78,7 +78,7 @@ in **`alice-masterclass-django`**.
 `runserver`.
 
 Python interpreter: **`E2E_PYTHON`**, or automatically
-`../alice-masterclass-django/.venv-e2e/bin/python` when that path exists.
+`../alice-masterclass-django/venv/bin/python` when that path exists.
 
 ## `e2e/django/` scenarios (summary)
 
