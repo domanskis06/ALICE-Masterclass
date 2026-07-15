@@ -92,7 +92,7 @@ export const FIELD_MAX_Z = SOL_MAX_Z;
 export const FIELD_DATA_BASE_PATH = 'assets/field';
 export const DETECTOR_MODEL_BASE_PATH = 'assets/models/alice components';
 export const PROTON_MODEL_PATH = 'assets/models/proton.glb';
-/** Curated Particle Propagation events (see scripts/curate-propagation-events.mjs). */
+/** Curated Particle Propagation events from part1 (see scripts/curate-propagation-events.mjs). */
 export const PARTICLE_EVENT_DATA_BASE_PATH = 'assets/exercises/particle-propagation';
 /** Number of curated `event_<n>.json` files shipped under the base path above. */
 export const PARTICLE_EVENT_COUNT = 10;

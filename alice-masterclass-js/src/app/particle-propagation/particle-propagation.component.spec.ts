@@ -36,6 +36,7 @@ async function flushAsyncChain(turns = 6): Promise<void> {
 
 const fakeParticle: PropagationParticle = {
   id: 'track-0',
+  origin: 'primary',
   vertex: { x: 0, y: 0, z: 0 },
   momentum: { x: 0, y: 0, z: 1 },
   charge: 1,
@@ -49,6 +50,7 @@ const fakeTrack: BufferedTrack = {
   times: new Float32Array([0, 1]),
   pointCount: 2,
   charge: 1,
+  origin: 'primary',
 };
 
 describe('ParticlePropagationComponent', () => {

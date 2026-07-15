@@ -11,7 +11,7 @@ function makeTrack(id: string, times: number[]): BufferedTrack {
   const positions = new Float32Array(pointCount * 3);
   const timesArr = new Float32Array(pointCount);
   timesArr.set(times);
-  return { particleId: id, positions, times: timesArr, pointCount, charge: 1 };
+  return { particleId: id, positions, times: timesArr, pointCount, charge: 1, origin: 'primary' };
 }
 
 describe('PropagationTimeline', () => {

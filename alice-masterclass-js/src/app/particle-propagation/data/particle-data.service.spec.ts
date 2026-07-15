@@ -10,6 +10,7 @@ import { MAX_TRACKED_PARTICLES, PARTICLE_EVENT_COUNT, PARTICLE_EVENT_DATA_BASE_P
 function makeTrack(overrides: Partial<PropagationRawTrack> = {}): PropagationRawTrack {
   return {
     charge: 1,
+    origin: 'primary',
     X: 0.06,
     Y: 0.36,
     Z: -1.1,
@@ -30,20 +31,27 @@ describe('ParticleDataService (real curated event fixture)', () => {
     service = TestBed.inject(ParticleDataService);
   });
 
-  it('loads a real curated event and maps every charged track to an origin-vertex particle', async () => {
+  it('loads a real curated event with primary (IP) and V0 (secondary) tracks', async () => {
     const particles = await firstValueFrom(service.loadEvent(0));
 
-    expect(particles.length).toBeGreaterThanOrEqual(15);
+    expect(particles.length).toBeGreaterThanOrEqual(10);
     expect(particles.length).toBeLessThanOrEqual(MAX_TRACKED_PARTICLES);
-    // Curated data is exclusively charged; nothing should map to a neutral particle.
     expect(particles.every((p) => p.charge === 1 || p.charge === -1)).toBe(true);
-    // Both charge signs should be represented (this is a "red vs blue" exercise).
     expect(particles.some((p) => p.charge > 0)).toBe(true);
     expect(particles.some((p) => p.charge < 0)).toBe(true);
 
-    for (const p of particles) {
-      // Vertex pinned to the detector's central axis.
+    const primary = particles.filter((p) => p.origin === 'primary');
+    const v0 = particles.filter((p) => p.origin === 'v0');
+    expect(primary.length).toBeGreaterThanOrEqual(8);
+    expect(v0.length).toBe(2);
+    expect(v0.some((p) => p.charge > 0)).toBe(true);
+    expect(v0.some((p) => p.charge < 0)).toBe(true);
+
+    for (const p of primary) {
       expect(p.vertex).toEqual({ x: 0, y: 0, z: 0 });
+    }
+    for (const p of v0) {
+      expect(Math.hypot(p.vertex.x, p.vertex.y)).toBeGreaterThan(0.3);
       expect(Number.isFinite(p.momentum.x)).toBe(true);
       expect(Number.isFinite(p.energy)).toBe(true);
     }
@@ -71,23 +79,47 @@ describe('ParticleDataService (synthetic fixtures via HttpTestingController)', (
 
   afterEach(() => httpMock.verify());
 
-  it('maps charge/momentum/energy correctly and forces the vertex to the origin', async () => {
+  it('maps primary tracks to the IP and V0 tracks to their secondary vertex', async () => {
     const event: PropagationEvent = {
-      tracks: [makeTrack({ charge: -1, px: 1, py: 2, pz: 3, E: 4.5, X: 0.1, Y: 0.4, Z: -2 })],
+      tracks: [
+        makeTrack({ charge: -1, origin: 'primary', px: 1, py: 2, pz: 3, E: 4.5, X: 0.1, Y: 0.4, Z: -2 }),
+        makeTrack({
+          charge: 1,
+          origin: 'v0',
+          px: 0.2,
+          py: -0.1,
+          pz: 0.5,
+          E: 0.6,
+          X: 5,
+          Y: 3,
+          Z: -1,
+          mass: 0.13957,
+        }),
+      ],
     };
 
     const promise = firstValueFrom(service.loadEvent(0));
     httpMock.expectOne(`${PARTICLE_EVENT_DATA_BASE_PATH}/event_0.json`).flush(event);
     const particles = await promise;
 
-    expect(particles.length).toBe(1);
+    expect(particles.length).toBe(2);
     expect(particles[0]).toEqual({
       id: 'track-0',
+      origin: 'primary',
       vertex: { x: 0, y: 0, z: 0 },
       momentum: { x: 1, y: 2, z: 3 },
       charge: -1,
       mass: 0.13957,
       energy: 4.5,
+    });
+    expect(particles[1]).toEqual({
+      id: 'track-1',
+      origin: 'v0',
+      vertex: { x: 5, y: 3, z: -1 },
+      momentum: { x: 0.2, y: -0.1, z: 0.5 },
+      charge: 1,
+      mass: 0.13957,
+      energy: 0.6,
     });
   });
 
@@ -104,11 +136,15 @@ describe('ParticleDataService (synthetic fixtures via HttpTestingController)', (
     expect(particles.every((p) => p.charge !== 0)).toBe(true);
   });
 
-  it('truncates to MAX_TRACKED_PARTICLES, keeping the highest-|p| particles, and warns once', async () => {
+  it('truncates to MAX_TRACKED_PARTICLES, keeping all V0 and the highest-|p| primary', async () => {
     const extraCount = MAX_TRACKED_PARTICLES + 50;
-    const tracks: PropagationRawTrack[] = Array.from({ length: extraCount }, (_, i) =>
-      makeTrack({ px: i + 1, py: 0, pz: 0 }) // momentum magnitude == i+1, strictly increasing
-    );
+    const tracks: PropagationRawTrack[] = [
+      ...Array.from({ length: extraCount }, (_, i) =>
+        makeTrack({ origin: 'primary', px: i + 1, py: 0, pz: 0 })
+      ),
+      makeTrack({ origin: 'v0', charge: 1, X: 4, Y: 2, Z: 0, px: 0.1 }),
+      makeTrack({ origin: 'v0', charge: -1, X: 4, Y: 2, Z: 0, px: 0.2 }),
+    ];
     const event: PropagationEvent = { tracks };
 
     const warnSpy = spyOn(console, 'warn');
@@ -117,8 +153,9 @@ describe('ParticleDataService (synthetic fixtures via HttpTestingController)', (
     const particles = await promise;
 
     expect(particles.length).toBe(MAX_TRACKED_PARTICLES);
-    // Highest-momentum track had px = extraCount; it must have survived truncation.
-    expect(particles[0].momentum.x).toBe(extraCount);
+    expect(particles.filter((p) => p.origin === 'v0').length).toBe(2);
+    // Highest-momentum primary had px = extraCount; it must have survived truncation.
+    expect(particles.some((p) => p.origin === 'primary' && p.momentum.x === extraCount)).toBe(true);
     expect(warnSpy).toHaveBeenCalled();
   });
 });

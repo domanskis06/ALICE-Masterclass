@@ -156,7 +156,14 @@ export function computeTrajectory(
   writePoint(state.r, 0);
 
   if (length(state.r) >= maxRadius) {
-    return { particleId: particle.id, positions, times, pointCount, charge: particle.charge };
+    return {
+      particleId: particle.id,
+      positions,
+      times,
+      pointCount,
+      charge: particle.charge,
+      origin: particle.origin,
+    };
   }
 
   let s = 0;
@@ -186,7 +193,14 @@ export function computeTrajectory(
     writePoint(state.r, s);
   }
 
-  return { particleId: particle.id, positions, times, pointCount, charge: particle.charge };
+  return {
+    particleId: particle.id,
+    positions,
+    times,
+    pointCount,
+    charge: particle.charge,
+    origin: particle.origin,
+  };
 }
 
 /**

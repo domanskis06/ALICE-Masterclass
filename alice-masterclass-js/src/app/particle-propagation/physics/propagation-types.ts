@@ -5,11 +5,16 @@ export interface Vec3 {
   z: number;
 }
 
-/** A single charged/neutral particle produced at the collision vertex, ready for propagation. */
+/** Production role — primary (IP) vs V0 secondary; mirrored from on-disk `origin`. */
+export type ParticleOrigin = 'primary' | 'v0';
+
+/** A single charged/neutral particle ready for propagation. */
 export interface PropagationParticle {
   /** Stable identifier (e.g. `track-3` or `decay-1-0`), used to correlate results back to input. */
   id: string;
-  /** Production vertex, in cm. */
+  /** Production role: collision primary vs V0 daughter (drives track colour). */
+  origin: ParticleOrigin;
+  /** Production vertex, in cm (IP for primary, secondary vertex for V0). */
   vertex: Vec3;
   /** Momentum vector, in GeV/c. */
   momentum: Vec3;
@@ -37,6 +42,8 @@ export interface BufferedTrack {
   /** Number of valid points actually written into `positions`/`times`. */
   pointCount: number;
   charge: number;
+  /** Copied from the input particle so the renderer can colour primary vs V0. */
+  origin: ParticleOrigin;
 }
 
 /** Aggregate result of a full pre-computation pass over an event. */

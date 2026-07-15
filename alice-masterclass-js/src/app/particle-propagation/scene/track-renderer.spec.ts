@@ -5,13 +5,18 @@ import {
   createTrackLines,
   updateDrawRange,
   DEFAULT_TRACK_LINEWIDTH,
+  PRIMARY_TRACK_COLOR,
   POSITIVE_TRACK_COLOR,
   NEGATIVE_TRACK_COLOR,
   NEUTRAL_TRACK_COLOR,
 } from './track-renderer';
-import { BufferedTrack } from '../physics/propagation-types';
+import { BufferedTrack, ParticleOrigin } from '../physics/propagation-types';
 
-function makeTrack(charge: number, times: number[]): BufferedTrack {
+function makeTrack(
+  charge: number,
+  times: number[],
+  origin: ParticleOrigin = 'v0'
+): BufferedTrack {
   const pointCount = times.length;
   const positions = new Float32Array(pointCount * 3);
   for (let i = 0; i < pointCount; i++) {
@@ -21,7 +26,7 @@ function makeTrack(charge: number, times: number[]): BufferedTrack {
   }
   const timesArr = new Float32Array(pointCount);
   timesArr.set(times);
-  return { particleId: `p-${charge}`, positions, times: timesArr, pointCount, charge };
+  return { particleId: `p-${charge}`, positions, times: timesArr, pointCount, charge, origin };
 }
 
 describe('createTrackLines', () => {
@@ -44,11 +49,15 @@ describe('createTrackLines', () => {
     expect(track.positions[3]).toBe(originalX1);
   });
 
-  it('colors tracks by charge: positive red, negative green, neutral fallback', () => {
-    const [posLine] = createTrackLines([makeTrack(1, [0])], 1);
-    const [negLine] = createTrackLines([makeTrack(-1, [0])], 1);
-    const [neutralLine] = createTrackLines([makeTrack(0, [0])], 1);
+  it('colors primary tracks blue and V0 tracks by charge (red + / green −)', () => {
+    const [primaryLine] = createTrackLines([makeTrack(1, [0], 'primary')], 1);
+    const [posLine] = createTrackLines([makeTrack(1, [0], 'v0')], 1);
+    const [negLine] = createTrackLines([makeTrack(-1, [0], 'v0')], 1);
+    const [neutralLine] = createTrackLines([makeTrack(0, [0], 'v0')], 1);
 
+    expect((primaryLine.material as LineMaterial).color.getHexString()).toBe(
+      new THREE.Color(PRIMARY_TRACK_COLOR).getHexString()
+    );
     expect((posLine.material as LineMaterial).color.getHexString()).toBe(
       new THREE.Color(POSITIVE_TRACK_COLOR).getHexString()
     );

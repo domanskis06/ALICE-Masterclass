@@ -2,19 +2,27 @@
  * On-disk schema for the curated Particle Propagation events under
  * `assets/exercises/particle-propagation/event_<n>.json`.
  *
- * These are distilled from https://github.com/pnwkw/gpu_propagator's
- * `data/events.json` by `scripts/curate-propagation-events.mjs`. Unlike the
- * strangeness dataset, each track carries a real electric `charge` (+-1) — the
- * `sign` field in the original data is always 0 and is intentionally dropped.
+ * Distilled from Strangeness Visual Analysis `part1` events by
+ * `scripts/curate-propagation-events.mjs`:
+ *   - primary tracks (VA background) — charge inferred from helix trajectory
+ *   - one V0 decay pair — charge from VA `sign`, vertex at the secondary
  *
- * Kept deliberately minimal: only the fields the RK4 pre-computation needs.
+ * Kept deliberately minimal: only the fields the RK4 pre-computation + colouring need.
  */
 
-/** A single charged final-state particle at (near) the interaction point. */
+/** Where the particle was produced — drives vertex pinning and track colour. */
+export type TrackOrigin = 'primary' | 'v0';
+
+/** A single charged particle ready for RK4 (primary from IP, or V0 daughter). */
 export interface PropagationRawTrack {
   /** Electric charge in units of |e| (+1 or -1). */
   charge: number;
-  /** Production vertex, cm (beam-spot; pinned to the origin at map time). */
+  /** Production role: collision (primary) vs secondary V0 decay. */
+  origin: TrackOrigin;
+  /**
+   * Production vertex, cm.
+   * Primary: written as 0,0,0 (IP). V0: secondary vertex from VA `trajectory[0]`.
+   */
   X: number;
   Y: number;
   Z: number;

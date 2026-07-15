@@ -17,8 +17,8 @@ function collectEvents(obs: { subscribe: Function }): Promise<PrecomputeEvent[]>
 }
 
 const testParticles: PropagationParticle[] = [
-  { id: 'p1', vertex: { x: 0, y: 0, z: 0 }, momentum: { x: 1, y: 0, z: 0.5 }, charge: 1, mass: 0.1396, energy: 1.16 },
-  { id: 'p2', vertex: { x: 0, y: 0, z: 0 }, momentum: { x: -0.6, y: 0.4, z: 0.2 }, charge: -1, mass: 0.1396, energy: 0.77 },
+  { id: 'p1', origin: 'primary', vertex: { x: 0, y: 0, z: 0 }, momentum: { x: 1, y: 0, z: 0.5 }, charge: 1, mass: 0.1396, energy: 1.16 },
+  { id: 'p2', origin: 'primary', vertex: { x: 0, y: 0, z: 0 }, momentum: { x: -0.6, y: 0.4, z: 0.2 }, charge: -1, mass: 0.1396, energy: 0.77 },
 ];
 
 describe('Rk4PropagatorService', () => {

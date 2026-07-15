@@ -20,6 +20,7 @@ describe('rk4-integrator', () => {
     it('propagates a neutral particle in a straight line, regardless of the field', () => {
       const particle: PropagationParticle = {
         id: 'neutral-1',
+        origin: 'primary',
         vertex: { x: 0, y: 0, z: 0 },
         momentum: { x: 1, y: 0, z: 0 },
         charge: 0,
@@ -49,6 +50,7 @@ describe('rk4-integrator', () => {
 
       const particle: PropagationParticle = {
         id: 'charged-1',
+        origin: 'primary',
         vertex: { x: 0, y: 0, z: 0 },
         momentum: { x: pt, y: 0, z: 0 },
         charge,
@@ -90,6 +92,7 @@ describe('rk4-integrator', () => {
     it('stops and interpolates to the exact detector boundary sphere', () => {
       const particle: PropagationParticle = {
         id: 'radial-1',
+        origin: 'primary',
         vertex: { x: 0, y: 0, z: 0 },
         momentum: { x: 1, y: 0, z: 0 },
         charge: 0,

@@ -17,14 +17,16 @@ import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 
+import { trackColor } from '../../shared/globals/colors/colors';
 import { BufferedTrack } from '../physics/propagation-types';
 
 /**
- * Track colours, local to this module (intentionally NOT the shared strangeness
- * palette constants — VA maps sign via navy/lime there, but the on-screen
- * convention students learn is red = (+), green = (−)). Neutral is only a
- * defensive fallback; the curated data ships |charge| == 1 exclusively.
+ * Track colours:
+ * - primary (collision background) → shared VA blue (`trackColor`)
+ * - V0 daughters → red (+) / green (−) for charge sign (local to this module)
+ * Neutral is only a defensive fallback for non-V0 / unknown charge.
  */
+export const PRIMARY_TRACK_COLOR = trackColor;
 export const POSITIVE_TRACK_COLOR = '#E53935';
 export const NEGATIVE_TRACK_COLOR = '#43A047';
 export const NEUTRAL_TRACK_COLOR = '#B0BEC5';
@@ -42,9 +44,12 @@ export interface TrackLineOptions {
   resolution?: { width: number; height: number };
 }
 
-function colorForCharge(charge: number): THREE.Color {
-  if (charge > 0) return new THREE.Color(POSITIVE_TRACK_COLOR);
-  if (charge < 0) return new THREE.Color(NEGATIVE_TRACK_COLOR);
+function colorForTrack(track: BufferedTrack): THREE.Color {
+  if (track.origin === 'primary') {
+    return new THREE.Color(PRIMARY_TRACK_COLOR);
+  }
+  if (track.charge > 0) return new THREE.Color(POSITIVE_TRACK_COLOR);
+  if (track.charge < 0) return new THREE.Color(NEGATIVE_TRACK_COLOR);
   return new THREE.Color(NEUTRAL_TRACK_COLOR);
 }
 
@@ -88,68 +93,64 @@ export function createTrackLines(
     } else {
       geometry.setPositions([0, 0, 0, 0, 0, 0]);
     }
-    geometry.instanceCount = 0;
 
     const material = new LineMaterial({
-      color: colorForCharge(track.charge),
+      color: colorForTrack(track),
       linewidth,
-      resolution: res.clone(),
+      resolution: res,
+      worldUnits: false,
+      transparent: false,
+      depthTest: true,
+      depthWrite: true,
     });
 
     const line = new Line2(geometry, material);
-    line.name = `track-${track.particleId}`;
-    line.userData['particleId'] = track.particleId;
-    line.frustumCulled = false; // instanceCount changes every frame; a stale bounding sphere would cull valid growth.
+    line.computeLineDistances();
+    line.geometry.instanceCount = 0;
+    line.userData = { particleId: track.particleId, charge: track.charge, origin: track.origin };
     return line;
   });
 }
 
 /**
- * Finds the largest index `i` (0-based, within `[0, track.pointCount - 1]`)
- * such that `track.times[i] <= t`, i.e. the number of vertices that should
- * already be visible at time `t`. Returns `-1` if `t` is before the track's
- * first vertex (nothing visible yet).
+ * Binary-search the last index `i` such that `track.times[i] <= t`. Returns
+ * -1 when `t` is before the first sample (nothing visible yet).
  */
 function lastVisibleIndex(track: BufferedTrack, t: number): number {
-  const count = track.pointCount;
-  if (count === 0 || t < track.times[0]) return -1;
-  if (t >= track.times[count - 1]) return count - 1;
+  const { times, pointCount } = track;
+  if (pointCount === 0 || t < times[0]) return -1;
+  if (t >= times[pointCount - 1]) return pointCount - 1;
 
   let lo = 0;
-  let hi = count - 1;
+  let hi = pointCount - 1;
   while (lo < hi) {
-    const mid = (lo + hi + 1) >>> 1;
-    if (track.times[mid] <= t) {
-      lo = mid;
-    } else {
-      hi = mid - 1;
-    }
+    const mid = (lo + hi + 1) >> 1;
+    if (times[mid] <= t) lo = mid;
+    else hi = mid - 1;
   }
   return lo;
 }
 
 /**
- * Reveals `line` up to whatever `track`'s pre-computed time buffer says is
+ * Reveals the prefix of `line` corresponding to the physics points already
  * reached by `tSincePropagationStart` (same units as `BufferedTrack.times`,
- * i.e. ns — see `PropagationTimeline`, Faza 10, for the ms->ns conversion).
- * Pure lookup: **no physics is (re-)computed here**.
- *
- * Fat lines are instanced segments (`n` points → `n - 1` instances), so
- * visibility is controlled via `instanceCount`, not `setDrawRange`.
+ * i.e. ns since the particle left its production vertex). Physics-free: pure
+ * buffer lookup + `instanceCount` write.
  */
 export function updateDrawRange(line: Line2, track: BufferedTrack, tSincePropagationStart: number): void {
-  const geometry = line.geometry as LineGeometry;
   const index = lastVisibleIndex(track, tSincePropagationStart);
   // `index` is the last visible vertex; segment count between 0..index is `index`.
-  geometry.instanceCount = index < 0 ? 0 : index;
+  line.geometry.instanceCount = Math.max(0, index);
 }
 
-/** Updates every track `LineMaterial.resolution` after a canvas resize. */
-export function setTrackLinesResolution(lines: Line2[], width: number, height: number): void {
-  const w = Math.max(1, width);
-  const h = Math.max(1, height);
+/** Updates `LineMaterial.resolution` on every line (call on canvas resize). */
+export function setTrackLinesResolution(
+  lines: Line2[],
+  width: number,
+  height: number
+): void {
+  const res = new THREE.Vector2(Math.max(1, width), Math.max(1, height));
   for (const line of lines) {
-    const mat = line.material as LineMaterial;
-    mat.resolution?.set(w, h);
+    (line.material as LineMaterial).resolution.copy(res);
   }
 }

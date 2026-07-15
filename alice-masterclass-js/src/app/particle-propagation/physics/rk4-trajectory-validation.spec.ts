@@ -67,6 +67,7 @@ describe('RK4 vs. stored event trajectory (real field, real event_0_0.json)', ()
       const momentum: Vec3 = { x: raw.px, y: raw.py, z: raw.pz };
       const particle: PropagationParticle = {
         id: 'validation',
+        origin: 'v0',
         vertex,
         momentum,
         charge: raw.sign,
