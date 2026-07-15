@@ -4,6 +4,7 @@ import {
   applyDetectorLayerMaterials,
   CALORIMETER_MIN_OPACITY,
   defaultLayerOpacity,
+  detectorPartAccentColor,
   detectorPartLabel,
   MAX_PART_OPACITY,
   MIN_PART_OPACITY,
@@ -38,6 +39,18 @@ describe('detectorPartLabel', () => {
 
   it('falls back to the bare filename (minus extension) for unknown parts', () => {
     expect(detectorPartLabel('assets/models/alice components/foo.glb')).toBe('foo');
+  });
+});
+
+describe('detectorPartAccentColor', () => {
+  it('maps known GLB filenames to signature accent hex colours', () => {
+    expect(detectorPartAccentColor('assets/models/alice components/its.glb')).toBe('#33FF71');
+    expect(detectorPartAccentColor('assets/models/alice components/L3.glb')).toBe('#FF0D12');
+    expect(detectorPartAccentColor('assets/models/alice components/tpc.glb')).toBe('#22C4FF');
+  });
+
+  it('falls back to the default orange accent for unknown parts', () => {
+    expect(detectorPartAccentColor('assets/models/alice components/foo.glb')).toBe('#ff6f00');
   });
 });
 

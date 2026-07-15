@@ -65,6 +65,13 @@ export class PropagationScene {
   private readonly lights = new THREE.Group();
   private _darkMode = true;
 
+  /**
+   * Set when the scene graph / camera changed and a frame must be drawn.
+   * The host component drives a demand-based RAF loop: continuous only while
+   * playing or while OrbitControls damping still settles.
+   */
+  needsRender = true;
+
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true });
     // Cap the device pixel ratio: uncapped HiDPI rendering multiplies fragment
@@ -72,6 +79,7 @@ export class PropagationScene {
     // (fill-rate bound). 1.5 keeps edges crisp without shading 4x the pixels.
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
     this.renderer.setPixelRatio(Math.min(dpr, 1.5));
+    this.renderer.shadowMap.enabled = false;
     this.renderer.sortObjects = true;
 
     const width = canvas.clientWidth || 1;
@@ -102,6 +110,15 @@ export class PropagationScene {
     // "centered" camera mode (`updateCameraMode`), applied here unconditionally
     // since this scene has no free/pan mode to begin with.
     this.controls.enablePan = false;
+    this.controls.addEventListener('change', () => {
+      this.needsRender = true;
+    });
+    this.controls.addEventListener('start', () => {
+      this.needsRender = true;
+    });
+    this.controls.addEventListener('end', () => {
+      this.needsRender = true;
+    });
 
     this.setupLights();
 
@@ -122,6 +139,7 @@ export class PropagationScene {
     this._darkMode = darkMode;
     this.scene.background = darkMode ? DARK_BACKGROUND : LIGHT_BACKGROUND;
     applyDetectorDarkMode(this.detectorGroup, darkMode);
+    this.needsRender = true;
   }
 
   /** Restores the reference "down the barrel" pose (used on (re)mount). */
@@ -147,16 +165,23 @@ export class PropagationScene {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
+    this.needsRender = true;
   }
 
   /**
    * Renders one frame. Callers are responsible for driving time-dependent
    * visibility first (`PropagationTimeline.applyTime(t)`, Faza 10) — this
    * class only owns the camera/renderer/scene graph, not "what time it is".
+   *
+   * @returns `true` if damping is still settling (caller should keep RAF alive).
    */
-  render(): void {
-    this.controls.update();
+  render(): boolean {
+    const dampingActive = this.controls.update();
     this.renderer.render(this.scene, this.camera);
+    this.needsRender = false;
+    // OrbitControls.update() returns true while damping still moves the camera.
+    if (dampingActive) this.needsRender = true;
+    return !!dampingActive;
   }
 
   dispose(): void {

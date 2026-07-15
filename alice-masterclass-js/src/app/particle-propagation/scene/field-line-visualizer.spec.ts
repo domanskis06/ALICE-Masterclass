@@ -1,6 +1,4 @@
 import * as THREE from 'three';
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2';
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 
 import {
   buildFieldLines,
@@ -12,10 +10,12 @@ import { Vec3 } from '../physics/propagation-types';
 /** Uniform 0.5 T field along +z, like the ALICE solenoid interior. */
 const uniformZField = (): Vec3 => ({ x: 0, y: 0, z: 0.5 });
 
-function lineSegments2(group: THREE.Object3D): LineSegments2 | null {
-  let found: LineSegments2 | null = null;
+function lineSegments(group: THREE.Object3D): THREE.LineSegments | null {
+  let found: THREE.LineSegments | null = null;
   group.traverse((o) => {
-    if (!found && (o as LineSegments2).isLineSegments2) found = o as LineSegments2;
+    if (!found && (o as THREE.LineSegments).isLineSegments && o.name === 'field-line-segments') {
+      found = o as THREE.LineSegments;
+    }
   });
   return found;
 }
@@ -39,12 +39,28 @@ function anyPlane(group: THREE.Object3D): boolean {
   return found;
 }
 
+function anyFatLine(group: THREE.Object3D): boolean {
+  let found = false;
+  group.traverse((o) => {
+    if ((o as { isLineSegments2?: boolean }).isLineSegments2 || (o as { isLine2?: boolean }).isLine2) {
+      found = true;
+    }
+  });
+  return found;
+}
+
 describe('buildFieldLines', () => {
-  it('packs all traced lines into a single LineSegments2 object', () => {
+  it('packs all traced lines into a single native LineSegments object', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse' });
-    const segments = lineSegments2(group);
+    const segments = lineSegments(group);
     expect(segments).not.toBeNull();
     expect(segments!.geometry).toBeTruthy();
+    expect(anyFatLine(group)).toBeFalse();
+  });
+
+  it('enables frustum culling on static field geometry', () => {
+    const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse' });
+    expect(lineSegments(group)!.frustumCulled).toBeTrue();
   });
 
   it('adds direction arrowheads and never a slice/plane mesh', () => {
@@ -76,29 +92,30 @@ describe('buildFieldLines', () => {
 
   it('returns an empty group when the field is everywhere negligible', () => {
     const group = buildFieldLines(() => ({ x: 0, y: 0, z: 0 }), { scale: 1e-2, density: 'sparse' });
-    expect(lineSegments2(group)).toBeNull();
+    expect(lineSegments(group)).toBeNull();
     expect(arrowMesh(group)).toBeNull();
   });
 
   it('setFieldLinesOpacity updates both line and arrow materials', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse', opacity: 0.7 });
     setFieldLinesOpacity(group, 0.3);
-    const segments = lineSegments2(group)!;
-    expect((segments.material as LineMaterial).opacity).toBeCloseTo(0.3, 6);
+    const segments = lineSegments(group)!;
+    expect((segments.material as THREE.LineBasicMaterial).opacity).toBeCloseTo(0.3, 6);
     expect((arrowMesh(group)!.material as THREE.Material).opacity).toBeCloseTo(0.3, 6);
   });
 
-  it('setFieldLinesWidth updates the LineMaterial linewidth', () => {
+  it('setFieldLinesWidth stores the requested width without rebuilding fat lines', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse', linewidth: 2 });
     setFieldLinesWidth(group, 4.5);
-    expect((lineSegments2(group)!.material as LineMaterial).linewidth).toBeCloseTo(4.5, 6);
+    expect(group.userData['linewidth']).toBeCloseTo(4.5, 6);
+    expect(anyFatLine(group)).toBeFalse();
   });
 
   it('uses default depthTest like particle tracks (occluded by detector geometry)', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse' });
-    expect((lineSegments2(group)!.material as LineMaterial).depthTest).toBeTrue();
+    expect((lineSegments(group)!.material as THREE.LineBasicMaterial).depthTest).toBeTrue();
     expect((arrowMesh(group)!.material as THREE.Material).depthTest).toBeTrue();
-    expect(lineSegments2(group)!.renderOrder).toBe(0);
+    expect(lineSegments(group)!.renderOrder).toBe(0);
     expect(arrowMesh(group)!.renderOrder).toBe(0);
   });
 });

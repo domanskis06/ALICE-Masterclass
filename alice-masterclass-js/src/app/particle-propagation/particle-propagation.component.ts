@@ -32,13 +32,12 @@ import { CollisionIntro } from './scene/collision-intro';
 import { createTrackLines, setTrackLinesResolution } from './scene/track-renderer';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { PropagationTimeline } from './scene/propagation-timeline';
-import { setDetectorPartOpacity, setDetectorPartVisibility } from './scene/detector-appearance';
+import { detectorPartAccentColor, setDetectorPartOpacity, setDetectorPartVisibility } from './scene/detector-appearance';
 import {
   buildFieldLines,
   DEFAULT_FIELD_LINEWIDTH,
   setFieldLinesOpacity,
   setFieldLinesResolution,
-  setFieldLinesWidth,
 } from './scene/field-line-visualizer';
 import { FieldLineDensity } from './physics/field-line-tracer';
 import {
@@ -63,6 +62,8 @@ export interface DetectorPartUiModel {
   label: string;
   visible: boolean;
   opacity: number;
+  /** CSS hex matching the part's GLB signature colour (opacity slider accent). */
+  accentColor: string;
 }
 
 export interface EventOption {
@@ -87,7 +88,15 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   progressTotal = 0;
   errorMessage: string | null = null;
   isDarkMode = true;
+  sidebarCollapsed = false;
   detectorPartsForUi: DetectorPartUiModel[] = [];
+
+  /** CDK overlay panel lives outside the host; class must be applied via panelClass. */
+  get eventSelectPanelClass(): string | string[] {
+    return this.isDarkMode
+      ? ['pp-event-select-panel', 'pp-event-select-panel--dark']
+      : 'pp-event-select-panel';
+  }
 
   // --- Native UI state (replaces lil-gui) ---
   eventOptions: EventOption[] = [];
@@ -98,20 +107,23 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   minTimeMs = -1;
   maxTimeMs = 1;
   playbackSpeed = 1;
-  fieldVisible = true;
-  fieldOpacity = 0.9;
   /**
-   * 0 = sparse, 1 = medium (default), 2 = dense — drives {@link fieldDensity}.
-   * Medium is denser than the original two-step slider's "medium".
+   * Field overlay is opt-in (off by default) so the idle detector matches the
+   * smooth EventDisplay / Visual Analysis profile — no always-on line overlay.
    */
-  fieldDensityLevel = 1;
-  /** Fat-line width in CSS pixels (LineMaterial.linewidth). */
+  fieldVisible = false;
+  fieldOpacity = 0.35;
+  /**
+   * 0 = sparse (default), 1 = medium, 2 = dense — drives {@link fieldDensity}.
+   */
+  fieldDensityLevel = 0;
+  /** Stored line-width preference (native WebGL lines ignore linewidth). */
   fieldLinewidth = DEFAULT_FIELD_LINEWIDTH;
 
   private scene: PropagationScene | null = null;
   private readonly detectorPartRootByPath = new Map<string, THREE.Object3D>();
   private fieldLines: THREE.Object3D | null = null;
-  private fieldDensity: FieldLineDensity = 'medium';
+  private fieldDensity: FieldLineDensity = 'sparse';
   private collisionIntroPromise: Promise<CollisionIntro> | null = null;
   private timeline: PropagationTimeline | null = null;
   private tracks: BufferedTrack[] = [];
@@ -211,12 +223,14 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.timeline.applyTime(this.currentTimeMs);
     this.isPlaying = true;
     this.lastFrameWallMs = 0;
+    this.requestRender();
   }
 
   onTimeChange(valueMs: number): void {
     this.currentTimeMs = valueMs;
     this.isPlaying = false;
     this.timeline?.applyTime(valueMs);
+    this.requestRender();
   }
 
   onEventChange(index: number): void {
@@ -230,22 +244,26 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     part.visible = visible;
     const root = this.detectorPartRootByPath.get(part.assetPath);
     if (root) setDetectorPartVisibility(root, visible);
+    this.requestRender();
   }
 
   onDetectorPartOpacity(part: DetectorPartUiModel, value: number | string): void {
     const root = this.detectorPartRootByPath.get(part.assetPath);
     if (!root) return;
     part.opacity = setDetectorPartOpacity(root, Number(value));
+    this.requestRender();
   }
 
   onFieldShowChange(visible: boolean): void {
     this.fieldVisible = visible;
     if (this.fieldLines) this.fieldLines.visible = visible;
+    this.requestRender();
   }
 
   onFieldOpacityChange(opacity: number): void {
     this.fieldOpacity = opacity;
     if (this.fieldLines) setFieldLinesOpacity(this.fieldLines, opacity);
+    this.requestRender();
   }
 
   onFieldDensityLevelChange(level: number): void {
@@ -254,14 +272,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.rebuildFieldVisualization();
   }
 
-  onFieldLinewidthChange(width: number): void {
-    this.fieldLinewidth = width;
-    if (this.fieldLines) setFieldLinesWidth(this.fieldLines, width);
-  }
-
   onDarkModeChange(darkMode: boolean): void {
     this.isDarkMode = darkMode;
     this.scene?.setDarkMode(darkMode);
+    this.requestRender();
     this.cdr.markForCheck();
   }
 
@@ -284,7 +298,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
           label: part.label,
           visible: true,
           opacity: this.getPartOpacity(part.root),
+          accentColor: detectorPartAccentColor(part.assetPath),
         }));
+        this.requestRender();
         this.cdr.markForCheck();
       })
       .catch((err) => console.error('[ParticlePropagation] detector load failed', err));
@@ -320,6 +336,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     });
     this.fieldLines.visible = this.fieldVisible;
     this.scene.fieldGroup.add(this.fieldLines);
+    this.requestRender();
   }
 
   private getPartOpacity(root: THREE.Object3D): number {
@@ -492,14 +509,22 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private startRenderLoop(): void {
     // Keep the RAF loop outside Angular's zone so per-frame time scrubbing
     // doesn't re-check the Material tree every frame. UI sync is throttled.
+    // Idle frames are skipped (demand-based): EventDisplay always RAFs, but
+    // with a smaller viewport and no field overlay; here we only redraw when
+    // playing, damping, flashing, or `needsRender` (orbit/resize/UI).
     this.ngZone.runOutsideAngular(() => {
       let lastUiSyncMs = 0;
       const step = (nowMs: number) => {
         this.rafId = requestAnimationFrame(step);
+        const scene = this.scene;
+        if (!scene) return;
+
         const deltaMs = this.lastFrameWallMs ? nowMs - this.lastFrameWallMs : 0;
         this.lastFrameWallMs = nowMs;
 
+        let dirty = scene.needsRender;
         if (this.isPlaying && this.timeline) {
+          dirty = true;
           const next = this.currentTimeMs + deltaMs * this.playbackSpeed;
           this.currentTimeMs = Math.min(next, this.timeline.maxTimeMs);
           this.timeline.applyTime(this.currentTimeMs);
@@ -512,11 +537,19 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
           }
         }
 
+        if (this.flashRemainingMs > 0) dirty = true;
+        if (!dirty) return;
+
         this.updateCollisionFlash(deltaMs);
-        this.scene?.render();
+        scene.render();
       };
       this.rafId = requestAnimationFrame(step);
     });
+  }
+
+  /** Marks the Three.js scene dirty so the next RAF draws a frame. */
+  private requestRender(): void {
+    if (this.scene) this.scene.needsRender = true;
   }
 
   private stopRenderLoop(): void {
