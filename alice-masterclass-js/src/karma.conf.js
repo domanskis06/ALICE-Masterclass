@@ -24,6 +24,14 @@ module.exports = function (config) {
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
+    // Particle-propagation specs load real GLBs / run WebGL + RK4 on the main
+    // thread; without these, CI ChromeHeadless can miss Karma pings and report
+    // "Disconnected ... ping timeout" mid-suite (no assertion failures).
+    browserNoActivityTimeout: 120000,
+    browserDisconnectTimeout: 20000,
+    browserDisconnectTolerance: 3,
+    captureTimeout: 120000,
+    pingTimeout: 60000,
     browsers: ['ChromeHeadlessCI'],
     customLaunchers: {
       ChromeHeadlessCI: {
