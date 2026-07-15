@@ -1,6 +1,6 @@
 <div fxFlex="grow" data-testid="strangeness-visual-analysis-page">
   @if (vaCoachOverlayVisible) {
-    <div class="va-coach-layer" [class.va-coach-layer--dark]="visualDarkMode" aria-live="polite">
+    <div class="va-coach-layer" aria-live="polite">
       @if (vaCoachWelcomePhase) {
         <mat-card appearance="outlined" class="va-coach-card">
           <mat-card-title>{{ 'VA_COACH.WELCOME_TITLE' | translate }}</mat-card-title>
@@ -31,8 +31,6 @@
         <mat-card appearance="outlined" class="va-coach-card">
           <mat-card-title>{{ 'VA_COACH.DRAG_TITLE' | translate }}</mat-card-title>
           <mat-card-content class="va-coach-text">
-            <p>{{ 'VA_COACH.DRAG_STEP' | translate:{ current: vaCoachPieceHintIndex + 1, total: ALICE_DETECTOR_MODEL.length } }}</p>
-            <p>{{ 'VA_COACH.DRAG_INSTRUCTION' | translate }}</p>
             <p class="va-coach-part-name">
               <strong
                 [translate]="vaCoachCurrentPiecePresentation.labelKey"
@@ -42,14 +40,7 @@
             @if (vaCoachCurrentPartDescId; as partDescId) {
               <div class="va-coach-part-desc">
                 <p class="va-coach-part-desc-title">{{ ('VA_COACH.PART_DESC.' + partDescId + '.TITLE') | translate }}</p>
-                <p>{{ ('VA_COACH.PART_DESC.' + partDescId + '.BODY') | translate }}</p>
-                <p class="va-coach-lets-us">{{ ('VA_COACH.PART_DESC.' + partDescId + '.LETS_US') | translate }}</p>
-                <ul class="va-coach-lets-us-list">
-                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B1') | translate }}</li>
-                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B2') | translate }}</li>
-                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B3') | translate }}</li>
-                  <li>{{ ('VA_COACH.PART_DESC.' + partDescId + '.B4') | translate }}</li>
-                </ul>
+                <p class="va-coach-part-desc-body">{{ ('VA_COACH.PART_DESC.' + partDescId + '.BODY') | translate }}</p>
               </div>
             }
           </mat-card-content>
@@ -78,15 +69,16 @@
       [hasClusters]="event.clusters.length !== 0"
       [landscape]="(isLandscape$ | async)"
       [assemblyCoachHighlightAssetPath]="assemblyCoachHighlightPath"
+      [assemblyAllowedDragAssetPath]="assemblyAllowedDragPath"
       [detectorModel]="ALICE_DETECTOR_MODEL"
       [showThemeToggle]="true"
       [darkMode]="visualDarkMode"
       (darkModeChange)="visualDarkMode = $event"
       [showProtonCollisionIntro]="eventID === 0"
       [event]="event"
-      [previousEventButtonDisabled]="(eventID - 1) < 0"
+      [previousEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
       (previousEvent)="onPreviousEvent()"
-      [nextEventButtonDisabled]="(eventID + 1) >= maxEvents"
+      [nextEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
       (nextEvent)="onNextEvent()"
       (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
       (trackClickedEvent)="onTrackClicked($event)"
@@ -94,7 +86,11 @@
       <div class="dataset-controls">
         <mat-form-field appearance="outline" class="dataset-select">
           <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
-          <mat-select data-testid="va-dataset-select" [value]="datasetID" (selectionChange)="onDatasetChange($event.value)">
+          <mat-select
+            data-testid="va-dataset-select"
+            [value]="datasetID"
+            [disabled]="isDetectorAssemblyInProgress"
+            (selectionChange)="onDatasetChange($event.value)">
             @if (dataService.VA_DATASET.hasDemo) {
               <mat-option [value]="-1">{{ 'SELECT_DATASET_DIALOG.DEMO' | translate }}</mat-option>
             }
@@ -112,6 +108,13 @@
       <span>{{ 'EVENT_DISPLAY.EVENT' | translate }} {{ eventID }}</span>
       @if (isCurrentEventDone) {
         <mat-icon id="done">done</mat-icon>
+      }
+      @if (showLetsUsPanel) {
+        <app-lets-us-panel
+          eventDisplayCornerOverlay
+          [partDescId]="vaCoachCurrentPartDescId"
+          [bulletKeys]="vaCoachCurrentPartBulletKeys"
+        ></app-lets-us-panel>
       }
     </app-event-display>
     <div fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">

@@ -1,0 +1,16 @@
+@if (partDescId) {
+  <aside class="lets-us-panel" aria-live="polite">
+    <p class="lets-us-heading">
+      <mat-icon class="lets-us-heading-star" aria-hidden="true">star</mat-icon>
+      <span>{{ ('VA_COACH.PART_DESC.' + partDescId + '.LETS_US') | translate }}</span>
+    </p>
+    <ul class="lets-us-list">
+      @for (bulletKey of bulletKeys; track bulletKey) {
+        <li>
+          <mat-icon class="lets-us-bullet" aria-hidden="true">lightbulb</mat-icon>
+          <span>{{ ('VA_COACH.PART_DESC.' + partDescId + '.' + bulletKey) | translate }}</span>
+        </li>
+      }
+    </ul>
+  </aside>
+}

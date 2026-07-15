@@ -11,12 +11,9 @@
     "WELCOME_P3": "Sie bauen den Detektor Teil für Teil zusammen — wir zeigen immer das nächste Fragment. Tipps auf »Weiter«, wenn Sie starten möchten.",
     "WELCOME_CONTINUE": "Weiter",
     "DRAG_TITLE": "Nächstes Teil platzieren",
-    "DRAG_STEP": "Schritt {{current}} von {{total}}",
-    "DRAG_INSTRUCTION": "Ziehen Sie rechts das hervorgehobene Teil in die Bildmitte der 3D-Ansicht, bis es einrastet.",
     "DONE_TITLE": "Detector fertig montiert",
     "DONE_BODY": "Alle Teile sind platziert. Sichtbarkeit und Bahneinstellungen finden Sie im rechten Panel.",
     "DONE_BUTTON": "Alles klar",
-    "ITS_UNLOCK_TIP": "ITS: Siliziumschichten am nächsten am Kollisionspunkt — hier beginnen die Spuren und der Primary Vertex wird gemessen.",
     "PART_DESC": {
       "ITS": {
         "TITLE": "ITS (Inner Tracking System)",
@@ -26,6 +23,58 @@
         "B2": "sekundäre Vertices rekonstruieren, die für Charm- und Hyperon-Zerfälle nötig sind",
         "B3": "Teilchen mit niedrigem Impuls verfolgen und identifizieren",
         "B4": "Impuls- und Winkelauflösung für Teilchen verbessern, die in der Time Projection Chamber (TPC) rekonstruiert werden"
+      },
+      "TPC": {
+        "TITLE": "TPC (Time Projection Chamber)",
+        "BODY": "Die TPC (Time Projection Chamber) ist der größte Spurdetektor im ALICE-Experiment und einer der größten Gasdetektoren, die je für die Teilchenphysik gebaut wurden. Sie ist mit einer sorgfältig gewählten Gasmischung gefüllt, durch die geladene Teilchen nach einer Kollision fliegen. Dabei ionisieren sie das Gas und hinterlassen Spuren freier Elektronen. Diese Elektronen driften in einem homogenen elektrischen Feld zu den Auslesekammern, so dass Physiker die dreidimensionalen Trajektorien der Teilchen mit hoher Präzision rekonstruieren können. Eine einzelne Schwerionenkollision kann Zehntausende geladener Teilchen erzeugen — die TPC kann ihre Spuren gleichzeitig aufzeichnen. Neben den Bahnen hilft sie auch bei der Teilchenidentifikation, indem sie misst, wie viel Energie die Teilchen beim Durchqueren des Gases verlieren.",
+        "LETS_US": "Mit der TPC können wir:",
+        "B1": "Teilchenspuren rekonstruieren und die Bahnen Tausender Teilchen aus einer einzigen Kollision sichtbar machen",
+        "B2": "verschiedene Teilchenarten identifizieren, indem wir ihren Energieverlust im Gas messen",
+        "B3": "den Impuls der Teilchen messen und so ihre Bewegung und Wechselwirkungen verstehen",
+        "B4": "die Eigenschaften des Quark-Gluon-Plasmas untersuchen, das in hochenergetischen Schwerionenstößen entsteht"
+      },
+      "TRD": {
+        "TITLE": "TRD (Transition Radiation Detector)",
+        "BODY": "Der TRD (Transition Radiation Detector) ist ein Detektor, der vor allem Elektronen unter den vielen verschiedenen Teilchen aus Hochenergiekollisionen identifizieren soll. Er nutzt die sogenannte Übergangsstrahlung: Wenn ein sehr schnelles geladenes Teilchen die Grenze zwischen zwei verschiedenen Materialien durchquert, sendet es Röntgenstrahlung aus. Elektronen erzeugen diese Strahlung deutlich effizienter als schwerere Teilchen — so kann der TRD sie von Teilchen wie Pionen unterscheiden. Der TRD spielt eine wichtige Rolle bei der Untersuchung von Prozessen mit Elektronen, auch beim Quark-Gluon-Plasma in Schwerionenkollisionen. Mit präzisen Informationen über Elektronenproduktion und -verhalten hilft er Physikern, die Bedingungen der Materie bei extremen Temperaturen und Dichten kurz nach einer Kollision zu verstehen.",
+        "LETS_US": "Mit dem TRD können wir:",
+        "B1": "Elektronen identifizieren und von anderen Teilchenarten trennen.",
+        "B2": "die Elektronenproduktion in hochenergetischen Proton- und Schwerionenkollisionen untersuchen.",
+        "B3": "das Quark-Gluon-Plasma und die extremen Bedingungen nach Kollisionen erforschen.",
+        "B4": "die Ereignisrekonstruktion durch zusätzliche Informationen über nachgewiesene Teilchen verbessern."
+      },
+      "TOF": {
+        "TITLE": "TOF (Time Of Flight)",
+        "BODY": "Der TOF-Detektor misst mit extrem hoher Präzision die Flugzeit von Teilchen vom Kollisionspunkt bis zum Detektor. Die Genauigkeit liegt bei etwa 50 Pikosekunden — nur 50 Billionstel einer Sekunde. Aus gemessener Flugzeit, zurückgelegter Strecke und Impuls berechnen Physiker die Geschwindigkeit und daraus die Teilchenart. So kann der TOF verschiedene Teilchen — etwa Pionen, Kaonen und Protonen — unterscheiden, auch wenn sie sich mit Geschwindigkeiten nahe der Lichtgeschwindigkeit bewegen. Das ist besonders wichtig, weil viele in Kollisionen erzeugte Teilchen ähnliche Eigenschaften haben und präzise Zeitmessungen einen zusätzlichen Weg zur Identifikation bieten.",
+        "LETS_US": "Mit dem TOF können wir:",
+        "B1": "Teilchengeschwindigkeiten mit extrem hoher Präzision messen.",
+        "B2": "verschiedene Teilchenarten durch Vergleich von Flugzeit und Impuls identifizieren.",
+        "B3": "Pionen, Kaonen und Protonen aus Kollisionen unterscheiden.",
+        "B4": "das Verständnis von Teilchenwechselwirkungen in Hochenergiekollisionen verbessern."
+      },
+      "EMCAL": {
+        "TITLE": "EMCAL (Electromagnetic Calorimeter)",
+        "BODY": "Der EMCAL (Electromagnetic Calorimeter) misst die Energie von Elektronen und Photonen aus Teilchenkollisionen. Wenn ein solches Teilchen in den Detektor eintritt, entsteht ein elektromagnetischer Schauer — eine Kaskade sekundärer Teilchen, die ihre gesamte Energie im Kalorimeter deponieren. Aus diesem Schauer bestimmen Physiker die Energie des ursprünglichen Teilchens mit hoher Präzision.\n\nDer EMCAL spielt auch eine zentrale Rolle bei der Untersuchung von Jets — gebündelten Teilchenstrahlen, die entstehen, wenn hochenergetische Quarks und Gluonen in Kollisionen erzeugt werden. Die Messung der Energie von Elektronen, Photonen und Jets hilft zu verstehen, wie sich Materie unter den extremen Bedingungen im ALICE-Experiment verhält.",
+        "LETS_US": "Mit dem EMCAL können wir:",
+        "B1": "die Energie von Elektronen und Photonen mit hoher Präzision messen.",
+        "B2": "Jets aus Hochenergiekollisionen untersuchen.",
+        "B3": "untersuchen, wie Teilchen beim Durchqueren des Quark-Gluon-Plasmas Energie verlieren."
+      },
+      "DCAL": {
+        "TITLE": "DCAL (Di-jet Calorimeter)",
+        "BODY": "Der DCAL (Di-jet Calorimeter) ist eine Erweiterung des EMCAL und arbeitet nach demselben Prinzip: Er misst die Energie von Elektronen und Photonen. Sein Hauptzweck ist eine größere Abdeckung, sodass ALICE mehr Jets erfassen kann — besonders Jet-Paare, die in Hochenergiekollisionen in entgegengesetzte Richtungen entstehen.\n\nMit seiner größeren Akzeptanz verbessert der DCAL die Untersuchung von Di-Jet-Ereignissen: Der Vergleich der Energien zweier gegenüberliegender Jets zeigt, wie sie mit dem Quark-Gluon-Plasma wechselwirken. Dieser extrem heiße und dichte Zustand der Materie erfüllte das Universum für einen winzigen Bruchteil einer Sekunde nach dem Urknall — solche Messungen sind daher ein wichtiges Werkzeug, um die frühesten Momente unseres Universums zu verstehen.",
+        "LETS_US": "Mit dem DCAL können wir:",
+        "B1": "den Jet-Nachweisbereich des ALICE-Experiments erweitern.",
+        "B2": "Jet-Paare (Di-Jets) untersuchen, die in entgegengesetzte Richtungen entstehen.",
+        "B3": "untersuchen, wie Jets beim Durchqueren des Quark-Gluon-Plasmas Energie verlieren."
+      },
+      "L3": {
+        "TITLE": "L3 (Solenoid Magnet)",
+        "BODY": "Der L3-Magnet ist der große Solenoid, der die ALICE-Detektoren umgibt und ein starkes Magnetfeld entlang der Strahlachse erzeugt. Wenn ein geladenes Teilchen durch dieses Feld fliegt, krümmt die Lorentzkraft seine Bahn. Die Richtung der Krümmung zeigt das Vorzeichen der Ladung, während der Krümmungsradius mit dem Impuls zusammenhängt: schnellere Teilchen mit höherem Impuls biegen sich weniger stark als langsamere.\n\nOhne Magnetfeld erscheinen rekonstruierte Spuren als Geraden. Mit dem L3 werden daraus die gekrümmten Trajektorien, aus denen der Impuls gemessen wird — ein zentraler Schritt zum Verständnis der Teilchen aus Hochenergiekollisionen.",
+        "LETS_US": "Mit dem L3 können wir:",
+        "B1": "Bahnen geladener Teilchen im Magnetfeld krümmen.",
+        "B2": "aus der Richtung der Spurkrümmung auf die Teilchenladung schließen.",
+        "B3": "den Teilchenimpuls aus der Stärke der Bahnkrümmung messen.",
+        "B4": "nach dem Zusammenbau des Detektors die volle gekrümmte Ereignistopologie sehen."
       }
     }
   },

@@ -125,6 +125,16 @@ mat-card-title {
     background: rgba(26, 68, 128, 0.06);
     box-shadow: 0 2px 8px rgba(26, 68, 128, 0.2);
   }
+
+  &.palette-part-drag-disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    filter: grayscale(0.25);
+
+    &:active {
+      cursor: not-allowed;
+    }
+  }
 }
 
 .palette-part-card.cdk-drag-dragging {
@@ -160,6 +170,16 @@ mat-drawer-content {
     width: 100%;
     height: 100%;
   }
+}
+
+/* Projected tip panel: flush with the end assembly drawer, top-right of the viz. */
+.event-display-corner-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 4;
+  pointer-events: none;
+  max-width: min(300px, 42%);
 }
 
 #spinner {

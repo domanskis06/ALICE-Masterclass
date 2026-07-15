@@ -124,7 +124,26 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   get assemblyCoachHighlightPath(): string | null {
     if (!this.vaCoachOverlayVisible || this.vaCoachWelcomePhase || this.vaCoachVictoryPhase) return null;
-    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex] ?? null;
+  }
+
+  /**
+   * Only this palette asset may be dragged/placed while assembly is in progress.
+   * Null during welcome (description not shown yet) → all palette drag disabled.
+   */
+  get assemblyAllowedDragPath(): string | null {
+    if (!this.isDetectorAssemblyInProgress || this.vaCoachVictoryPhase) {
+      return null;
+    }
+    if (this.vaCoachOverlayVisible && this.vaCoachWelcomePhase) {
+      return null;
+    }
+    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex] ?? null;
+  }
+
+  /** True until the multipart detector has been fully assembled this session. */
+  get isDetectorAssemblyInProgress(): boolean {
+    return !EventDisplayComponent.isMultipartDetectorStoredComplete(this.ALICE_DETECTOR_MODEL);
   }
 
   get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
@@ -139,9 +158,41 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     const file = path.replace(/^.*[/\\]/, '').toLowerCase();
     const byFile: Record<string, string> = {
       'its.glb': 'ITS',
-      // Add TPC, TRD, … here as descriptions are written.
+      'tpc.glb': 'TPC',
+      'trd.glb': 'TRD',
+      'tof.glb': 'TOF',
+      'emcal.glb': 'EMCAL',
+      'dcal.glb': 'DCAL',
+      'l3.glb': 'L3',
     };
     return byFile[file] ?? null;
+  }
+
+  /** LETS US tip panel next to the assembly drawer (hidden during welcome / victory). */
+  get showLetsUsPanel(): boolean {
+    return (
+      this.vaCoachOverlayVisible &&
+      !this.vaCoachWelcomePhase &&
+      !this.vaCoachVictoryPhase &&
+      !!this.vaCoachCurrentPartDescId
+    );
+  }
+
+  /** Bullet keys (B1, B2, …) present for the current PART_DESC — length may vary per component. */
+  get vaCoachCurrentPartBulletKeys(): string[] {
+    const id = this.vaCoachCurrentPartDescId;
+    if (!id) return [];
+    const candidates = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'];
+    const block = this.translateService.instant(`VA_COACH.PART_DESC.${id}`);
+    if (block && typeof block === 'object') {
+      return candidates.filter((k) => typeof (block as Record<string, unknown>)[k] === 'string'
+        && String((block as Record<string, unknown>)[k]).length > 0);
+    }
+    return candidates.filter((k) => {
+      const key = `VA_COACH.PART_DESC.${id}.${k}`;
+      const text = this.translateService.instant(key);
+      return typeof text === 'string' && text.length > 0 && text !== key;
+    });
   }
 
   onVaCoachWelcomeContinue(): void {
@@ -154,11 +205,6 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
-    if (EventDisplayComponent.isItsAssetPath(assetPath)) {
-      this.translateService.get('VA_COACH.ITS_UNLOCK_TIP').subscribe((msg: string) => {
-        this.snackBar.open(msg, null, { duration: 7000 });
-      });
-    }
     if (!this.vaCoachOverlayVisible || this.vaCoachVictoryPhase || this.vaCoachWelcomePhase) return;
     const expected = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
     if (assetPath !== expected) return;
@@ -207,6 +253,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   onDatasetChange(newDatasetID: number): void {
+    if (this.isDetectorAssemblyInProgress) {
+      return;
+    }
     this.dataService.clearVisualAnalysisResults();
     this.datasetID = newDatasetID;
 
@@ -230,6 +279,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   onPreviousEvent(): void {
+    if (this.isDetectorAssemblyInProgress) {
+      return;
+    }
     this.eventID -= 1;
 
     this.loadEvent().subscribe(
@@ -243,6 +295,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   onNextEvent(): void {
+    if (this.isDetectorAssemblyInProgress) {
+      return;
+    }
     this.eventID += 1;
     
     this.loadEvent().subscribe(

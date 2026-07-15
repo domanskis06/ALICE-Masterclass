@@ -74,7 +74,9 @@
                   @for (item of detectorPaletteItems; track item.assetPath) {
                     @if (!item.placed) {
                       <div class="palette-part-card" cdkDrag
+                        [cdkDragDisabled]="!detectorInteractiveAssemblyDone && (!assemblyAllowedDragAssetPath || assemblyAllowedDragAssetPath !== item.assetPath)"
                         [class.palette-part-coach-highlight]="assemblyCoachHighlightAssetPath === item.assetPath"
+                        [class.palette-part-drag-disabled]="!detectorInteractiveAssemblyDone && (!assemblyAllowedDragAssetPath || assemblyAllowedDragAssetPath !== item.assetPath)"
                         (cdkDragEnded)="onDetectorPaletteDragEnded($event, item)">
                         <mat-icon class="palette-part-icon" aria-hidden="true">view_in_ar</mat-icon>
                         <span class="palette-part-label" [translate]="item.labelKey" [translateParams]="item.labelParams || {}"></span>
@@ -122,6 +124,9 @@
           }
       </mat-drawer>
       <mat-drawer-content>
+        <aside class="event-display-corner-overlay">
+          <ng-content select="[eventDisplayCornerOverlay]"></ng-content>
+        </aside>
         <div id="content" [class.disabled]="loading" fxLayout="row" fxLayoutAlign="center stretch">
           @if (showControls) {
             <button [disabled]="previousEventButtonDisabled" fxFlexAlign="center" (click)="onPreviousEventClick()" mat-icon-button aria-label="Previous Event button">

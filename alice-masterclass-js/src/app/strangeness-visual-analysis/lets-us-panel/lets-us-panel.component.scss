@@ -1,0 +1,65 @@
+:host {
+  display: block;
+  pointer-events: none;
+  max-width: min(300px, 42vw);
+}
+
+.lets-us-panel {
+  pointer-events: auto;
+  margin: 0;
+  padding: 0.7em 0.85em 0.75em;
+  border-radius: 10px 0 0 10px;
+  background: rgba(255, 248, 225, 0.96);
+  border: 1px solid rgba(255, 179, 0, 0.55);
+  border-right: none;
+  box-shadow: -2px 2px 12px rgba(0, 0, 0, 0.14);
+}
+
+.lets-us-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  font-weight: 700;
+  font-size: 1.12rem;
+  line-height: 1.3;
+  color: #8a5a00;
+  margin: 0 0 0.45em;
+}
+
+.lets-us-heading-star {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+  font-size: 1.2em;
+  color: #f9a825;
+}
+
+.lets-us-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lets-us-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+  margin-bottom: 0.4em;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.lets-us-list li:last-child {
+  margin-bottom: 0;
+}
+
+.lets-us-bullet {
+  flex-shrink: 0;
+  width: 1.1em;
+  height: 1.1em;
+  font-size: 1.1em;
+  margin-top: 0.05em;
+  color: #f9a825;
+}

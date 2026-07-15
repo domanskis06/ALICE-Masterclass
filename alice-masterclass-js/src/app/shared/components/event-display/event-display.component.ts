@@ -74,6 +74,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly farClippingPlane: number = 1500;
   static readonly objectScale: number = 1.0e-2;
   static readonly detectorModelScale: number = 1.0e-2;
+  /** Default overview framing of the full ALICE detector. */
+  static readonly CAMERA_3D_OVERVIEW = { x: -7.5, y: 7.5, z: 2.5 } as const;
+  /**
+   * Closer start framing for guided multipart assembly (ITS-scale).
+   * ~3.5× nearer than overview so the beam pipe / first layers dominate the view.
+   */
+  static readonly CAMERA_3D_ASSEMBLY_START = { x: -2.0, y: 2.0, z: 0.7 } as const;
   /**
    * ITS/TPC/TRD GLBs place the beam axis at local y=+30 (cm). After
    * `detectorModelScale` that is +0.3 in scene units. L3 / TOF / calorimeters
@@ -87,7 +94,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * Sparse event trajectories typically have ~1 point inside ITS; we interpolate
    * the boundary so stubs remain readable (~10 cm).
    */
-  static readonly ITS_STUB_RADIUS = 10;
+  static readonly TRACK_RADIUS_ITS = 45;
+  static readonly TRACK_RADIUS_TPC = 250;
+  static readonly TRACK_RADIUS_TRD = 370;
+  static readonly TRACK_RADIUS_TOF = 410;
+  /** Min segment length (trajectory data units) before falling back to momentum. */
+  private static readonly STRAIGHT_TRACK_EPS = 1e-4;
 
   /** Keeps trajectory points with R = sqrt(x²+y²) < rMax; interpolates the exit point. */
   static clipTrajectoryToRadius(trajectory: number[][], rMax: number): number[][] {
@@ -122,12 +134,99 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return out;
   }
 
+  /** Same inside-out ordering as createLine (smaller R² first). */
+  static orderTrajectoryFromIp(trajectory: number[][]): number[][] {
+    if (!trajectory?.length) {
+      return [];
+    }
+    const first = trajectory[0];
+    const last = trajectory[trajectory.length - 1];
+    const firstR2 = first[0] * first[0] + first[1] * first[1] + first[2] * first[2];
+    const lastR2 = last[0] * last[0] + last[1] * last[1] + last[2] * last[2];
+    return firstR2 <= lastR2 ? trajectory : [...trajectory].reverse();
+  }
+
+  /**
+   * Straight flight path (no B field): direction from the first two IP-ordered
+   * points (else px,py,pz); length matches original first→last distance.
+   * Optional `startOverride` pins the origin (e.g. shared V0 / cascade vertex).
+   * Returns null when direction cannot be determined.
+   */
+  static buildStraightTrajectory(
+    trajectory: number[][],
+    px = 0,
+    py = 0,
+    pz = 0,
+    startOverride?: number[] | null
+  ): number[][] | null {
+    const eps = EventDisplayComponent.STRAIGHT_TRACK_EPS;
+    const ordered = EventDisplayComponent.orderTrajectoryFromIp(trajectory || []);
+    if (!ordered.length) {
+      return null;
+    }
+    const origin = ordered[0];
+    const p0 =
+      startOverride && startOverride.length >= 3
+        ? [startOverride[0], startOverride[1], startOverride[2]]
+        : [origin[0], origin[1], origin[2]];
+    let dir: number[] | null = null;
+
+    if (ordered.length >= 2) {
+      const p1 = ordered[1];
+      const dx = p1[0] - origin[0];
+      const dy = p1[1] - origin[1];
+      const dz = p1[2] - origin[2];
+      const seg = Math.hypot(dx, dy, dz);
+      if (seg >= eps) {
+        dir = [dx / seg, dy / seg, dz / seg];
+      }
+    }
+
+    if (!dir) {
+      const pMag = Math.hypot(px || 0, py || 0, pz || 0);
+      if (pMag < eps) {
+        return null;
+      }
+      dir = [(px || 0) / pMag, (py || 0) / pMag, (pz || 0) / pMag];
+    }
+
+    const end = ordered[ordered.length - 1];
+    let length = Math.hypot(end[0] - origin[0], end[1] - origin[1], end[2] - origin[2]);
+    if (length < eps) {
+      length = Math.hypot(
+        (px || 0) * 100,
+        (py || 0) * 100,
+        (pz || 0) * 100
+      );
+    }
+    if (length < eps) {
+      return null;
+    }
+
+    return [
+      p0,
+      [p0[0] + dir[0] * length, p0[1] + dir[1] * length, p0[2] + dir[2] * length],
+    ];
+  }
+
   static isItsAssetPath(assetPath: string): boolean {
     return /(^|[/\\])its\.glb($|\?)/i.test(assetPath);
   }
 
   static isTpcAssetPath(assetPath: string): boolean {
     return /(^|[/\\])tpc\.glb($|\?)/i.test(assetPath);
+  }
+
+  static isTrdAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])trd\.glb($|\?)/i.test(assetPath);
+  }
+
+  static isTofAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])tof\.glb($|\?)/i.test(assetPath);
+  }
+
+  static isL3AssetPath(assetPath: string): boolean {
+    return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
   }
 
   static detectorPartPresentation(assetPath: string): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
@@ -260,6 +359,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private static readonly CALO_BAR_MIN_HEIGHT = 0.01;
   private static readonly CALO_BAR_MAX_HEIGHT = 0.35;
   private static readonly CALO_BAR_DARK_EMISSIVE = 0.9;
+  /** Extra screen-space linewidth in light mode so tracks punch through pale detectors. */
+  private static readonly LIGHT_MODE_TRACK_WIDTH_SCALE = 1.5;
+  /** Soft fill: midpoint between the original dim lights and the brighter light-mode pass. */
+  private static readonly LIGHT_MODE_AMBIENT = { color: 0xa2a2a2, intensity: 0.925 };
+  private static readonly LIGHT_MODE_HEMISPHERE = { sky: 0xd5dff4, ground: 0x81838b, intensity: 0.7 };
+  private static readonly LIGHT_MODE_DIRECTIONAL_INTENSITY = 0.5;
+  private static readonly DARK_MODE_AMBIENT = { color: 0x444444, intensity: 1 };
+  private static readonly DARK_MODE_HEMISPHERE = { sky: 0xb8c8e8, ground: 0x2a2a30, intensity: 0.5 };
+  private static readonly DARK_MODE_DIRECTIONAL_INTENSITY = 0.45;
 
   private trackMaterial: THREE.Material = null;
   private postiveTrackMaterial: THREE.Material = null;
@@ -326,22 +434,35 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   @Input()
   get trackWidth(): number { return this._trackWidth; }
-  get trackHighlightWidth(): number { return 6 * this.trackWidth; }
-  get trackDecayWidth(): number { return 1.2 * this.trackWidth; }
+  /** Light mode boosts screen-space width so tracks stay readable on pale detectors. */
+  get trackHighlightWidth(): number { return 6 * this.effectiveTrackWidth; }
+  get trackDecayWidth(): number { return 1.25 * this.effectiveTrackWidth; }
 
   set trackWidth(trackWidth: number) {
     this._trackWidth = trackWidth;
-    if (this.trackMaterial && (this.trackMaterial as LineMaterial).linewidth !== undefined) {
-      (this.trackMaterial as LineMaterial).linewidth = this.trackWidth;
-      (this.postiveTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
-      (this.negativeTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
-      (this.bachelorTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
-      (this.highlightTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
-      (this.cascadeHoverTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
-      if (this.cascadeProtonMaterial) (this.cascadeProtonMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
-    }
+    this.applyTrackMaterialWidths();
   }
   private _trackWidth: number = 2;
+
+  /** Screen-space linewidth used by LineMaterial (light mode is thicker for contrast). */
+  private get effectiveTrackWidth(): number {
+    return this._darkMode ? this._trackWidth : this._trackWidth * EventDisplayComponent.LIGHT_MODE_TRACK_WIDTH_SCALE;
+  }
+
+  private applyTrackMaterialWidths(): void {
+    if (!this.trackMaterial || (this.trackMaterial as LineMaterial).linewidth === undefined) {
+      return;
+    }
+    (this.trackMaterial as LineMaterial).linewidth = this.effectiveTrackWidth;
+    (this.postiveTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
+    (this.negativeTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
+    (this.bachelorTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
+    (this.highlightTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
+    (this.cascadeHoverTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
+    if (this.cascadeProtonMaterial) {
+      (this.cascadeProtonMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
+    }
+  }
 
   @Input()
   get clusterSize(): number { return this._clusterSize; }
@@ -400,6 +521,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return g;
   })();
   private lights: THREE.Group = new THREE.Group();
+  private ambientLight: THREE.AmbientLight | null = null;
+  private hemisphereLight: THREE.HemisphereLight | null = null;
+  private directionalLightA: THREE.DirectionalLight | null = null;
+  private directionalLightB: THREE.DirectionalLight | null = null;
 
   private camera3D: THREE.PerspectiveCamera;
   private cam3DVP: THREE.Vector4 = new THREE.Vector4();
@@ -532,6 +657,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.resize(true);
       this.staggeredRevealDetectorParts(modelPaths);
       this.rebuildCalorimeterReadouts();
+      // Event may have loaded before GLBs finished — rebuild tracks now that parts exist.
+      this.refreshPhysicsForAssemblyUnlock();
     };
 
     const finishMultipartPreload = () => {
@@ -559,6 +686,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.detectorPartsForUi = [];
       this.detectorScene = null;
       this.loading = false;
+      this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_ASSEMBLY_START);
       this.cdr.markForCheck();
       this.resize(true);
     };
@@ -661,6 +789,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /** Returns true when the piece snaps into the detector (valid drop zone). */
   private tryPlaceDetectorPieceFromPalette(item: DetectorPaletteItem, clientX: number, clientY: number): boolean {
+    // Guided assembly: only the currently coached part may be placed.
+    if (!this._detectorInteractiveAssemblyDone) {
+      if (!this.assemblyAllowedDragAssetPath || item.assetPath !== this.assemblyAllowedDragAssetPath) {
+        return false;
+      }
+    }
+
     const renderArea =
       typeof this.canvasRef?.nativeElement?.parentElement !== 'undefined'
         ? (this.canvasRef.nativeElement.parentElement as HTMLElement | null)
@@ -684,8 +819,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     item.placed = true;
     this.fadeInDetectorScene(root, 500);
 
-    this.detectorAssemblyPiecePlaced.emit(item.assetPath);
-
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
     this.refreshPhysicsForAssemblyUnlock();
 
@@ -695,6 +828,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     } else if (EventDisplayComponent.isCalorimeterAssetPath(item.assetPath)) {
       this.rebuildCalorimeterReadouts();
     }
+
+    // Emit after persist-on-complete so parent unlocks dataset/event controls.
+    this.detectorAssemblyPiecePlaced.emit(item.assetPath);
     return true;
   }
 
@@ -732,6 +868,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.refreshPhysicsForAssemblyUnlock();
     this.cdr.markForCheck();
     this.resize(true);
+  }
+
+  /** Frames the 3D orbit camera (no-op until WebGL scene exists). */
+  private applyCamera3DPosition(pos: { x: number; y: number; z: number }): void {
+    if (!this.camera3D || !this.controls) return;
+    this.camera3D.position.set(pos.x, pos.y, pos.z);
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
   }
 
   setDetectorPartVisibility(part: DetectorPartToggleModel, visible: boolean): void {
@@ -834,15 +978,46 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.renderer.toneMappingExposure = 1;
     }
     this.syncSceneBackground();
+    this.syncSceneLighting();
     if (this.trackMaterial) {
-      (this.trackMaterial as any).color.copy(
+      (this.trackMaterial as LineMaterial).color.copy(
         this._darkMode ? EventDisplayComponent.neonTrackColor : EventDisplayComponent.trackColor
       );
     }
+    // LineMaterial fat-lines need transparent blending for edge AA — never force opaque.
+    this.applyTrackMaterialWidths();
     if (this.detector) {
       this.applyDarkModeToObject(this.detector);
     }
     this.applyCalorimeterBarTheme();
+  }
+
+  /** Bright, flatter fill in light mode; keep darker contrast for neon dark mode. */
+  private syncSceneLighting(): void {
+    if (!this.ambientLight || !this.hemisphereLight || !this.directionalLightA || !this.directionalLightB) {
+      return;
+    }
+    if (this._darkMode) {
+      const a = EventDisplayComponent.DARK_MODE_AMBIENT;
+      const h = EventDisplayComponent.DARK_MODE_HEMISPHERE;
+      this.ambientLight.color.setHex(a.color);
+      this.ambientLight.intensity = a.intensity;
+      this.hemisphereLight.color.setHex(h.sky);
+      this.hemisphereLight.groundColor.setHex(h.ground);
+      this.hemisphereLight.intensity = h.intensity;
+      this.directionalLightA.intensity = EventDisplayComponent.DARK_MODE_DIRECTIONAL_INTENSITY;
+      this.directionalLightB.intensity = EventDisplayComponent.DARK_MODE_DIRECTIONAL_INTENSITY;
+    } else {
+      const a = EventDisplayComponent.LIGHT_MODE_AMBIENT;
+      const h = EventDisplayComponent.LIGHT_MODE_HEMISPHERE;
+      this.ambientLight.color.setHex(a.color);
+      this.ambientLight.intensity = a.intensity;
+      this.hemisphereLight.color.setHex(h.sky);
+      this.hemisphereLight.groundColor.setHex(h.ground);
+      this.hemisphereLight.intensity = h.intensity;
+      this.directionalLightA.intensity = EventDisplayComponent.LIGHT_MODE_DIRECTIONAL_INTENSITY;
+      this.directionalLightB.intensity = EventDisplayComponent.LIGHT_MODE_DIRECTIONAL_INTENSITY;
+    }
   }
 
   /** Boosts (or resets) saturation + self-emissive glow on every mesh material under `object`. */
@@ -866,8 +1041,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             m.emissive.copy(m.color);
             (m as any).emissiveIntensity = EventDisplayComponent.DETECTOR_NEON_EMISSIVE_INTENSITY;
           }
+          if ('metalness' in m && typeof userData.baseMetalness === 'number') {
+            m.metalness = userData.baseMetalness;
+          }
         } else {
           m.color.copy(userData.neonBaseColor);
+          // Soften metallic self-shadows: keep albedo, cut metalness so light mode stays airy.
+          if ('metalness' in m) {
+            if (typeof userData.baseMetalness !== 'number') {
+              userData.baseMetalness = typeof m.metalness === 'number' ? m.metalness : 0;
+            }
+            m.metalness = Math.min(userData.baseMetalness, 0.15);
+          }
           if ('emissive' in m) {
             m.emissive.setRGB(0, 0, 0);
             (m as any).emissiveIntensity = 1;
@@ -1552,13 +1737,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private createLine(track: number[][], material: THREE.Material): THREE.Object3D {
+  private createLine(
+    track: number[][],
+    material: THREE.Material,
+    options?: { geometricStraight?: boolean }
+  ): THREE.Object3D {
     let mesh: THREE.Object3D;
-    const first = track[0];
-    const last = track[track.length - 1];
-    const firstR2 = first[0] * first[0] + first[1] * first[1] + first[2] * first[2];
-    const lastR2 = last[0] * last[0] + last[1] * last[1] + last[2] * last[2];
-    const orderedTrack = firstR2 <= lastR2 ? track : [...track].reverse();
+    const orderedTrack = EventDisplayComponent.orderTrajectoryFromIp(track);
     const points: Array<THREE.Vector3> = [];
     for (let point of orderedTrack) {
       points.push(new THREE.Vector3(
@@ -1567,8 +1752,27 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         EventDisplayComponent.objectScale * point[2]
       ));
     }
-    const spline = new THREE.CatmullRomCurve3(points);
-    const vertices = spline.getPoints(EventDisplayComponent.lineSegments);
+
+    let vertices: THREE.Vector3[];
+    if (options?.geometricStraight) {
+      // Colinear samples only — no CatmullRom (B = 0 → straight flight).
+      const n = Math.max(2, EventDisplayComponent.lineSegments + 1);
+      const a = points[0];
+      const b = points[points.length - 1];
+      vertices = [];
+      for (let i = 0; i < n; i++) {
+        const t = i / (n - 1);
+        vertices.push(new THREE.Vector3(
+          a.x + (b.x - a.x) * t,
+          a.y + (b.y - a.y) * t,
+          a.z + (b.z - a.z) * t
+        ));
+      }
+    } else {
+      const spline = new THREE.CatmullRomCurve3(points);
+      vertices = spline.getPoints(EventDisplayComponent.lineSegments);
+    }
+
     const points2 = [];
     for (let v of vertices) {
       points2.push(v.x, v.y, v.z);
@@ -1631,15 +1835,82 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.tracks.visible = this.desiredTracksShown;
     this.decays.visible = this.desiredDecaysShown;
-    this.clusters.visible = this.desiredClustersShown;
+    this.clusters.visible = this.desiredClustersShown && this.assemblyAllowsClusters();
     this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
     this.primaryVertexMarkers.visible = this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0;
     this.syncCalorimeterReadoutVisibility();
   }
 
-  /** True while multipart drag-assembly is still in progress (progressive track reveal applies). */
-  private shouldUseProgressiveTrackReveal(): boolean {
-    return this.detectorMultipartAssemblyMode && !this._detectorInteractiveAssemblyDone;
+  /** Model includes ITS/TPC progressive unlock pieces. */
+  private detectorModelHasTrackerUnlock(): boolean {
+    const paths =
+      this.detectorMultipartModelPathsOrder.length > 0
+        ? this.detectorMultipartModelPathsOrder
+        : Array.isArray(this._detectorModel)
+          ? this._detectorModel
+          : [];
+    return paths.some(
+      (p) =>
+        EventDisplayComponent.isItsAssetPath(p) || EventDisplayComponent.isTpcAssetPath(p)
+    );
+  }
+
+  /** Whether a multipart piece has been snapped onto the scene (ignores UI visibility). */
+  private isDetectorPartPlaced(match: (assetPath: string) => boolean): boolean {
+    return [...this.detectorPartRootByPath.keys()].some(match);
+  }
+
+  /**
+   * Max track radius unlocked by placed barrel layers (ITS < TPC < TRD < TOF).
+   * Null = no radial clip (non-progressive model, or full assembly complete).
+   */
+  private getUnlockedTrackRadiusMax(): number | null {
+    if (!this.detectorModelHasTrackerUnlock()) {
+      return null;
+    }
+    // After the detector is fully assembled, show complete trajectories.
+    if (this._detectorInteractiveAssemblyDone) {
+      return null;
+    }
+    const unlock = this.getAssemblyUnlockState();
+    if (unlock.hasTof) {
+      return EventDisplayComponent.TRACK_RADIUS_TOF;
+    }
+    if (unlock.hasTrd) {
+      return EventDisplayComponent.TRACK_RADIUS_TRD;
+    }
+    if (unlock.hasTpc) {
+      return EventDisplayComponent.TRACK_RADIUS_TPC;
+    }
+    if (unlock.hasIts) {
+      return EventDisplayComponent.TRACK_RADIUS_ITS;
+    }
+    return null;
+  }
+
+  /** Clusters unlock only after the full multipart detector is assembled. */
+  private assemblyAllowsClusters(): boolean {
+    if (!this.detectorModelHasTrackerUnlock()) {
+      return true;
+    }
+    return this._detectorInteractiveAssemblyDone;
+  }
+
+  /** True when L3 has been placed in assembly → bent tracks (visibility toggle does not matter). */
+  private isL3MagnetActive(): boolean {
+    const expectsL3 =
+      this.detectorMultipartModelPathsOrder.some((p) => EventDisplayComponent.isL3AssetPath(p)) ||
+      (Array.isArray(this._detectorModel) &&
+        this._detectorModel.some((p) => EventDisplayComponent.isL3AssetPath(p)));
+    if (!expectsL3) {
+      // Non-multipart / no L3 in the model → keep legacy bent trajectories.
+      return true;
+    }
+    return this.isDetectorPartPlaced(EventDisplayComponent.isL3AssetPath);
+  }
+
+  private shouldRenderStraightTracks(): boolean {
+    return !this.isL3MagnetActive();
   }
 
   private getAssemblyUnlockState(): AssemblyUnlockState {
@@ -1705,7 +1976,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
       const p0 = traj[0];
       const r = Math.hypot(p0[0], p0[1]);
-      if (r > EventDisplayComponent.ITS_STUB_RADIUS) {
+      if (r > EventDisplayComponent.TRACK_RADIUS_ITS) {
         continue;
       }
       sx += p0[0];
@@ -1719,21 +1990,59 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return [sx / n, sy / n, sz / n];
   }
 
-  private trajectoryForAssemblyMode(trajectory: number[][], stubOnly: boolean): number[][] | null {
-    if (!trajectory?.length) {
+  private trajectoryForAssemblyMode(
+    track: Track,
+    rMax: number | null,
+    straight: boolean,
+    startOverride?: number[] | null
+  ): { points: number[][]; geometricStraight: boolean } | null {
+    if (!track?.trajectory?.length) {
       return null;
     }
-    const points = stubOnly
-      ? EventDisplayComponent.clipTrajectoryToRadius(trajectory, EventDisplayComponent.ITS_STUB_RADIUS)
-      : trajectory;
-    return points.length >= 2 ? points : null;
+
+    let geometricStraight = false;
+    let points: number[][] | null = null;
+
+    if (straight) {
+      points = EventDisplayComponent.buildStraightTrajectory(
+        track.trajectory,
+        track.px,
+        track.py,
+        track.pz,
+        startOverride
+      );
+      if (points) {
+        geometricStraight = true;
+      } else if (track.trajectory.length >= 2) {
+        // Fallback: keep bent if direction cannot be formed.
+        points = track.trajectory;
+      }
+    } else {
+      points = track.trajectory.length >= 2 ? track.trajectory : null;
+    }
+
+    if (!points) {
+      return null;
+    }
+
+    if (rMax != null && rMax > 0) {
+      points = EventDisplayComponent.clipTrajectoryToRadius(points, rMax);
+    }
+
+    return points.length >= 2 ? { points, geometricStraight } : null;
+  }
+
+  /** Detector group to fade during cascade hover (assembly may leave detectorScene unset). */
+  private getDetectorFadeRoot(): THREE.Object3D | null {
+    return this.detectorScene ?? (this.detector.children.length > 0 ? this.detector : null);
   }
 
   /**
    * Builds background + decay track meshes (and vertex markers) according to
-   * assembly unlock: ITS-only → stubs + primary vertex; TPC → full trajectories.
+   * assembly unlock: ITS-only → stubs + PV; TPC → full length; L3 → bent vs straight.
    */
   private rebuildTracksFromEvent(deferTrackDrawForIntro: boolean): void {
+    this.clearCascadeHover();
     this.tracks.clear();
     this.decays.clear();
     this.cascadeVertexMarkers.clear();
@@ -1743,19 +2052,24 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const progressive = this.shouldUseProgressiveTrackReveal();
-    const unlock = this.getAssemblyUnlockState();
-    const showFull = !progressive || unlock.hasTpc;
-    const showStubs = progressive && unlock.hasIts && !unlock.hasTpc;
+    const useTrackerUnlock = this.detectorModelHasTrackerUnlock();
+    const assemblyDone = this._detectorInteractiveAssemblyDone;
+    const tpcActive = this.isDetectorPartPlaced(EventDisplayComponent.isTpcAssetPath);
+    const itsActive = this.isDetectorPartPlaced(EventDisplayComponent.isItsAssetPath);
+    // Completed assembly (incl. refresh / session restore): always full tracks.
+    // During progressive build: TPC+ → full mode; ITS-only → stubs; else nothing.
+    const showFull = !useTrackerUnlock || assemblyDone || tpcActive;
+    const showStubs = useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
 
     if (!showFull && !showStubs) {
       return;
     }
 
-    const stubOnly = showStubs;
+    const rMax = this.getUnlockedTrackRadiusMax();
+    const straight = this.shouldRenderStraightTracks();
+    const cascadeVertices = showFull ? this.getCascadeVertices(this._event) : [];
 
     if (showFull) {
-      const cascadeVertices = this.getCascadeVertices(this._event);
       for (const v of cascadeVertices) {
         this.cascadeVertexMarkers.add(this.createVertexMarker(v.pos, v.label));
       }
@@ -1768,11 +2082,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
 
     for (const track of this._event.tracks) {
-      const traj = this.trajectoryForAssemblyMode(track.trajectory, stubOnly);
-      if (!traj) {
+      const resolved = this.trajectoryForAssemblyMode(track, rMax, straight);
+      if (!resolved) {
         continue;
       }
-      const line = this.createLine(traj, this.trackMaterial);
+      const line = this.createLine(resolved.points, this.trackMaterial, {
+        geometricStraight: resolved.geometricStraight
+      });
       this.tracks.add(line);
       if (deferTrackDrawForIntro) {
         this.pendingTrackDrawLines.push(line);
@@ -1783,9 +2099,20 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     for (const particleList of this._event.decays) {
       const decayObject = new THREE.Object3D();
+      // Pin straight decay products to the same vertices used by mother dashed lines.
+      const v0Start = cascadeVertices[0]?.pos ?? null;
+      const cascadeStart = cascadeVertices[1]?.pos ?? null;
       for (const track of particleList) {
-        const traj = this.trajectoryForAssemblyMode(track.trajectory, stubOnly);
-        if (!traj) {
+        let startOverride: number[] | null = null;
+        if (straight && showFull) {
+          if (track.type === TrackType.CASCADE_BACHELOR) {
+            startOverride = cascadeStart ?? v0Start;
+          } else if (v0Start) {
+            startOverride = v0Start;
+          }
+        }
+        const resolved = this.trajectoryForAssemblyMode(track, rMax, straight, startOverride);
+        if (!resolved) {
           continue;
         }
         let material: THREE.Material;
@@ -1798,7 +2125,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         } else {
           material = this.trackMaterial;
         }
-        const line = this.createLine(traj, material);
+        const line = this.createLine(resolved.points, material, {
+          geometricStraight: resolved.geometricStraight
+        });
         (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
         decayObject.add(line);
         if (deferTrackDrawForIntro) {
@@ -2130,23 +2459,56 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   @Input()
   assemblyCoachHighlightAssetPath: string | null = null;
 
+  /**
+   * When set during unfinished multipart assembly, only this palette asset can be dragged/placed.
+   * When null while assembly is unfinished (e.g. welcome coach), all palette drags are blocked.
+   */
+  @Input()
+  assemblyAllowedDragAssetPath: string | null = null;
+
   private rendernig: Observable<number> = scheduled([0], animationFrameScheduler).pipe(repeat());
   private renderingSubscription: Subscription = null;
 
   constructor(private cdr: ChangeDetectorRef) {
     const lineParams = {
-      linewidth: this.trackWidth,
+      linewidth: this.effectiveTrackWidth,
       resolution: new THREE.Vector2(1, 1),
       depthTest: false,
+      // Fat-line shader fades edges via alpha; opaque blending makes tracks disappear.
+      transparent: true,
+      opacity: 1,
     };
     this.trackMaterial = new LineMaterial({ color: EventDisplayComponent.trackColor, ...lineParams });
-    this.postiveTrackMaterial = new LineMaterial({ color: EventDisplayComponent.positiveTrackColor, ...lineParams });
-    this.negativeTrackMaterial = new LineMaterial({ color: EventDisplayComponent.negativeTrackColor, ...lineParams });
-    this.bachelorTrackMaterial = new LineMaterial({ color: EventDisplayComponent.bachelorTrackColor, ...lineParams });
-    this.highlightTrackMaterial = new LineMaterial({ color: EventDisplayComponent.highlightColor, ...lineParams });
-    const cascadeHoverParams = { linewidth: 6 * this.trackWidth, resolution: new THREE.Vector2(1, 1), depthTest: false };
-    this.cascadeHoverTrackMaterial = new LineMaterial({ color: 0x000000, ...cascadeHoverParams });
-    this.cascadeProtonMaterial = new LineMaterial({ color: 0x000080, ...cascadeHoverParams });
+    this.postiveTrackMaterial = new LineMaterial({
+      color: EventDisplayComponent.positiveTrackColor,
+      ...lineParams,
+      linewidth: this.trackDecayWidth,
+    });
+    this.negativeTrackMaterial = new LineMaterial({
+      color: EventDisplayComponent.negativeTrackColor,
+      ...lineParams,
+      linewidth: this.trackDecayWidth,
+    });
+    this.bachelorTrackMaterial = new LineMaterial({
+      color: EventDisplayComponent.bachelorTrackColor,
+      ...lineParams,
+      linewidth: this.trackDecayWidth,
+    });
+    this.highlightTrackMaterial = new LineMaterial({
+      color: EventDisplayComponent.highlightColor,
+      ...lineParams,
+      linewidth: this.trackHighlightWidth,
+    });
+    this.cascadeHoverTrackMaterial = new LineMaterial({
+      color: 0x000000,
+      ...lineParams,
+      linewidth: this.trackHighlightWidth,
+    });
+    this.cascadeProtonMaterial = new LineMaterial({
+      color: 0x000080,
+      ...lineParams,
+      linewidth: this.trackHighlightWidth,
+    });
     this.pointsMaterial = new THREE.PointsMaterial({
       color: EventDisplayComponent.clusterColor,
       size: this.clusterSize,
@@ -2615,7 +2977,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cascadeHoverActive = true;
     (this.trackMaterial as any).transparent = true;
     (this.trackMaterial as any).opacity = 0;
-    this.detectorScene?.traverse((o: THREE.Object3D) => {
+    this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
       if ((o as any).isMesh) {
         const raw = (o as THREE.Mesh).material;
         const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
@@ -2709,7 +3071,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.cascadeHoverActive = false;
       (this.trackMaterial as any).transparent = false;
       (this.trackMaterial as any).opacity = 1;
-      this.detectorScene?.traverse((o: THREE.Object3D) => {
+      this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
         if ((o as any).isMesh) {
           const raw = (o as THREE.Mesh).material;
           const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
@@ -2954,7 +3316,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       EventDisplayComponent.nearClippingPlane,
       EventDisplayComponent.farClippingPlane
     );
-    this.camera3D.position.set(-7.5, 7.5, 2.5);
+    const startCam = this.detectorMultipartAssemblyMode && !this._detectorInteractiveAssemblyDone
+      ? EventDisplayComponent.CAMERA_3D_ASSEMBLY_START
+      : EventDisplayComponent.CAMERA_3D_OVERVIEW;
+    this.camera3D.position.set(startCam.x, startCam.y, startCam.z);
     this.camera3D.up.set(0.0, 1.0, 0.0);
     this.cameraRphi = new THREE.PerspectiveCamera(
       EventDisplayComponent.fieldOfView,
@@ -2994,16 +3359,17 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     window.addEventListener('pointerup', this.onPointerUp);
     this.canvas.addEventListener('wheel', this.onWheel, { passive: false });
     this.updateCameraMode();
-    const ambientLight = new THREE.AmbientLight(0x444444);
-    this.lights.add(ambientLight);
-    const hemisphereLight = new THREE.HemisphereLight(0xb8c8e8, 0x2a2a30, 0.5);
-    this.lights.add(hemisphereLight);
-    const directionalLighta = new THREE.DirectionalLight(0xFFFFFF, 0.45);
-    directionalLighta.position.set(1.0, 1.0, 1.0);
-    this.lights.add(directionalLighta);
-    const directionalLightb = new THREE.DirectionalLight(0xFFFFFF, 0.45);
-    directionalLightb.position.set(-1.0, 1.0, -1.0);
-    this.lights.add(directionalLightb);
+    this.ambientLight = new THREE.AmbientLight(0xa2a2a2, 0.925);
+    this.lights.add(this.ambientLight);
+    this.hemisphereLight = new THREE.HemisphereLight(0xd5dff4, 0x81838b, 0.7);
+    this.lights.add(this.hemisphereLight);
+    this.directionalLightA = new THREE.DirectionalLight(0xffffff, 0.5);
+    this.directionalLightA.position.set(1.0, 1.0, 1.0);
+    this.lights.add(this.directionalLightA);
+    this.directionalLightB = new THREE.DirectionalLight(0xffffff, 0.5);
+    this.directionalLightB.position.set(-1.0, 1.0, -1.0);
+    this.lights.add(this.directionalLightB);
+    this.syncSceneLighting();
     const axesHelper = new THREE.AxesHelper(5);
     this.axes.add(axesHelper);
     this.axes.visible = false;

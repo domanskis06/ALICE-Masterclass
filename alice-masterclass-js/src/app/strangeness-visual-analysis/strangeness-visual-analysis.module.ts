@@ -10,6 +10,7 @@ import { ParticleMassComponent } from './particle-mass/particle-mass.component';
 import { CalculatorComponent } from './calculator/calculator.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
 import { InstructionsComponent } from './instructions/instructions.component';
+import { LetsUsPanelComponent } from './lets-us-panel/lets-us-panel.component';
 
 @NgModule({
   declarations: [
@@ -18,6 +19,7 @@ import { InstructionsComponent } from './instructions/instructions.component';
     CalculatorComponent,
     MassHistogramsComponent,
     InstructionsComponent,
+    LetsUsPanelComponent,
   ],
   imports: [
     CommonModule,
