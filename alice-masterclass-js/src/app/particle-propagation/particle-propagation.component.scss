@@ -1,0 +1,258 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+// Visual Analysis dark-mode palette (see strangeness-visual-analysis.component.scss).
+.particle-propagation-host {
+  --pp-bg-panel-solid: #ffffff;
+  --pp-bg-scene: #eef1f6;
+  --pp-border: rgba(0, 0, 0, 0.14);
+  --pp-text: rgba(0, 0, 0, 0.82);
+  --pp-muted: rgba(0, 0, 0, 0.55);
+  --pp-control-bg: #f5f5f5;
+  --pp-accent: #ff6f00;
+
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  // CERN toolbar 40px + app toolbar 64px.
+  height: calc(100vh - 104px);
+  min-height: 480px;
+  overflow: hidden;
+  background: var(--pp-bg-scene);
+  color: var(--pp-text);
+  transition: background 0.25s ease, color 0.25s ease;
+
+  &.pp-dark {
+    --pp-bg-panel-solid: #0a1832;
+    --pp-bg-scene: #05070d;
+    --pp-border: rgba(148, 163, 184, 0.28);
+    --pp-text: #e5edf7;
+    --pp-muted: rgba(226, 232, 240, 0.7);
+    --pp-control-bg: rgba(15, 23, 42, 0.94);
+    --pp-accent: #ff6f00;
+  }
+}
+
+.scene-column {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--pp-bg-scene);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+}
+
+// Right controls sidebar — EventDisplay / VA end-drawer look.
+.controls-sidebar {
+  flex: 0 0 300px;
+  width: 300px;
+  height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 16px 14px 24px;
+  background: var(--pp-bg-panel-solid);
+  border-left: 1px solid var(--pp-border);
+  color: var(--pp-text);
+}
+
+.controls-section {
+  margin-bottom: 20px;
+
+  h4 {
+    margin: 0 0 12px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pp-text);
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.playback-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+
+  button[mat-icon-button] {
+    color: var(--pp-text);
+  }
+
+  button[mat-icon-button]:disabled {
+    color: var(--pp-muted);
+  }
+}
+
+.slider-label {
+  display: block;
+  margin: 10px 0 4px;
+  font-size: 12px;
+  color: var(--pp-muted);
+}
+
+.time-readout {
+  font-size: 12px;
+  color: var(--pp-muted);
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+// VA-style left detector overlay on the canvas.
+.detector-parts-panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  width: 228px;
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  padding: 16px 14px 24px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  background: var(--pp-bg-panel-solid);
+  border: 1px solid var(--pp-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  color: var(--pp-text);
+
+  h4 {
+    margin: 0 0 12px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pp-text);
+  }
+
+  .theme-toggle-row {
+    display: flex;
+    justify-content: flex-end;
+    margin: -6px 0 12px;
+  }
+
+  .detector-parts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .detector-part-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    mat-slide-toggle {
+      display: block;
+      white-space: normal;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--pp-text);
+    }
+
+    input[type='range'] {
+      width: 100%;
+      margin: 0;
+      accent-color: var(--pp-accent);
+    }
+  }
+}
+
+.loading-overlay,
+.error-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(5, 7, 13, 0.55);
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.loading-label {
+  margin: 0.5rem 0 0;
+}
+
+.loading-progress {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 0.85rem;
+}
+
+.error-detail {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 0.85rem;
+  max-width: 480px;
+}
+
+// Material form fields / sliders / toggles — readable on light and VA dark panel.
+.particle-propagation-host ::ng-deep {
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__leading,
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__notch,
+  .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-notched-outline__trailing {
+    border-color: var(--pp-border) !important;
+  }
+
+  .mat-mdc-select-value,
+  .mat-mdc-select-arrow,
+  .mat-mdc-floating-label,
+  .mdc-floating-label,
+  .mat-mdc-form-field-label {
+    color: var(--pp-text) !important;
+  }
+
+  .mat-mdc-slide-toggle {
+    color: var(--pp-text);
+  }
+
+  .mat-mdc-slider {
+    width: 100%;
+  }
+}
+
+.particle-propagation-host.pp-dark ::ng-deep {
+  .mat-mdc-form-field .mat-mdc-text-field-wrapper {
+    background: var(--pp-control-bg);
+  }
+
+  .mat-mdc-option {
+    color: var(--pp-text);
+  }
+
+  .mat-mdc-select-panel {
+    background: var(--pp-bg-panel-solid);
+  }
+
+  .mdc-label,
+  .mat-internal-form-field > label {
+    color: var(--pp-text) !important;
+  }
+}

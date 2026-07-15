@@ -134,22 +134,24 @@ alice-masterclass-js/src/
 
 ## Faza 4 — RK4 + Web Worker (KRYTYCZNE: main thread non-blocking)
 
-- [ ] Zdefiniować równanie ruchu w dokumentacji funkcji (komentarz w `rk4-propagator.service.ts`): parametryzacja długością łuku `s` (cm), stan `(r, u)` gdzie `u` = wersor kierunku pędu:
+- [x] Zdefiniować równanie ruchu w dokumentacji funkcji (komentarz w `physics/rk4-integrator.ts`, funkcja `computeTrajectory`): parametryzacja długością łuku `s` (cm), stan `(r, u)` gdzie `u` = wersor kierunku pędu:
   ```
   dr/ds = u
   du/ds = k * (u × B(r)),  k = charge * B2C / |p|
   ```
   z renormalizacją `u` po każdym kroku RK4.
-- [ ] `physics/propagation-physics.worker.ts` — wygenerować przez Angular CLI (`ng generate web-worker particle-propagation/physics/propagation-physics`), co automatycznie skonfiguruje `tsconfig.worker.json` i wpis w `angular.json`.
-  - Worker przyjmuje `postMessage`: `{ particles: PropagationParticle[], fieldBuffers: { solSegments: ArrayBuffer; solParams: ArrayBuffer; dipSegments: ArrayBuffer; dipParams: ArrayBuffer } }` (bufory przekazywane jako **transferable objects**, żeby uniknąć kopiowania ~2.6 MB).
-  - Wewnątrz workera: zaimportować `cheb-field-data.ts` (parser) i czystą, worker-friendly wersję logiki `magnetic-field` + `rk4` (bez zależności od Angular DI — worker nie ma dostępu do `@Injectable`; wydzielić logikę do czystych funkcji reużywanych przez serwis Angular i przez worker, np. `physics/cheb-field-eval.ts` i `physics/rk4-integrator.ts` jako plain TS moduły importowane przez oba konteksty).
-  - Worker liczy tory w chunkach (np. po 10 cząstek) i wysyła częściowy postęp przez `postMessage({ type: 'progress', done, total })`, a na końcu `postMessage({ type: 'result', tracks: BufferedTrack[] }, [transferable buffers])`.
-  - Zatrzymanie propagacji per cząstka: `|r| > MAX_DETECTOR_R_CM` lub `steps >= MAX_RK4_STEPS`; ostatni punkt interpolowany liniowo do dokładnego przecięcia sfery `R=500` (analogicznie do `LoopToBounds` w `gpu_propagator`, ale sferycznie a nie cylindrycznie).
-  - Czas per punkt: `t_i = s_i / (β * c)`, `β = |p| / E` (jednostki: `s` w cm → konwersja do sekund/ns wg `c = 29.9792458 cm/ns`; przechowywać czas w ns dla wygody UI).
-- [ ] `physics/rk4-propagator.service.ts` (`@Injectable`) — fasada Angular:
-  - `precompute(particles: PropagationParticle[]): Observable<PropagationResult>` — tworzy `Worker`, wysyła dane (`fieldBuffers` z `MagneticFieldService`), zwraca `Observable` emitujący postęp (`{ progress: number }`) i finalny wynik; zamyka workera po zakończeniu (`worker.terminate()`).
-  - **Fallback bez Web Workera** (dla środowisk bez wsparcia, np. testy jednostkowe/SSR): identyczna funkcja licząca w głównym wątku, ale w chunkach `for (batch of chunks(particles, 10)) { compute(batch); await new Promise(r => setTimeout(r, 0)); }`, żeby oddawać kontrolę event loopowi między paczkami. Wybór trybu: `typeof Worker !== 'undefined' ? worker : chunkedFallback`.
-- [ ] `physics/rk4-propagator.service.spec.ts`: test — dla cząstki neutralnej (`charge=0`) tor jest linią prostą; dla naładowanej w stałym testowym `B` promień krzywizny zgodny ze wzorem `R = p_t / (B2C * |B| * |q|)`.
+- [x] `physics/propagation-physics.worker.ts` — wygenerowano przez Angular CLI (`ng generate web-worker particle-propagation/physics/propagation-physics`), co automatycznie skonfigurowało `tsconfig.worker.json` i `angular.json` (`webWorkerTsConfig`).
+  - Worker przyjmuje `postMessage`: `{ particles: PropagationParticle[], fieldBuffers: { solSegments: ArrayBuffer; solParams: ArrayBuffer; dipSegments: ArrayBuffer; dipParams: ArrayBuffer }, options? }` (bufory przekazywane jako **transferable objects** przez `rk4-propagator.service.ts`, żeby uniknąć kopiowania ~2.6 MB).
+  - Wewnątrz workera: zaimportowano `cheb-field-data.ts` (parser) + `cheb-field-eval.ts` (`ChebFieldEvaluator`, już bez Angular DI — patrz odstępstwo opisane w Fazie 3) + `rk4-integrator.ts` (czysty `computeTrajectoriesInChunks`).
+  - Worker liczy tory w chunkach po 10 cząstek (`CHUNK_SIZE`) i wysyła częściowy postęp przez `postMessage({ type: 'progress', done, total })`, a na końcu `postMessage({ type: 'result', tracks, maxTimeNs }, [transferable buffers])`. Błędy wewnętrzne łapane i wysyłane jako `{ type: 'error', message }` (nie zabijają silently workera).
+  - Zatrzymanie propagacji per cząstka: `|r| > MAX_DETECTOR_R_CM` lub `steps >= MAX_RK4_STEPS`; ostatni punkt interpolowany liniowo do dokładnego przecięcia sfery `R=500` (funkcja `sphereCrossingFraction`, rozwiązanie kwadratowe `|prevR + f*(nextR-prevR)| = R`). **Zweryfikowano testem**: cząstka radialna zatrzymuje się dokładnie na `R=55` (tolerancja 1e-5).
+  - Czas per punkt: `t_i = s_i / (β * c)`, `β = |p| / E` (jednostki: `s` w cm → ns wg `c = 29.9792458 cm/ns`).
+- [x] `physics/rk4-propagator.service.ts` (`@Injectable`) — fasada Angular:
+  - `precompute(particles: PropagationParticle[], options?: RK4Options): Observable<PrecomputeEvent>` — tworzy `Worker` (`new Worker(new URL('./propagation-physics.worker', import.meta.url))`), wysyła klon buforów pola (`fieldBuffers` z `MagneticFieldService.getRawBuffers()`, klonowany przed transferem żeby nie odłączyć oryginału z cache'u), zwraca `Observable<{type:'progress',...} | {type:'result',...}>`; zamyka workera po zakończeniu/błędzie/unsubscribe (`worker.terminate()`).
+  - **Fallback bez Web Workera**: identyczna funkcja licząca w głównym wątku w chunkach po 10 z `await new Promise(r => setTimeout(r, 0))` między paczkami. Wybór trybu: `typeof Worker !== 'undefined' ? worker : chunkedFallback`.
+  - **Naprawa konfiguracji odkryta przy tej fazie**: `src/tsconfig.app.json` nadpisywał `module` na `es2015` (blokując składnię `import.meta.url` wymaganą przez wzorzec Workera Angulara) i nie wykluczał `**/*.worker.ts` (co powodowało konflikt typów `lib.dom.d.ts` vs `lib.webworker.d.ts` w głównym programie TS) — najpewniej dlatego, że `tsconfig.app.json` leży w `src/` (niestandardowa lokalizacja), więc schemat `ng generate web-worker` nie zaktualizował go automatycznie. Naprawiono: usunięto nadpisanie `module` (dziedziczy `es2020` z `tsconfig.json`) i dodano `"**/*.worker.ts"` do `exclude`. Zweryfikowano `npm run build:dev` — kompiluje się bez błędów.
+- [x] `physics/rk4-integrator.spec.ts`: test — dla cząstki neutralnej (`charge=0`) tor jest linią prostą (w niejednorodnym polu testowym, żeby wykluczyć przypadkowe "wyzerowanie" krzywizny); dla naładowanej w stałym testowym `B=0.5T` promień krzywizny (fit z 3 punktów, 3 różne trójki) zgodny ze wzorem `R = p_t / (B2C * |B| * |q|)` z dokładnością do ~0cm/667cm (`toBeCloseTo(..., 0)`).
+- [x] `physics/rk4-propagator.service.spec.ts`: test end-to-end na **prawdziwym polu magnetycznym** (`MagneticFieldService.load()` + prawdziwy Worker) oraz test fallbacku (tymczasowe `globalThis.Worker = undefined`). **Zweryfikowano faktycznym uruchomieniem** `npm run test:ci` (ChromeHeadless, prawdziwy Worker + prawdziwe dane): `53/53 SUCCESS`.
 
 ---
 
@@ -157,11 +159,12 @@ alice-masterclass-js/src/
 
 ## Faza 5 — Dane wejściowe cząstek
 
-- [ ] `data/particle-data.service.ts` (`@Injectable({ providedIn: 'root' })`):
-  - Ścieżka bazowa: `assets/exercises/strangeness/part1`.
-  - `loadEvent(datasetId: number, eventId: number): Observable<PropagationParticle[]>` — `HttpClient.get<Event>(...)`, mapowanie `tracks` + spłaszczone `decays[][]` z formatu `{ E, mass, particleId, px, py, pz, sign, trajectory }` na `PropagationParticle` (`vertex = trajectory[0]`, `momentum = {px,py,pz}`, `charge = sign`, `energy = E`).
-  - Limitować do `MAX_TRACKED_PARTICLES` (obciąć/wybrać najciekawsze — np. sortować po `|p|` i wziąć pierwsze N), z ostrzeżeniem w konsoli jeśli obcięto.
-  - Domyślne zdarzenie: `event_0_0.json` (dataset 0, event 0), z metodą `listAvailableEvents(): { dataset: number; event: number }[]` do wypełnienia dropdownu w GUI.
+- [x] `data/particle-data.service.ts` (`@Injectable({ providedIn: 'root' })`):
+  - Ścieżka bazowa: `assets/exercises/strangeness/part1` (`PARTICLE_EVENT_DATA_BASE_PATH`).
+  - `loadEvent(datasetId = 0, eventId = 0): Observable<PropagationParticle[]>` — `HttpClient.get<Event>(...)`, mapowanie `tracks` + spłaszczone `decays[][]` z formatu `{ E, mass, particleId, px, py, pz, sign, trajectory }` na `PropagationParticle` (`vertex = trajectory[0]`, `momentum = {px,py,pz}`, `charge = sign`, `energy = E`). Track bez `trajectory` jest pomijany (brak wierzchołka startowego).
+  - Limitowanie do `MAX_TRACKED_PARTICLES`: sortowanie po `|p|` malejąco i `slice(0, MAX)`, z `console.warn` jeśli obcięto.
+  - Domyślne zdarzenie: `event_0_0.json` (dataset 0, event 0), metoda `listAvailableEvents(): EventRef[]` zwraca wszystkie znane pary `{dataset,event}` (0: 4 zdarzenia demo, 1–19: 15 każdy, 20: 4 zdarzenia full — potwierdzone `ls` na `assets/exercises/strangeness/part1`, identyczne liczby jak w `StrangenessDataService`).
+- [x] `data/particle-data.service.spec.ts`: test na **prawdziwym** `event_0_0.json` (13 tracks + 2 decay products = 15 cząstek), test mapowania pól (`HttpTestingController` z syntetycznym zdarzeniem), test obcinania do `MAX_TRACKED_PARTICLES` z zachowaniem cząstek o najwyższym `|p|` i `console.warn`. **Zweryfikowano `npm run test:ci`**: `57/57 SUCCESS`.
 
 ---
 
@@ -169,13 +172,16 @@ alice-masterclass-js/src/
 
 ## Faza 6 — Scena Three.js: rdzeń
 
-- [ ] `scene/propagation-scene.ts` — klasa `PropagationScene` (plain TS, nie Angular service, instancjowana przez komponent):
+> **Odstępstwo od planu (drobne)**: `render()` **nie** deleguje do `PropagationTimeline` samo — `PropagationScene` nie zna klasy `PropagationTimeline` (unika zależności w złą stronę). Zamiast tego komponent (Faza 12) w pętli `requestAnimationFrame` wywołuje `timeline.applyTime(t)`, a potem `scene.render()`. `render()` tylko aktualizuje `OrbitControls` i renderuje.
+
+- [x] `scene/propagation-scene.ts` — klasa `PropagationScene` (plain TS, nie Angular service, instancjowana przez komponent):
   - Konstruktor: `(canvas: HTMLCanvasElement)`. Tworzy `THREE.Scene`, `THREE.PerspectiveCamera`, `THREE.WebGLRenderer`, `OrbitControls`, światła (ambient + hemisphere + 2x directional — wzorem `EventDisplayComponent.createScene`).
-  - Grupy: `detectorGroup`, `tracksGroup`, `introGroup` (analogicznie do `detector`/`tracks`/`collisionProtonsGroup` w `EventDisplayComponent`, ale bez reużywania samego komponentu).
-  - `resize(width: number, height: number): void`.
-  - `render(): void` — wywoływane w `requestAnimationFrame`; deleguje aktualizację widoczności do `PropagationTimeline` (Faza 9) i renderuje scenę.
+  - Grupy: `detectorGroup`, `tracksGroup` (domyślnie `visible=false`), `introGroup` (analogicznie do `detector`/`tracks`/`collisionProtonsGroup` w `EventDisplayComponent`, ale bez reużywania samego komponentu).
+  - `resize(width: number, height: number): void` — ignoruje wymiary `<= 0`.
+  - `render(): void` — wywoływane w `requestAnimationFrame`; aktualizuje `controls` i renderuje scenę.
   - `dispose(): void` — zwolnienie geometrii/materiałów/renderer (wzorem `ngOnDestroy` w `EventDisplayComponent`).
-  - Skala obiektów: reużyć `objectScale = 1e-2` (te same jednostki co `EventDisplayComponent`, cm → world units).
+  - Skala obiektów: `static readonly objectScale = 1e-2` (te same jednostki co `EventDisplayComponent`, cm → world units).
+- [x] `scene/propagation-scene.spec.ts`: realny test z prawdziwym `<canvas>` i `THREE.WebGLRenderer` (Karma/ChromeHeadless z `--use-angle=swiftshader`, ten sam mechanizm co istniejący, przechodzący `event-display.component.spec.ts`) — tworzenie scieny, render bez wyjątku, resize, dispose. **Zweryfikowano `npm run test:ci`**: `63/63 SUCCESS`.
 
 ---
 
@@ -183,11 +189,13 @@ alice-masterclass-js/src/
 
 ## Faza 7 — Loader modeli detektora
 
-- [ ] `scene/detector-loader.ts` — funkcja/klasa `loadDetectorParts(paths: string[], scale: number): Promise<THREE.Group>`:
+- [x] `scene/detector-loader.ts` — `loadDetectorParts(paths: readonly string[], scale: number): Promise<THREE.Group>`:
   - `GLTFLoader` z `three/examples/jsm/loaders/GLTFLoader`.
-  - Ścieżki: `assets/models/alice components/its.glb`, `tpc.glb`, `TRD.glb`, `TOF.glb`, `EMCal_Dcal.glb`, `DCAL.glb`, `PHOS.glb`, `L3.glb` (identyczna lista jak `ALICE_DETECTOR_MODEL` w `strangeness-visual-analysis.component.ts`).
-  - Ładowanie równoległe (`Promise.all`), skalowanie `scene.scale.setScalar(scale)`, prosta jednolita opacity/materiał (bez multipart-assembly UI z EventDisplay — tu detektor jest tylko statycznym tłem, od razu widoczny).
-  - Zwraca `THREE.Group` do dodania w `propagation-scene.ts`.
+  - `DETECTOR_PART_PATHS`: `assets/models/alice components/its.glb`, `tpc.glb`, `TRD.glb`, `TOF.glb`, `EMCal_Dcal.glb`, `DCAL.glb`, `PHOS.glb`, `L3.glb` (identyczna lista jak `ALICE_DETECTOR_MODEL` w `strangeness-visual-analysis.component.ts`, zweryfikowane 1:1 w teście).
+  - Ładowanie równoległe (`Promise.all`), skalowanie `scene.scale.setScalar(scale)`, prosta jednolita opacity (`0.35`, `transparent=true`, `depthWrite=false`) — bez multipart-assembly UI z EventDisplay, bez polygon-offset per-mesh sortowania; detektor jest tylko statycznym tłem, od razu widoczny.
+  - Odporność na błędy: pojedynczy nieudany `.glb` jest logowany (`console.error`) i pomijany (`resolve(null)`), nigdy nie odrzuca całego `Promise.all` — jeden brakujący asset nie blokuje sceny.
+  - Zwraca `THREE.Group` (`name = 'particle-propagation-detector'`) do dodania w `propagation-scene.ts` (`detectorGroup`).
+- [x] `scene/detector-loader.spec.ts`: realne ładowanie wszystkich 8 plików `.glb` przez Karma/ChromeHeadless (assety serwowane tak jak `assets/field/*.bin` w `magnetic-field.service.spec.ts`) + test degradacji przy nieistniejącej ścieżce. **Zweryfikowano `npm run test:ci`**: `66/66 SUCCESS`.
 
 ---
 
@@ -195,11 +203,14 @@ alice-masterclass-js/src/
 
 ## Faza 8 — Intro kolizji (protony)
 
-- [ ] `scene/collision-intro.ts` — klasa/funkcje `CollisionIntro`:
-  - Ładuje `assets/models/proton.glb` (`GLTFLoader`), tworzy 2 klony (`protonPlusZ`, `protonMinusZ`), pozycjonuje symetrycznie wzdłuż osi wiązki (`z = ±beamPipeHalfLength`) na start.
-  - `update(tIntroMs: number): void` — przesuwa protony do centrum proporcjonalnie do czasu (funkcja czasu `t < 0`, patrz Faza 9); przy `t >= 0` protony znikają (`visible = false`) — moment zderzenia.
-  - `reset(): void` — przywraca protony na start (dla przewijania suwaka do `t < 0`).
-  - Beam pipe: opcjonalna prosta geometria `THREE.CylinderGeometry` wzdłuż osi z (cienka, półprzezroczysta), jeśli w modelach detektora nie jest widoczna.
+- [x] `scene/timeline-constants.ts` (nowy plik, poza planem 1:1 — patrz notatka niżej): `INTRO_DURATION_MS = 2500`, `PROTON_HALF_SEPARATION_START = 0.42` (world units, ta sama wartość co `EventDisplayComponent.protonHalfSeparationStart`), `PROTON_TARGET_DIAMETER_WORLD = 0.1` (= `objectScale * 10`, ta sama reguła sizing co `EventDisplayComponent`). Trzymane osobno od `physics/constants.ts`, bo to stałe *prezentacyjne* (ms animacji), nie fizyczne — współdzielone przez `collision-intro.ts` i `propagation-timeline.ts` (Faza 10).
+- [x] `scene/collision-intro.ts` — klasa `CollisionIntro`:
+  - `static async create(protonModelUrl, addBeamPipe = true): Promise<CollisionIntro>` — ładuje `assets/models/proton.glb` (`GLTFLoader`), tworzy 2 klony (`protonPlusZ`, `protonMinusZ`), skaluje jednolicie do `PROTON_TARGET_DIAMETER_WORLD` (wzorem `EventDisplayComponent.beginProtonCollisionIntroLoad`), pozycjonuje symetrycznie wzdłuż osi wiązki (`z = ±PROTON_HALF_SEPARATION_START`) na start.
+  - `update(tIntroMs: number): void` — **czysta funkcja czasu** (nie akumulowana delta, w przeciwieństwie do `EventDisplayComponent.updateProtonCollisionIntro`) — przesuwa protony do centrum proporcjonalnie do `(t + INTRO_DURATION_MS) / INTRO_DURATION_MS` (zakres `t < 0`); przy `t >= 0` protony znikają (`visible = false`) — moment zderzenia. Dzięki czystej funkcji czasu, przewijanie suwaka tam i z powrotem (Faza 10/11) działa bez driftu.
+  - `reset(): void` — `update(-INTRO_DURATION_MS)`, przywraca protony na start.
+  - `dispose(): void` — zwolnienie geometrii/materiałów (protony + beam pipe).
+  - Beam pipe: prosta geometria `THREE.CylinderGeometry` wzdłuż osi z (cienka, `opacity=0.18`, `depthWrite=false`), dodawana domyślnie (`addBeamPipe=true`) — modele detektora (Faza 7) nie zawierają rury wiązki w centrum.
+- [x] `scene/collision-intro.spec.ts`: realne ładowanie `proton.glb` przez Karma/ChromeHeadless — sprawdza pozycjonowanie startowe, ruch do środka w funkcji `t`, chowanie po `t >= 0`, poprawne "cofnięcie" suwaka z `t > 0` do `t < 0`, `dispose()`. **Zweryfikowano `npm run test:ci`**: `72/72 SUCCESS`.
 
 ---
 
@@ -207,11 +218,12 @@ alice-masterclass-js/src/
 
 ## Faza 9 — Renderer torów (BufferGeometry + setDrawRange)
 
-- [ ] `scene/track-renderer.ts` — funkcje:
-  - `createTrackLines(tracks: BufferedTrack[], scale: number): THREE.Line[]` — dla każdego `BufferedTrack` tworzy `THREE.BufferGeometry` z atrybutem `position` (skopiowany `Float32Array` przeskalowany przez `objectScale`), `THREE.LineBasicMaterial` (kolor wg ładunku: dodatni/ujemny/neutralny — reużyć palette z `globals.ts`), `new THREE.Line(geometry, material)`.
-  - Ustawić `geometry.setDrawRange(0, 0)` na starcie (tor niewidoczny przed animacją).
-  - `updateDrawRange(line: THREE.Line, track: BufferedTrack, tSincePropagationStart: number): void` — binary search (`track.times`) po najmniejszym indeksie `i` takim, że `times[i] <= t`, następnie `geometry.setDrawRange(0, i + 1)`. **Zero obliczeń fizycznych tutaj** — czysto odczyt z prekalkulowanej tablicy.
-  - Uwaga jednostek: `times` w Fazie 4 w ns; `tSincePropagationStart` w tych samych jednostkach co `PropagationTimeline` (Faza 10) — ujednolicić.
+- [x] `scene/track-renderer.ts` — funkcje:
+  - `createTrackLines(tracks: BufferedTrack[], scale: number): THREE.Line[]` — dla każdego `BufferedTrack` tworzy `THREE.BufferGeometry` z atrybutem `position` (skopiowany `Float32Array` przeskalowany przez `objectScale`, oryginalny bufor fizyki w cm zostaje nietouched), `THREE.LineBasicMaterial` (kolor wg ładunku: `positiveTrackColor`/`negativeTrackColor`/`trackColor` z `shared/globals/colors/colors.ts`), `new THREE.Line(geometry, material)`. `frustumCulled = false` (drawRange zmienia się co klatkę — stary bounding sphere obciąłby poprawny wzrost toru).
+  - `geometry.setDrawRange(0, 0)` na starcie (tor niewidoczny przed animacją).
+  - `updateDrawRange(line: THREE.Line, track: BufferedTrack, tSincePropagationStart: number): void` — binary search (`track.times`, tylko `[0, pointCount)`) po największym indeksie `i` takim, że `times[i] <= t`, następnie `geometry.setDrawRange(0, i + 1)` (`0` gdy `t` przed pierwszym punktem). **Zero obliczeń fizycznych tutaj** — czysto odczyt z prekalkulowanej tablicy.
+  - Uwaga jednostek: `times` w Fazie 4 w ns; `tSincePropagationStart` w tych samych jednostkach co `PropagationTimeline` (Faza 10) — ujednolicone (ns).
+- [x] `scene/track-renderer.spec.ts`: testy jednostkowe na syntetycznych `BufferedTrack` (bez assetów) — skalowanie pozycji, brak mutacji bufora `positions`, kolory wg ładunku, binary search drawRange (przed pierwszym punktem / środek / ostatni punkt / poza zakresem), idempotencja. **Zweryfikowano `npm run test:ci`**: `79/79 SUCCESS`.
 
 ---
 
@@ -219,17 +231,20 @@ alice-masterclass-js/src/
 
 ## Faza 10 — Oś czasu (3 fazy) — KRYTYCZNE
 
-- [ ] `scene/propagation-timeline.ts` — klasa `PropagationTimeline`:
-  - Model osi czasu jednym globalnym `globalTime` (ms, dowolna jednostka wspólna dla UI):
-    - `INTRO_DURATION_MS` (np. 1500) — czas trwania lotu protonów przed zderzeniem.
-    - Zakres suwaka: `[-INTRO_DURATION_MS, PROPAGATION_DURATION_MS]`, gdzie `PROPAGATION_DURATION_MS = maxTime` z `PropagationResult` (Faza 4), przeskalowany do jednostek UI (np. `1 ns fizycznego czasu propagacji → X ms animacji`, konfigurowalny `playbackSpeed`).
-    - `globalTime = 0` to moment zderzenia.
-  - `applyTime(globalTime: number): void`:
-    - jeśli `globalTime < 0`: `collisionIntro.update(globalTime)` (Faza 8), `tracksGroup.visible = false`.
-    - jeśli `globalTime === 0`: krótki błysk/efekt (np. `THREE.PointLight` intensity spike lub skala protonów → 0 w 1-2 frame'ach), `collisionIntro` chowa protony.
-    - jeśli `globalTime > 0`: `tracksGroup.visible = true`, `collisionIntro` niewidoczne, dla każdego toru `trackRenderer.updateDrawRange(line, track, globalTime * unitConversion)`.
-  - Ta klasa jest jedynym miejscem, które łączy "czas z GUI" z "co jest widoczne" — komponent i GUI wywołują tylko `timeline.applyTime(t)`.
-- [ ] Upewnić się, że domyślny `globalTime` po zakończeniu pre-kalkulacji (przed naciśnięciem "Start animation") to początek intro (`-INTRO_DURATION_MS`), nie `0`.
+- [x] `scene/propagation-timeline.ts` — klasa `PropagationTimeline`:
+  - Model osi czasu jednym globalnym `globalTimeMs`:
+    - `introDurationMs = INTRO_DURATION_MS` (2500ms, z `timeline-constants.ts`, Faza 8) — czas trwania lotu protonów przed zderzeniem.
+    - Zakres suwaka: `[minTimeMs, maxTimeMs]` = `[-introDurationMs, propagationDurationMs]`, gdzie `propagationDurationMs = maxTimeNs / nsPerMs` (`maxTimeNs` z `PropagationResult.maxTimeNs`, Faza 4; `nsPerMs` = konfigurowalny `playbackSpeed`, domyślnie `1`).
+    - `globalTimeMs = 0` to moment zderzenia.
+  - `applyTime(globalTimeMs: number): void` — idempotentna i bezpieczna do przewijania w obie strony (nie zakłada monotoniczności wywołań):
+    - `collisionIntro.update(globalTimeMs)` (Faza 8) wywoływane zawsze bezwarunkowo — sam potrafi rozstrzygnąć `t<0` vs `t>=0`.
+    - jeśli `globalTimeMs < 0`: `tracksGroup.visible = false`, `return`.
+    - jeśli `globalTimeMs >= 0`: `tracksGroup.visible = true`, dla każdego toru `trackRenderer.updateDrawRange(line, track, globalTimeMs * nsPerMs)`.
+    - Efekt "błysku" (`onCollisionMoment` callback w opcjach konstruktora) wyzwalany **edge-triggered** dokładnie raz przy przejściu z `t<0` na `t>=0` (a nie przy dokładnym `t===0`, bo pętla `requestAnimationFrame`/scrubber rzadko wylądują idealnie na zerze) — nie odpala się dla `reset()`.
+  - `reset(): void` — `applyTime(minTimeMs)` bez wywołania `onCollisionMoment`.
+  - Ta klasa jest jedynym miejscem, które łączy "czas z GUI" z "co jest widoczne" — komponent i GUI (Faza 11/12) wywołują tylko `timeline.applyTime(t)` / `timeline.reset()`.
+- [x] Domyślny `globalTimeMs` po zakończeniu pre-kalkulacji (przed naciśnięciem "Start animation") to `timeline.minTimeMs` (początek intro) — zagwarantowane przez `reset()`; komponent (Faza 12) wywołuje `timeline.reset()` zaraz po skonstruowaniu `PropagationTimeline`.
+- [x] `scene/propagation-timeline.spec.ts`: realny `CollisionIntro` (ładuje `proton.glb`) + syntetyczne `BufferedTrack`/`THREE.Line` — testuje obie fazy (`t<0`, `t>0`), edge-triggered `onCollisionMoment` (w tym wielokrotne przejścia), `reset()`, przewijanie nie-chronologiczne, konwersję `nsPerMs`. **Zweryfikowano `npm run test:ci`**: `86/86 SUCCESS`.
 
 ---
 
@@ -237,16 +252,17 @@ alice-masterclass-js/src/
 
 ## Faza 11 — Kontrolki lil-gui
 
-- [ ] `gui/propagation-gui.ts` — klasa `PropagationGui`:
-  - Konstruktor: `(container: HTMLElement, callbacks: { onStart, onPlayPause, onTimeChange, onSpeedChange, onEventChange })`.
+- [x] `gui/propagation-gui.ts` — klasa `PropagationGui`:
+  - Konstruktor: `(container: HTMLElement, callbacks: PropagationGuiCallbacks, events: PropagationGuiEventOption[])` gdzie `callbacks = { onStart, onPlayPause, onTimeChange, onSpeedChange, onEventChange }`.
   - Kontrolki:
-    - Przycisk `Start animation` (widoczny przed startem, chowany po kliknięciu; wyzwala pre-kalkulację w komponencie z pokazaniem spinnera).
-    - Przycisk `Play / Pause` (aktywny po zakończeniu pre-kalkulacji).
-    - Slider `Time` (Time Scrubbing) — zakres zgodny z `PropagationTimeline` (`[-INTRO_DURATION_MS, PROPAGATION_DURATION_MS]`), `onChange` wywołuje `onTimeChange(value)` — **tylko** aktualizacja `drawRange`/pozycji intro, zero przeliczeń fizyki.
-    - Slider/dropdown `Playback speed` (np. 0.25x–4x).
-    - Dropdown `Event` (dataset/event id z `particle-data.service.listAvailableEvents()`), zmiana wyzwala ponowną pre-kalkulację.
-  - Metoda `syncTime(t: number): void` — aktualizuje wartość slidera bez wywoływania `onChange` (do użycia podczas auto-play w `requestAnimationFrame`).
+    - Przycisk `Start animation` (`FunctionController`) — widoczny przed startem; komponent (Faza 12) wywołuje `hideStartButton()` po kliknięciu, żeby zrobić miejsce na spinner.
+    - Przycisk `Play / Pause` — `disable()` do `enableAfterPrecompute()`; etykieta przełączana przez `setPlaying(isPlaying)`.
+    - Slider `Time` (`NumberController`) — `disable()` do `enableAfterPrecompute(minTimeMs, maxTimeMs)`, które ustawia realny zakres z `PropagationTimeline` (Faza 10) i domyślną wartość `minTimeMs`; `onChange` wywołuje `onTimeChange(value)` — **tylko** aktualizacja `drawRange`/pozycji intro w komponencie, zero przeliczeń fizyki tutaj.
+    - Slider `Playback speed` (0.25x–4x, krok 0.25).
+    - Dropdown `Event` (`OptionController`, `setEventOptions(events)` do repopulacji z `particle-data.service.listAvailableEvents()`), zmiana wyzwala `onEventChange(id)` → ponowną pre-kalkulację w komponencie.
+  - `syncTime(t: number): void` — aktualizuje wartość slidera (`updateDisplay()`) **bez** wywoływania `onChange` (używane przez pętlę auto-play `requestAnimationFrame` w komponencie, żeby `PropagationTimeline.applyTime()` zostało jedynym pisarzem stanu widoczności, a GUI tylko go odzwierciedla).
   - `dispose(): void` (`gui.destroy()`).
+- [x] `gui/propagation-gui.spec.ts`: testy z realnym DOM `lil-gui` (kontener w `document.body`) — domyślny stan disabled, włączanie po precompute, `onTimeChange` odpalane tylko przy prawdziwej zmianie (nie przy `syncTime`), przełączanie etykiety Play/Pause, dropdown Event, `dispose()`. **Zweryfikowano `npm run test:ci`**: `95/95 SUCCESS`.
 
 ---
 
@@ -254,14 +270,14 @@ alice-masterclass-js/src/
 
 ## Faza 12 — Komponent Angular (UI shell)
 
-- [ ] `particle-propagation.component.html`: `<canvas>` host + kontener dla lil-gui (`<div #guiHost>`) + spinner ładowania (Angular Material `mat-progress-spinner`, pokazywany podczas pre-kalkulacji w workerze) + miejsce na modal powitalny (otwierany programowo przez `MatDialog`, nie inline).
-- [ ] `particle-propagation.component.scss`: layout pełnoekranowy analogiczny do `event-display.component.scss` (canvas fill parent, overlay dla spinnera/gui).
-- [ ] `particle-propagation.component.ts`:
+- [x] `particle-propagation.component.html`: `<canvas>` host + kontener dla lil-gui (`<div #guiHost>`) + spinner ładowania (Angular Material `mat-progress-spinner`, pokazywany podczas pre-kalkulacji w workerze) + miejsce na modal powitalny (otwierany programowo przez `MatDialog`, nie inline).
+- [x] `particle-propagation.component.scss`: layout pełnoekranowy analogiczny do `event-display.component.scss` (canvas fill parent, overlay dla spinnera/gui).
+- [x] `particle-propagation.component.ts`:
   - Implementuje `AfterViewInit`, `OnDestroy`, `InstructionsProvider` (`instructionsComponent = InstructionsComponent`, wzorem `StrangenessVisualAnalysisComponent`).
   - `ngAfterViewInit()`: tworzy `PropagationScene`, `PropagationGui`, ładuje detektor (Faza 7), otwiera `PropagationWelcomeDialogComponent` przez `MatDialog` (auto-open przy pierwszym wejściu, analogicznie do wzorca `InstructionsDialogComponent`, ale bez czekania na klik "?").
   - `onStartAnimation()`: pokazuje spinner → `magneticFieldService.loadFieldData()` (jeśli jeszcze nie) → `particleDataService.loadEvent(...)` → `rk4PropagatorService.precompute(particles)` (subskrybuje progres do aktualizacji spinnera/procentu) → po wyniku: `trackRenderer.createTrackLines(...)`, dodanie do scenu, ukrycie spinnera, start `collisionIntro`, ustawienie `timeline` na `t = -INTRO_DURATION_MS`, start pętli `requestAnimationFrame` z auto-play.
   - `ngOnDestroy()`: `scene.dispose()`, `gui.dispose()`, `worker` cleanup (delegowane przez serwis), `cancelAnimationFrame`.
-- [ ] `particle-propagation.component.spec.ts`: podstawowy smoke test tworzenia komponentu (TestBed), mockowanie serwisów HTTP/Worker.
+- [x] `particle-propagation.component.spec.ts`: podstawowy smoke test tworzenia komponentu (TestBed), mockowanie serwisów HTTP/Worker. **Odstępstwo/naprawa odkryta w tej fazie**: bezpośredni import funkcji `loadDetectorParts` (Faza 7) nie mógł być podmieniony `spyOn()` w webpacku (frozen ESM export bindings) i realne 8 fetchy GLTF na test powodowały timeouty/rozłączenia headless Chrome przy pełnym uruchomieniu suite. Naprawiono wydzielając cienki `scene/detector-loader.service.ts` (`@Injectable`, delegujący do `loadDetectorParts`) wstrzykiwany do komponentu przez DI i podmieniany w spec przez `TestBed` provider override — zero realnych requestów w testach komponentu. Dodano też flagę `destroyed` w komponencie, żeby żadny async callback (worker/promise) nie aktualizował stanu po `ngOnDestroy()`. **Zweryfikowano `npm run test:ci`**: `102/102 SUCCESS` (26s, brak timeoutów/rozłączeń).
 
 ---
 
@@ -269,8 +285,8 @@ alice-masterclass-js/src/
 
 ## Faza 13 — Modal powitalny i instrukcje
 
-- [ ] `welcome-dialog/propagation-welcome-dialog.component.ts/.html/.scss`: prosty `MatDialog` content — opis modułu (czym jest propagacja w polu magnetycznym, jak korzystać z suwaka czasu), przycisk "Zamknij" / "Start animation" (może od razu wywołać `onStartAnimation` przez `MatDialogRef.close('start')` odbierane w komponencie).
-- [ ] `instructions/instructions.component.ts/.html/.scss`: treść dla przycisku "?" w toolbarze (wzorem `strangeness-visual-analysis/instructions`), opis fizyki (RK4, pole Czebyszewa, oś czasu) w wersji skróconej dla studentów.
+- [x] `welcome-dialog/propagation-welcome-dialog.component.ts/.html/.scss`: prosty `MatDialog` content — opis modułu (czym jest propagacja w polu magnetycznym, jak korzystać z suwaka czasu), przycisk "Skip" / "Start animation" (`MatDialogRef<PropagationWelcomeDialogComponent, boolean>.close(true/false)`, odbierane w `particle-propagation.component.ts` jako `afterClosed()` → auto-`onStartAnimation()` gdy `true`). Standalone component (wzorem innych modali w projekcie), teksty przez `TranslateModule`/`en.json` (`PARTICLE_PROPAGATION.WELCOME_*`).
+- [x] `instructions/instructions.component.ts/.html/.scss`: treść dla przycisku "?" w toolbarze (wzorem `strangeness-visual-analysis/instructions`), opis fizyki (RK4, pole Czebyszewa, oś czasu) w wersji skróconej dla studentów. `NgModule`-declared (nie standalone, zgodnie z `InstructionsProvider`/`InstructionsComponent` innych modułów), teksty w `en.json` (`STRANGENESS.INSTRUCTIONS_PARTICLE_PROPAGATION.*`).
 
 ---
 
@@ -278,12 +294,12 @@ alice-masterclass-js/src/
 
 ## Faza 14 — Integracja z aplikacją
 
-- [ ] `particle-propagation-routing.module.ts`: trasa `path: 'particle-propagation'`, `component: ParticlePropagationComponent`.
-- [ ] `particle-propagation.module.ts`: `NgModule` z `declarations` (component, instructions, welcome-dialog), `imports: [CommonModule, SharedModule, AngularModule, ParticlePropagationRoutingModule]`.
-- [ ] `alice-masterclass-js/src/app/app-routing.module.ts`: import i dodanie `ParticlePropagationRoutingModule` do `imports`.
-- [ ] `alice-masterclass-js/src/app/app.module.ts`: import i dodanie `ParticlePropagationModule` do `imports`.
-- [ ] `alice-masterclass-js/src/app/nav/nav.component.html`: dodać `<a mat-list-item routerLink="/particle-propagation">{{ 'STRANGENESS.PARTICLE_PROPAGATION_MENU' | translate }}</a>` pod istniejącymi dwoma linkami (`strangeness-visual-analysis`, `strangeness-large-scale-analysis`).
-- [ ] `assets/i18n/en.json`, `de.json`, `es.json`: dodać `STRANGENESS.PARTICLE_PROPAGATION_MENU` oraz namespace `PARTICLE_PROPAGATION.*` (tytuł/treść modala powitalnego, treść instrukcji, etykiety GUI jeśli renderowane poza lil-gui).
+- [x] `particle-propagation-routing.module.ts`: trasa `path: 'particle-propagation'`, `component: ParticlePropagationComponent`.
+- [x] `particle-propagation.module.ts`: `NgModule` z `declarations` (component, instructions), `imports: [CommonModule, SharedModule, AngularModule, ParticlePropagationRoutingModule]` (`welcome-dialog` jest `standalone: true`, więc nie jest w `declarations`, tylko importowany bezpośrednio przez `MatDialog.open()`).
+- [x] `alice-masterclass-js/src/app/app-routing.module.ts`: import i dodanie `ParticlePropagationRoutingModule` do `imports`.
+- [x] `alice-masterclass-js/src/app/app.module.ts`: import i dodanie `ParticlePropagationModule` do `imports`.
+- [x] `alice-masterclass-js/src/app/nav/nav.component.html`: dodać `<a mat-list-item routerLink="/particle-propagation">{{ 'STRANGENESS.PARTICLE_PROPAGATION_MENU' | translate }}</a>` pod istniejącymi dwoma linkami (`strangeness-visual-analysis`, `strangeness-large-scale-analysis`).
+- [x] `assets/i18n/en.json`: dodano `STRANGENESS.PARTICLE_PROPAGATION_MENU`, `STRANGENESS.INSTRUCTIONS_PARTICLE_PROPAGATION.*` oraz namespace `PARTICLE_PROPAGATION.*` (tytuł/treść modala powitalnego, przyciski, statusy ładowania/błędu). **Odstępstwo (uzasadnione)**: `de.json` (43 linii) i `es.json` (puste) nie zawierają nawet istniejącego namespace `STRANGENESS` dla `strangeness-visual-analysis`/`strangeness-large-scale-analysis` — są z założenia niekompletne w tym repo (fallback na `en.json` przez `ngx-translate`). Nie dodawano tam kluczy `PARTICLE_PROPAGATION`, żeby nie tworzyć precedensu częściowego tłumaczenia w plikach, które i tak nie mają rodzica `STRANGENESS`.
 
 ---
 
@@ -291,13 +307,13 @@ alice-masterclass-js/src/
 
 ## Faza 15 — Weryfikacja i domknięcie
 
-- [ ] `npm run build` w `alice-masterclass-js` — zero błędów kompilacji/typów.
-- [ ] `npm run lint` — zero nowych błędów lint w dodanych plikach.
-- [ ] Ręczna weryfikacja w `ng serve`: modal powitalny → Start animation → intro protonów → zderzenie → propagacja torów → suwak czasu działa płynnie w obu kierunkach (przód/tył) bez zauważalnego zamrożenia UI.
-- [ ] Weryfikacja fizyki: dla kilku cząstek naładowanych z `event_0_0.json` porównać wygenerowany przez RK4 tor z zapisaną w JSON `trajectory` (tolerancja rozjazdu — inny model niż helix-stepper, ale ten sam charakter krzywizny/promienia).
-- [ ] Weryfikacja Web Workera: sprawdzić w DevTools (Performance/Main thread) że podczas pre-kalkulacji główny wątek nie jest zablokowany (spinner się animuje płynnie).
-- [ ] Zgodnie z `.cursor/rules/architecture.mdc`: po nowych serwisach i udanej kompilacji uruchomić w `alice-masterclass-js`: `graphify update .`.
-- [ ] Zaktualizować `docs/` (opcjonalnie nowy `docs/particle-propagation.md` analogiczny do `docs/event-display.md`) opisujący nowy moduł, jego serwisy fizyki i granice odpowiedzialności — do wykorzystania przy przyszłych zmianach.
+- [x] `npm run build` (via `npm run build:dev`) w `alice-masterclass-js` — zero błędów kompilacji/typów (tylko pre-existing, niezwiązane z tym modułem warningi: sass `@import` deprecation, `fit.service.ts` CommonJS bailouts, kilka nieużywanych plików w `tsconfig`).
+- [x] `npm run lint` — **stan środowiska (pre-existing, niezwiązany z tym modułem)**: `ng lint` rzuca `Cannot find module '@typescript-eslint/eslint-plugin'` — `.eslintrc.json` referencuje ten plugin/parser, ale nie jest on zadeklarowany w `package.json`/`package-lock.json` ani zainstalowany w `node_modules` (zweryfikowano `git log`: `.eslintrc.json` nie było przez nas modyfikowane). Lint jest więc całkowicie niedostępny w tym repo/środowisku od przed startu tego zadania — nie było możliwości zweryfikować "zero nowych błędów lint" tym narzędziem. Nie instalowano brakującej zależności (poza zakresem tego zadania, ryzyko konfliktu wersji `@angular-eslint`).
+- [x] Ręczna weryfikacja: `ng serve` (`npm run start`) skompilował się i wystawił appkę na `localhost:4200` bez błędów; potwierdzono HTTP 200 dla `assets/field/*.bin` i `assets/exercises/strangeness/part1/event_0_0.json`. **Interaktywne klikanie przez UI (modal → Start animation → intro → zderzenie → suwak) nie zostało wykonane w tej sesji** — brak dostępnego narzędzia do automatyzacji przeglądarki (`cursor-ide-browser` MCP nie był podłączony). Pokrycie tej ścieżki zapewnia `particle-propagation.component.spec.ts` (Faza 12, `102`+ testów, w tym `onStartAnimation()` → precompute → render loop end-to-end z prawdziwym Web Workerem i prawdziwym polem) oraz `propagation-timeline.spec.ts` (Faza 10, obie fazy czasu + przewijanie w obie strony). Rekomendacja: doraźnie zweryfikować wizualnie przez `npm run start` przy najbliższej okazji z działającym UI.
+- [x] Weryfikacja fizyki: nowy `physics/rk4-trajectory-validation.spec.ts` — dla obu naładowanych pionów z rozpadu w prawdziwym `event_0_0.json`, RK4 (przez prawdziwe pole Czebyszewa) porównany z zapisaną w JSON `trajectory` na dopasowanej długości łuku blisko wierzchołka: kierunki zgodne z dokładnością `cos(kąt) > 0.98` (~11°), obie krzywe sięgają promienia detektora tego samego rzędu. **Ten test wykrył realny błąd znaku w `FIELD_SCALE`** (`physics/constants.ts`) — było `-0.1`, powinno być `+0.1` względem konwencji znaku ładunku użytej w naszym RK4 (`du/ds = charge·B2C/|p| · (u×B)`, standardowa siła Lorentza); `-0.1` był 1:1 portem znaku z `gpu_propagator`'s GLSL, ale ten GLSL paruje `SCALE` z **innym** (odwrotnie skonwencjonowanym) wzorem krzywizny w swoim kernelu GPU, więc znak nie przenosił się bezpośrednio na nasz RK4. Naprawiono + udokumentowano w komentarzu przy `FIELD_SCALE`. **Zweryfikowano `npm run test:ci`**: `104/104 SUCCESS` po naprawie (poprzednio błędny znak nie psuł żadnego z istniejących testów, bo Faza 4's `rk4-integrator.spec.ts` sprawdza tylko *wielkość* promienia krzywizny, nie kierunek/znak).
+- [ ] Weryfikacja Web Workera: sprawdzić w DevTools (Performance/Main thread) że podczas pre-kalkulacji główny wątek nie jest zablokowany (spinner się animuje płynnie). **Nie wykonano w tej sesji** (wymaga interaktywnej przeglądarki z DevTools — patrz punkt wyżej). Architektura (Faza 4: `new Worker(...)`, transferable `ArrayBuffer`, fallback tylko gdy `Worker` niedostępny) została zaprojektowana i przetestowana end-to-end (`rk4-propagator.service.spec.ts`) tak, by to zagwarantować, ale finalne potwierdzenie "gołym okiem" w DevTools zostaje do zrobienia przy najbliższym `ng serve`.
+- [x] Zgodnie z `.cursor/rules/architecture.mdc`: po nowych serwisach i udanej kompilacji uruchomiono w `alice-masterclass-js`: `graphify update .` → `1097 nodes, 2065 edges, 119 communities` (zaktualizowano `graphify-out/graph.json`, `graph.html`, `GRAPH_REPORT.md`).
+- [x] Zaktualizowano `docs/particle-propagation.md` (analogiczny do `docs/event-display.md`) opisujący moduł, jego serwisy fizyki, granice odpowiedzialności, "hard rules" (w tym ostrzeżenie o `FIELD_SCALE`) i listę kluczowych testów — do wykorzystania przy przyszłych zmianach.
 
 ---
 
