@@ -20,7 +20,6 @@ import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
   neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
-import { mergeStaticMeshesByMaterial } from '../../three/merge-static-meshes';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -603,11 +602,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             detectorLayerIndex: pathIndex
           };
           this.setDetectorMaterialsWithPolygonOffset(scene, defaultPartOpacity, pathIndex);
-          // Collapses thousands of repeated-node meshes (e.g. calorimeter
-          // crystals) down to ~1 draw call per material — see merge-static-meshes.ts.
-          // Must run after setDetectorMaterialsWithPolygonOffset(), which mutates
-          // the (shared) materials used as the merge grouping key.
-          loadedByPath.set(modelPath, mergeStaticMeshesByMaterial(scene));
+          // Keep the original GLB scene graph (SMOD_/DCSM_ node names, etc.).
+          // Mesh merging belongs in particle-propagation only — flattening here
+          // breaks calorimeter cylindrical coverage / energy readout bars.
+          loadedByPath.set(modelPath, scene);
           finishOne();
         },
         undefined,
