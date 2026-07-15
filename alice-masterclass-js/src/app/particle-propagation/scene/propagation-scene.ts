@@ -106,12 +106,10 @@ export class PropagationScene {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.copy(INITIAL_CAMERA_TARGET);
     this.controls.maxPolarAngle = 0.5 * Math.PI;
-    // Clamp zoom: without a minDistance the camera can dive *inside* the
-    // geometry, where near-plane clipping + full-screen overdraw tank the frame
-    // rate. Bounds sized to the ~5-unit detector (scale 1e-2 of ~500 cm).
-    // Keep the camera outside the innermost shell (VA-like orbit), not inside
-    // the L3 barrel opening where nested translucent layers fill the screen.
-    this.controls.minDistance = 1.5;
+    // Clamp zoom: without a floor the camera can sit on the target and trip
+    // near-plane clipping. Keep this low enough to enter the ITS bore
+    // (outer ~0.4 wu at scale 1e-2) while staying above NEAR_CLIPPING_PLANE.
+    this.controls.minDistance = 0.15;
     this.controls.maxDistance = 40;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
