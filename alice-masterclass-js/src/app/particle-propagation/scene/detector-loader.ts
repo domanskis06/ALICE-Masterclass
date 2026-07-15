@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DETECTOR_MODEL_BASE_PATH } from '../physics/constants';
+import { stripCadHelperCubes } from '../../shared/three/cad-helper-cubes';
 import { mergeStaticMeshesByMaterial } from '../../shared/three/merge-static-meshes';
 import {
   applyDetectorLayerMaterials,
@@ -64,6 +65,9 @@ function loadOnePart(
       path,
       (gltf: GLTF) => {
         const root = gltf.scene;
+        // Drop Blender/CAD helper boxes before material merge — otherwise they
+        // get baked into the per-material draw call (visible=false is not enough).
+        stripCadHelperCubes(root);
         const radialInflate = 1 + layerIndex * LAYER_RADIAL_INFLATE_STEP;
         root.scale.setScalar(scale * radialInflate);
         root.updateMatrixWorld(true);

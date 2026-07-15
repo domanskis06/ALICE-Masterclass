@@ -20,6 +20,7 @@ import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
   neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
+import { isCadHelperCubeName } from '../../three/cad-helper-cubes';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -175,7 +176,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   static alignDetectorPartToBeamAxis(scene: THREE.Object3D, assetPath: string): void {
     scene.traverse((o: THREE.Object3D) => {
-      if (/^Cube(\d+)?$/i.test(o.name || '')) {
+      if (isCadHelperCubeName(o.name)) {
         o.visible = false;
       }
     });
