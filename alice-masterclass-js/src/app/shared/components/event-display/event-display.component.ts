@@ -11,10 +11,14 @@ import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
-import { Event, Track, TrackType } from '../../models';
+import {
+  Event, Track, TrackType, CalorimeterDetectorId,
+  CALO_PANELS, CALO_DCAL_PANELS, caloFlatSizeFor,
+  caloFlatIndex, caloPanelsFor, packCalorimeterHits
+} from '../../models';
 import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
-  neonTrackColor
+  neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
 
 /** Detector layer toggle row (multipart GLB assembly). */
@@ -31,6 +35,18 @@ export interface DetectorPaletteItem {
   labelKey: string;
   labelParams?: Record<string, string>;
   placed: boolean;
+}
+
+/** Progressive detector assembly unlock flags (which multipart pieces are on the scene). */
+export interface AssemblyUnlockState {
+  hasIts: boolean;
+  hasTpc: boolean;
+  hasTrd: boolean;
+  hasTof: boolean;
+  hasEmcal: boolean;
+  hasDcal: boolean;
+  hasPhos: boolean;
+  hasL3: boolean;
 }
 
 @Component({
@@ -58,6 +74,61 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly farClippingPlane: number = 1500;
   static readonly objectScale: number = 1.0e-2;
   static readonly detectorModelScale: number = 1.0e-2;
+  /**
+   * ITS/TPC/TRD GLBs place the beam axis at local y=+30 (cm). After
+   * `detectorModelScale` that is +0.3 in scene units. L3 / TOF / calorimeters
+   * are already around the origin — only cancel the barrel offset so tracks
+   * at (0,0,0) sit on the detector axis.
+   */
+  static readonly DETECTOR_BEAM_AXIS_Y_OFFSET = -30 * EventDisplayComponent.detectorModelScale;
+
+  /**
+   * Max transverse radius (trajectory data units, ~cm) for ITS-only track stubs.
+   * Sparse event trajectories typically have ~1 point inside ITS; we interpolate
+   * the boundary so stubs remain readable (~10 cm).
+   */
+  static readonly ITS_STUB_RADIUS = 10;
+
+  /** Keeps trajectory points with R = sqrt(x²+y²) < rMax; interpolates the exit point. */
+  static clipTrajectoryToRadius(trajectory: number[][], rMax: number): number[][] {
+    if (!trajectory?.length || !(rMax > 0)) {
+      return [];
+    }
+    const rOf = (p: number[]) => Math.hypot(p[0], p[1]);
+    const out: number[][] = [];
+    for (let i = 0; i < trajectory.length; i++) {
+      const p = trajectory[i];
+      const r = rOf(p);
+      if (r < rMax) {
+        out.push([p[0], p[1], p[2]]);
+        continue;
+      }
+      if (i === 0) {
+        return [];
+      }
+      const prev = trajectory[i - 1];
+      const rPrev = rOf(prev);
+      if (rPrev >= rMax) {
+        break;
+      }
+      const t = r === rPrev ? 0 : (rMax - rPrev) / (r - rPrev);
+      out.push([
+        prev[0] + t * (p[0] - prev[0]),
+        prev[1] + t * (p[1] - prev[1]),
+        prev[2] + t * (p[2] - prev[2]),
+      ]);
+      break;
+    }
+    return out;
+  }
+
+  static isItsAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])its\.glb($|\?)/i.test(assetPath);
+  }
+
+  static isTpcAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])tpc\.glb($|\?)/i.test(assetPath);
+  }
 
   static detectorPartPresentation(assetPath: string): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
     const baseName = assetPath.replace(/^.*[/\\]/, '');
@@ -68,7 +139,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       'trd.glb': 'EVENT_DISPLAY.DETECTOR_TRD',
       'tof.glb': 'EVENT_DISPLAY.DETECTOR_TOF',
       'l3.glb': 'EVENT_DISPLAY.DETECTOR_L3',
-      'emcal_dcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
+      'emcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
       'dcal.glb': 'EVENT_DISPLAY.DETECTOR_DCAL',
       'phos.glb': 'EVENT_DISPLAY.DETECTOR_PHOS',
     };
@@ -79,6 +150,38 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       labelKey: 'EVENT_DISPLAY.DETECTOR_LAYER_FALLBACK',
       labelParams: { name: baseName.replace(/\.(glb|gltf)$/i, '').replace(/_/g, ' ') }
     };
+  }
+
+  static isCalorimeterAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])(emcal|dcal)\.glb($|\?)/i.test(assetPath);
+  }
+
+  static calorimeterDetectorId(assetPath: string): CalorimeterDetectorId | null {
+    const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
+    if (file.startsWith('emcal')) return 'emcal';
+    if (file.startsWith('dcal')) return 'dcal';
+    return null;
+  }
+
+  /** Barrel trackers (ITS/TPC/TRD) were exported with beam axis at y=+30. */
+  static needsBeamAxisYCorrection(assetPath: string): boolean {
+    return /(^|[/\\])(its|tpc|trd)\.glb($|\?)/i.test(assetPath);
+  }
+
+  /**
+   * Shift barrel parts onto the world origin and hide leftover CAD helper cubes.
+   * Calorimeter GLBs stay put — they are already coaxial with L3; readout bars
+   * are rebuilt from those meshes in world space.
+   */
+  static alignDetectorPartToBeamAxis(scene: THREE.Object3D, assetPath: string): void {
+    scene.traverse((o: THREE.Object3D) => {
+      if (/^Cube(\d+)?$/i.test(o.name || '')) {
+        o.visible = false;
+      }
+    });
+    if (EventDisplayComponent.needsBeamAxisYCorrection(assetPath)) {
+      scene.position.y = EventDisplayComponent.DETECTOR_BEAM_AXIS_Y_OFFSET;
+    }
   }
 
   static readonly lineSegments: number = 50;
@@ -145,11 +248,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly highlightColor: THREE.Color = new THREE.Color(highlightColor);
 
   static readonly neonTrackColor: THREE.Color = new THREE.Color(neonTrackColor);
+  static readonly caloBarColorLight: THREE.Color = new THREE.Color(caloBarColorLight);
+  static readonly caloBarColorDark: THREE.Color = new THREE.Color(caloBarColorDark);
 
   private static readonly BLOOM_STRENGTH = 0.22;
   private static readonly BLOOM_RADIUS = 0.28;
   private static readonly BLOOM_THRESHOLD = 0.72;
   private static readonly DETECTOR_NEON_EMISSIVE_INTENSITY = 0.12;
+  private static readonly CALO_BAR_MAX_COUNT = 3200;
+  private static readonly CALO_BAR_PITCH_FILL = 0.96;
+  private static readonly CALO_BAR_MIN_HEIGHT = 0.01;
+  private static readonly CALO_BAR_MAX_HEIGHT = 0.35;
+  private static readonly CALO_BAR_DARK_EMISSIVE = 0.9;
 
   private trackMaterial: THREE.Material = null;
   private postiveTrackMaterial: THREE.Material = null;
@@ -159,6 +269,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private cascadeHoverTrackMaterial: THREE.Material = null;
   private cascadeProtonMaterial: THREE.Material = null;
   private pointsMaterial: THREE.Material = null;
+  private caloBarMaterial: THREE.MeshStandardMaterial = null;
+  private caloBarGeometry: THREE.BoxGeometry = null;
 
   private _backgroundColor: number = 0xFFFFFF;
 
@@ -304,7 +416,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private tracks: THREE.Object3D = new THREE.Object3D();
   private decays: THREE.Object3D = new THREE.Object3D();
   private clusters: THREE.Object3D = new THREE.Object3D();
+  /** Radial energy-readout bars on EMCal / DCal surfaces. */
+  private calorimeterReadouts: THREE.Group = new THREE.Group();
   private cascadeVertexMarkers: THREE.Object3D = new THREE.Object3D();
+  /** Primary vertex marker shown while ITS is unlocked but TPC is not yet placed. */
+  private primaryVertexMarkers: THREE.Object3D = new THREE.Object3D();
   private cascadeConnectorLine: Line2 | null = null;
   private cascadeXiLine: Line2 | null = null;
   private lambdaFlightLine2Track: Line2 | null = null;
@@ -367,6 +483,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.detectorPreloadedRoots.clear();
     this.detectorPaletteItems = [];
     this.detectorMultipartModelPathsOrder = [];
+    this.clearCalorimeterReadouts();
 
     const modelPaths = Array.isArray(detectorModel) ? detectorModel : [detectorModel];
     const multiPart = modelPaths.length > 1;
@@ -414,6 +531,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.cdr.markForCheck();
       this.resize(true);
       this.staggeredRevealDetectorParts(modelPaths);
+      this.rebuildCalorimeterReadouts();
     };
 
     const finishMultipartPreload = () => {
@@ -463,7 +581,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const detectorOpacity =
         EventDisplayComponent.DETECTOR_INNER_OPACITY * (1 - t) +
         EventDisplayComponent.DETECTOR_OUTER_OPACITY * t;
-      const isCalorimeterLayer = /(^|[/\\])(emcal_dcal|dcal|phos)\.glb($|\?)/i.test(modelPath);
+      const isCalorimeterLayer = /(^|[/\\])(emcal|dcal|phos)\.glb($|\?)/i.test(modelPath);
       const defaultPartOpacity = isCalorimeterLayer
         ? Math.max(detectorOpacity, 0.45)
         : detectorOpacity;
@@ -476,6 +594,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           const scene = gltf.scene;
           const radialInflate = 1 + pathIndex * EventDisplayComponent.DETECTOR_LAYER_RADIAL_INFLATE_STEP;
           scene.scale.setScalar(EventDisplayComponent.detectorModelScale * radialInflate);
+          EventDisplayComponent.alignDetectorPartToBeamAxis(scene, modelPath);
           scene.updateMatrixWorld(true);
           scene.userData = {
             ...(scene.userData || {}),
@@ -568,11 +687,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.detectorAssemblyPiecePlaced.emit(item.assetPath);
 
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
+    this.refreshPhysicsForAssemblyUnlock();
 
     const allPlaced = this.detectorPaletteItems.every((row) => row.placed);
-
     if (allPlaced) {
       this.completeMultipartDetectorAssembly();
+    } else if (EventDisplayComponent.isCalorimeterAssetPath(item.assetPath)) {
+      this.rebuildCalorimeterReadouts();
     }
     return true;
   }
@@ -607,6 +728,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.sidebarOpened = false;
     this.applyUiDetectorOpacities();
+    this.rebuildCalorimeterReadouts();
+    this.refreshPhysicsForAssemblyUnlock();
     this.cdr.markForCheck();
     this.resize(true);
   }
@@ -617,6 +740,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (root) {
       root.visible = visible;
     }
+    this.syncCalorimeterReadoutVisibility();
   }
 
   setDetectorPartOpacity(part: DetectorPartToggleModel, value: number | string): void {
@@ -718,6 +842,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (this.detector) {
       this.applyDarkModeToObject(this.detector);
     }
+    this.applyCalorimeterBarTheme();
   }
 
   /** Boosts (or resets) saturation + self-emissive glow on every mesh material under `object`. */
@@ -751,6 +876,557 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         (m as any).needsUpdate = true;
       }
     });
+  }
+
+  private applyCalorimeterBarTheme(): void {
+    if (!this.caloBarMaterial) return;
+    if (this._darkMode) {
+      this.caloBarMaterial.color.copy(EventDisplayComponent.caloBarColorDark);
+      this.caloBarMaterial.emissive.copy(EventDisplayComponent.caloBarColorDark);
+      this.caloBarMaterial.emissiveIntensity = EventDisplayComponent.CALO_BAR_DARK_EMISSIVE;
+      this.caloBarMaterial.transparent = true;
+      this.caloBarMaterial.opacity = 0.92;
+      this.caloBarMaterial.roughness = 0.35;
+    } else {
+      this.caloBarMaterial.color.copy(EventDisplayComponent.caloBarColorLight);
+      this.caloBarMaterial.emissive.setRGB(0, 0, 0);
+      this.caloBarMaterial.emissiveIntensity = 0;
+      this.caloBarMaterial.transparent = false;
+      this.caloBarMaterial.opacity = 1;
+      this.caloBarMaterial.roughness = 0.55;
+    }
+    this.caloBarMaterial.needsUpdate = true;
+  }
+
+  private clearCalorimeterReadouts(): void {
+    while (this.calorimeterReadouts.children.length > 0) {
+      const child = this.calorimeterReadouts.children[0];
+      this.calorimeterReadouts.remove(child);
+      // Geometry and material are shared on the component — do not dispose them here.
+    }
+  }
+
+  private syncCalorimeterReadoutVisibility(): void {
+    if (!this.detector.visible) {
+      this.calorimeterReadouts.visible = false;
+      return;
+    }
+    this.calorimeterReadouts.visible = true;
+    for (const child of this.calorimeterReadouts.children) {
+      const assetPath = (child.userData && child.userData.detectorAssetPath) as string | undefined;
+      if (!assetPath) continue;
+      const root = this.detectorPartRootByPath.get(assetPath);
+      const ui = this.detectorPartsForUi.find((p) => p.assetPath === assetPath);
+      child.visible = !!(root && root.visible && (ui ? ui.visible : true));
+    }
+  }
+
+  private rebuildCalorimeterReadouts(): void {
+    this.clearCalorimeterReadouts();
+    if (!this.caloBarGeometry || !this.caloBarMaterial) return;
+
+    for (const [assetPath, root] of this.detectorPartRootByPath.entries()) {
+      const detector = EventDisplayComponent.calorimeterDetectorId(assetPath);
+      if (!detector) continue;
+
+      const cells = detector === 'emcal'
+        ? this.buildCalorimeterCellLayoutOnEmcal(root)
+        : this.buildCalorimeterCellLayoutOnDcal(root);
+      if (cells.length === 0) continue;
+
+      const energies = this.resolveCalorimeterEnergies(detector, cells);
+      const mesh = this.createCalorimeterBarInstances(cells, energies, detector);
+      mesh.userData = { ...(mesh.userData || {}), detectorAssetPath: assetPath, calorimeterDetector: detector };
+      mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 200;
+      this.calorimeterReadouts.add(mesh);
+    }
+
+    this.syncCalorimeterReadoutVisibility();
+  }
+
+  /**
+   * Prefers packed collision data (`caloEmcal` / `caloDcal`), then sparse `caloHits`,
+   * then a procedural preview so the grid is visible before real activations land.
+   */
+  private resolveCalorimeterEnergies(
+    detector: CalorimeterDetectorId,
+    cells: Array<{ position: THREE.Vector3; panel: number; phiIndex: number; zIndex: number }>
+  ): Float32Array {
+    const cellCount = cells.length;
+    const flatSize = caloFlatSizeFor(detector);
+    const ev = this._event;
+    const dense = detector === 'emcal' ? ev?.caloEmcal : ev?.caloDcal;
+    if (dense && dense.length >= Math.min(cellCount, flatSize)) {
+      const out = new Float32Array(cellCount);
+      for (let i = 0; i < cellCount; i++) {
+        out[i] = dense[i] ?? 0;
+      }
+      return out;
+    }
+
+    if (ev?.caloHits?.length) {
+      const packed = packCalorimeterHits(ev.caloHits, detector);
+      const out = new Float32Array(cellCount);
+      for (let i = 0; i < cellCount; i++) {
+        out[i] = packed[i] ?? 0;
+      }
+      return out;
+    }
+
+    return this.buildProceduralCalorimeterEnergies(cells);
+  }
+
+  private buildProceduralCalorimeterEnergies(
+    cells: Array<{ position: THREE.Vector3; panel: number; phiIndex: number; zIndex: number }>
+  ): Float32Array {
+    const seed = this.computeCalorimeterSeed();
+    const hitPhis = this.collectTrackCalorimeterHitPhis();
+    const out = new Float32Array(cells.length);
+    for (let i = 0; i < cells.length; i++) {
+      let energy = EventDisplayComponent.hash01(i, seed);
+      energy = Math.pow(energy, 2.15);
+      if (hitPhis.length > 0) {
+        const phi = Math.atan2(cells[i].position.y, cells[i].position.x);
+        let best = Math.PI;
+        for (const hitPhi of hitPhis) {
+          let d = Math.abs(phi - hitPhi);
+          if (d > Math.PI) d = 2 * Math.PI - d;
+          if (d < best) best = d;
+        }
+        if (best < 0.12) {
+          energy = Math.min(1, energy + (0.12 - best) / 0.12 * 0.85);
+        } else if (best < 0.28) {
+          energy = Math.min(1, energy + (0.28 - best) / 0.28 * 0.35);
+        }
+      }
+      if (energy < 0.04 && EventDisplayComponent.hash01(i, seed + 91) > 0.55) {
+        energy = 0;
+      }
+      out[i] = energy;
+    }
+    return out;
+  }
+
+  private computeCalorimeterSeed(): number {
+    const ev = this._event;
+    if (!ev) return 1;
+    let seed = (ev.tracks?.length || 0) * 131 + (ev.clusters?.length || 0) * 17;
+    for (let i = 0; i < Math.min(8, ev.tracks?.length || 0); i++) {
+      const t = ev.tracks[i];
+      seed = (seed + Math.abs(t.px || 0) * 1009 + Math.abs(t.py || 0) * 917 + Math.abs(t.E || 0) * 503) | 0;
+    }
+    return seed || 1;
+  }
+
+  private collectTrackCalorimeterHitPhis(): number[] {
+    const phis: number[] = [];
+    const ev = this._event;
+    if (!ev?.tracks?.length) return phis;
+    for (const track of ev.tracks) {
+      const traj = track.trajectory;
+      if (traj?.length) {
+        const tip = traj[traj.length - 1];
+        phis.push(Math.atan2(tip[1], tip[0]));
+      } else {
+        phis.push(Math.atan2(track.py, track.px));
+      }
+    }
+    for (const decay of ev.decays || []) {
+      for (const track of decay) {
+        const traj = track.trajectory;
+        if (traj?.length) {
+          const tip = traj[traj.length - 1];
+          phis.push(Math.atan2(tip[1], tip[0]));
+        }
+      }
+    }
+    return phis;
+  }
+
+  /**
+   * Places the EMCal readout grid (5×12×48 + 1×4×48) on the loaded detector face.
+   * Flat plates fold about Z; seams between plates run parallel to Z.
+   */
+  private buildCalorimeterCellLayoutOnEmcal(root: THREE.Object3D): Array<{
+    position: THREE.Vector3;
+    panel: number;
+    phiIndex: number;
+    zIndex: number;
+    pitchPhi: number;
+    pitchZ: number;
+    outwardX: number;
+    outwardY: number;
+    tangentX: number;
+    tangentY: number;
+  }> {
+    const coverage = this.measureCalorimeterCylindricalCoverage(root);
+    if (!coverage) return [];
+
+    const { radius, zMin, zMax, phiStart, phiEnd } = coverage;
+    // Final fit onto the live EMCal mesh (settled values).
+    const surfaceR = radius * 0.63;
+    const phiMid = (phiStart + phiEnd) * 0.5;
+    const zMid = (zMin + zMax) * 0.5;
+    const zHalf = (zMax - zMin) * 0.5 * 0.7;
+    const zLo = zMid - zHalf;
+    const zHi = zMid + zHalf;
+
+    const cellsZ = CALO_PANELS[0].cellsZ;
+    const nPanels = CALO_PANELS.length;
+    const foldRad = (20 * Math.PI) / 180;
+    const cellAngle = foldRad / CALO_PANELS[0].cellsPhi;
+    const shiftRad = 3 * cellAngle;
+    const pitchPhi = ((surfaceR * foldRad) / CALO_PANELS[0].cellsPhi) * 0.88;
+    const pitchZ = (zHi - zLo) / cellsZ;
+    const seam = 0.92 * pitchPhi;
+
+    let angle = phiMid - foldRad * (nPanels - 1) * 0.5 + shiftRad;
+
+    const w0 = CALO_PANELS[0].cellsPhi * pitchPhi;
+    let hingeX = surfaceR * Math.cos(angle) - (-Math.sin(angle)) * (w0 * 0.5);
+    let hingeY = surfaceR * Math.sin(angle) - Math.cos(angle) * (w0 * 0.5);
+
+    const cells: Array<{
+      position: THREE.Vector3;
+      panel: number;
+      phiIndex: number;
+      zIndex: number;
+      pitchPhi: number;
+      pitchZ: number;
+      outwardX: number;
+      outwardY: number;
+      tangentX: number;
+      tangentY: number;
+    }> = [];
+
+    for (let p = 0; p < nPanels; p++) {
+      const panel = CALO_PANELS[p];
+      const panelWidth = panel.cellsPhi * pitchPhi;
+      const outwardX = Math.cos(angle);
+      const outwardY = Math.sin(angle);
+      const tangentX = -Math.sin(angle);
+      const tangentY = Math.cos(angle);
+
+      for (let i = 0; i < panel.cellsPhi; i++) {
+        const along = (i + 0.5) * pitchPhi;
+        const x = hingeX + tangentX * along;
+        const y = hingeY + tangentY * along;
+        for (let j = 0; j < panel.cellsZ; j++) {
+          const z = zLo + (j + 0.5) * pitchZ;
+          cells.push({
+            position: new THREE.Vector3(x, y, z),
+            panel: p,
+            phiIndex: i,
+            zIndex: j,
+            pitchPhi,
+            pitchZ,
+            outwardX,
+            outwardY,
+            tangentX,
+            tangentY
+          });
+        }
+      }
+
+      hingeX += tangentX * (panelWidth + seam);
+      hingeY += tangentY * (panelWidth + seam);
+      angle += foldRad;
+    }
+    return cells;
+  }
+
+  /**
+   * Places the DCal readout as an inverted U:
+   * two Z-bands of 3×(12×16) folded in φ, bridged at the outer φ end by a 4×48 strip.
+   */
+  private buildCalorimeterCellLayoutOnDcal(root: THREE.Object3D): Array<{
+    position: THREE.Vector3;
+    panel: number;
+    phiIndex: number;
+    zIndex: number;
+    pitchPhi: number;
+    pitchZ: number;
+    outwardX: number;
+    outwardY: number;
+    tangentX: number;
+    tangentY: number;
+  }> {
+    const coverage = this.measureCalorimeterCylindricalCoverage(root, 'dcal');
+    if (!coverage) return [];
+
+    const { radius, zMin, zMax, phiStart, phiEnd } = coverage;
+    // Final fit onto the live DCal mesh (settled values).
+    const surfaceR = radius * 0.329;
+    const phiMid = (phiStart + phiEnd) * 0.5;
+    const zMid = (zMin + zMax) * 0.5;
+    const zHalf = (zMax - zMin) * 0.5 * 0.95;
+    const zLo = zMid - zHalf;
+    const zHi = zMid + zHalf;
+    const zSpan = zHi - zLo;
+    const gapZ = zSpan * 0.35;
+    const bandSpan = Math.max(1e-4, (zSpan - gapZ) * 0.5);
+    const band0Lo = zLo;
+    const band0Hi = zLo + bandSpan;
+    const band1Lo = zHi - bandSpan;
+    const band1Hi = zHi;
+
+    const panels = CALO_DCAL_PANELS;
+    const bandCount = 3;
+    const mainCellsPhi = panels[0].cellsPhi;
+    const foldRad = (20 * Math.PI) / 180;
+    const cellAngle = foldRad / mainCellsPhi;
+    const shiftRad = 0.75 * cellAngle;
+    const pitchPhi = ((surfaceR * foldRad) / mainCellsPhi) * 0.987;
+    const seam = 0.9 * pitchPhi;
+
+    // 3 band plates + 1 connector in φ.
+    const nPhiSlots = bandCount + 1;
+    let angle = phiMid - foldRad * (nPhiSlots - 1) * 0.5 + shiftRad;
+    const w0 = mainCellsPhi * pitchPhi;
+    let hingeX = surfaceR * Math.cos(angle) - (-Math.sin(angle)) * (w0 * 0.5);
+    let hingeY = surfaceR * Math.sin(angle) - Math.cos(angle) * (w0 * 0.5);
+
+    type Cell = {
+      position: THREE.Vector3;
+      panel: number;
+      phiIndex: number;
+      zIndex: number;
+      pitchPhi: number;
+      pitchZ: number;
+      outwardX: number;
+      outwardY: number;
+      tangentX: number;
+      tangentY: number;
+    };
+    const cells: Cell[] = [];
+
+    const pushPanel = (
+      panelIndex: number,
+      cellsPhi: number,
+      cellsZ: number,
+      zPanelLo: number,
+      zPanelHi: number,
+      ang: number,
+      hx: number,
+      hy: number
+    ) => {
+      const pitchZ = (zPanelHi - zPanelLo) / cellsZ;
+      const outwardX = Math.cos(ang);
+      const outwardY = Math.sin(ang);
+      const tangentX = -Math.sin(ang);
+      const tangentY = Math.cos(ang);
+      for (let i = 0; i < cellsPhi; i++) {
+        const along = (i + 0.5) * pitchPhi;
+        const x = hx + tangentX * along;
+        const y = hy + tangentY * along;
+        for (let j = 0; j < cellsZ; j++) {
+          const z = zPanelLo + (j + 0.5) * pitchZ;
+          cells.push({
+            position: new THREE.Vector3(x, y, z),
+            panel: panelIndex,
+            phiIndex: i,
+            zIndex: j,
+            pitchPhi,
+            pitchZ,
+            outwardX,
+            outwardY,
+            tangentX,
+            tangentY
+          });
+        }
+      }
+    };
+
+    // Two Z-bands share the same 3 φ plates (inverted-U arms).
+    for (let b = 0; b < bandCount; b++) {
+      const panelWidth = mainCellsPhi * pitchPhi;
+      const tX = -Math.sin(angle);
+      const tY = Math.cos(angle);
+      pushPanel(b, mainCellsPhi, 16, band0Lo, band0Hi, angle, hingeX, hingeY);
+      pushPanel(b + bandCount, mainCellsPhi, 16, band1Lo, band1Hi, angle, hingeX, hingeY);
+
+      hingeX += tX * (panelWidth + seam);
+      hingeY += tY * (panelWidth + seam);
+      angle += foldRad;
+    }
+
+    // Outer φ connector: same seam as between band plates (no extra centering gap).
+    const connector = panels[6];
+    pushPanel(6, connector.cellsPhi, connector.cellsZ, zLo, zHi, angle, hingeX, hingeY);
+
+    return cells;
+  }
+
+  /** Measures EMCal/DCal barrel face in scene space: radius, z span, contiguous φ arc. */
+  private measureCalorimeterCylindricalCoverage(
+    root: THREE.Object3D,
+    detector: CalorimeterDetectorId = 'emcal'
+  ): {
+    radius: number;
+    zMin: number;
+    zMax: number;
+    phiStart: number;
+    phiEnd: number;
+  } | null {
+    root.updateMatrixWorld(true);
+    const phis: number[] = [];
+    const zs: number[] = [];
+    const radii: number[] = [];
+    const worldPos = new THREE.Vector3();
+
+    const isTower = (o: THREE.Object3D): boolean => {
+      let p: THREE.Object3D | null = o;
+      while (p) {
+        const n = (p.name || '').toUpperCase();
+        if (detector === 'dcal') {
+          if (n.startsWith('DCSM_') || n.startsWith('DCEXT_')) return true;
+        } else if (n.startsWith('SMOD_') || n.startsWith('SM3RD_')) {
+          return true;
+        }
+        p = p.parent;
+      }
+      return false;
+    };
+
+    let towerMeshes = 0;
+    root.traverse((o: THREE.Object3D) => {
+      if ((o as THREE.Mesh).isMesh && isTower(o)) towerMeshes += 1;
+    });
+    const preferTower = towerMeshes >= 16;
+
+    root.traverse((o: THREE.Object3D) => {
+      if (!(o as THREE.Mesh).isMesh) return;
+      if (preferTower && !isTower(o)) return;
+      o.getWorldPosition(worldPos);
+      const r = Math.hypot(worldPos.x, worldPos.y);
+      if (r < 0.4) return;
+      radii.push(r);
+      phis.push(Math.atan2(worldPos.y, worldPos.x));
+      zs.push(worldPos.z);
+    });
+    if (radii.length < 16) return null;
+
+
+    const sortedR = radii.slice().sort((a, b) => a - b);
+    const medianR = sortedR[Math.floor(sortedR.length / 2)];
+    const facePhis: number[] = [];
+    const faceZs: number[] = [];
+    const faceRs: number[] = [];
+    for (let i = 0; i < radii.length; i++) {
+      if (radii[i] < medianR * 0.88 || radii[i] > medianR * 1.08) continue;
+      facePhis.push(phis[i]);
+      faceZs.push(zs[i]);
+      faceRs.push(radii[i]);
+    }
+    if (facePhis.length < 16) return null;
+
+    const sortedPhi = facePhis.slice().sort((a, b) => a - b);
+    let largestGap = -1;
+    let gapAfter = -1;
+    for (let i = 0; i < sortedPhi.length; i++) {
+      const gapVal = i < sortedPhi.length - 1
+        ? sortedPhi[i + 1] - sortedPhi[i]
+        : (sortedPhi[0] + Math.PI * 2) - sortedPhi[sortedPhi.length - 1];
+      if (gapVal > largestGap) {
+        largestGap = gapVal;
+        gapAfter = i;
+      }
+    }
+
+    const startIdx = (gapAfter + 1) % sortedPhi.length;
+    const arc: number[] = [];
+    for (let k = 0; k < sortedPhi.length; k++) {
+      const idx = (startIdx + k) % sortedPhi.length;
+      let phi = sortedPhi[idx];
+      if (arc.length > 0) {
+        while (phi < arc[arc.length - 1]) phi += Math.PI * 2;
+      }
+      arc.push(phi);
+    }
+
+    const zSorted = faceZs.slice().sort((a, b) => a - b);
+    const trim = Math.max(1, Math.floor(zSorted.length * 0.02));
+    const radius = faceRs.reduce((s, v) => s + v, 0) / faceRs.length;
+
+    return {
+      radius,
+      zMin: zSorted[trim],
+      zMax: zSorted[zSorted.length - 1 - trim],
+      phiStart: arc[0],
+      phiEnd: arc[arc.length - 1]
+    };
+  }
+
+  private createCalorimeterBarInstances(
+    cells: Array<{
+      position: THREE.Vector3;
+      panel: number;
+      phiIndex: number;
+      zIndex: number;
+      pitchPhi: number;
+      pitchZ: number;
+      outwardX: number;
+      outwardY: number;
+      tangentX: number;
+      tangentY: number;
+    }>,
+    energies: Float32Array,
+    detector: CalorimeterDetectorId = 'emcal'
+  ): THREE.InstancedMesh {
+    const mesh = new THREE.InstancedMesh(this.caloBarGeometry, this.caloBarMaterial, cells.length);
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const outward = new THREE.Vector3();
+    const tangential = new THREE.Vector3();
+    const beam = new THREE.Vector3(0, 0, 1);
+    const colX = new THREE.Vector3();
+    const colY = new THREE.Vector3();
+    const colZ = new THREE.Vector3();
+    const fill = EventDisplayComponent.CALO_BAR_PITCH_FILL;
+    const minH = EventDisplayComponent.CALO_BAR_MIN_HEIGHT;
+    const maxH = EventDisplayComponent.CALO_BAR_MAX_HEIGHT;
+    const panels = caloPanelsFor(detector);
+
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      const base = cell.position;
+      // Same normal for every cell on a flat rectangular plate.
+      outward.set(cell.outwardX, cell.outwardY, 0).normalize();
+      tangential.set(cell.tangentX, cell.tangentY, 0).normalize();
+
+      const energy = Math.max(
+        0,
+        energies[caloFlatIndex(cell.panel, cell.phiIndex, cell.zIndex, panels)] ?? energies[i] ?? 0
+      );
+      const height = energy <= 0 ? 0 : minH + Math.min(1, energy) * (maxH - minH);
+      if (height <= 0) {
+        matrix.makeScale(0, 0, 0);
+        mesh.setMatrixAt(i, matrix);
+        continue;
+      }
+
+      const sizePhi = Math.max(1e-4, cell.pitchPhi * fill);
+      const sizeZ = Math.max(1e-4, cell.pitchZ * fill);
+
+      position.copy(base).addScaledVector(outward, height * 0.5);
+      // Basis: X = flat panel width, Y = panel normal (bar height), Z = beam.
+      matrix.makeBasis(
+        colX.copy(tangential).multiplyScalar(sizePhi),
+        colY.copy(outward).multiplyScalar(height),
+        colZ.copy(beam).multiplyScalar(sizeZ)
+      );
+      matrix.setPosition(position);
+      mesh.setMatrixAt(i, matrix);
+    }
+
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.frustumCulled = false;
+    return mesh;
+  }
+
+  private static hash01(i: number, salt: number): number {
+    const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453123;
+    return x - Math.floor(x);
   }
 
   private zeroDetectorSceneOpacity(object: THREE.Object3D): void {
@@ -830,6 +1506,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get detectorShown(): boolean { return this.detector.visible; }
   set detectorShown(detectorShown: boolean) {
     this.detector.visible = detectorShown;
+    this.calorimeterReadouts.visible = detectorShown;
+    if (detectorShown) {
+      this.syncCalorimeterReadoutVisibility();
+    }
   }
 
   private desiredTracksShown = true;
@@ -944,13 +1624,194 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.tracks.visible = false;
       this.decays.visible = false;
       this.clusters.visible = false;
+      this.calorimeterReadouts.visible = false;
       this.cascadeVertexMarkers.visible = false;
+      this.primaryVertexMarkers.visible = false;
       return;
     }
     this.tracks.visible = this.desiredTracksShown;
     this.decays.visible = this.desiredDecaysShown;
     this.clusters.visible = this.desiredClustersShown;
     this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
+    this.primaryVertexMarkers.visible = this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0;
+    this.syncCalorimeterReadoutVisibility();
+  }
+
+  /** True while multipart drag-assembly is still in progress (progressive track reveal applies). */
+  private shouldUseProgressiveTrackReveal(): boolean {
+    return this.detectorMultipartAssemblyMode && !this._detectorInteractiveAssemblyDone;
+  }
+
+  private getAssemblyUnlockState(): AssemblyUnlockState {
+    const paths = [...this.detectorPartRootByPath.keys()];
+    const hasFile = (file: string) =>
+      paths.some((p) => new RegExp(`(^|[/\\\\])${file}\\.glb($|\\?)`, 'i').test(p));
+    return {
+      hasIts: hasFile('its'),
+      hasTpc: hasFile('tpc'),
+      hasTrd: hasFile('trd'),
+      hasTof: hasFile('tof'),
+      hasEmcal: hasFile('emcal'),
+      hasDcal: hasFile('dcal'),
+      hasPhos: hasFile('phos'),
+      hasL3: hasFile('l3'),
+    };
+  }
+
+  /** Rebuild tracks/markers when the set of snapped detector parts changes. */
+  private refreshPhysicsForAssemblyUnlock(): void {
+    if (!this._event) {
+      return;
+    }
+    const deferTrackDraw = this.isCollisionIntroBlockingPhysics();
+    this.trackDrawAnimations = [];
+    if (deferTrackDraw) {
+      this.pendingTrackDrawLines = [];
+    } else {
+      this.trackDrawAnimationStartMs = performance.now();
+    }
+    this.rebuildTracksFromEvent(deferTrackDraw);
+    this.applyDesiredPhysicsVisibility();
+    this.cdr.markForCheck();
+  }
+
+  private clearPrimaryVertexMarkers(): void {
+    while (this.primaryVertexMarkers.children.length > 0) {
+      const child = this.primaryVertexMarkers.children[0];
+      this.primaryVertexMarkers.remove(child);
+      if ((child as THREE.Mesh).geometry) {
+        (child as THREE.Mesh).geometry.dispose();
+      }
+      const mat = (child as THREE.Mesh).material;
+      if (mat) {
+        if (Array.isArray(mat)) {
+          mat.forEach((m) => m.dispose());
+        } else {
+          mat.dispose();
+        }
+      }
+    }
+  }
+
+  private estimatePrimaryVertexPosition(tracks: Track[]): number[] {
+    let sx = 0;
+    let sy = 0;
+    let sz = 0;
+    let n = 0;
+    for (const track of tracks || []) {
+      const traj = track.trajectory;
+      if (!traj?.length) {
+        continue;
+      }
+      const p0 = traj[0];
+      const r = Math.hypot(p0[0], p0[1]);
+      if (r > EventDisplayComponent.ITS_STUB_RADIUS) {
+        continue;
+      }
+      sx += p0[0];
+      sy += p0[1];
+      sz += p0[2];
+      n++;
+    }
+    if (n === 0) {
+      return [0, 0, 0];
+    }
+    return [sx / n, sy / n, sz / n];
+  }
+
+  private trajectoryForAssemblyMode(trajectory: number[][], stubOnly: boolean): number[][] | null {
+    if (!trajectory?.length) {
+      return null;
+    }
+    const points = stubOnly
+      ? EventDisplayComponent.clipTrajectoryToRadius(trajectory, EventDisplayComponent.ITS_STUB_RADIUS)
+      : trajectory;
+    return points.length >= 2 ? points : null;
+  }
+
+  /**
+   * Builds background + decay track meshes (and vertex markers) according to
+   * assembly unlock: ITS-only → stubs + primary vertex; TPC → full trajectories.
+   */
+  private rebuildTracksFromEvent(deferTrackDrawForIntro: boolean): void {
+    this.tracks.clear();
+    this.decays.clear();
+    this.cascadeVertexMarkers.clear();
+    this.clearPrimaryVertexMarkers();
+
+    if (!this._event) {
+      return;
+    }
+
+    const progressive = this.shouldUseProgressiveTrackReveal();
+    const unlock = this.getAssemblyUnlockState();
+    const showFull = !progressive || unlock.hasTpc;
+    const showStubs = progressive && unlock.hasIts && !unlock.hasTpc;
+
+    if (!showFull && !showStubs) {
+      return;
+    }
+
+    const stubOnly = showStubs;
+
+    if (showFull) {
+      const cascadeVertices = this.getCascadeVertices(this._event);
+      for (const v of cascadeVertices) {
+        this.cascadeVertexMarkers.add(this.createVertexMarker(v.pos, v.label));
+      }
+      this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
+    }
+
+    if (showStubs) {
+      const pv = this.estimatePrimaryVertexPosition(this._event.tracks);
+      this.primaryVertexMarkers.add(this.createVertexMarker(pv, 'Primary Vertex'));
+    }
+
+    for (const track of this._event.tracks) {
+      const traj = this.trajectoryForAssemblyMode(track.trajectory, stubOnly);
+      if (!traj) {
+        continue;
+      }
+      const line = this.createLine(traj, this.trackMaterial);
+      this.tracks.add(line);
+      if (deferTrackDrawForIntro) {
+        this.pendingTrackDrawLines.push(line);
+      } else {
+        this.queueTrackDrawAnimation(line);
+      }
+    }
+
+    for (const particleList of this._event.decays) {
+      const decayObject = new THREE.Object3D();
+      for (const track of particleList) {
+        const traj = this.trajectoryForAssemblyMode(track.trajectory, stubOnly);
+        if (!traj) {
+          continue;
+        }
+        let material: THREE.Material;
+        if (track.type === TrackType.CASCADE_BACHELOR) {
+          material = this.bachelorTrackMaterial;
+        } else if (track.sign < 0) {
+          material = this.negativeTrackMaterial;
+        } else if (track.sign > 0) {
+          material = this.postiveTrackMaterial;
+        } else {
+          material = this.trackMaterial;
+        }
+        const line = this.createLine(traj, material);
+        (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
+        decayObject.add(line);
+        if (deferTrackDrawForIntro) {
+          this.pendingTrackDrawLines.push(line);
+        } else {
+          this.queueTrackDrawAnimation(line);
+        }
+      }
+      if (decayObject.children.length > 0) {
+        this.decays.add(decayObject);
+      }
+      break;
+    }
   }
 
   private clearCollisionProtonModels(): void {
@@ -1171,6 +2032,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.decays.clear();
     this.clusters.clear();
     this.cascadeVertexMarkers.clear();
+    this.clearPrimaryVertexMarkers();
     if (this.cascadeConnectorLine) {
       this.scene.remove(this.cascadeConnectorLine);
       this.cascadeConnectorLine.geometry.dispose();
@@ -1210,45 +2072,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       : performance.now();
     this.loading = true;
     if (this._event !== null) {
-      const cascadeVertices = this.getCascadeVertices(this._event);
-      for (const v of cascadeVertices) {
-        this.cascadeVertexMarkers.add(this.createVertexMarker(v.pos, v.label));
-      }
-      this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
-      for (let track of this._event.tracks) {
-        const line = this.createLine(track.trajectory, this.trackMaterial);
-        this.tracks.add(line);
-        if (deferTrackDrawForIntro) {
-          this.pendingTrackDrawLines.push(line);
-        } else {
-          this.queueTrackDrawAnimation(line);
-        }
-      }
-      for (let particleList of this._event.decays) {
-        const decayObject = new THREE.Object3D();
-        for (let track of particleList) {
-          let material: THREE.Material;
-          if (track.type === TrackType.CASCADE_BACHELOR) {
-            material = this.bachelorTrackMaterial;
-          } else if (track.sign < 0) {
-            material = this.negativeTrackMaterial;
-          } else if (track.sign > 0) {
-            material = this.postiveTrackMaterial;
-          } else {
-            material = this.trackMaterial;
-          }
-          const line = this.createLine(track.trajectory, material);
-          (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
-          decayObject.add(line);
-          if (deferTrackDrawForIntro) {
-            this.pendingTrackDrawLines.push(line);
-          } else {
-            this.queueTrackDrawAnimation(line);
-          }
-        }
-        this.decays.add(decayObject);
-        break;
-      }
+      this.rebuildTracksFromEvent(deferTrackDrawForIntro);
       if (this._event.clusters && this._event.clusters.length > 0) {
         const points: Array<THREE.Vector3> = [];
         for (let point of this._event.clusters) {
@@ -1274,6 +2098,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         }
       }
     }
+    this.rebuildCalorimeterReadouts();
     this.applyDesiredPhysicsVisibility();
     if (deferTrackDrawForIntro) {
       this.beginProtonCollisionIntroLoad();
@@ -1331,6 +2156,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       depthTest: false,
       sizeAttenuation: true,
     });
+    this.caloBarGeometry = new THREE.BoxGeometry(1, 1, 1);
+    this.caloBarMaterial = new THREE.MeshStandardMaterial({
+      color: EventDisplayComponent.caloBarColorLight,
+      roughness: 0.45,
+      metalness: 0.05,
+      depthTest: true,
+      depthWrite: true,
+    });
+    this.applyCalorimeterBarTheme();
   }
 
   /** Circular point sprite for cluster PointsMaterial. */
@@ -1410,6 +2244,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.canvas?.removeEventListener('wheel', this.onWheel);
     this.clearGridBackground();
     this.clearCollisionProtonModels();
+    this.clearCalorimeterReadouts();
+    this.caloBarGeometry?.dispose();
+    this.caloBarMaterial?.dispose();
   }
 
   private clearGridBackground(): void {
@@ -2139,7 +2976,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cameraRhoz.lookAt(new THREE.Vector3(0, 0, 0));
     this.controls = new OrbitControls(this.camera3D, this.renderer.domElement);
     this.controls.target.set(0.0, 0.0, 0.0);
-    this.controls.maxPolarAngle = 0.5 * Math.PI;
+    this.controls.minPolarAngle = 0;
+    this.controls.maxPolarAngle = Math.PI;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.composer = new EffectComposer(this.renderer);
@@ -2175,7 +3013,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.scene.add(this.detector);
     this.scene.add(this.tracks);
     this.scene.add(this.cascadeVertexMarkers);
+    this.scene.add(this.primaryVertexMarkers);
     this.scene.add(this.clusters);
+    this.scene.add(this.calorimeterReadouts);
     this.scene.add(this.decays);
     this.collisionProtonsGroup.visible = false;
     this.scene.add(this.collisionProtonsGroup);

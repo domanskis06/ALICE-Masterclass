@@ -15,7 +15,19 @@
     "DRAG_INSTRUCTION": "Ziehen Sie rechts das hervorgehobene Teil in die Bildmitte der 3D-Ansicht, bis es einrastet.",
     "DONE_TITLE": "Detector fertig montiert",
     "DONE_BODY": "Alle Teile sind platziert. Sichtbarkeit und Bahneinstellungen finden Sie im rechten Panel.",
-    "DONE_BUTTON": "Alles klar"
+    "DONE_BUTTON": "Alles klar",
+    "ITS_UNLOCK_TIP": "ITS: Siliziumschichten am nächsten am Kollisionspunkt — hier beginnen die Spuren und der Primary Vertex wird gemessen.",
+    "PART_DESC": {
+      "ITS": {
+        "TITLE": "ITS (Inner Tracking System)",
+        "BODY": "Das ITS (Inner Tracking System) ist der innerste Spurdetektor, am nächsten am Punkt, an dem Protonen oder schwere Ionen kollidieren. Es besteht aus extrem dünnen Siliziumsensoren, die den Durchgang geladener Teilchen mit einer Genauigkeit von wenigen Mikrometern erfassen — dünner als ein menschliches Haar. Damit bestimmen Physiker den genauen Entstehungsort der Teilchen und finden Teilchen, die fast sofort nach ihrer Erzeugung zerfallen, bevor sie die äußeren Detektoren erreichen.",
+        "LETS_US": "Mit dem ITS können wir:",
+        "B1": "den Primary Vertex mit einer Auflösung besser als 100 Mikrometer bestimmen",
+        "B2": "sekundäre Vertices rekonstruieren, die für Charm- und Hyperon-Zerfälle nötig sind",
+        "B3": "Teilchen mit niedrigem Impuls verfolgen und identifizieren",
+        "B4": "Impuls- und Winkelauflösung für Teilchen verbessern, die in der Time Projection Chamber (TPC) rekonstruiert werden"
+      }
+    }
   },
   "HOME": {
     "HOME": "Home",
