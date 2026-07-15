@@ -1,21 +1,19 @@
 /**
- * Builds magnetic **field lines** (streamlines through B(r)) as fat
- * `LineSegments2` polylines plus direction arrowheads — same depth stack as
+ * Builds magnetic **field lines** (streamlines through B(r)) as cheap native
+ * `THREE.LineSegments` polylines plus direction arrowheads — same depth stack as
  * particle tracks (`track-renderer.ts`: `depthTest` / `depthWrite` on).
  *
  * Vertex colours encode `|B|` via a Jet-style colormap (`physics/field-colormap.ts`).
  * Tracing lives in `physics/field-line-tracer.ts`; this module only builds
  * Three.js objects.
  *
- * Notes on the reference `distributed_field` repo: GPU streamlines store
- * positions only; colourful figures there come mainly from 2D slices that map
- * `Field(pos)` → RGB. Here each streamline vertex keeps `|B|` for colouring.
+ * Performance: fat `LineSegments2` (screen-space quads) dominated orbit cost
+ * when looking down the L3 barrel. Native `LineSegments` are 1 px GPU lines
+ * (same cheap path EventDisplay used before Line2) and keep the |B| colour
+ * legend via `vertexColors`.
  */
 
 import * as THREE from 'three';
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2';
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry';
 
 import {
   FIELD_COLOR_MAX_T,
@@ -32,15 +30,18 @@ export interface FieldLineOptions {
   density?: FieldLineDensity;
   /** Initial material opacity. */
   opacity?: number;
-  /** Line width in CSS pixels (`LineMaterial.linewidth`). */
+  /**
+   * Desired line width in CSS pixels. Stored for UI compatibility; native
+   * WebGL `LineBasicMaterial` ignores `linewidth` on most platforms.
+   */
   linewidth?: number;
-  /** Canvas size used to initialise `LineMaterial.resolution`. */
+  /** Canvas size (kept for API parity with the previous fat-line path). */
   resolution?: { width: number; height: number };
   /** `|B|` colour-scale window (defaults to the nominal 0.5 T band). */
   colorRange?: FieldColorRange;
 }
 
-/** Default fat-line width in CSS pixels (same order as track lines). */
+/** Default stored linewidth (UI slider default; see {@link FieldLineOptions.linewidth}). */
 export const DEFAULT_FIELD_LINEWIDTH = 1.5;
 
 /** Place one arrowhead every this many cm of arc length along each line. */
@@ -72,13 +73,9 @@ function writeRgb(
   out[offset + 2] = b;
 }
 
-function isFatFieldLine(o: THREE.Object3D): o is LineSegments2 {
-  return !!(o as { isLineSegments2?: boolean }).isLineSegments2;
-}
-
 /**
  * Returns a group holding:
- * - one `LineSegments2` with every traced field line (single draw call),
+ * - one `THREE.LineSegments` with every traced field line (single draw call),
  * - one `InstancedMesh` of cone arrowheads showing +B̂ direction,
  * or an empty group if none were traced.
  */
@@ -88,7 +85,6 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
     density = 'medium',
     opacity = 0.65,
     linewidth = DEFAULT_FIELD_LINEWIDTH,
-    resolution = { width: 1, height: 1 },
     colorRange = { minT: FIELD_COLOR_MIN_T, maxT: FIELD_COLOR_MAX_T },
   } = options;
   const group = new THREE.Group();
@@ -122,28 +118,23 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
     }
   }
 
-  const geometry = new LineSegmentsGeometry();
-  geometry.setPositions(positions);
-  geometry.setColors(colors);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.computeBoundingSphere();
 
-  const material = new LineMaterial({
+  const material = new THREE.LineBasicMaterial({
     // Must stay white so per-vertex colours are not tinted.
     color: 0xffffff,
     vertexColors: true,
-    linewidth,
     transparent: opacity < 0.995,
     opacity,
-    // Match particle tracks (`track-renderer.ts`) so lines sit correctly
-    // against depth-writing detector shells.
     depthTest: true,
     depthWrite: true,
-    worldUnits: false,
-    resolution: new THREE.Vector2(Math.max(1, resolution.width), Math.max(1, resolution.height)),
   });
 
-  const segments = new LineSegments2(geometry, material);
+  const segments = new THREE.LineSegments(geometry, material);
   segments.name = 'field-line-segments';
-  segments.computeLineDistances();
   segments.frustumCulled = true;
   group.add(segments);
 
@@ -248,8 +239,9 @@ function collectArrowPlacements(line: FieldLinePolyline, out: ArrowPlacement[]):
 /** Sets opacity on both lines and arrow cones in a {@link buildFieldLines} group. */
 export function setFieldLinesOpacity(group: THREE.Object3D, opacity: number): void {
   group.traverse((o) => {
-    if (isFatFieldLine(o)) {
-      const mat = o.material as LineMaterial;
+    const line = o as THREE.LineSegments;
+    if (line.isLineSegments) {
+      const mat = line.material as THREE.LineBasicMaterial;
       mat.opacity = opacity;
       mat.transparent = opacity < 0.995;
       mat.needsUpdate = true;
@@ -265,23 +257,16 @@ export function setFieldLinesOpacity(group: THREE.Object3D, opacity: number): vo
   });
 }
 
-/** Updates `LineMaterial.linewidth` (and stores the value for UI state). */
+/**
+ * Stores the requested linewidth for UI state. Native WebGL lines ignore
+ * `linewidth`, so this has no GPU effect — kept so the thickness slider stays
+ * wired without forcing a rebuild to expensive fat lines.
+ */
 export function setFieldLinesWidth(group: THREE.Object3D, linewidth: number): void {
   group.userData['linewidth'] = linewidth;
-  group.traverse((o) => {
-    if (isFatFieldLine(o)) {
-      (o.material as LineMaterial).linewidth = linewidth;
-      (o.material as LineMaterial).needsUpdate = true;
-    }
-  });
 }
 
-/** Updates `LineMaterial.resolution` after canvas resize (required for correct fat-line width). */
-export function setFieldLinesResolution(group: THREE.Object3D, width: number, height: number): void {
-  const res = new THREE.Vector2(Math.max(1, width), Math.max(1, height));
-  group.traverse((o) => {
-    if (isFatFieldLine(o)) {
-      (o.material as LineMaterial).resolution.copy(res);
-    }
-  });
+/** No-op retained for callers that still update fat-line resolution after resize. */
+export function setFieldLinesResolution(_group: THREE.Object3D, _width: number, _height: number): void {
+  // Native LineSegments do not need a resolution uniform.
 }

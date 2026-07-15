@@ -149,5 +149,15 @@ export async function loadDetectorModel(
   });
 
   recenterOnBeamAxis(group, parts);
+  // Detector geometry is static after load — skip per-frame matrix walks.
+  freezeStaticTransforms(group);
   return { group, parts };
+}
+
+/** Disables `matrixAutoUpdate` once world matrices are final. */
+function freezeStaticTransforms(root: THREE.Object3D): void {
+  root.updateMatrixWorld(true);
+  root.traverse((obj) => {
+    obj.matrixAutoUpdate = false;
+  });
 }

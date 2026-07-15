@@ -12,9 +12,10 @@
  * `opacity 0.35`, `depthWrite = false`), these materials keep `depthWrite =
  * true` and rely on per-mesh `polygonOffset` + `renderOrder`. Depth writes let
  * the GPU reject fragments hidden behind nearer shells instead of blending all
- * of them, which is what killed the frame rate when zoomed in (massive
- * transparent overdraw). This mirrors what makes the Visual Analysis detector
- * smooth.
+ * of them. The L3 magnet yoke defaults to fully opaque (`opacity = 1`) so the
+ * down-the-barrel camera does not pay full-screen translucent overdraw for a
+ * shell the student looks *through the opening of*, not through the yoke —
+ * matching Visual Analysis orbit smoothness while keeping the red magnet visible.
  */
 
 import * as THREE from 'three';
@@ -24,9 +25,9 @@ export const DETECTOR_INNER_OPACITY = 0.8;
 export const DETECTOR_OUTER_OPACITY = 0.75;
 /** Calorimeter layers never go below this (they'd otherwise vanish). */
 export const CALORIMETER_MIN_OPACITY = 0.45;
-/** UI slider clamp (identical to EventDisplay). */
+/** UI slider clamp. Upper bound is 1 so the L3 yoke can stay fully opaque. */
 export const MIN_PART_OPACITY = 0.05;
-export const MAX_PART_OPACITY = 0.95;
+export const MAX_PART_OPACITY = 1;
 
 const RENDER_ORDER_LAYER_STRIDE = 10000;
 
@@ -72,8 +73,15 @@ function isCalorimeter(assetPath: string): boolean {
   return /(^|[/\\])(emcal_dcal|dcal|phos)\.glb($|\?)/i.test(assetPath);
 }
 
+/** Outer L3 magnet yoke — large screen coverage under the PP camera. */
+export function isOuterMagnet(assetPath: string): boolean {
+  return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
+}
+
 /** Default opacity for a layer given its depth index (inner -> outer lerp). */
 export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
+  // Opaque magnet: look through the aperture, not the yoke (fill-rate win).
+  if (isOuterMagnet(assetPath)) return 1;
   const t = totalLayers > 1 ? layerIndex / (totalLayers - 1) : 0;
   const opacity = DETECTOR_INNER_OPACITY * (1 - t) + DETECTOR_OUTER_OPACITY * t;
   return isCalorimeter(assetPath) ? Math.max(opacity, CALORIMETER_MIN_OPACITY) : opacity;

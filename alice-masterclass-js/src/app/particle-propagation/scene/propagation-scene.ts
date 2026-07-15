@@ -64,6 +64,10 @@ export class PropagationScene {
 
   private readonly lights = new THREE.Group();
   private _darkMode = true;
+  /** Capped DPR for idle frames; interaction temporarily drops to 1. */
+  private readonly maxPixelRatio: number;
+  private viewWidth = 1;
+  private viewHeight = 1;
 
   /**
    * Set when the scene graph / camera changed and a frame must be drawn.
@@ -73,12 +77,18 @@ export class PropagationScene {
   needsRender = true;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      logarithmicDepthBuffer: true,
+      powerPreference: 'high-performance',
+    });
     // Cap the device pixel ratio: uncapped HiDPI rendering multiplies fragment
     // work quadratically and was a major cause of the orbit lag when zoomed in
     // (fill-rate bound). 1.5 keeps edges crisp without shading 4x the pixels.
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio : 1;
-    this.renderer.setPixelRatio(Math.min(dpr, 1.5));
+    this.maxPixelRatio = Math.min(dpr, 1.5);
+    this.renderer.setPixelRatio(this.maxPixelRatio);
     this.renderer.shadowMap.enabled = false;
     this.renderer.sortObjects = true;
 
@@ -99,7 +109,9 @@ export class PropagationScene {
     // Clamp zoom: without a minDistance the camera can dive *inside* the
     // geometry, where near-plane clipping + full-screen overdraw tank the frame
     // rate. Bounds sized to the ~5-unit detector (scale 1e-2 of ~500 cm).
-    this.controls.minDistance = 0.6;
+    // Keep the camera outside the innermost shell (VA-like orbit), not inside
+    // the L3 barrel opening where nested translucent layers fill the screen.
+    this.controls.minDistance = 1.5;
     this.controls.maxDistance = 40;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
@@ -114,9 +126,12 @@ export class PropagationScene {
       this.needsRender = true;
     });
     this.controls.addEventListener('start', () => {
+      // Drop to 1× DPR while dragging — fill-rate dominated when zoomed in.
+      this.applyPixelRatio(1);
       this.needsRender = true;
     });
     this.controls.addEventListener('end', () => {
+      this.applyPixelRatio(this.maxPixelRatio);
       this.needsRender = true;
     });
 
@@ -162,10 +177,18 @@ export class PropagationScene {
   /** Resizes the renderer/camera to match the canvas's current CSS size. */
   resize(width: number, height: number): void {
     if (width <= 0 || height <= 0) return;
+    this.viewWidth = width;
+    this.viewHeight = height;
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
     this.needsRender = true;
+  }
+
+  private applyPixelRatio(ratio: number): void {
+    if (this.renderer.getPixelRatio() === ratio) return;
+    this.renderer.setPixelRatio(ratio);
+    this.renderer.setSize(this.viewWidth, this.viewHeight, false);
   }
 
   /**

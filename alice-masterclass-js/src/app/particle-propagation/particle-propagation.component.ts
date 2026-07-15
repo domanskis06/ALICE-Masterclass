@@ -112,6 +112,11 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   eventOptions: EventOption[] = [];
   selectedEventIndex = 0;
   hasStarted = false;
+  /**
+   * True after the field-strength slider changes while tracks already exist.
+   * Replay (not the slider itself) re-runs RK4 so the student decides when to restart.
+   */
+  private tracksNeedRecompute = false;
   isPlaying = false;
   currentTimeMs = 0;
   minTimeMs = -1;
@@ -242,7 +247,13 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   }
 
   onReplay(): void {
-    if (!this.controlsEnabled || !this.timeline) return;
+    if (!this.controlsEnabled) return;
+    if (this.tracksNeedRecompute) {
+      this.tracksNeedRecompute = false;
+      this.runPrecomputePipeline();
+      return;
+    }
+    if (!this.timeline) return;
     this.currentTimeMs = this.timeline.minTimeMs;
     this.timeline.applyTime(this.currentTimeMs);
     this.isPlaying = true;
@@ -302,9 +313,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.fieldStrengthT = next;
     this.magneticField.setFieldStrengthT(next);
     this.rebuildFieldVisualization();
-    // Stronger |B| → tighter curvature: re-precompute tracks and replay.
+    // Defer RK4 until Replay so adjusting the slider does not interrupt playback.
     if (this.hasStarted) {
-      this.runPrecomputePipeline();
+      this.tracksNeedRecompute = true;
     }
     this.cdr.markForCheck();
   }

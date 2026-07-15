@@ -140,7 +140,7 @@ describe('ParticlePropagationComponent', () => {
     expect(precomputeSpy).not.toHaveBeenCalled(); // still stuck at loading-field; second call is a no-op.
   });
 
-  it('onFieldStrengthChange() updates the field service and re-runs precompute after start', async () => {
+  it('onFieldStrengthChange() updates the field but defers RK4 until Replay', async () => {
     const magneticField = TestBed.inject(MagneticFieldService) as unknown as {
       setFieldStrengthT: jasmine.Spy;
       fieldStrengthT: number;
@@ -158,9 +158,13 @@ describe('ParticlePropagationComponent', () => {
     component.onFieldStrengthChange(1);
     await flushAsyncChain();
     expect(component.fieldStrengthT).toBe(1);
+    expect(precomputeSpy).toHaveBeenCalledTimes(1); // slider alone does not recompute
+    expect(component.fieldColorMinT).toBeCloseTo(0.94, 6);
+    expect(component.fieldColorMaxT).toBeCloseTo(1.02, 6);
+
+    component.onReplay();
+    await flushAsyncChain();
     expect(precomputeSpy).toHaveBeenCalledTimes(2);
-    expect(component.fieldColorMinT).toBeCloseTo(0.97, 6);
-    expect(component.fieldColorMaxT).toBeCloseTo(1.01, 6);
   }, 15000);
 
   it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', () => {

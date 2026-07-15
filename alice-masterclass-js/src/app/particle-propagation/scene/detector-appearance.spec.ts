@@ -65,6 +65,10 @@ describe('defaultLayerOpacity', () => {
     const calo = defaultLayerOpacity('assets/x/PHOS.glb', 7, 8);
     expect(calo).toBeGreaterThanOrEqual(CALORIMETER_MIN_OPACITY);
   });
+
+  it('defaults the L3 magnet yoke to fully opaque (no translucent overdraw)', () => {
+    expect(defaultLayerOpacity('assets/models/alice components/L3.glb', 7, 8)).toBe(1);
+  });
 });
 
 describe('applyDetectorLayerMaterials', () => {
@@ -92,6 +96,15 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(0.5);
     expect(mat.transparent).toBe(true);
     expect(mat.depthWrite).toBe(true); // stays cheap to blend
+  });
+
+  it('keeps fully opaque parts on the non-transparent path', () => {
+    const part = makePart();
+    setDetectorPartOpacity(part, 1);
+    const mat = firstMaterial(part);
+    expect(mat.opacity).toBe(1);
+    expect(mat.transparent).toBe(false);
+    expect(mat.depthWrite).toBe(true);
   });
 });
 

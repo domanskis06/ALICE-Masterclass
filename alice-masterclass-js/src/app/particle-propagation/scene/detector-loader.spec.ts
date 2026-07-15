@@ -43,25 +43,39 @@ describe('loadDetectorModel', () => {
       expect(part.root).toBeDefined();
     }
 
-    for (const part of model.group.children) {
-      const box = new THREE.Box3().setFromObject(part);
+    for (const part of model.parts) {
+      const box = new THREE.Box3().setFromObject(part.root);
       const size = box.getSize(new THREE.Vector3());
       expect(size.length()).toBeGreaterThan(0);
       expect(size.length()).toBeLessThan(50); // detector ~500cm across -> ~5 units at 1e-2 scale.
 
+      const isL3 = /l3\.glb$/i.test(part.assetPath);
       let sawMesh = false;
-      part.traverse((obj) => {
+      part.root.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         if (!mesh.isMesh) return;
         sawMesh = true;
         const material = mesh.material as THREE.Material;
-        expect(material.transparent).toBe(true);
-        expect(material.opacity).toBeGreaterThan(0);
-        expect(material.opacity).toBeLessThan(1);
         expect(material.depthWrite).toBe(true);
+        expect(material.opacity).toBeGreaterThan(0);
+        if (isL3) {
+          // Opaque magnet yoke — look through the aperture, not the red shell.
+          expect(material.transparent).toBe(false);
+          expect(material.opacity).toBe(1);
+        } else {
+          expect(material.transparent).toBe(true);
+          expect(material.opacity).toBeLessThan(1);
+        }
       });
       expect(sawMesh).toBe(true);
     }
+  });
+
+  it('freezes detector transforms after load (static scene graph)', () => {
+    expect(model.group.matrixAutoUpdate).toBe(false);
+    model.group.traverse((obj) => {
+      expect(obj.matrixAutoUpdate).toBe(false);
+    });
   });
 
   it('recenters the model so the ITS (beam-pipe) center sits at the world origin', () => {

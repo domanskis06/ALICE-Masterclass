@@ -10,20 +10,15 @@ import { Vec3 } from '../physics/propagation-types';
 /** Uniform 0.5 T field along +z, like the ALICE solenoid interior. */
 const uniformZField = (): Vec3 => ({ x: 0, y: 0, z: 0.5 });
 
-function fieldLineSegments(group: THREE.Object3D): LineSegments2Like | null {
-  let found: LineSegments2Like | null = null;
+function fieldLineSegments(group: THREE.Object3D): THREE.LineSegments | null {
+  let found: THREE.LineSegments | null = null;
   group.traverse((o) => {
-    if (!found && (o as LineSegments2Like).isLineSegments2 && o.name === 'field-line-segments') {
-      found = o as LineSegments2Like;
+    const line = o as THREE.LineSegments;
+    if (!found && line.isLineSegments && o.name === 'field-line-segments') {
+      found = line;
     }
   });
   return found;
-}
-
-interface LineSegments2Like extends THREE.Object3D {
-  isLineSegments2: true;
-  material: THREE.Material;
-  geometry: THREE.BufferGeometry & { attributes: Record<string, THREE.BufferAttribute> };
 }
 
 function arrowMesh(group: THREE.Object3D): THREE.InstancedMesh | null {
@@ -46,11 +41,12 @@ function anyPlane(group: THREE.Object3D): boolean {
 }
 
 describe('buildFieldLines', () => {
-  it('packs all traced lines into a single fat LineSegments2 object', () => {
+  it('packs all traced lines into a single native LineSegments object', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse' });
     const segments = fieldLineSegments(group);
     expect(segments).not.toBeNull();
     expect(segments!.geometry).toBeTruthy();
+    expect(segments!.isLineSegments).toBeTrue();
   });
 
   it('enables frustum culling on static field geometry', () => {
@@ -98,11 +94,10 @@ describe('buildFieldLines', () => {
     expect((arrowMesh(group)!.material as THREE.Material).opacity).toBeCloseTo(0.3, 6);
   });
 
-  it('setFieldLinesWidth updates LineMaterial linewidth', () => {
+  it('setFieldLinesWidth stores linewidth for UI without requiring fat LineMaterial', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse', linewidth: 2 });
     setFieldLinesWidth(group, 4.5);
     expect(group.userData['linewidth']).toBeCloseTo(4.5, 6);
-    expect(((fieldLineSegments(group)!.material as unknown) as { linewidth: number }).linewidth).toBeCloseTo(4.5, 6);
   });
 
   it('matches particle-track depth stack (depthTest + depthWrite)', () => {
@@ -118,16 +113,9 @@ describe('buildFieldLines', () => {
   it('enables vertex colours mapped from |B|', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse' });
     const segments = fieldLineSegments(group)!;
-    const mat = segments.material as { vertexColors: boolean };
+    const mat = segments.material as THREE.LineBasicMaterial;
     expect(mat.vertexColors).toBeTrue();
-    // LineSegmentsGeometry stores colours as instance attribute `instanceColorStart`/`End`
-    // or a combined buffer — either way the material must request vertex colours.
-    const attrs = segments.geometry.attributes;
-    const hasColor =
-      !!attrs['instanceColorStart'] ||
-      !!attrs['instanceColorEnd'] ||
-      !!attrs['color'];
-    expect(hasColor).toBeTrue();
+    expect(segments.geometry.attributes['color']).toBeTruthy();
   });
 
   it('maps weak and strong |B| to different vertex colours', () => {
@@ -135,14 +123,12 @@ describe('buildFieldLines', () => {
     const strong = (): Vec3 => ({ x: 0, y: 0, z: 0.51 });
     const weakSeg = fieldLineSegments(buildFieldLines(weak, { scale: 1e-2, density: 'sparse' }))!;
     const strongSeg = fieldLineSegments(buildFieldLines(strong, { scale: 1e-2, density: 'sparse' }))!;
-    const weakStart =
-      weakSeg.geometry.attributes['instanceColorStart'] || weakSeg.geometry.attributes['color'];
-    const strongStart =
-      strongSeg.geometry.attributes['instanceColorStart'] || strongSeg.geometry.attributes['color'];
-    expect(weakStart).toBeTruthy();
-    expect(strongStart).toBeTruthy();
+    const weakColor = weakSeg.geometry.attributes['color'];
+    const strongColor = strongSeg.geometry.attributes['color'];
+    expect(weakColor).toBeTruthy();
+    expect(strongColor).toBeTruthy();
     // Weak = deep blue (higher B); strong = bright red (higher R).
-    expect(weakStart.getZ(0)).toBeGreaterThan(strongStart.getZ(0));
-    expect(weakStart.getX(0)).toBeLessThan(strongStart.getX(0));
+    expect(weakColor.getZ(0)).toBeGreaterThan(strongColor.getZ(0));
+    expect(weakColor.getX(0)).toBeLessThan(strongColor.getX(0));
   });
 });
