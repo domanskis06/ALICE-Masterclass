@@ -247,6 +247,27 @@
       "BACKGROUND": "Background",
       "FIT": "Fit",
       "ACCEPT": "Accept"
+    },
+    "PARTICLE_PROPAGATION_MENU": "Particle Propagation",
+    "INSTRUCTIONS_PARTICLE_PROPAGATION": {
+      "TITLE": "Particle Propagation in the Magnetic Field",
+      "SUBTITLE": "How tracks curve through ALICE",
+      "P1": "Two protons collide at the centre of the detector. The particles produced in the collision fly outward and are bent by the ALICE magnetic field (a solenoid around the barrel and a dipole around the muon arm), following a curved path described by the Lorentz force.",
+      "P2": "Each track's trajectory is pre-computed once, ahead of time, using 4th-order Runge-Kutta (RK4) integration through the exact 3D magnetic field map (a Chebyshev polynomial model of the real ALICE field) — the browser never re-computes physics while you scrub or play the animation.",
+      "P3": "Use the time slider to move through three phases: before the collision (the two protons approaching), the moment of collision, and afterwards (the produced particles propagating outward). Positively and negatively charged tracks curve in opposite directions; neutral tracks travel in a straight line."
+    },
+    "PARTICLE_PROPAGATION": {
+      "WELCOME_TITLE": "Particle Propagation in the Magnetic Field",
+      "WELCOME_BODY_1": "Watch two protons collide at the centre of the ALICE detector, then see the produced particles propagate outward, bent by the real 3D magnetic field.",
+      "WELCOME_BODY_2": "Once you start the animation, trajectories are pre-computed using Runge-Kutta integration through the ALICE Chebyshev field map — this can take a moment for busy events.",
+      "WELCOME_BODY_3": "Afterwards, use the time slider to scrub freely through the collision and the propagation that follows.",
+      "START_BUTTON": "Start animation",
+      "SKIP_BUTTON": "Skip",
+      "LOADING_FIELD": "Loading magnetic field map…",
+      "LOADING_EVENT": "Loading collision event…",
+      "PRECOMPUTING": "Pre-computing particle trajectories…",
+      "ERROR": "Something went wrong while preparing the animation.",
+      "RETRY": "Retry"
     }
   }
 }

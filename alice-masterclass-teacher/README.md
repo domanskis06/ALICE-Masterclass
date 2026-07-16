@@ -1,27 +1,45 @@
-# AliceMasterclassTeacher
+# ALICE MasterClass — Teacher app
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.0.3.
+Angular panel for teachers (sessions, events, results). Talks to the Django API.
 
-## Development server
+## Prerequisites
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+- [Node.js](https://nodejs.org) (LTS recommended)
+- Django API running on [http://127.0.0.1:8000](http://127.0.0.1:8000) (see [`../alice-masterclass-django/README.md`](../alice-masterclass-django/README.md))
 
-## Code scaffolding
+## Setup
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```bash
+npm install
+```
+
+## Run locally
+
+Dev server on port **4201** (student app uses 4200):
+
+```bash
+npm start
+```
+
+Then open [http://localhost:4201](http://localhost:4201).
+
+Local `environment.ts` points at:
+
+- API: `http://localhost:8000/api/v1/`
+- Student host: `http://localhost:4200/`
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm run build        # default
+npm run build:prod   # production (runs `make-prod.mjs` first when configured)
+```
 
-## Running unit tests
+## Tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+- Unit: `npm test` (Karma)
+- E2E (from the student repo, with Django): see [`../docs/E2E.md`](../docs/E2E.md) (`npm run e2e:teacher` in `alice-masterclass-js`)
 
-## Running end-to-end tests
+## Related
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+- Monorepo overview: [`../README.md`](../README.md)

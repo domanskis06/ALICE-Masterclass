@@ -18,6 +18,7 @@ import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
   neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
+import { isCadHelperCubeName } from '../../three/cad-helper-cubes';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -448,7 +449,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   static alignDetectorPartToBeamAxis(scene: THREE.Object3D, assetPath: string): void {
     scene.traverse((o: THREE.Object3D) => {
-      if (/^Cube(\d+)?$/i.test(o.name || '')) {
+      if (isCadHelperCubeName(o.name)) {
         o.visible = false;
       }
     });
@@ -943,6 +944,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             detectorLayerIndex: pathIndex
           };
           this.setDetectorMaterialsWithPolygonOffset(scene, defaultPartOpacity, pathIndex);
+          // Keep the original GLB scene graph (SMOD_/DCSM_ node names, etc.).
+          // Mesh merging belongs in particle-propagation only — flattening here
+          // breaks calorimeter cylindrical coverage / energy readout bars.
           loadedByPath.set(modelPath, scene);
           finishOne();
         },

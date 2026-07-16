@@ -9,6 +9,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
@@ -54,6 +55,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     MatTableModule,
     MatPaginatorModule,
     MatSlideToggleModule,
+    MatSliderModule,
     NgxSliderModule
   ],
   exports: [
@@ -80,6 +82,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     MatTableModule,
     MatPaginatorModule,
     MatSlideToggleModule,
+    MatSliderModule,
     NgxSliderModule
   ]
 })

@@ -456,17 +456,35 @@ accepted; rollback steps live in [`openshift/dev/README.md`](../openshift/dev/RE
 
 ## 7. Deployment Procedure
 
-### 7.1 Trigger the pipeline
+### 7.1 Redeploy dev with a git tag (copy-paste)
+
+Pushing a **new** protected tag matching `v*-dev` triggers the full pipeline
+(tests → build → dockerize → OpenShift redeploy). Requires **Maintainer/Owner**
+(see §5.1). The tag is created on whatever commit is checked out.
 
 ```bash
-git tag v0.1.7-dev
-git push origin v0.1.7-dev   # Maintainer/Owner; tag must match protected wildcard v*-dev
+# 1. Point HEAD at the branch/commit you want on dev
+git fetch origin
+git checkout <branch>          # e.g. calorimeters, main, …
+git pull origin <branch>
+
+# 2. Pick the next unused tag (list existing, then bump patch)
+git fetch origin --tags
+git tag -l 'v*-dev' | sort -V | tail -5
+# e.g. last is v0.1.11-dev → use v0.1.12-dev
+
+# 3. Tag HEAD and push the tag (not the branch)
+git tag v0.1.12-dev
+git push origin v0.1.12-dev
 ```
 
-This runs unit tests, builds and pushes the three images, imports them into the
-ImageStreams, and rolls out the student, teacher, and Django DeploymentConfigs.
-If the tag introduces Django schema changes, play the manual `migrate_django` job
-in GitLab after `redeploy_django` succeeds.
+Watch the GitLab pipeline for that tag. It builds and pushes the three images,
+imports them into the ImageStreams, and rolls out student, teacher, and Django
+DeploymentConfigs. If the tag introduces Django schema changes, play the manual
+`migrate_django` job after `redeploy_django` succeeds.
+
+Do **not** reuse an existing tag name — GitLab will not re-run deploy for a
+retag unless you delete the remote tag first (avoid that; always bump).
 
 ### 7.2 First-deployment manual steps
 
