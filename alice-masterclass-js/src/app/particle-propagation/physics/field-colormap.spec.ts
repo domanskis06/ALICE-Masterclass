@@ -8,6 +8,7 @@ import {
   FIELD_COLOR_MAX_T,
   FIELD_COLOR_MIN_T,
   fieldColorbarCssGradient,
+  fieldColorRangeForDipoleView,
   fieldColorRangeForStrength,
   magnitudeToRgb,
   normalizeMagnitude,
@@ -26,6 +27,16 @@ describe('field-colormap', () => {
     const at2T = fieldColorRangeForStrength(2);
     expect(at2T.minT).toBeCloseTo(1.88, 6);
     expect(at2T.maxT).toBeCloseTo(2.04, 6);
+  });
+
+  it('dipole view uses a wide window covering fringe and dipole peak', () => {
+    const atHalf = fieldColorRangeForDipoleView(0.5);
+    expect(atHalf.minT).toBeCloseTo(0.05, 6);
+    expect(atHalf.maxT).toBeCloseTo(0.9, 6);
+    // Solenoid plateau sits mid-scale; dipole ~0.7 T is not crushed to the top.
+    expect(normalizeMagnitude(0.5, atHalf)).toBeGreaterThan(0.4);
+    expect(normalizeMagnitude(0.5, atHalf)).toBeLessThan(0.7);
+    expect(normalizeMagnitude(0.7, atHalf)).toBeGreaterThan(normalizeMagnitude(0.5, atHalf));
   });
 
   it('maps a proportional |B| drop to the same normalised colour at every strength', () => {

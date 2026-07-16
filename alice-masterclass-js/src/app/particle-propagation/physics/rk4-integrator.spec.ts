@@ -89,7 +89,7 @@ describe('rk4-integrator', () => {
       }
     });
 
-    it('stops and interpolates to the exact detector boundary sphere', () => {
+    it('stops and interpolates to the exact detector cylinder side wall', () => {
       const particle: PropagationParticle = {
         id: 'radial-1',
         origin: 'primary',
@@ -101,11 +101,41 @@ describe('rk4-integrator', () => {
       };
       const zeroField = (): Vec3 => ({ x: 0, y: 0, z: 0 });
 
-      const track = computeTrajectory(particle, zeroField, { stepCm: 10, maxSteps: 1000, maxRadiusCm: 55 });
+      const track = computeTrajectory(particle, zeroField, {
+        stepCm: 10,
+        maxSteps: 1000,
+        maxRadiusCm: 55,
+        maxZCm: 1000,
+      });
       const last = readPoint(track.positions, track.pointCount - 1);
-      const radius = Math.hypot(last.x, last.y, last.z);
+      const radius = Math.hypot(last.x, last.y);
 
       expect(radius).toBeCloseTo(55, 5);
+      expect(Math.abs(last.z)).toBeLessThan(1);
+    });
+
+    it('stops at the cylinder end-cap for a forward-going track', () => {
+      const particle: PropagationParticle = {
+        id: 'forward-1',
+        origin: 'primary',
+        vertex: { x: 0, y: 0, z: 0 },
+        momentum: { x: 0, y: 0, z: -1 },
+        charge: 0,
+        mass: 0,
+        energy: 1,
+      };
+      const zeroField = (): Vec3 => ({ x: 0, y: 0, z: 0 });
+
+      const track = computeTrajectory(particle, zeroField, {
+        stepCm: 10,
+        maxSteps: 1000,
+        maxRadiusCm: 500,
+        maxZCm: 200,
+      });
+      const last = readPoint(track.positions, track.pointCount - 1);
+
+      expect(last.z).toBeCloseTo(-200, 5);
+      expect(Math.hypot(last.x, last.y)).toBeLessThan(1);
     });
   });
 });

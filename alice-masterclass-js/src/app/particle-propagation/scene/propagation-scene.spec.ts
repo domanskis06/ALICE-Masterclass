@@ -24,6 +24,8 @@ describe('PropagationScene', () => {
     expect(scene.scene.children).toContain(scene.detectorGroup);
     expect(scene.scene.children).toContain(scene.introGroup);
     expect(scene.scene.children).toContain(scene.tracksGroup);
+    expect(scene.controls.enableDamping).toBe(true);
+    expect(scene.controls.rotateSpeed).toBeLessThan(1);
   });
 
   it('hides tracksGroup by default (nothing to show before t > 0)', () => {

@@ -38,7 +38,12 @@ import { CollisionIntro } from './scene/collision-intro';
 import { createTrackLines, setTrackLinesResolution } from './scene/track-renderer';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { PropagationTimeline } from './scene/propagation-timeline';
-import { detectorPartAccentColor, setDetectorPartOpacity, setDetectorPartVisibility } from './scene/detector-appearance';
+import {
+  defaultDetectorPartVisible,
+  detectorPartAccentColor,
+  setDetectorPartOpacity,
+  setDetectorPartVisibility,
+} from './scene/detector-appearance';
 import {
   buildFieldLines,
   DEFAULT_FIELD_LINEWIDTH,
@@ -48,6 +53,7 @@ import {
 import { FieldLineDensity } from './physics/field-line-tracer';
 import {
   fieldColorbarCssGradient,
+  fieldColorRangeForDipoleView,
   fieldColorRangeForStrength,
 } from './physics/field-colormap';
 import {
@@ -124,6 +130,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   playbackSpeed = 1;
   /** Field overlay on by default so students see |B|-coloured streamlines. */
   fieldVisible = true;
+  /** Dipole-transition bend at the forward (negative-z) detector end. */
+  fieldDipoleTransitionVisible = false;
   fieldOpacity = 0.65;
   /**
    * 0 = sparse (default), 1 = medium, 2 = dense — drives {@link fieldDensity}.
@@ -138,13 +146,19 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   readonly fieldStrengthStepT = FIELD_STRENGTH_STEP_T;
   readonly fieldColorbarGradient = fieldColorbarCssGradient();
 
-  /** Colorbar scale ends (Tesla) — track the selected field strength. */
+  /** Colorbar scale ends (Tesla) — track the selected field strength / dipole view. */
   get fieldColorMinT(): number {
-    return fieldColorRangeForStrength(this.fieldStrengthT).minT;
+    return this.activeFieldColorRange().minT;
   }
 
   get fieldColorMaxT(): number {
-    return fieldColorRangeForStrength(this.fieldStrengthT).maxT;
+    return this.activeFieldColorRange().maxT;
+  }
+
+  private activeFieldColorRange(): { minT: number; maxT: number } {
+    return this.fieldDipoleTransitionVisible
+      ? fieldColorRangeForDipoleView(this.fieldStrengthT)
+      : fieldColorRangeForStrength(this.fieldStrengthT);
   }
 
   private scene: PropagationScene | null = null;
@@ -295,6 +309,11 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.requestRender();
   }
 
+  onFieldDipoleTransitionChange(enabled: boolean): void {
+    this.fieldDipoleTransitionVisible = enabled;
+    this.rebuildFieldVisualization();
+  }
+
   onFieldOpacityChange(opacity: number): void {
     this.fieldOpacity = opacity;
     if (this.fieldLines) setFieldLinesOpacity(this.fieldLines, opacity);
@@ -341,13 +360,17 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
         for (const part of model.parts) {
           this.detectorPartRootByPath.set(part.assetPath, part.root);
         }
-        this.detectorPartsForUi = model.parts.map((part) => ({
-          assetPath: part.assetPath,
-          label: part.label,
-          visible: true,
-          opacity: this.getPartOpacity(part.root),
-          accentColor: detectorPartAccentColor(part.assetPath),
-        }));
+        this.detectorPartsForUi = model.parts.map((part) => {
+          const visible = defaultDetectorPartVisible(part.assetPath);
+          setDetectorPartVisibility(part.root, visible);
+          return {
+            assetPath: part.assetPath,
+            label: part.label,
+            visible,
+            opacity: this.getPartOpacity(part.root),
+            accentColor: detectorPartAccentColor(part.assetPath),
+          };
+        });
         this.requestRender();
         this.cdr.markForCheck();
       })
@@ -377,7 +400,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       density: this.fieldDensity,
       opacity: this.fieldOpacity,
       linewidth: this.fieldLinewidth,
-      colorRange: fieldColorRangeForStrength(this.fieldStrengthT),
+      includeDipoleTransition: this.fieldDipoleTransitionVisible,
+      colorRange: this.activeFieldColorRange(),
       resolution: {
         width: host?.clientWidth || 1,
         height: host?.clientHeight || 1,

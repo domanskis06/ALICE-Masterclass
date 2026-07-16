@@ -20,6 +20,9 @@
  * Time-of-flight at arc length `s`: `t(s) = s / (beta * c)`, with
  * `beta = |p| / E` and `c` in cm/ns — stored in ns for the UI timeline.
  *
+ * Tracking volume is a finite cylinder (L3 free bore): stop when
+ * `sqrt(x²+y²) > maxRadiusCm` or `|z| > maxZCm`.
+ *
  * This module has zero Angular/DOM dependencies so the exact same code runs
  * inside `propagation-physics.worker.ts` (off the main thread) and inside
  * `rk4-propagator.service.ts`'s no-Worker fallback.
@@ -29,7 +32,8 @@ import {
   B2C,
   RK4_STEP_CM,
   MAX_RK4_STEPS,
-  MAX_DETECTOR_R_CM,
+  MAX_DETECTOR_RXY_CM,
+  MAX_DETECTOR_Z_CM,
   SPEED_OF_LIGHT_CM_PER_NS,
 } from './constants';
 import { BufferedTrack, PropagationParticle, Vec3 } from './propagation-types';
@@ -41,8 +45,10 @@ export interface RK4Options {
   stepCm?: number;
   /** Hard cap on the number of RK4 steps. Defaults to `MAX_RK4_STEPS`. */
   maxSteps?: number;
-  /** Stop once `|r|` exceeds this radius, cm. Defaults to `MAX_DETECTOR_R_CM`. */
+  /** Stop once `sqrt(x²+y²)` exceeds this radius, cm. Defaults to `MAX_DETECTOR_RXY_CM`. */
   maxRadiusCm?: number;
+  /** Stop once `|z|` exceeds this half-length, cm. Defaults to `MAX_DETECTOR_Z_CM`. */
+  maxZCm?: number;
 }
 
 interface State {
@@ -66,12 +72,12 @@ function cross(a: Vec3, b: Vec3): Vec3 {
   };
 }
 
-function dot(a: Vec3, b: Vec3): number {
-  return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
 function length(a: Vec3): number {
   return Math.hypot(a.x, a.y, a.z);
+}
+
+function transverseRadius(r: Vec3): number {
+  return Math.hypot(r.x, r.y);
 }
 
 function normalize(a: Vec3): Vec3 {
@@ -99,23 +105,48 @@ function derivative(state: State, field: FieldFn, k: number): State {
   return { r: state.u, u: scale(cross(state.u, b), k) };
 }
 
+function outsideCylinder(r: Vec3, maxRxy: number, maxZ: number): boolean {
+  return transverseRadius(r) > maxRxy || Math.abs(r.z) > maxZ;
+}
+
 /**
- * Finds `f` in `[0, 1]` such that `|prevR + f * (nextR - prevR)| == radius`,
- * i.e. the linear-interpolation parameter at which the segment crosses the
- * detector's outer boundary sphere. Assumes `|prevR| <= radius <= |nextR|`.
+ * Finds `f` in `[0, 1]` where the segment `prev → next` first hits the cylinder
+ * wall `sqrt(x²+y²) = maxRxy` or an end-cap `|z| = maxZ`.
  */
-function sphereCrossingFraction(prevR: Vec3, nextR: Vec3, radius: number): number {
+function cylinderCrossingFraction(
+  prevR: Vec3,
+  nextR: Vec3,
+  maxRxy: number,
+  maxZ: number
+): number {
   const d = add(nextR, prevR, -1);
-  const a = dot(d, d);
-  if (a === 0) return 0;
-  const b = 2 * dot(prevR, d);
-  const c = dot(prevR, prevR) - radius * radius;
-  const discriminant = Math.max(0, b * b - 4 * a * c);
-  const sqrtDisc = Math.sqrt(discriminant);
-  const f1 = (-b + sqrtDisc) / (2 * a);
-  const f2 = (-b - sqrtDisc) / (2 * a);
-  const candidates = [f1, f2].filter((f) => f >= 0 && f <= 1);
-  return candidates.length > 0 ? Math.min(...candidates) : 1;
+  let bestF = 1;
+
+  // End-caps: z = ±maxZ
+  if (d.z !== 0) {
+    for (const zWall of [maxZ, -maxZ]) {
+      const f = (zWall - prevR.z) / d.z;
+      if (f >= 0 && f <= 1) bestF = Math.min(bestF, f);
+    }
+  }
+
+  // Side wall: |r_xy| = maxRxy (quadratic in the transverse plane only)
+  const dx = d.x;
+  const dy = d.y;
+  const a = dx * dx + dy * dy;
+  if (a > 0) {
+    const b = 2 * (prevR.x * dx + prevR.y * dy);
+    const c = prevR.x * prevR.x + prevR.y * prevR.y - maxRxy * maxRxy;
+    const discriminant = b * b - 4 * a * c;
+    if (discriminant >= 0) {
+      const sqrtDisc = Math.sqrt(discriminant);
+      for (const f of [(-b + sqrtDisc) / (2 * a), (-b - sqrtDisc) / (2 * a)]) {
+        if (f >= 0 && f <= 1) bestF = Math.min(bestF, f);
+      }
+    }
+  }
+
+  return bestF;
 }
 
 /**
@@ -131,7 +162,8 @@ export function computeTrajectory(
 ): BufferedTrack {
   const h = options.stepCm ?? RK4_STEP_CM;
   const maxSteps = options.maxSteps ?? MAX_RK4_STEPS;
-  const maxRadius = options.maxRadiusCm ?? MAX_DETECTOR_R_CM;
+  const maxRadius = options.maxRadiusCm ?? MAX_DETECTOR_RXY_CM;
+  const maxZ = options.maxZCm ?? MAX_DETECTOR_Z_CM;
 
   const pMag = length(particle.momentum);
   const beta = pMag > 0 && particle.energy > 0 ? Math.min(pMag / particle.energy, 1) : 0;
@@ -155,7 +187,7 @@ export function computeTrajectory(
   let state: State = { r: { ...particle.vertex }, u: normalize(particle.momentum) };
   writePoint(state.r, 0);
 
-  if (length(state.r) >= maxRadius) {
+  if (outsideCylinder(state.r, maxRadius, maxZ)) {
     return {
       particleId: particle.id,
       positions,
@@ -182,9 +214,8 @@ export function computeTrajectory(
     state = next;
     s += h;
 
-    const radius = length(state.r);
-    if (radius > maxRadius) {
-      const f = sphereCrossingFraction(prevR, state.r, maxRadius);
+    if (outsideCylinder(state.r, maxRadius, maxZ)) {
+      const f = cylinderCrossingFraction(prevR, state.r, maxRadius, maxZ);
       const boundaryR = add(prevR, add(state.r, prevR, -1), f);
       writePoint(boundaryR, prevS + f * h);
       break;

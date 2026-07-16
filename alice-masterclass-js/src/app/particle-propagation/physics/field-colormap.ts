@@ -38,6 +38,19 @@ export function fieldColorRangeForStrength(targetStrengthT: number): FieldColorR
   };
 }
 
+/**
+ * Wider |B| window when dipole arcs are shown. The solenoid plateau sits mid-scale
+ * while the stronger dipole aperture (~0.7 T at nominal map) and weak fringe are
+ * not crushed into a single colour (the narrow ±0.03 T barrel window did that).
+ */
+export function fieldColorRangeForDipoleView(targetStrengthT: number): FieldColorRange {
+  const strengthScale = targetStrengthT / NOMINAL_SOLENOID_B_T;
+  return {
+    minT: 0.05 * strengthScale,
+    maxT: 0.9 * strengthScale,
+  };
+}
+
 /** Default lower end of the colour scale (Tesla) at the nominal 0.5 T strength. */
 export const FIELD_COLOR_MIN_T = fieldColorRangeForStrength(FIELD_STRENGTH_DEFAULT_T).minT;
 

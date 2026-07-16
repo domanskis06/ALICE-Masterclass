@@ -1,13 +1,20 @@
 import * as THREE from 'three';
 import { DETECTOR_PART_PATHS, DetectorModel, loadDetectorModel } from './detector-loader';
+import {
+  ITS_LOD_FAR_DISTANCE,
+  MUON_AUX_LOD_FAR_DISTANCE,
+  OUTER_MAGNET_DEFAULT_OPACITY,
+  OUTER_MAGNET_LOD_FAR_DISTANCE,
+  TPC_LOD_FAR_DISTANCE,
+} from './detector-appearance';
 
 describe('loadDetectorModel', () => {
-  /** One shared load — re-fetching all 8 GLBs per `it` freezes headless Chrome in CI. */
+  /** One shared load — re-fetching all GLBs per `it` freezes headless Chrome in CI. */
   let model: DetectorModel;
 
   beforeAll(async () => {
     model = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2);
-  }, 60000);
+  }, 90000);
 
   afterAll(() => {
     model?.group.traverse((obj) => {
@@ -19,7 +26,7 @@ describe('loadDetectorModel', () => {
     });
   });
 
-  it('lists the same 8 ALICE parts as StrangenessVisualAnalysisComponent.ALICE_DETECTOR_MODEL', () => {
+  it('lists the PP detector assembly including forward muon-system layers', () => {
     expect(DETECTOR_PART_PATHS).toEqual([
       'assets/models/alice components/its.glb',
       'assets/models/alice components/tpc.glb',
@@ -29,6 +36,10 @@ describe('loadDetectorModel', () => {
       'assets/models/alice components/DCAL.glb',
       'assets/models/alice components/PHOS.glb',
       'assets/models/alice components/L3.glb',
+      'assets/models/alice components/MCH.glb',
+      'assets/models/alice components/ABSO.glb',
+      'assets/models/alice components/SHIL.glb',
+      'assets/models/alice components/DIPO.glb',
     ]);
   });
 
@@ -59,15 +70,110 @@ describe('loadDetectorModel', () => {
         expect(material.depthWrite).toBe(true);
         expect(material.opacity).toBeGreaterThan(0);
         if (isL3) {
-          // Opaque magnet yoke — look through the aperture, not the red shell.
-          expect(material.transparent).toBe(false);
-          expect(material.opacity).toBe(1);
+          expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
+          expect(material.transparent).toBe(true);
         } else {
           expect(material.transparent).toBe(true);
           expect(material.opacity).toBeLessThan(1);
         }
       });
       expect(sawMesh).toBe(true);
+    }
+  });
+
+  it('wraps L3 in a distance LOD of InstancedMesh sector families (no material merge)', () => {
+    const l3 = model.parts.find((p) => /l3\.glb$/i.test(p.assetPath));
+    expect(l3).toBeDefined();
+    expect(l3!.root).toBeInstanceOf(THREE.LOD);
+    const lod = l3!.root as THREE.LOD;
+    expect(lod.levels.length).toBe(2);
+    expect(lod.levels[0].distance).toBe(0);
+    expect(lod.levels[1].distance).toBe(OUTER_MAGNET_LOD_FAR_DISTANCE);
+
+    const countInstanced = (root: THREE.Object3D): number => {
+      let n = 0;
+      root.traverse((obj) => {
+        if ((obj as THREE.InstancedMesh).isInstancedMesh) n += 1;
+      });
+      return n;
+    };
+    const instanceCount = (root: THREE.Object3D): number => {
+      let n = 0;
+      root.traverse((obj) => {
+        const mesh = obj as THREE.InstancedMesh;
+        if (mesh.isInstancedMesh) n += mesh.count;
+      });
+      return n;
+    };
+    expect(countInstanced(lod.levels[0].object)).toBeGreaterThanOrEqual(3);
+    expect(instanceCount(lod.levels[1].object)).toBeLessThan(instanceCount(lod.levels[0].object));
+  });
+
+  it('wraps TPC in a distance LOD with a lighter far level (thinned + decimated)', () => {
+    const tpc = model.parts.find((p) => /tpc\.glb$/i.test(p.assetPath));
+    expect(tpc).toBeDefined();
+    expect(tpc!.root).toBeInstanceOf(THREE.LOD);
+    const lod = tpc!.root as THREE.LOD;
+    expect(lod.levels.length).toBe(2);
+    expect(lod.levels[0].distance).toBe(0);
+    expect(lod.levels[1].distance).toBe(TPC_LOD_FAR_DISTANCE);
+
+    const triCount = (root: THREE.Object3D): number => {
+      let tris = 0;
+      root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const g = mesh.geometry as THREE.BufferGeometry;
+        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+      });
+      return tris;
+    };
+    expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
+  });
+
+  it('wraps ITS in a distance LOD with a lighter far level (decimated Mesh_0)', () => {
+    const its = model.parts.find((p) => /its\.glb$/i.test(p.assetPath));
+    expect(its).toBeDefined();
+    expect(its!.root).toBeInstanceOf(THREE.LOD);
+    const lod = its!.root as THREE.LOD;
+    expect(lod.levels.length).toBe(2);
+    expect(lod.levels[0].distance).toBe(0);
+    expect(lod.levels[1].distance).toBe(ITS_LOD_FAR_DISTANCE);
+
+    const triCount = (root: THREE.Object3D): number => {
+      let tris = 0;
+      root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const g = mesh.geometry as THREE.BufferGeometry;
+        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+      });
+      return tris;
+    };
+    expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
+  });
+
+  it('wraps MCH / ABSO / SHIL in distance LODs with lighter far levels', () => {
+    const triCount = (root: THREE.Object3D): number => {
+      let tris = 0;
+      root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const g = mesh.geometry as THREE.BufferGeometry;
+        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+      });
+      return tris;
+    };
+
+    for (const re of [/mch\.glb$/i, /abso\.glb$/i, /shil\.glb$/i, /dipo\.glb$/i]) {
+      const part = model.parts.find((p) => re.test(p.assetPath));
+      expect(part).toBeDefined();
+      expect(part!.label.length).toBeGreaterThan(0);
+      expect(part!.root).toBeInstanceOf(THREE.LOD);
+      const lod = part!.root as THREE.LOD;
+      expect(lod.levels.length).toBe(2);
+      expect(lod.levels[1].distance).toBe(MUON_AUX_LOD_FAR_DISTANCE);
+      expect(triCount(lod.levels[1].object)).toBeLessThanOrEqual(triCount(lod.levels[0].object));
     }
   });
 
@@ -89,10 +195,11 @@ describe('loadDetectorModel', () => {
     expect(Math.abs(center.z)).toBeLessThan(0.05);
   });
 
-  it('collapses each part down to a small number of draw calls (one per unique material)', () => {
-    for (const part of model.group.children) {
+  it('collapses each non-LOD part down to a small number of draw calls', () => {
+    for (const part of model.parts) {
+      if ((part.root as THREE.LOD).isLOD) continue;
       let meshCount = 0;
-      part.traverse((obj) => {
+      part.root.traverse((obj) => {
         if ((obj as THREE.Mesh).isMesh) meshCount += 1;
       });
       expect(meshCount).toBeGreaterThan(0);

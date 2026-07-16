@@ -72,4 +72,12 @@ describe('MagneticFieldService', () => {
     expect(b).toBeUndefined();
     expect(service.isLoaded).toBe(true);
   });
+
+  it('dipole LUT region has mostly transverse B along the beam at z ≈ −900 cm', async () => {
+    await service.load();
+    const b = service.field({ x: 0, y: -50, z: -900 });
+    const mag = Math.hypot(b.x, b.y, b.z);
+    expect(mag).toBeGreaterThan(0.4);
+    expect(Math.abs(b.x) / mag).toBeGreaterThan(0.85);
+  });
 });

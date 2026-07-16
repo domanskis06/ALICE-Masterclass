@@ -47,13 +47,31 @@ export const FIELD_STRENGTH_STEP_T = 0.1;
 /** Default slider / initial strength (matches the nominal map). */
 export const FIELD_STRENGTH_DEFAULT_T = NOMINAL_SOLENOID_B_T;
 
-/** Detector "wall": particles are stopped once |r| (from origin, in cm) exceeds this radius. */
-export const MAX_DETECTOR_R_CM = 500;
+/**
+ * Cylindrical tracking volume (L3 free bore, slightly inset from the yoke wall):
+ * stop once transverse radius `sqrt(x²+y²)` exceeds this (cm).
+ */
+export const MAX_DETECTOR_RXY_CM = 480;
+
+/**
+ * Half-length of the tracking cylinder along the beam axis (cm). Forward tracks
+ * can reach the dipole region (z ≲ −536 cm) before hitting this cap.
+ */
+export const MAX_DETECTOR_Z_CM = 750;
+
+/**
+ * Legacy alias: spherical outer radius used by older call sites / specs.
+ * Prefer {@link MAX_DETECTOR_RXY_CM} + {@link MAX_DETECTOR_Z_CM} for the cylinder.
+ */
+export const MAX_DETECTOR_R_CM = MAX_DETECTOR_RXY_CM;
 
 /** RK4 arc-length step, in cm. */
 export const RK4_STEP_CM = 1.5;
 
-/** Hard cap on the number of RK4 steps per particle (safety bound, avoids runaway loops). */
+/**
+ * Hard cap on the number of RK4 steps per particle.
+ * With {@link RK4_STEP_CM} = 1.5 cm this allows a ~750 cm path (matches {@link MAX_DETECTOR_Z_CM}).
+ */
 export const MAX_RK4_STEPS = 500;
 
 /** Hard cap on the number of particles propagated per event (perf/UX guard).

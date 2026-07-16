@@ -39,6 +39,13 @@ export interface FieldLineOptions {
   resolution?: { width: number; height: number };
   /** `|B|` colour-scale window (defaults to the nominal 0.5 T band). */
   colorRange?: FieldColorRange;
+  /** Extend barrel streamlines into the dipole region (continuous lines). */
+  includeDipoleTransition?: boolean;
+  /**
+   * Extra dipole-aperture arcs (paper-style). Defaults to
+   * {@link includeDipoleTransition}; does not densify the solenoid barrel.
+   */
+  includeDipoleArcs?: boolean;
 }
 
 /** Default stored linewidth (UI slider default; see {@link FieldLineOptions.linewidth}). */
@@ -86,11 +93,17 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
     opacity = 0.65,
     linewidth = DEFAULT_FIELD_LINEWIDTH,
     colorRange = { minT: FIELD_COLOR_MIN_T, maxT: FIELD_COLOR_MAX_T },
+    includeDipoleTransition = false,
+    includeDipoleArcs,
   } = options;
   const group = new THREE.Group();
   group.name = 'magnetic-field-lines';
 
-  const { lines } = traceFieldLines(sample, { density });
+  const { lines } = traceFieldLines(sample, {
+    density,
+    includeDipoleTransition,
+    includeDipoleArcs,
+  });
   if (lines.length === 0) return group;
 
   let segmentCount = 0;

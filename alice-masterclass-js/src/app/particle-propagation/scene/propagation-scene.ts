@@ -47,6 +47,8 @@ export class PropagationScene {
   private static readonly FIELD_OF_VIEW = 70;
   private static readonly NEAR_CLIPPING_PLANE = 0.05;
   private static readonly FAR_CLIPPING_PLANE = 1500;
+  /** OrbitControls default is 1 — lower values feel slower and less jumpy. */
+  private static readonly ORBIT_ROTATE_SPEED = 0.5;
 
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
@@ -111,8 +113,9 @@ export class PropagationScene {
     // (outer ~0.4 wu at scale 1e-2) while staying above NEAR_CLIPPING_PLANE.
     this.controls.minDistance = 0.15;
     this.controls.maxDistance = 40;
+    this.controls.rotateSpeed = PropagationScene.ORBIT_ROTATE_SPEED;
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
+    this.controls.dampingFactor = 0.08;
     // The collision vertex and the detector model are both centred on the
     // world origin (see docs/particle-propagation.md); disabling pan is what
     // guarantees they *stay* visually centred under the cursor no matter how

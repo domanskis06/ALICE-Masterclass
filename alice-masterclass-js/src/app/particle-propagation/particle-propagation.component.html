@@ -159,6 +159,13 @@
           (ngModelChange)="onFieldShowChange($event)">
           Show field
         </mat-slide-toggle>
+        <mat-slide-toggle
+          [(ngModel)]="fieldDipoleTransitionVisible"
+          [ngModelOptions]="{ standalone: true }"
+          [disabled]="!fieldVisible"
+          (ngModelChange)="onFieldDipoleTransitionChange($event)">
+          Dipole field (forward arcs + transverse brush)
+        </mat-slide-toggle>
         <label class="slider-label">Field opacity</label>
         <mat-slider
           class="full-width"

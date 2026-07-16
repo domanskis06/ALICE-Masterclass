@@ -16,7 +16,7 @@ import { firstValueFrom } from 'rxjs';
 import { MagneticFieldService } from './magnetic-field.service';
 import { computeTrajectory } from './rk4-integrator';
 import { PropagationParticle, Vec3 } from './propagation-types';
-import { MAX_DETECTOR_R_CM } from './constants';
+import { MAX_DETECTOR_R_CM, MAX_DETECTOR_Z_CM } from './constants';
 
 interface RawTrack {
   E: number;
@@ -90,7 +90,8 @@ describe('RK4 vs. stored event trajectory (real field, real event_0_0.json)', ()
       );
       expect(storedFinalR).toBeGreaterThan(MAX_DETECTOR_R_CM * 0.5);
       expect(rk4FinalR).toBeGreaterThan(MAX_DETECTOR_R_CM * 0.5);
-      expect(rk4FinalR).toBeLessThan(MAX_DETECTOR_R_CM * 1.1);
+      // Cylinder: side wall at Rxy, or end-cap at |z| — either bound is OK.
+      expect(rk4FinalR).toBeLessThan(Math.hypot(MAX_DETECTOR_R_CM, MAX_DETECTOR_Z_CM) * 1.05);
 
       // 2) Same sense of curvature: project the stored trajectory's net
       // deflection (final tangent direction vs. initial momentum direction)
