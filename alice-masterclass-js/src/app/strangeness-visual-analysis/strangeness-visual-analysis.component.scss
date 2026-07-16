@@ -302,14 +302,15 @@
 }
 
 /* Fixed overlay so it is not swallowed by THREE canvas/stacking; palette on the right stays usable.
-   Clear CERN toolbar (40px) + app toolbar (64px) = 104px — same as .container / app-event-display. */
+   Clear CERN toolbar (40px) + app toolbar (64px) = 104px, plus a small gap so the card
+   does not visually fuse with the red toolbar. */
 .va-coach-layer {
   pointer-events: none;
   position: fixed;
   z-index: 1400;
-  top: max(104px, env(safe-area-inset-top, 0px) + 104px);
+  top: max(120px, env(safe-area-inset-top, 0px) + 120px);
   left: max(16px, env(safe-area-inset-left, 0px));
-  max-width: min(520px, calc(100vw - 280px)); /* leave room for end drawer + palettes */
+  max-width: min(420px, calc(100vw - 320px)); /* leave room for end drawer + LET'S US corner tip */
 }
 
 .va-coach-card {
@@ -318,12 +319,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* ALICE theme primary = Material red 900 */
-  border: 4px solid #b71c1c;
+  background: #fff;
+  border: 1px solid rgba(183, 28, 28, 0.45);
   border-radius: 10px;
-  box-shadow:
-    0 0 0 1px rgba(183, 28, 28, 0.12),
-    0 4px 18px rgba(183, 28, 28, 0.16);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
 }
 
 .va-coach-card .mat-mdc-card-content,

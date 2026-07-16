@@ -9,7 +9,8 @@
         </button>
       }
       <span class="title-content" fxLayout="row" fxLayoutAlign="start center" fxFlex="1 1 auto" fxLayoutGap="16px">
-        <ng-content></ng-content>
+        <!-- Exclude corner overlay: a bare <ng-content> before the selective slot steals it. -->
+        <ng-content select=":not([eventDisplayCornerOverlay])"></ng-content>
       </span>
     </span>
     @if (showControls) {

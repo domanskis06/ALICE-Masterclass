@@ -3,7 +3,9 @@
     <div class="va-coach-layer" aria-live="polite">
       @if (vaCoachWelcomePhase) {
         <mat-card appearance="outlined" class="va-coach-card">
-          <mat-card-title>{{ 'VA_COACH.WELCOME_TITLE' | translate }}</mat-card-title>
+          <mat-card-header>
+            <mat-card-title>{{ 'VA_COACH.WELCOME_TITLE' | translate }}</mat-card-title>
+          </mat-card-header>
           <mat-card-content class="va-coach-text">
             <p>{{ 'VA_COACH.WELCOME_P1' | translate }}</p>
             <p>{{ 'VA_COACH.WELCOME_P2' | translate }}</p>
@@ -17,7 +19,9 @@
         </mat-card>
       } @else if (vaCoachVictoryPhase) {
         <mat-card appearance="outlined" class="va-coach-card">
-          <mat-card-title>{{ 'VA_COACH.DONE_TITLE' | translate }}</mat-card-title>
+          <mat-card-header>
+            <mat-card-title>{{ 'VA_COACH.DONE_TITLE' | translate }}</mat-card-title>
+          </mat-card-header>
           <mat-card-content class="va-coach-text">
             <p>{{ 'VA_COACH.DONE_BODY' | translate }}</p>
           </mat-card-content>
@@ -29,7 +33,9 @@
         </mat-card>
       } @else {
         <mat-card appearance="outlined" class="va-coach-card">
-          <mat-card-title>{{ 'VA_COACH.DRAG_TITLE' | translate }}</mat-card-title>
+          <mat-card-header>
+            <mat-card-title>{{ 'VA_COACH.DRAG_TITLE' | translate }}</mat-card-title>
+          </mat-card-header>
           <mat-card-content class="va-coach-text">
             <p class="va-coach-part-name">
               <strong
@@ -113,6 +119,7 @@
       @if (showLetsUsPanel) {
         <app-lets-us-panel
           eventDisplayCornerOverlay
+          ngProjectAs="[eventDisplayCornerOverlay]"
           [partDescId]="vaCoachCurrentPartDescId"
           [bulletKeys]="vaCoachCurrentPartBulletKeys"
         ></app-lets-us-panel>
