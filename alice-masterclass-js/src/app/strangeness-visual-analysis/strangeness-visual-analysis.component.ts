@@ -52,6 +52,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   vaCoachPieceHintIndex = 0;
   private vaCoachScheduleSub: Subscription | null = null;
   private vaCoachOpenScheduled = false;
+  /** First real event loaded — avoids running the collision theatre on the empty stub event. */
+  private eventReadyForProtonIntro = false;
+  /** Collision theatre finished (or skipped because assembly was already done). */
+  private protonCollisionIntroFinished = false;
 
   readonly ALICE_DETECTOR_MODEL = [
     'assets/models/alice components/its.glb',
@@ -147,6 +151,18 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     return !EventDisplayComponent.isMultipartDetectorStoredComplete(this.ALICE_DETECTOR_MODEL);
   }
 
+  /**
+   * Play the proton–proton collision theatre before the detector assembly coach.
+   * Skipped when assembly was already completed in this browser tab session.
+   */
+  get showProtonCollisionIntro(): boolean {
+    return (
+      this.isDetectorAssemblyInProgress &&
+      this.eventReadyForProtonIntro &&
+      !this.protonCollisionIntroFinished
+    );
+  }
+
   get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
     const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
     return EventDisplayComponent.detectorPartPresentation(path);
@@ -218,9 +234,17 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.vaCoachPieceHintIndex = next;
   }
 
+  onProtonCollisionIntroFinished(): void {
+    if (this.protonCollisionIntroFinished) return;
+    this.protonCollisionIntroFinished = true;
+    this.tryScheduleVaCoach();
+  }
+
   private tryScheduleVaCoach(): void {
     if (this.vaCoachOpenScheduled) return;
     if (EventDisplayComponent.isMultipartDetectorStoredComplete(this.ALICE_DETECTOR_MODEL)) return;
+    // Detector building starts only after the collision intro (when one is required).
+    if (this.isDetectorAssemblyInProgress && !this.protonCollisionIntroFinished) return;
     this.vaCoachOpenScheduled = true;
     this.vaCoachOverlayVisible = true;
     this.vaCoachWelcomePhase = true;
@@ -230,12 +254,20 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   ngOnInit(): void {
     this.maxEvents = this.dataService.EVENTS_IN_DEMO_DATASET;
+    if (!this.isDetectorAssemblyInProgress) {
+      // Returning session: no collision theatre before assembly.
+      this.protonCollisionIntroFinished = true;
+    }
     this.loadEvent().subscribe(
       (data: Event) => {
         this.eventChanged();
+        this.eventReadyForProtonIntro = true;
         this.event = data;
       },
       (error: HttpErrorResponse) => {
+        // Do not block the assembly coach if the first event fails to load.
+        this.eventReadyForProtonIntro = true;
+        this.onProtonCollisionIntroFinished();
       }
     );
   }

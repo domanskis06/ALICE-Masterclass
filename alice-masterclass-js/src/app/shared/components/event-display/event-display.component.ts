@@ -63,6 +63,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private readonly CLUSTERS_USE_POINTS: boolean = true;
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
   private readonly TRACK_DRAW_ANIMATION_MS = 4000;
+  /** Flash peak after protons meet. */
+  private readonly COLLISION_EXPLOSION_MS = 380;
+  /** Outgoing particle spray that follows the flash. */
+  private readonly COLLISION_SPRAY_MS = 1200;
 
   /** Proton GLB for the first-event collision intro. */
   @Input() protonModelUrl = 'assets/models/proton.glb';
@@ -733,11 +737,25 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private trackDrawAnimations: THREE.Object3D[] = [];
   private pendingTrackDrawLines: THREE.Object3D[] = [];
   private trackDrawAnimationStartMs = 0;
-  /** When non-null, track draw progress is paused while two protons collide. */
-  private collisionIntroPhase: 'loading' | 'animating' | null = null;
+  /**
+   * When non-null, assembly UI waits for the proton collision theatre:
+   * approach → flash → particle spray.
+   */
+  private collisionIntroPhase: 'loading' | 'approaching' | 'exploding' | 'spraying' | null = null;
   private collisionProtonsGroup = new THREE.Group();
   private protonPlusZMesh: THREE.Object3D | null = null;
   private protonMinusZMesh: THREE.Object3D | null = null;
+  private collisionImpactMesh: THREE.Mesh | null = null;
+  private collisionImpactHalo: THREE.Mesh | null = null;
+  private collisionImpactRing: THREE.Mesh | null = null;
+  private collisionFlashLight: THREE.PointLight | null = null;
+  private collisionSprayGroup: THREE.Group | null = null;
+  private collisionSprayVelocities: Float32Array | null = null;
+  private collisionSprayMeshes: THREE.Mesh[] = [];
+  private collisionImpactElapsedMs = 0;
+  private collisionSprayElapsedMs = 0;
+  private collisionIntroFinishEmitted = false;
+  private collisionBloomWasEnabled: boolean | null = null;
   /** World-space approximate radius after scaling (bounding sphere). */
   private protonRadiusWorld = 0.014;
   private lastRenderWallMs = 0;
@@ -749,8 +767,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private viewDestroyed = false;
   private resizeObserver: ResizeObserver | null = null;
   private rendererAntialias = true;
-  private protonHalfSeparationStart = 0.42;
-  private readonly protonApproachSpeed = 1.35e-4;
+  private protonHalfSeparationStart = 0.55;
+  /** Approach speed (doubled again for a snappier collision). */
+  private readonly protonApproachSpeed = 6.2e-4;
+  /** Slightly larger theatrical protons for the assembly intro camera. */
+  private readonly PROTON_INTRO_TARGET_DIAMETER = EventDisplayComponent.objectScale * 14;
   private keysDown: { [key: string]: boolean } = {};
   private panVec = new THREE.Vector3();
   private panRight = new THREE.Vector3();
@@ -873,11 +894,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         });
       }
       this.detectorLayersPanelOpened = false;
-      this.sidebarOpened = true;
       this.detectorPartsForUi = [];
       this.detectorScene = null;
       this.loading = false;
       this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_ASSEMBLY_START);
+      this.syncAssemblyDrawerForCollisionIntro();
       this.cdr.markForCheck();
       this.resize(true);
       this.requestRender();
@@ -1939,8 +1960,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this._showProtonCollisionIntro = v;
     if (!v) {
       this.cancelProtonCollisionIntroAndRevealTracks();
+    } else {
+      this.collisionIntroFinishEmitted = false;
     }
   }
+
+  /** Fires once when the pre-assembly proton collision intro finishes (or is skipped/fails). */
+  @Output()
+  protonCollisionIntroFinished: EventEmitter<void> = new EventEmitter<void>();
 
   private createLine(
     track: number[][],
@@ -2000,7 +2027,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateTrackDrawAnimations(): void {
-    if (this.isCollisionIntroBlockingPhysics()) return;
+    if (this.isCollisionIntroActive()) return;
     if (this.trackDrawAnimations.length === 0) return;
     const now = performance.now();
     const progress = Math.min(1, (now - this.trackDrawAnimationStartMs) / this.TRACK_DRAW_ANIMATION_MS);
@@ -2023,13 +2050,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private isCollisionIntroBlockingPhysics(): boolean {
-    return this.collisionIntroPhase === 'loading' || this.collisionIntroPhase === 'animating';
+  private isCollisionIntroActive(): boolean {
+    return this.collisionIntroPhase !== null;
   }
 
   /** Applies parent's track/decay/cluster toggles unless the proton intro hides physics layers. */
   private applyDesiredPhysicsVisibility(): void {
-    if (this.isCollisionIntroBlockingPhysics()) {
+    if (this.isCollisionIntroActive()) {
       this.tracks.visible = false;
       this.decays.visible = false;
       this.clusters.visible = false;
@@ -2127,7 +2154,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (!this._event) {
       return;
     }
-    const deferTrackDraw = this.isCollisionIntroBlockingPhysics();
+    const deferTrackDraw = this.isCollisionIntroActive();
     this.trackDrawAnimations = [];
     if (deferTrackDraw) {
       this.pendingTrackDrawLines = [];
@@ -2159,7 +2186,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (!this._event) {
       return;
     }
-    const deferTrackDraw = this.isCollisionIntroBlockingPhysics();
+    const deferTrackDraw = this.isCollisionIntroActive();
     this.trackDrawAnimations = [];
     if (deferTrackDraw) {
       this.pendingTrackDrawLines = [];
@@ -2287,7 +2314,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * Builds background + decay track meshes (and vertex markers) according to
    * assembly unlock: ITS-only → stubs + PV; TPC → full length; L3 → bent vs straight.
    */
-  private rebuildTracksFromEvent(deferTrackDrawForIntro: boolean): void {
+  private rebuildTracksFromEvent(
+    deferTrackDrawForIntro: boolean,
+    options?: { forceFullTheater?: boolean }
+  ): void {
     this.clearCascadeHover();
     this.tracks.clear();
     this.decays.clear();
@@ -2298,21 +2328,23 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    const theater = !!options?.forceFullTheater;
     const useTrackerUnlock = this.detectorModelHasTrackerUnlock();
     const assemblyDone = this._detectorInteractiveAssemblyDone;
     const tpcActive = this.isDetectorPartPlaced(EventDisplayComponent.isTpcAssetPath);
     const itsActive = this.isDetectorPartPlaced(EventDisplayComponent.isItsAssetPath);
     // Completed assembly (incl. refresh / session restore): always full tracks.
     // During progressive build: TPC+ → full mode; ITS-only → stubs; else nothing.
-    const showFull = !useTrackerUnlock || assemblyDone || tpcActive;
-    const showStubs = useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
+    // Collision intro theatre forces a full spray regardless of assembly unlock.
+    const showFull = theater || !useTrackerUnlock || assemblyDone || tpcActive;
+    const showStubs = !theater && useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
 
     if (!showFull && !showStubs) {
       return;
     }
 
-    const rMax = this.getUnlockedTrackRadiusMax();
-    const straight = this.shouldRenderStraightTracks();
+    const rMax = theater ? null : this.getUnlockedTrackRadiusMax();
+    const straight = theater ? false : this.shouldRenderStraightTracks();
     const cascadeVertices = showFull ? this.getCascadeVertices(this._event) : [];
 
     if (showFull) {
@@ -2390,6 +2422,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private clearCollisionProtonModels(): void {
+    this.disposeCollisionImpactFx();
+    this.restoreCollisionBloom();
     while (this.collisionProtonsGroup.children.length > 0) {
       const c = this.collisionProtonsGroup.children[0];
       this.collisionProtonsGroup.remove(c);
@@ -2405,123 +2439,424 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.protonPlusZMesh = null;
     this.protonMinusZMesh = null;
+    this.collisionImpactElapsedMs = 0;
+    this.collisionSprayElapsedMs = 0;
     this.collisionProtonsGroup.visible = false;
+  }
+
+  private boostCollisionBloom(): void {
+    if (!this.bloomPass) return;
+    if (this.collisionBloomWasEnabled === null) {
+      this.collisionBloomWasEnabled = this.bloomPass.enabled;
+    }
+    this.bloomPass.enabled = true;
+    this.bloomPass.strength = Math.max(EventDisplayComponent.BLOOM_STRENGTH, 0.55);
+    this.bloomPass.threshold = 0.2;
+  }
+
+  private restoreCollisionBloom(): void {
+    if (!this.bloomPass || this.collisionBloomWasEnabled === null) return;
+    this.bloomPass.enabled = this.collisionBloomWasEnabled;
+    this.bloomPass.strength = EventDisplayComponent.BLOOM_STRENGTH;
+    this.bloomPass.threshold = EventDisplayComponent.BLOOM_THRESHOLD;
+    this.collisionBloomWasEnabled = null;
+  }
+
+  private disposeCollisionImpactFx(): void {
+    if (this.collisionImpactMesh) {
+      this.collisionProtonsGroup.remove(this.collisionImpactMesh);
+      this.collisionImpactMesh.geometry?.dispose?.();
+      (this.collisionImpactMesh.material as THREE.Material)?.dispose?.();
+      this.collisionImpactMesh = null;
+    }
+    if (this.collisionImpactHalo) {
+      this.collisionProtonsGroup.remove(this.collisionImpactHalo);
+      this.collisionImpactHalo.geometry?.dispose?.();
+      (this.collisionImpactHalo.material as THREE.Material)?.dispose?.();
+      this.collisionImpactHalo = null;
+    }
+    if (this.collisionImpactRing) {
+      this.collisionProtonsGroup.remove(this.collisionImpactRing);
+      this.collisionImpactRing.geometry?.dispose?.();
+      (this.collisionImpactRing.material as THREE.Material)?.dispose?.();
+      this.collisionImpactRing = null;
+    }
+    if (this.collisionSprayGroup) {
+      this.collisionProtonsGroup.remove(this.collisionSprayGroup);
+      const sharedGeom = this.collisionSprayMeshes[0]?.geometry ?? null;
+      for (const mesh of this.collisionSprayMeshes) {
+        (mesh.material as THREE.Material)?.dispose?.();
+      }
+      sharedGeom?.dispose?.();
+      this.collisionSprayGroup = null;
+      this.collisionSprayMeshes = [];
+      this.collisionSprayVelocities = null;
+    }
+    if (this.collisionFlashLight) {
+      this.collisionProtonsGroup.remove(this.collisionFlashLight);
+      this.collisionFlashLight = null;
+    }
+  }
+
+  private cloneProtonMaterials(root: THREE.Object3D): void {
+    root.traverse((o: THREE.Object3D) => {
+      if (!(o as THREE.Mesh).isMesh) return;
+      const mesh = o as THREE.Mesh;
+      if (Array.isArray(mesh.material)) {
+        mesh.material = mesh.material.map((m) => m.clone());
+      } else if (mesh.material) {
+        mesh.material = mesh.material.clone();
+      }
+    });
   }
 
   private beginProtonCollisionIntroLoad(): void {
     if (!this._event || !this.showProtonCollisionIntro) return;
     this.clearCollisionProtonModels();
+    this.collisionIntroFinishEmitted = false;
     this.collisionIntroPhase = 'loading';
+    this.syncAssemblyDrawerForCollisionIntro();
     this.loaderGLTF.load(
       this.protonModelUrl,
       (gltf: GLTF) => {
-      if (
-        !this._event ||
-        !this.showProtonCollisionIntro ||
-        this.collisionIntroPhase !== 'loading'
-      ) {
-        return;
-      }
-      const tpl = gltf.scene;
-      const plus = tpl.clone(true);
-      const minus = tpl.clone(true);
-      const bbox = new THREE.Box3().setFromObject(tpl);
-      const size = bbox.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
-      const targetDiameter =
-        EventDisplayComponent.objectScale * 10;
-      const uniform = targetDiameter / maxDim;
-      plus.scale.setScalar(uniform);
-      minus.scale.setScalar(uniform);
+        if (
+          !this._event ||
+          !this.showProtonCollisionIntro ||
+          this.collisionIntroPhase !== 'loading'
+        ) {
+          return;
+        }
+        const tpl = gltf.scene;
+        const plus = tpl.clone(true);
+        const minus = tpl.clone(true);
+        this.cloneProtonMaterials(plus);
+        this.cloneProtonMaterials(minus);
 
-      plus.updateMatrixWorld(true);
-      minus.updateMatrixWorld(true);
-      const sph = new THREE.Sphere();
-      new THREE.Box3().setFromObject(plus).getBoundingSphere(sph);
-      this.protonRadiusWorld = sph.radius;
+        const bbox = new THREE.Box3().setFromObject(tpl);
+        const size = bbox.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
+        const uniform = this.PROTON_INTRO_TARGET_DIAMETER / maxDim;
+        plus.scale.setScalar(uniform);
+        minus.scale.setScalar(uniform);
 
-      const halfSep = Math.max(this.protonHalfSeparationStart, this.protonRadiusWorld * 2.6);
-      minus.position.set(0, 0, -halfSep);
-      plus.position.set(0, 0, halfSep);
-      minus.traverse(this.setIntroProtonPresentationalState);
-      plus.traverse(this.setIntroProtonPresentationalState);
-      this.collisionProtonsGroup.add(minus);
-      this.collisionProtonsGroup.add(plus);
-      this.protonMinusZMesh = minus;
-      this.protonPlusZMesh = plus;
-      this.collisionProtonsGroup.visible = true;
-      this.collisionIntroPhase = 'animating';
-      this.requestRender();
-    },
+        plus.updateMatrixWorld(true);
+        const sph = new THREE.Sphere();
+        new THREE.Box3().setFromObject(plus).getBoundingSphere(sph);
+        this.protonRadiusWorld = sph.radius;
+
+        const halfSep = Math.max(this.protonHalfSeparationStart, this.protonRadiusWorld * 3.2);
+        minus.position.set(0, 0, -halfSep);
+        plus.position.set(0, 0, halfSep);
+        minus.traverse(this.setIntroProtonPresentationalState);
+        plus.traverse(this.setIntroProtonPresentationalState);
+        this.collisionProtonsGroup.add(minus);
+        this.collisionProtonsGroup.add(plus);
+        this.protonMinusZMesh = minus;
+        this.protonPlusZMesh = plus;
+        this.collisionProtonsGroup.visible = true;
+        this.collisionIntroPhase = 'approaching';
+        this.syncAssemblyDrawerForCollisionIntro();
+        this.requestRender();
+      },
       undefined,
       () => {
-        this.collisionIntroPhase = null;
-        this.clearCollisionProtonModels();
-        if (this.pendingTrackDrawLines.length) {
-          const pending = [...this.pendingTrackDrawLines];
-          this.pendingTrackDrawLines = [];
-          for (const line of pending) {
-            this.queueTrackDrawAnimation(line);
-          }
-          this.trackDrawAnimationStartMs = performance.now();
-        }
-        this.applyDesiredPhysicsVisibility();
-        this.requestRender();
+        this.finishCollisionIntroTheatre();
       }
     );
   }
 
   private setIntroProtonPresentationalState = (o: THREE.Object3D): void => {
-    if ((o as THREE.Mesh).isMesh) {
-      const m = (o as THREE.Mesh).material;
-      const mats: THREE.Material[] = Array.isArray(m) ? m : m ? [m] : [];
-      for (const mat of mats) {
-        mat.depthWrite = true;
-        mat.needsUpdate = true;
+    if (!(o as THREE.Mesh).isMesh) return;
+    const mesh = o as THREE.Mesh;
+    const mats: THREE.Material[] = Array.isArray(mesh.material)
+      ? mesh.material
+      : mesh.material
+        ? [mesh.material]
+        : [];
+    for (const mat of mats) {
+      mat.depthWrite = false;
+      mat.transparent = true;
+      mat.needsUpdate = true;
+      const std = mat as THREE.MeshStandardMaterial;
+      if (std.isMeshStandardMaterial) {
+        if (!std.emissive) {
+          std.emissive = new THREE.Color(0x000000);
+        }
+        std.emissive.copy(std.color).multiplyScalar(0.35);
+        std.emissiveIntensity = Math.max(std.emissiveIntensity ?? 0, 0.18);
       }
-      o.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8000;
+      const opacity = (mat as { opacity?: number }).opacity;
+      if (opacity != null) {
+        (mat.userData as { baseOpacity?: number }).baseOpacity = opacity;
+      }
     }
+    o.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8000;
   };
 
-  private completeCollisionIntro(): void {
-    if (this.collisionIntroPhase === null || this.collisionIntroPhase === 'loading') return;
+  private removeIntroProtonMeshes(): void {
+    const disposeRoot = (root: THREE.Object3D | null) => {
+      if (!root) return;
+      this.collisionProtonsGroup.remove(root);
+      root.traverse((o: THREE.Object3D) => {
+        if (!(o as THREE.Mesh).isMesh) return;
+        const m = o as THREE.Mesh;
+        m.geometry?.dispose?.();
+        const mat = m.material as THREE.Material | THREE.Material[];
+        if (Array.isArray(mat)) mat.forEach((x) => x.dispose?.());
+        else mat?.dispose?.();
+      });
+    };
+    disposeRoot(this.protonPlusZMesh);
+    disposeRoot(this.protonMinusZMesh);
+    this.protonPlusZMesh = null;
+    this.protonMinusZMesh = null;
+  }
+
+  private beginCollisionExplosion(): void {
+    this.disposeCollisionImpactFx();
+    this.removeIntroProtonMeshes();
+    this.boostCollisionBloom();
+
+    const coreR = Math.max(this.protonRadiusWorld * 1.1, 0.016);
+    // Opaque saturated core — readable on white (additive washout avoided).
+    const flash = new THREE.Mesh(
+      new THREE.SphereGeometry(coreR, 28, 22),
+      new THREE.MeshBasicMaterial({
+        color: 0xff2a6d,
+        transparent: true,
+        opacity: 1,
+        depthWrite: false
+      })
+    );
+    flash.scale.setScalar(0.55);
+    flash.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9000;
+    this.collisionImpactMesh = flash;
+    this.collisionProtonsGroup.add(flash);
+
+    const halo = new THREE.Mesh(
+      new THREE.SphereGeometry(coreR * 1.35, 24, 20),
+      new THREE.MeshBasicMaterial({
+        color: 0xff8c1a,
+        transparent: true,
+        opacity: 0.72,
+        depthWrite: false
+      })
+    );
+    halo.scale.setScalar(0.7);
+    halo.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8995;
+    this.collisionImpactHalo = halo;
+    this.collisionProtonsGroup.add(halo);
+
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(coreR * 0.7, coreR * 1.25, 56),
+      new THREE.MeshBasicMaterial({
+        color: 0x1f6bff,
+        transparent: true,
+        opacity: 0.95,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8990;
+    this.collisionImpactRing = ring;
+    this.collisionProtonsGroup.add(ring);
+
+    this.spawnCollisionSprayParticles();
+
+    this.collisionFlashLight = new THREE.PointLight(0xff4d8d, 6.5, this.protonRadiusWorld * 36, 2);
+    this.collisionProtonsGroup.add(this.collisionFlashLight);
+
+    this.collisionProtonsGroup.visible = true;
+    this.collisionImpactElapsedMs = 0;
+    this.collisionSprayElapsedMs = 0;
+    this.collisionIntroPhase = 'exploding';
+  }
+
+  private spawnCollisionSprayParticles(): void {
+    const sprayCount = 140;
+    const colors = [0xc41e3a, 0x1a3cff, 0x000080, 0x7b2cbf, 0xff6b00, 0x0d9488, 0xe11d48];
+    const group = new THREE.Group();
+    const velocities = new Float32Array(sprayCount * 3);
+    const meshes: THREE.Mesh[] = [];
+    const speed = Math.max(this.protonRadiusWorld * 14, 0.22);
+    const geom = new THREE.SphereGeometry(Math.max(this.protonRadiusWorld * 0.22, 0.0045), 10, 8);
+
+    for (let i = 0; i < sprayCount; i++) {
+      const u = Math.random();
+      const v = Math.random();
+      const theta = 2 * Math.PI * u;
+      const phi = Math.acos(2 * v - 1);
+      const dirX = Math.sin(phi) * Math.cos(theta);
+      const dirY = Math.sin(phi) * Math.sin(theta);
+      const dirZ = Math.cos(phi);
+      const s = speed * (0.45 + Math.random() * 1.35);
+      velocities[i * 3] = dirX * s;
+      velocities[i * 3 + 1] = dirY * s;
+      velocities[i * 3 + 2] = dirZ * s;
+
+      const mat = new THREE.MeshBasicMaterial({
+        color: colors[i % colors.length],
+        transparent: true,
+        opacity: 1,
+        depthWrite: false
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      const scale = 0.7 + Math.random() * 1.1;
+      mesh.scale.setScalar(scale);
+      mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9020;
+      group.add(mesh);
+      meshes.push(mesh);
+    }
+
+    this.collisionSprayGroup = group;
+    this.collisionSprayMeshes = meshes;
+    this.collisionSprayVelocities = velocities;
+    this.collisionProtonsGroup.add(group);
+  }
+
+  private finishCollisionIntroTheatre(): void {
     this.collisionIntroPhase = null;
     this.clearCollisionProtonModels();
-    for (const line of this.pendingTrackDrawLines) {
-      this.queueTrackDrawAnimation(line);
-    }
+    this.trackDrawAnimations = [];
     this.pendingTrackDrawLines = [];
-    this.trackDrawAnimationStartMs = performance.now();
+    this.tracks.clear();
+    this.decays.clear();
+    this.cascadeVertexMarkers.clear();
+    this.clearPrimaryVertexMarkers();
     this.applyDesiredPhysicsVisibility();
+    this.syncAssemblyDrawerForCollisionIntro();
     this.requestRender();
+    this.emitProtonCollisionIntroFinished();
+  }
+
+  private emitProtonCollisionIntroFinished(): void {
+    if (this.collisionIntroFinishEmitted) return;
+    this.collisionIntroFinishEmitted = true;
+    this.protonCollisionIntroFinished.emit();
+  }
+
+  private syncAssemblyDrawerForCollisionIntro(): void {
+    if (!this.detectorMultipartAssemblyMode || this._detectorInteractiveAssemblyDone) {
+      return;
+    }
+    // Keep the palette closed until the collision theatre hands off to assembly coaching.
+    this.sidebarOpened = !this.isCollisionIntroActive();
+    this.cdr.markForCheck();
   }
 
   private cancelProtonCollisionIntroAndRevealTracks(): void {
-    const blocking = this.isCollisionIntroBlockingPhysics();
-    if (!blocking && this.pendingTrackDrawLines.length === 0) return;
-    const pending = [...this.pendingTrackDrawLines];
+    if (!this.isCollisionIntroActive()) {
+      if (this._showProtonCollisionIntro === false) {
+        this.emitProtonCollisionIntroFinished();
+      }
+      return;
+    }
     this.pendingTrackDrawLines = [];
+    this.trackDrawAnimations = [];
     this.collisionIntroPhase = null;
     this.clearCollisionProtonModels();
-    for (const line of pending) {
-      this.queueTrackDrawAnimation(line);
-    }
-    if (pending.length) {
-      this.trackDrawAnimationStartMs = performance.now();
-    }
+    this.tracks.clear();
+    this.decays.clear();
+    this.cascadeVertexMarkers.clear();
+    this.clearPrimaryVertexMarkers();
     this.applyDesiredPhysicsVisibility();
+    this.syncAssemblyDrawerForCollisionIntro();
     this.requestRender();
+    this.emitProtonCollisionIntroFinished();
+  }
+
+  private updateCollisionSpray(deltaMs: number, fadeFactor: number): void {
+    if (!this.collisionSprayGroup || !this.collisionSprayVelocities) return;
+    const step = deltaMs / 1000;
+    const vel = this.collisionSprayVelocities;
+    for (let i = 0; i < this.collisionSprayMeshes.length; i++) {
+      const mesh = this.collisionSprayMeshes[i];
+      const ix = i * 3;
+      mesh.position.x += vel[ix] * step;
+      mesh.position.y += vel[ix + 1] * step;
+      mesh.position.z += vel[ix + 2] * step;
+      const mat = mesh.material as THREE.MeshBasicMaterial;
+      mat.opacity = Math.max(0, fadeFactor);
+    }
   }
 
   private updateProtonCollisionIntro(deltaWallMs: number): void {
-    if (this.collisionIntroPhase !== 'animating' || !this.protonPlusZMesh || !this.protonMinusZMesh) return;
+    if (
+      this.collisionIntroPhase !== 'approaching' &&
+      this.collisionIntroPhase !== 'exploding' &&
+      this.collisionIntroPhase !== 'spraying'
+    ) {
+      return;
+    }
     const dt = Math.min(Math.max(deltaWallMs, 0), 72);
-    const step = this.protonApproachSpeed * dt;
-    this.protonPlusZMesh.position.z -= step;
-    this.protonMinusZMesh.position.z += step;
-    const sep = this.protonPlusZMesh.position.z - this.protonMinusZMesh.position.z;
-    if (sep <= 2 * this.protonRadiusWorld * 1.02) {
-      this.completeCollisionIntro();
+
+    if (this.collisionIntroPhase === 'approaching' && this.protonPlusZMesh && this.protonMinusZMesh) {
+      this.protonPlusZMesh.position.z -= this.protonApproachSpeed * dt;
+      this.protonMinusZMesh.position.z += this.protonApproachSpeed * dt;
+      const sep = this.protonPlusZMesh.position.z - this.protonMinusZMesh.position.z;
+      if (sep <= 2 * this.protonRadiusWorld * 1.05) {
+        this.beginCollisionExplosion();
+      }
+      return;
+    }
+
+    if (this.collisionIntroPhase === 'exploding') {
+      this.collisionImpactElapsedMs += dt;
+      const t = Math.min(1, this.collisionImpactElapsedMs / this.COLLISION_EXPLOSION_MS);
+      const ease = 1 - Math.pow(1 - t, 3);
+
+      if (this.collisionImpactMesh) {
+        this.collisionImpactMesh.scale.setScalar(0.55 + ease * 4.2);
+        (this.collisionImpactMesh.material as THREE.MeshBasicMaterial).opacity = 1 - ease * 0.25;
+      }
+      if (this.collisionImpactHalo) {
+        this.collisionImpactHalo.scale.setScalar(0.7 + ease * 6.5);
+        (this.collisionImpactHalo.material as THREE.MeshBasicMaterial).opacity = 0.72 * (1 - ease * 0.55);
+      }
+      if (this.collisionImpactRing) {
+        const ringScale = 1 + ease * 10;
+        this.collisionImpactRing.scale.set(ringScale, ringScale, ringScale);
+        (this.collisionImpactRing.material as THREE.MeshBasicMaterial).opacity = 0.95 * (1 - ease * 0.35);
+      }
+      if (this.collisionFlashLight) {
+        this.collisionFlashLight.intensity = 6.5 * (1 - ease * 0.4);
+      }
+      // Particles already leave the vertex during the flash.
+      this.updateCollisionSpray(dt, 1);
+
+      if (t >= 1) {
+        this.collisionIntroPhase = 'spraying';
+        this.collisionSprayElapsedMs = 0;
+      }
+      return;
+    }
+
+    // spraying — flash fades, particles keep flying out then vanish
+    this.collisionSprayElapsedMs += dt;
+    const t = Math.min(1, this.collisionSprayElapsedMs / this.COLLISION_SPRAY_MS);
+    const fade = t < 0.55 ? 1 : 1 - (t - 0.55) / 0.45;
+
+    if (this.collisionImpactMesh) {
+      this.collisionImpactMesh.scale.setScalar(4.75 + t * 2.2);
+      (this.collisionImpactMesh.material as THREE.MeshBasicMaterial).opacity = 0.75 * fade;
+    }
+    if (this.collisionImpactHalo) {
+      this.collisionImpactHalo.scale.setScalar(7.2 + t * 3);
+      (this.collisionImpactHalo.material as THREE.MeshBasicMaterial).opacity = 0.32 * fade;
+    }
+    if (this.collisionImpactRing) {
+      const ringScale = 11 + t * 6;
+      this.collisionImpactRing.scale.set(ringScale, ringScale, ringScale);
+      (this.collisionImpactRing.material as THREE.MeshBasicMaterial).opacity = 0.6 * fade;
+    }
+    if (this.collisionFlashLight) {
+      this.collisionFlashLight.intensity = 3.8 * fade;
+    }
+    this.updateCollisionSpray(dt, fade);
+
+    if (t >= 1) {
+      this.finishCollisionIntroTheatre();
     }
   }
 
@@ -2640,11 +2975,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const deferTrackDrawForIntro =
       this._event !== null && this.showProtonCollisionIntro;
     if (deferTrackDrawForIntro) {
+      this.collisionIntroFinishEmitted = false;
       this.clearCollisionProtonModels();
       this.collisionIntroPhase = 'loading';
+      this.syncAssemblyDrawerForCollisionIntro();
     } else {
       this.collisionIntroPhase = null;
       this.clearCollisionProtonModels();
+      this.syncAssemblyDrawerForCollisionIntro();
     }
     this.trackDrawAnimationStartMs = deferTrackDrawForIntro
       ? 0
@@ -2865,7 +3203,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /** True while input/animations still need continuous frames (OrbitControls damping uses 'change'). */
   private isRenderActivityPending(): boolean {
-    if (this.collisionIntroPhase === 'animating') return true;
+    if (this.isCollisionIntroActive()) {
+      return true;
+    }
     if (this.trackDrawAnimations.length > 0) return true;
     if (this.isMousePanning) return true;
     if (this.cameraMode === 'free' && this.hasPanKeysDown()) return true;

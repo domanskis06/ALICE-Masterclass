@@ -28,3 +28,6 @@ alice-masterclass-django/.venv/
 
 # Local venv at monorepo root (mistaken python3 -m venv .venv-e2e here)
 .venv-e2e/
+
+# Blender working files / rendered frames (local only)
+alice-masterclass-js/src/assets/models/blender/

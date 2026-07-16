@@ -74,13 +74,14 @@
       [showThemeToggle]="true"
       [darkMode]="visualDarkMode"
       (darkModeChange)="visualDarkMode = $event"
-      [showProtonCollisionIntro]="eventID === 0"
+      [showProtonCollisionIntro]="showProtonCollisionIntro"
       [event]="event"
       [previousEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
       (previousEvent)="onPreviousEvent()"
       [nextEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
       (nextEvent)="onNextEvent()"
       (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
+      (protonCollisionIntroFinished)="onProtonCollisionIntroFinished()"
       (trackClickedEvent)="onTrackClicked($event)"
       >
       <div class="dataset-controls">
