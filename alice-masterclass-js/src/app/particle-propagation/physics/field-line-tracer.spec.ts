@@ -75,7 +75,9 @@ describe('traceFieldLines', () => {
     // mid (2×6) + TRD–L3 gap (4×24) = 108 at sparse
     expect(rings.length).toBe(108);
 
-    const trdL3 = rings.filter((s) => Math.hypot(s.x, s.y) >= 300);
+    // Mid radii [280, 340] interleave with TRD–L3 [322, …] — match by rounded R.
+    const trdL3Radii = new Set([322, 378, 434, 490]);
+    const trdL3 = rings.filter((s) => trdL3Radii.has(Math.round(Math.hypot(s.x, s.y))));
     expect(trdL3.length).toBe(96);
 
     const radii = [...new Set(trdL3.map((s) => Math.round(Math.hypot(s.x, s.y))))].sort(
@@ -127,6 +129,8 @@ describe('traceFieldLines', () => {
     const withDipole = traceFieldLines(mockSolDip, {
       density: 'sparse',
       includeDipoleTransition: true,
+      // Isolate continuous barrel→dipole extension (arcs default on with transition).
+      includeDipoleArcs: false,
     });
     // Same seeds; variant 2 may drop a stub, but bent arcs remain.
     expect(withDipole.lines.length).toBeGreaterThan(0);
@@ -193,9 +197,10 @@ describe('traceFieldLines', () => {
   });
 
   it('variant 2 clips non-bending dipole tails but keeps bent arcs', () => {
+    // minZ must stay above DIPOLE_KEEP_DEEP_Z_CM (−720) or the deep-tail keep wins.
     const straight = {
       pointCount: 4,
-      positions: new Float32Array([0, 0, -400, 0, 0, -500, 0, 0, -650, 0, 0, -900]),
+      positions: new Float32Array([0, 0, -400, 0, 0, -500, 0, 0, -580, 0, 0, -650]),
       magnitudes: new Float32Array([0.5, 0.45, 0.4, 0.3]),
     };
     expect(__testing__.bendsInDipole(straight)).toBe(false);
@@ -299,7 +304,12 @@ describe('traceFieldLines', () => {
     }
     expect(__testing__.keepTransverseLine(shortX)).toBeNull();
 
-    const zs = [0, -50, -150, -300, -450, -600, -750, -900, -1050, -1200];
+    // Need ≥16 kept vertices, Δz ≥ 220 cm, and minZ into the dipole LUT.
+    const zs = [
+      0,
+      -50,
+      ...Array.from({ length: 18 }, (_, i) => -150 - i * 50),
+    ];
     const positions = new Float32Array(zs.length * 3);
     const magnitudes = new Float32Array(zs.length);
     for (let i = 0; i < zs.length; i++) {
@@ -313,7 +323,7 @@ describe('traceFieldLines', () => {
       magnitudes,
     });
     expect(clipped).not.toBeNull();
-    expect(clipped!.pointCount).toBe(8); // drops z=0 and z=-50
+    expect(clipped!.pointCount).toBe(18); // drops z=0 and z=-50
     for (let i = 0; i < clipped!.pointCount; i++) {
       expect(clipped!.positions[i * 3 + 2]).toBeLessThanOrEqual(__testing__.PAPER_CLIP_MAX_Z_CM);
     }
