@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, Output, AfterViewInit, ViewChild, EventEmitter, HostBinding, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, ElementRef, Input, Output, AfterViewInit, ViewChild, EventEmitter, HostBinding, OnDestroy, ChangeDetectorRef, TemplateRef } from '@angular/core';
 import { CdkDragEnd } from '@angular/cdk/drag-drop';
 import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
@@ -3058,6 +3058,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   @Input()
   assemblyAllowedDragAssetPath: string | null = null;
+
+  /**
+   * Optional tip panel rendered in the top-right of the viz (next to the assembly drawer).
+   * Prefer TemplateRef over ng-content: @if + preserveWhitespaces breaks multi-slot projection.
+   */
+  @Input()
+  cornerOverlayTemplate: TemplateRef<unknown> | null = null;
 
   constructor(private cdr: ChangeDetectorRef) {
     const lineParams = {

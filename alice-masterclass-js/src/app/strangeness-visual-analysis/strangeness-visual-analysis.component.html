@@ -81,6 +81,7 @@
       [darkMode]="visualDarkMode"
       (darkModeChange)="visualDarkMode = $event"
       [showProtonCollisionIntro]="showProtonCollisionIntro"
+      [cornerOverlayTemplate]="showLetsUsPanel ? letsUsPanelTpl : null"
       [event]="event"
       [previousEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
       (previousEvent)="onPreviousEvent()"
@@ -116,15 +117,14 @@
       @if (isCurrentEventDone) {
         <mat-icon id="done">done</mat-icon>
       }
-      @if (showLetsUsPanel) {
-        <app-lets-us-panel
-          eventDisplayCornerOverlay
-          ngProjectAs="[eventDisplayCornerOverlay]"
-          [partDescId]="vaCoachCurrentPartDescId"
-          [bulletKeys]="vaCoachCurrentPartBulletKeys"
-        ></app-lets-us-panel>
-      }
     </app-event-display>
+
+    <ng-template #letsUsPanelTpl>
+      <app-lets-us-panel
+        [partDescId]="vaCoachCurrentPartDescId"
+        [bulletKeys]="vaCoachCurrentPartBulletKeys"
+      ></app-lets-us-panel>
+    </ng-template>
     <div fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
       <app-calculator fxFlex="grow"
         [darkMode]="visualDarkMode"
