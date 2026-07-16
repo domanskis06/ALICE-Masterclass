@@ -301,12 +301,13 @@
   }
 }
 
-/* Fixed overlay so it is not swallowed by THREE canvas/stacking; palette on the right stays usable. */
+/* Fixed overlay so it is not swallowed by THREE canvas/stacking; palette on the right stays usable.
+   Clear CERN toolbar (40px) + app toolbar (64px) = 104px — same as .container / app-event-display. */
 .va-coach-layer {
   pointer-events: none;
   position: fixed;
   z-index: 1400;
-  top: max(80px, env(safe-area-inset-top, 0px) + 64px);
+  top: max(104px, env(safe-area-inset-top, 0px) + 104px);
   left: max(16px, env(safe-area-inset-left, 0px));
   max-width: min(520px, calc(100vw - 280px)); /* leave room for end drawer + palettes */
 }
@@ -318,7 +319,7 @@
   flex-direction: column;
   overflow: hidden;
   /* ALICE theme primary = Material red 900 */
-  border: 8px solid #b71c1c;
+  border: 4px solid #b71c1c;
   border-radius: 10px;
   box-shadow:
     0 0 0 1px rgba(183, 28, 28, 0.12),
