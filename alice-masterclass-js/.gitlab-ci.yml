@@ -44,6 +44,15 @@ unit_tests_js:
     - cd "$CI_PROJECT_DIR/alice-masterclass-js"
     - npm install -g npm@11
   script:
+    - 'echo "CI_COMMIT_SHA=$CI_COMMIT_SHA CI_COMMIT_SHORT_SHA=$CI_COMMIT_SHORT_SHA"'
+    # Fail fast if muon-arm GLBs are missing from the checkout (Karma serves src/assets).
+    - |
+      set -e
+      MODEL_DIR="src/assets/models/alice components"
+      ls -la "$MODEL_DIR"
+      for f in MCH.glb ABSO.glb SHIL.glb DIPO.glb; do
+        test -f "$MODEL_DIR/$f" || { echo "MISSING detector GLB: $MODEL_DIR/$f"; exit 1; }
+      done
     - npm ci
     - export CHROME_BIN="$(ls /ms-playwright/chromium-*/chrome-linux*/chrome 2>/dev/null | head -1)"
     - '[ -n "$CHROME_BIN" ] || export CHROME_BIN="$(ls /ms-playwright/chromium_headless_shell-*/chrome-linux*/headless_shell 2>/dev/null | head -1)"'
