@@ -152,7 +152,9 @@
     "DETECTOR_LAYER_FALLBACK": "{{name}}",
     "MAGNETIC_FIELD": "Magnetfeld",
     "DETECTOR_ASSEMBLY_TITLE": "Detektor zusammenbauen",
-    "DETECTOR_ASSEMBLY_HINT": "Ziehen Sie jedes Teil aus diesem Panel in die 3D-Ansicht. Wenn alles platziert ist, erscheinen hier die Detektoroptionen (Ansichten, Cluster, Spuren)."
+    "DETECTOR_ASSEMBLY_HINT": "Ziehen Sie jedes Teil aus diesem Panel in die 3D-Ansicht. Wenn alles platziert ist, erscheinen hier die Detektoroptionen (Ansichten, Cluster, Spuren).",
+    "TRD_READING": "TRD-Auslesung",
+    "TOF_READING": "TOF-Auslesung"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Bitte wählen Sie den Datensatz:",
