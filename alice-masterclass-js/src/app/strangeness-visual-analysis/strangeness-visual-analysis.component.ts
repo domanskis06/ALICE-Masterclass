@@ -39,9 +39,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   @ViewChild('visualAnalysisContainer')
   private visualAnalysisContainerRef!: ElementRef<HTMLElement>;
 
+  @ViewChild('eventDisplayHost')
+  private eventDisplay!: EventDisplayComponent;
+
   @ViewChild('eventDisplayHost', {read: ElementRef})
   private eventDisplayHostRef!: ElementRef<HTMLElement>;
 
+  @ViewChild('collisionVideo')
+  private collisionVideoRef?: ElementRef<HTMLVideoElement>;
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
@@ -52,10 +57,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   vaCoachPieceHintIndex = 0;
   private vaCoachScheduleSub: Subscription | null = null;
   private vaCoachOpenScheduled = false;
-  /** First real event loaded — avoids running the collision theatre on the empty stub event. */
+  /** First real event loaded — avoids running the collision intro on the empty stub event. */
   private eventReadyForProtonIntro = false;
-  /** Collision theatre finished (or skipped because assembly was already done). */
+  /** Collision intro finished (or skipped because assembly was already done). */
   private protonCollisionIntroFinished = false;
+
+  /** MP4 proton–proton collision intro shown before the assembly coach. */
+  readonly collisionVideoUrl = 'assets/videos/proton_collision_animation.mp4';
 
   readonly ALICE_DETECTOR_MODEL = [
     'assets/models/alice components/its.glb',
@@ -152,10 +160,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   /**
-   * Play the proton–proton collision theatre before the detector assembly coach.
+   * Show the MP4 proton–proton collision intro before the detector assembly coach.
    * Skipped when assembly was already completed in this browser tab session.
    */
-  get showProtonCollisionIntro(): boolean {
+  get showCollisionVideoIntro(): boolean {
     return (
       this.isDetectorAssemblyInProgress &&
       this.eventReadyForProtonIntro &&
@@ -167,6 +175,15 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
     return EventDisplayComponent.detectorPartPresentation(path);
   }
+
+  /** Real photos for selected detector parts (shown under "Next piece to place"). */
+  private static readonly DETECTOR_PART_PHOTOS: Record<string, string> = {
+    ITS: 'assets/images/detector-parts/ITS.png',
+    FIT: 'assets/images/detector-parts/FIT.png',
+    TPC: 'assets/images/detector-parts/TPC.png',
+    EMCAL: 'assets/images/detector-parts/EMCAL.png',
+    L3: 'assets/images/detector-parts/L3.png',
+  };
 
   /** i18n key under VA_COACH.PART_DESC for the piece currently highlighted (e.g. ITS). */
   get vaCoachCurrentPartDescId(): string | null {
@@ -184,6 +201,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       'l3.glb': 'L3',
     };
     return byFile[file] ?? null;
+  }
+
+  /** Photo URL for the current assembly piece, when available. */
+  get vaCoachCurrentPartPhotoUrl(): string | null {
+    const id = this.vaCoachCurrentPartDescId;
+    if (!id) return null;
+    return StrangenessVisualAnalysisComponent.DETECTOR_PART_PHOTOS[id] ?? null;
   }
 
   /** LETS US tip panel next to the assembly drawer (hidden during welcome / victory). */
@@ -220,6 +244,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   onVaCoachVictoryDismiss(): void {
     this.vaCoachOverlayVisible = false;
     this.vaCoachVictoryPhase = false;
+    this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
   }
 
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
@@ -240,6 +265,16 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.tryScheduleVaCoach();
   }
 
+  onCollisionVideoReady(): void {
+    this.tryPlayCollisionVideo();
+  }
+
+  private tryPlayCollisionVideo(): void {
+    const video = this.collisionVideoRef?.nativeElement;
+    if (!video || this.protonCollisionIntroFinished) return;
+    void video.play().catch(() => this.onProtonCollisionIntroFinished());
+  }
+
   private tryScheduleVaCoach(): void {
     if (this.vaCoachOpenScheduled) return;
     if (EventDisplayComponent.isMultipartDetectorStoredComplete(this.ALICE_DETECTOR_MODEL)) return;
@@ -255,7 +290,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   ngOnInit(): void {
     this.maxEvents = this.dataService.EVENTS_IN_DEMO_DATASET;
     if (!this.isDetectorAssemblyInProgress) {
-      // Returning session: no collision theatre before assembly.
+      // Returning session: no collision intro before assembly.
       this.protonCollisionIntroFinished = true;
     }
     this.loadEvent().subscribe(
@@ -263,6 +298,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
         this.eventChanged();
         this.eventReadyForProtonIntro = true;
         this.event = data;
+        setTimeout(() => this.tryPlayCollisionVideo(), 0);
       },
       (error: HttpErrorResponse) => {
         // Do not block the assembly coach if the first event fails to load.

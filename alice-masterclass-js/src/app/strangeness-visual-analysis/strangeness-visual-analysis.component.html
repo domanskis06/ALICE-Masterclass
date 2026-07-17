@@ -1,4 +1,23 @@
 <div fxFlex="grow" data-testid="strangeness-visual-analysis-page">
+  @if (showCollisionVideoIntro) {
+    <div class="collision-video-layer" aria-live="polite">
+      <div class="collision-video-frame">
+        <video
+          #collisionVideo
+          class="collision-video"
+          [src]="collisionVideoUrl"
+          autoplay
+          muted
+          playsinline
+          preload="auto"
+          (loadeddata)="onCollisionVideoReady()"
+          (ended)="onProtonCollisionIntroFinished()"
+          (error)="onProtonCollisionIntroFinished()"
+        ></video>
+      </div>
+    </div>
+  }
+
   @if (vaCoachOverlayVisible) {
     <div class="va-coach-layer" aria-live="polite">
       @if (vaCoachWelcomePhase) {
@@ -32,25 +51,36 @@
           </mat-card-actions>
         </mat-card>
       } @else {
-        <mat-card appearance="outlined" class="va-coach-card">
-          <mat-card-header>
-            <mat-card-title>{{ 'VA_COACH.DRAG_TITLE' | translate }}</mat-card-title>
-          </mat-card-header>
-          <mat-card-content class="va-coach-text">
-            <p class="va-coach-part-name">
-              <strong
-                [translate]="vaCoachCurrentPiecePresentation.labelKey"
-                [translateParams]="vaCoachCurrentPiecePresentation.labelParams || {}"
-              ></strong>
-            </p>
-            @if (vaCoachCurrentPartDescId; as partDescId) {
-              <div class="va-coach-part-desc">
-                <p class="va-coach-part-desc-title">{{ ('VA_COACH.PART_DESC.' + partDescId + '.TITLE') | translate }}</p>
-                <p class="va-coach-part-desc-body">{{ ('VA_COACH.PART_DESC.' + partDescId + '.BODY') | translate }}</p>
-              </div>
-            }
-          </mat-card-content>
-        </mat-card>
+        <div class="va-coach-stack">
+          <mat-card appearance="outlined" class="va-coach-card">
+            <mat-card-header>
+              <mat-card-title>{{ 'VA_COACH.DRAG_TITLE' | translate }}</mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="va-coach-text">
+              <p class="va-coach-part-name">
+                <strong
+                  [translate]="vaCoachCurrentPiecePresentation.labelKey"
+                  [translateParams]="vaCoachCurrentPiecePresentation.labelParams || {}"
+                ></strong>
+              </p>
+              @if (vaCoachCurrentPartDescId; as partDescId) {
+                <div class="va-coach-part-desc">
+                  <p class="va-coach-part-desc-title">{{ ('VA_COACH.PART_DESC.' + partDescId + '.TITLE') | translate }}</p>
+                  <p class="va-coach-part-desc-body">{{ ('VA_COACH.PART_DESC.' + partDescId + '.BODY') | translate }}</p>
+                </div>
+              }
+            </mat-card-content>
+          </mat-card>
+          @if (vaCoachCurrentPartPhotoUrl; as photoUrl) {
+            <div class="va-coach-photo-frame">
+              <img
+                class="va-coach-photo"
+                [src]="photoUrl"
+                [alt]="('VA_COACH.PART_DESC.' + vaCoachCurrentPartDescId + '.TITLE') | translate"
+              />
+            </div>
+          }
+        </div>
       }
     </div>
   }
@@ -80,7 +110,6 @@
       [showThemeToggle]="true"
       [darkMode]="visualDarkMode"
       (darkModeChange)="visualDarkMode = $event"
-      [showProtonCollisionIntro]="showProtonCollisionIntro"
       [cornerOverlayTemplate]="showLetsUsPanel ? letsUsPanelTpl : null"
       [event]="event"
       [previousEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
@@ -88,7 +117,6 @@
       [nextEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
       (nextEvent)="onNextEvent()"
       (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
-      (protonCollisionIntroFinished)="onProtonCollisionIntroFinished()"
       (trackClickedEvent)="onTrackClicked($event)"
       >
       <div class="dataset-controls">

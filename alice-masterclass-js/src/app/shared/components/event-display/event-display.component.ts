@@ -1,5 +1,6 @@
 import { Component, ElementRef, Input, Output, AfterViewInit, ViewChild, EventEmitter, HostBinding, OnDestroy, ChangeDetectorRef, TemplateRef } from '@angular/core';
 import { CdkDragEnd } from '@angular/cdk/drag-drop';
+import { TranslateService } from '@ngx-translate/core';
 import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
@@ -64,13 +65,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private readonly CLUSTERS_USE_POINTS: boolean = true;
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
   private readonly TRACK_DRAW_ANIMATION_MS = 4000;
-  /** Flash peak after protons meet. */
-  private readonly COLLISION_EXPLOSION_MS = 380;
-  /** Outgoing particle spray that follows the flash. */
-  private readonly COLLISION_SPRAY_MS = 1200;
-
-  /** Proton GLB for the first-event collision intro. */
-  @Input() protonModelUrl = 'assets/models/proton.glb';
 
   @HostBinding("style.--primary-axis-ratio")
   readonly PRIMARY_AXIS_RATIO: number = 1 / 1.61803398875; // Golden ratio
@@ -104,8 +98,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   static readonly TRACK_RADIUS_ITS = 45;
   static readonly TRACK_RADIUS_TPC = 250;
+  /** Transverse radius (~cm) of the TRD barrel — used for hit markers, not track clip. */
   static readonly TRACK_RADIUS_TRD = 370;
+  /** Transverse radius (~cm) of the TOF barrel — used for hit markers, not track clip. */
   static readonly TRACK_RADIUS_TOF = 410;
+  static readonly LAYER_HIT_COLOR_TRD = 0xff0033;
+  static readonly LAYER_HIT_COLOR_TOF = 0x0099ff;
+  /** Half-length of each arm of a TRD/TOF hit “×” (scene units). */
+  static readonly LAYER_HIT_MARKER_HALF = 0.14;
   /** Min segment length (trajectory data units) before falling back to momentum. */
   private static readonly STRAIGHT_TRACK_EPS = 1e-4;
 
@@ -140,6 +140,39 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       break;
     }
     return out;
+  }
+
+  /**
+   * First outward crossing of cylinder R = radius (xy), or null if the path
+   * never reaches that shell. No extrapolation beyond the sampled trajectory.
+   */
+  static intersectTrajectoryAtRadius(trajectory: number[][], radius: number): number[] | null {
+    if (!trajectory?.length || !(radius > 0)) {
+      return null;
+    }
+    const rOf = (p: number[]) => Math.hypot(p[0], p[1]);
+    for (let i = 0; i < trajectory.length; i++) {
+      const p = trajectory[i];
+      const r = rOf(p);
+      if (r < radius) {
+        continue;
+      }
+      if (i === 0) {
+        return null;
+      }
+      const prev = trajectory[i - 1];
+      const rPrev = rOf(prev);
+      if (rPrev >= radius) {
+        return null;
+      }
+      const t = r === rPrev ? 0 : (radius - rPrev) / (r - rPrev);
+      return [
+        prev[0] + t * (p[0] - prev[0]),
+        prev[1] + t * (p[1] - prev[1]),
+        prev[2] + t * (p[2] - prev[2]),
+      ];
+    }
+    return null;
   }
 
   /** Same inside-out ordering as createLine (smaller R² first). */
@@ -400,6 +433,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
   }
 
+  static isFitAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])fit\.glb($|\?)/i.test(assetPath);
+  }
+
   static detectorPartPresentation(assetPath: string): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
     const baseName = assetPath.replace(/^.*[/\\]/, '');
     const file = baseName.toLowerCase();
@@ -552,6 +589,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private cascadeHoverTrackMaterial: THREE.Material = null;
   private cascadeProtonMaterial: THREE.Material = null;
   private pointsMaterial: THREE.Material = null;
+  private layerHitTrdMaterial: THREE.MeshBasicMaterial = null;
+  private layerHitTofMaterial: THREE.MeshBasicMaterial = null;
   private caloBarMaterial: THREE.MeshStandardMaterial = null;
   private caloBarGeometry: THREE.BoxGeometry = null;
 
@@ -732,34 +771,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private cascadeVertexMarkers: THREE.Object3D = new THREE.Object3D();
   /** Primary vertex marker shown while ITS is unlocked but TPC is not yet placed. */
   private primaryVertexMarkers: THREE.Object3D = new THREE.Object3D();
+  /** TRD/TOF layer-crossing hit markers during progressive assembly. */
+  private layerHitMarkers: THREE.Object3D = new THREE.Object3D();
   private cascadeConnectorLine: Line2 | null = null;
   private cascadeXiLine: Line2 | null = null;
   private lambdaFlightLine2Track: Line2 | null = null;
   private trackDrawAnimations: THREE.Object3D[] = [];
-  private pendingTrackDrawLines: THREE.Object3D[] = [];
   private trackDrawAnimationStartMs = 0;
-  /**
-   * When non-null, assembly UI waits for the proton collision theatre:
-   * approach → flash → particle spray.
-   */
-  private collisionIntroPhase: 'loading' | 'approaching' | 'exploding' | 'spraying' | null = null;
-  private collisionProtonsGroup = new THREE.Group();
-  private protonPlusZMesh: THREE.Object3D | null = null;
-  private protonMinusZMesh: THREE.Object3D | null = null;
-  private collisionImpactMesh: THREE.Mesh | null = null;
-  private collisionImpactHalo: THREE.Mesh | null = null;
-  private collisionImpactRing: THREE.Mesh | null = null;
-  private collisionFlashLight: THREE.PointLight | null = null;
-  private collisionSprayGroup: THREE.Group | null = null;
-  private collisionSprayVelocities: Float32Array | null = null;
-  private collisionSprayMeshes: THREE.Mesh[] = [];
-  private collisionImpactElapsedMs = 0;
-  private collisionSprayElapsedMs = 0;
-  private collisionIntroFinishEmitted = false;
-  private collisionBloomWasEnabled: boolean | null = null;
-  /** World-space approximate radius after scaling (bounding sphere). */
-  private protonRadiusWorld = 0.014;
-  private lastRenderWallMs = 0;
   private sideViewFrameCounter = 0;
   private forceSideViewsRender = false;
   private renderDirty = true;
@@ -768,11 +786,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private viewDestroyed = false;
   private resizeObserver: ResizeObserver | null = null;
   private rendererAntialias = true;
-  private protonHalfSeparationStart = 0.55;
-  /** Approach speed (doubled again for a snappier collision). */
-  private readonly protonApproachSpeed = 6.2e-4;
-  /** Slightly larger theatrical protons for the assembly intro camera. */
-  private readonly PROTON_INTRO_TARGET_DIAMETER = EventDisplayComponent.objectScale * 14;
   private keysDown: { [key: string]: boolean } = {};
   private panVec = new THREE.Vector3();
   private panRight = new THREE.Vector3();
@@ -899,7 +912,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.detectorScene = null;
       this.loading = false;
       this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_ASSEMBLY_START);
-      this.syncAssemblyDrawerForCollisionIntro();
       this.cdr.markForCheck();
       this.resize(true);
       this.requestRender();
@@ -1034,9 +1046,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.detector.add(root);
     this.detectorPartRootByPath.set(item.assetPath, root);
     item.placed = true;
-    this.fadeInDetectorScene(root, 500);
 
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
+    // Fade to the same default opacity the left-sidebar slider shows for this part.
+    this.fadeInDetectorScene(root, 500, () => {
+      const part = this.detectorPartsForUi.find((p) => p.assetPath === item.assetPath);
+      if (part) {
+        this.setDetectorPartOpacity(part, part.opacity);
+      }
+    });
     this.refreshPhysicsForAssemblyUnlock();
     this.requestRender();
 
@@ -1087,6 +1105,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
     this.syncRendererSideViewQuality();
     this.requestRender();
+  }
+
+  /** Hide FIT and L3 (e.g. after dismissing the assembly-complete coach). */
+  hideOuterDetectorPartsAfterAssembly(): void {
+    for (const part of this.detectorPartsForUi) {
+      if (
+        EventDisplayComponent.isFitAssetPath(part.assetPath) ||
+        EventDisplayComponent.isL3AssetPath(part.assetPath)
+      ) {
+        this.setDetectorPartVisibility(part, false);
+      }
+    }
   }
 
   /** Frames the 3D orbit camera (no-op until WebGL scene exists). */
@@ -1841,12 +1871,17 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         const mats = Array.isArray((o as THREE.Mesh).material)
           ? ((o as THREE.Mesh).material as THREE.Material[])
           : [(o as THREE.Mesh).material as THREE.Material];
-        mats.forEach((mat) => { if (mat) (mat as any).opacity = 0; });
+        mats.forEach((mat) => {
+          if (!mat) return;
+          (mat as any).opacity = 0;
+          (mat as any).transparent = true;
+          (mat as any).needsUpdate = true;
+        });
       }
     });
   }
 
-  private fadeInDetectorScene(object: THREE.Object3D, durationMs: number): void {
+  private fadeInDetectorScene(object: THREE.Object3D, durationMs: number, onComplete?: () => void): void {
     object.visible = true;
     const start = performance.now();
     const step = () => {
@@ -1860,12 +1895,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           mats.forEach((mat) => {
             if (!mat) return;
             const base = (mat as any).userData?.baseOpacity ?? EventDisplayComponent.DETECTOR_COMPONENT_OPACITY;
-            (mat as any).opacity = base * ease;
+            const opacity = base * ease;
+            (mat as any).opacity = opacity;
+            (mat as any).transparent = opacity < 0.995;
+            (mat as any).needsUpdate = true;
           });
         }
       });
       this.requestRender();
-      if (t < 1) requestAnimationFrame(step);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        onComplete?.();
+      }
     };
     requestAnimationFrame(step);
   }
@@ -1927,7 +1969,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private desiredTracksShown = true;
   private desiredClustersShown = true;
   private desiredDecaysShown = true;
-  private _showProtonCollisionIntro = false;
 
   @Input()
   get tracksShown(): boolean { return this.desiredTracksShown; }
@@ -1955,23 +1996,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.applyDesiredPhysicsVisibility();
     this.requestRender();
   }
-
-  @Input()
-  get showProtonCollisionIntro(): boolean { return this._showProtonCollisionIntro; }
-  set showProtonCollisionIntro(show: boolean) {
-    const v = !!show;
-    if (v === this._showProtonCollisionIntro) return;
-    this._showProtonCollisionIntro = v;
-    if (!v) {
-      this.cancelProtonCollisionIntroAndRevealTracks();
-    } else {
-      this.collisionIntroFinishEmitted = false;
-    }
-  }
-
-  /** Fires once when the pre-assembly proton collision intro finishes (or is skipped/fails). */
-  @Output()
-  protonCollisionIntroFinished: EventEmitter<void> = new EventEmitter<void>();
 
   private createLine(
     track: number[][],
@@ -2031,7 +2055,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateTrackDrawAnimations(): void {
-    if (this.isCollisionIntroActive()) return;
     if (this.trackDrawAnimations.length === 0) return;
     const now = performance.now();
     const progress = Math.min(1, (now - this.trackDrawAnimationStartMs) / this.TRACK_DRAW_ANIMATION_MS);
@@ -2054,26 +2077,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private isCollisionIntroActive(): boolean {
-    return this.collisionIntroPhase !== null;
-  }
-
-  /** Applies parent's track/decay/cluster toggles unless the proton intro hides physics layers. */
+  /** Applies parent's track/decay/cluster toggles. */
   private applyDesiredPhysicsVisibility(): void {
-    if (this.isCollisionIntroActive()) {
-      this.tracks.visible = false;
-      this.decays.visible = false;
-      this.clusters.visible = false;
-      this.calorimeterReadouts.visible = false;
-      this.cascadeVertexMarkers.visible = false;
-      this.primaryVertexMarkers.visible = false;
-      return;
-    }
     this.tracks.visible = this.desiredTracksShown;
     this.decays.visible = this.desiredDecaysShown;
     this.clusters.visible = this.desiredClustersShown && this.assemblyAllowsClusters();
     this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
     this.primaryVertexMarkers.visible = this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0;
+    this.layerHitMarkers.visible = this.desiredTracksShown && this.layerHitMarkers.children.length > 0;
     this.syncCalorimeterReadoutVisibility();
   }
 
@@ -2097,7 +2108,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Max track radius unlocked by placed barrel layers (ITS < TPC < TRD < TOF).
+   * Max track radius unlocked by placed barrel trackers (ITS < TPC).
+   * TRD/TOF unlock hit markers instead of extending tracks.
    * Null = no radial clip (non-progressive model, or full assembly complete).
    */
   private getUnlockedTrackRadiusMax(): number | null {
@@ -2109,12 +2121,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       return null;
     }
     const unlock = this.getAssemblyUnlockState();
-    if (unlock.hasTof) {
-      return EventDisplayComponent.TRACK_RADIUS_TOF;
-    }
-    if (unlock.hasTrd) {
-      return EventDisplayComponent.TRACK_RADIUS_TRD;
-    }
     if (unlock.hasTpc) {
       return EventDisplayComponent.TRACK_RADIUS_TPC;
     }
@@ -2158,14 +2164,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (!this._event) {
       return;
     }
-    const deferTrackDraw = this.isCollisionIntroActive();
     this.trackDrawAnimations = [];
-    if (deferTrackDraw) {
-      this.pendingTrackDrawLines = [];
-    } else {
-      this.trackDrawAnimationStartMs = performance.now();
-    }
-    this.rebuildTracksFromEvent(deferTrackDraw);
+    this.trackDrawAnimationStartMs = performance.now();
+    this.rebuildTracksFromEvent();
   }
 
   private getAssemblyUnlockState(): AssemblyUnlockState {
@@ -2190,14 +2191,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (!this._event) {
       return;
     }
-    const deferTrackDraw = this.isCollisionIntroActive();
     this.trackDrawAnimations = [];
-    if (deferTrackDraw) {
-      this.pendingTrackDrawLines = [];
-    } else {
-      this.trackDrawAnimationStartMs = performance.now();
-    }
-    this.rebuildTracksFromEvent(deferTrackDraw);
+    this.trackDrawAnimationStartMs = performance.now();
+    this.rebuildTracksFromEvent();
     this.applyDesiredPhysicsVisibility();
     this.cdr.markForCheck();
   }
@@ -2217,6 +2213,20 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           mat.dispose();
         }
       }
+    }
+  }
+
+  private clearLayerHitMarkers(): void {
+    while (this.layerHitMarkers.children.length > 0) {
+      const child = this.layerHitMarkers.children[0];
+      this.layerHitMarkers.remove(child);
+      child.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.geometry) {
+          mesh.geometry.dispose();
+        }
+        // Materials are shared (layerHitTrd/TofMaterial) — do not dispose.
+      });
     }
   }
 
@@ -2317,38 +2327,35 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /**
    * Builds background + decay track meshes (and vertex markers) according to
    * assembly unlock: ITS-only → stubs + PV; TPC → full length; L3 → bent vs straight.
+   * TRD/TOF place layer-crossing hit markers (no further radial track unlock).
    */
-  private rebuildTracksFromEvent(
-    deferTrackDrawForIntro: boolean,
-    options?: { forceFullTheater?: boolean }
-  ): void {
+  private rebuildTracksFromEvent(): void {
     this.clearCascadeHover();
     this.tracks.clear();
     this.decays.clear();
     this.cascadeVertexMarkers.clear();
     this.clearPrimaryVertexMarkers();
+    this.clearLayerHitMarkers();
 
     if (!this._event) {
       return;
     }
 
-    const theater = !!options?.forceFullTheater;
     const useTrackerUnlock = this.detectorModelHasTrackerUnlock();
     const assemblyDone = this._detectorInteractiveAssemblyDone;
     const tpcActive = this.isDetectorPartPlaced(EventDisplayComponent.isTpcAssetPath);
     const itsActive = this.isDetectorPartPlaced(EventDisplayComponent.isItsAssetPath);
     // Completed assembly (incl. refresh / session restore): always full tracks.
     // During progressive build: TPC+ → full mode; ITS-only → stubs; else nothing.
-    // Collision intro theatre forces a full spray regardless of assembly unlock.
-    const showFull = theater || !useTrackerUnlock || assemblyDone || tpcActive;
-    const showStubs = !theater && useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
+    const showFull = !useTrackerUnlock || assemblyDone || tpcActive;
+    const showStubs = useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
 
     if (!showFull && !showStubs) {
       return;
     }
 
-    const rMax = theater ? null : this.getUnlockedTrackRadiusMax();
-    const straight = theater ? false : this.shouldRenderStraightTracks();
+    const rMax = this.getUnlockedTrackRadiusMax();
+    const straight = this.shouldRenderStraightTracks();
     const cascadeVertices = showFull ? this.getCascadeVertices(this._event) : [];
 
     if (showFull) {
@@ -2372,11 +2379,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         geometricStraight: resolved.geometricStraight
       });
       this.tracks.add(line);
-      if (deferTrackDrawForIntro) {
-        this.pendingTrackDrawLines.push(line);
-      } else {
-        this.queueTrackDrawAnimation(line);
-      }
+      this.queueTrackDrawAnimation(line);
     }
 
     for (const particleList of this._event.decays) {
@@ -2412,457 +2415,88 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         });
         (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
         decayObject.add(line);
-        if (deferTrackDrawForIntro) {
-          this.pendingTrackDrawLines.push(line);
-        } else {
-          this.queueTrackDrawAnimation(line);
-        }
+        this.queueTrackDrawAnimation(line);
       }
       if (decayObject.children.length > 0) {
         this.decays.add(decayObject);
       }
       break;
     }
+
+    this.rebuildLayerHitMarkers(straight, showFull, cascadeVertices);
+    this.applyDesiredPhysicsVisibility();
   }
 
-  private clearCollisionProtonModels(): void {
-    this.disposeCollisionImpactFx();
-    this.restoreCollisionBloom();
-    while (this.collisionProtonsGroup.children.length > 0) {
-      const c = this.collisionProtonsGroup.children[0];
-      this.collisionProtonsGroup.remove(c);
-      c.traverse((o: THREE.Object3D) => {
-        if ((o as THREE.Mesh).isMesh) {
-          const m = o as THREE.Mesh;
-          m.geometry?.dispose?.();
-          const mat = m.material as THREE.Material | THREE.Material[];
-          if (Array.isArray(mat)) mat.forEach((x) => x.dispose?.());
-          else mat?.dispose?.();
+  /**
+   * Places TRD/TOF hit spheres at trajectory × cylinder intersections while
+   * progressive assembly is still open (tracks stay clipped at TPC).
+   */
+  private rebuildLayerHitMarkers(
+    straight: boolean,
+    showFull: boolean,
+    cascadeVertices: { pos: number[]; label: string }[]
+  ): void {
+    if (!this._event || !this.detectorModelHasTrackerUnlock() || this._detectorInteractiveAssemblyDone) {
+      return;
+    }
+    const unlock = this.getAssemblyUnlockState();
+    if (!unlock.hasTrd && !unlock.hasTof) {
+      return;
+    }
+
+    const addHitsForTrack = (track: Track, startOverride?: number[] | null) => {
+      const resolved = this.trajectoryForAssemblyMode(track, null, straight, startOverride);
+      if (!resolved?.points?.length) {
+        return;
+      }
+      if (unlock.hasTrd) {
+        const hit = EventDisplayComponent.intersectTrajectoryAtRadius(
+          resolved.points,
+          EventDisplayComponent.TRACK_RADIUS_TRD
+        );
+        if (hit) {
+          this.layerHitMarkers.add(
+            this.createLayerHitMarker(hit, EventDisplayComponent.LAYER_HIT_COLOR_TRD, 'EVENT_DISPLAY.TRD_READING')
+          );
         }
-      });
-    }
-    this.protonPlusZMesh = null;
-    this.protonMinusZMesh = null;
-    this.collisionImpactElapsedMs = 0;
-    this.collisionSprayElapsedMs = 0;
-    this.collisionProtonsGroup.visible = false;
-  }
-
-  private boostCollisionBloom(): void {
-    if (!this.bloomPass) return;
-    if (this.collisionBloomWasEnabled === null) {
-      this.collisionBloomWasEnabled = this.bloomPass.enabled;
-    }
-    this.bloomPass.enabled = true;
-    this.bloomPass.strength = Math.max(EventDisplayComponent.BLOOM_STRENGTH, 0.55);
-    this.bloomPass.threshold = 0.2;
-  }
-
-  private restoreCollisionBloom(): void {
-    if (!this.bloomPass || this.collisionBloomWasEnabled === null) return;
-    this.bloomPass.enabled = this.collisionBloomWasEnabled;
-    this.bloomPass.strength = EventDisplayComponent.BLOOM_STRENGTH;
-    this.bloomPass.threshold = EventDisplayComponent.BLOOM_THRESHOLD;
-    this.collisionBloomWasEnabled = null;
-  }
-
-  private disposeCollisionImpactFx(): void {
-    if (this.collisionImpactMesh) {
-      this.collisionProtonsGroup.remove(this.collisionImpactMesh);
-      this.collisionImpactMesh.geometry?.dispose?.();
-      (this.collisionImpactMesh.material as THREE.Material)?.dispose?.();
-      this.collisionImpactMesh = null;
-    }
-    if (this.collisionImpactHalo) {
-      this.collisionProtonsGroup.remove(this.collisionImpactHalo);
-      this.collisionImpactHalo.geometry?.dispose?.();
-      (this.collisionImpactHalo.material as THREE.Material)?.dispose?.();
-      this.collisionImpactHalo = null;
-    }
-    if (this.collisionImpactRing) {
-      this.collisionProtonsGroup.remove(this.collisionImpactRing);
-      this.collisionImpactRing.geometry?.dispose?.();
-      (this.collisionImpactRing.material as THREE.Material)?.dispose?.();
-      this.collisionImpactRing = null;
-    }
-    if (this.collisionSprayGroup) {
-      this.collisionProtonsGroup.remove(this.collisionSprayGroup);
-      const sharedGeom = this.collisionSprayMeshes[0]?.geometry ?? null;
-      for (const mesh of this.collisionSprayMeshes) {
-        (mesh.material as THREE.Material)?.dispose?.();
       }
-      sharedGeom?.dispose?.();
-      this.collisionSprayGroup = null;
-      this.collisionSprayMeshes = [];
-      this.collisionSprayVelocities = null;
-    }
-    if (this.collisionFlashLight) {
-      this.collisionProtonsGroup.remove(this.collisionFlashLight);
-      this.collisionFlashLight = null;
-    }
-  }
-
-  private cloneProtonMaterials(root: THREE.Object3D): void {
-    root.traverse((o: THREE.Object3D) => {
-      if (!(o as THREE.Mesh).isMesh) return;
-      const mesh = o as THREE.Mesh;
-      if (Array.isArray(mesh.material)) {
-        mesh.material = mesh.material.map((m) => m.clone());
-      } else if (mesh.material) {
-        mesh.material = mesh.material.clone();
-      }
-    });
-  }
-
-  private beginProtonCollisionIntroLoad(): void {
-    if (!this._event || !this.showProtonCollisionIntro) return;
-    this.clearCollisionProtonModels();
-    this.collisionIntroFinishEmitted = false;
-    this.collisionIntroPhase = 'loading';
-    this.syncAssemblyDrawerForCollisionIntro();
-    this.loaderGLTF.load(
-      this.protonModelUrl,
-      (gltf: GLTF) => {
-        if (
-          !this._event ||
-          !this.showProtonCollisionIntro ||
-          this.collisionIntroPhase !== 'loading'
-        ) {
-          return;
+      if (unlock.hasTof) {
+        const hit = EventDisplayComponent.intersectTrajectoryAtRadius(
+          resolved.points,
+          EventDisplayComponent.TRACK_RADIUS_TOF
+        );
+        if (hit) {
+          this.layerHitMarkers.add(
+            this.createLayerHitMarker(hit, EventDisplayComponent.LAYER_HIT_COLOR_TOF, 'EVENT_DISPLAY.TOF_READING')
+          );
         }
-        const tpl = gltf.scene;
-        const plus = tpl.clone(true);
-        const minus = tpl.clone(true);
-        this.cloneProtonMaterials(plus);
-        this.cloneProtonMaterials(minus);
-
-        const bbox = new THREE.Box3().setFromObject(tpl);
-        const size = bbox.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
-        const uniform = this.PROTON_INTRO_TARGET_DIAMETER / maxDim;
-        plus.scale.setScalar(uniform);
-        minus.scale.setScalar(uniform);
-
-        plus.updateMatrixWorld(true);
-        const sph = new THREE.Sphere();
-        new THREE.Box3().setFromObject(plus).getBoundingSphere(sph);
-        this.protonRadiusWorld = sph.radius;
-
-        const halfSep = Math.max(this.protonHalfSeparationStart, this.protonRadiusWorld * 3.2);
-        minus.position.set(0, 0, -halfSep);
-        plus.position.set(0, 0, halfSep);
-        minus.traverse(this.setIntroProtonPresentationalState);
-        plus.traverse(this.setIntroProtonPresentationalState);
-        this.collisionProtonsGroup.add(minus);
-        this.collisionProtonsGroup.add(plus);
-        this.protonMinusZMesh = minus;
-        this.protonPlusZMesh = plus;
-        this.collisionProtonsGroup.visible = true;
-        this.collisionIntroPhase = 'approaching';
-        this.syncAssemblyDrawerForCollisionIntro();
-        this.requestRender();
-      },
-      undefined,
-      () => {
-        this.finishCollisionIntroTheatre();
       }
-    );
-  }
-
-  private setIntroProtonPresentationalState = (o: THREE.Object3D): void => {
-    if (!(o as THREE.Mesh).isMesh) return;
-    const mesh = o as THREE.Mesh;
-    const mats: THREE.Material[] = Array.isArray(mesh.material)
-      ? mesh.material
-      : mesh.material
-        ? [mesh.material]
-        : [];
-    for (const mat of mats) {
-      mat.depthWrite = false;
-      mat.transparent = true;
-      mat.needsUpdate = true;
-      const std = mat as THREE.MeshStandardMaterial;
-      if (std.isMeshStandardMaterial) {
-        if (!std.emissive) {
-          std.emissive = new THREE.Color(0x000000);
-        }
-        std.emissive.copy(std.color).multiplyScalar(0.35);
-        std.emissiveIntensity = Math.max(std.emissiveIntensity ?? 0, 0.18);
-      }
-      const opacity = (mat as { opacity?: number }).opacity;
-      if (opacity != null) {
-        (mat.userData as { baseOpacity?: number }).baseOpacity = opacity;
-      }
-    }
-    o.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8000;
-  };
-
-  private removeIntroProtonMeshes(): void {
-    const disposeRoot = (root: THREE.Object3D | null) => {
-      if (!root) return;
-      this.collisionProtonsGroup.remove(root);
-      root.traverse((o: THREE.Object3D) => {
-        if (!(o as THREE.Mesh).isMesh) return;
-        const m = o as THREE.Mesh;
-        m.geometry?.dispose?.();
-        const mat = m.material as THREE.Material | THREE.Material[];
-        if (Array.isArray(mat)) mat.forEach((x) => x.dispose?.());
-        else mat?.dispose?.();
-      });
     };
-    disposeRoot(this.protonPlusZMesh);
-    disposeRoot(this.protonMinusZMesh);
-    this.protonPlusZMesh = null;
-    this.protonMinusZMesh = null;
-  }
 
-  private beginCollisionExplosion(): void {
-    this.disposeCollisionImpactFx();
-    this.removeIntroProtonMeshes();
-    this.boostCollisionBloom();
-
-    const coreR = Math.max(this.protonRadiusWorld * 1.1, 0.016);
-    // Opaque saturated core — readable on white (additive washout avoided).
-    const flash = new THREE.Mesh(
-      new THREE.SphereGeometry(coreR, 28, 22),
-      new THREE.MeshBasicMaterial({
-        color: 0xff2a6d,
-        transparent: true,
-        opacity: 1,
-        depthWrite: false
-      })
-    );
-    flash.scale.setScalar(0.55);
-    flash.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9000;
-    this.collisionImpactMesh = flash;
-    this.collisionProtonsGroup.add(flash);
-
-    const halo = new THREE.Mesh(
-      new THREE.SphereGeometry(coreR * 1.35, 24, 20),
-      new THREE.MeshBasicMaterial({
-        color: 0xff8c1a,
-        transparent: true,
-        opacity: 0.72,
-        depthWrite: false
-      })
-    );
-    halo.scale.setScalar(0.7);
-    halo.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8995;
-    this.collisionImpactHalo = halo;
-    this.collisionProtonsGroup.add(halo);
-
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(coreR * 0.7, coreR * 1.25, 56),
-      new THREE.MeshBasicMaterial({
-        color: 0x1f6bff,
-        transparent: true,
-        opacity: 0.95,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      })
-    );
-    ring.rotation.x = Math.PI / 2;
-    ring.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 8990;
-    this.collisionImpactRing = ring;
-    this.collisionProtonsGroup.add(ring);
-
-    this.spawnCollisionSprayParticles();
-
-    this.collisionFlashLight = new THREE.PointLight(0xff4d8d, 6.5, this.protonRadiusWorld * 36, 2);
-    this.collisionProtonsGroup.add(this.collisionFlashLight);
-
-    this.collisionProtonsGroup.visible = true;
-    this.collisionImpactElapsedMs = 0;
-    this.collisionSprayElapsedMs = 0;
-    this.collisionIntroPhase = 'exploding';
-  }
-
-  private spawnCollisionSprayParticles(): void {
-    const sprayCount = 140;
-    const colors = [0xc41e3a, 0x1a3cff, 0x000080, 0x7b2cbf, 0xff6b00, 0x0d9488, 0xe11d48];
-    const group = new THREE.Group();
-    const velocities = new Float32Array(sprayCount * 3);
-    const meshes: THREE.Mesh[] = [];
-    const speed = Math.max(this.protonRadiusWorld * 14, 0.22);
-    const geom = new THREE.SphereGeometry(Math.max(this.protonRadiusWorld * 0.22, 0.0045), 10, 8);
-
-    for (let i = 0; i < sprayCount; i++) {
-      const u = Math.random();
-      const v = Math.random();
-      const theta = 2 * Math.PI * u;
-      const phi = Math.acos(2 * v - 1);
-      const dirX = Math.sin(phi) * Math.cos(theta);
-      const dirY = Math.sin(phi) * Math.sin(theta);
-      const dirZ = Math.cos(phi);
-      const s = speed * (0.45 + Math.random() * 1.35);
-      velocities[i * 3] = dirX * s;
-      velocities[i * 3 + 1] = dirY * s;
-      velocities[i * 3 + 2] = dirZ * s;
-
-      const mat = new THREE.MeshBasicMaterial({
-        color: colors[i % colors.length],
-        transparent: true,
-        opacity: 1,
-        depthWrite: false
-      });
-      const mesh = new THREE.Mesh(geom, mat);
-      const scale = 0.7 + Math.random() * 1.1;
-      mesh.scale.setScalar(scale);
-      mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9020;
-      group.add(mesh);
-      meshes.push(mesh);
+    for (const track of this._event.tracks || []) {
+      addHitsForTrack(track);
     }
 
-    this.collisionSprayGroup = group;
-    this.collisionSprayMeshes = meshes;
-    this.collisionSprayVelocities = velocities;
-    this.collisionProtonsGroup.add(group);
-  }
-
-  private finishCollisionIntroTheatre(): void {
-    this.collisionIntroPhase = null;
-    this.clearCollisionProtonModels();
-    this.trackDrawAnimations = [];
-    this.pendingTrackDrawLines = [];
-    this.tracks.clear();
-    this.decays.clear();
-    this.cascadeVertexMarkers.clear();
-    this.clearPrimaryVertexMarkers();
-    this.applyDesiredPhysicsVisibility();
-    this.syncAssemblyDrawerForCollisionIntro();
-    this.requestRender();
-    this.emitProtonCollisionIntroFinished();
-  }
-
-  private emitProtonCollisionIntroFinished(): void {
-    if (this.collisionIntroFinishEmitted) return;
-    this.collisionIntroFinishEmitted = true;
-    this.protonCollisionIntroFinished.emit();
-  }
-
-  private syncAssemblyDrawerForCollisionIntro(): void {
-    if (!this.detectorMultipartAssemblyMode || this._detectorInteractiveAssemblyDone) {
-      return;
-    }
-    // Keep the palette closed until the collision theatre hands off to assembly coaching.
-    this.sidebarOpened = !this.isCollisionIntroActive();
-    this.cdr.markForCheck();
-  }
-
-  private cancelProtonCollisionIntroAndRevealTracks(): void {
-    if (!this.isCollisionIntroActive()) {
-      if (this._showProtonCollisionIntro === false) {
-        this.emitProtonCollisionIntroFinished();
+    if (showFull) {
+      const v0Start = cascadeVertices[0]?.pos ?? null;
+      const cascadeStart = cascadeVertices[1]?.pos ?? null;
+      for (const particleList of this._event.decays || []) {
+        for (const track of particleList) {
+          let startOverride: number[] | null = null;
+          if (straight) {
+            if (track.type === TrackType.CASCADE_BACHELOR) {
+              startOverride = cascadeStart ?? v0Start;
+            } else if (v0Start) {
+              startOverride = v0Start;
+            }
+          }
+          addHitsForTrack(track, startOverride);
+        }
+        break;
       }
-      return;
-    }
-    this.pendingTrackDrawLines = [];
-    this.trackDrawAnimations = [];
-    this.collisionIntroPhase = null;
-    this.clearCollisionProtonModels();
-    this.tracks.clear();
-    this.decays.clear();
-    this.cascadeVertexMarkers.clear();
-    this.clearPrimaryVertexMarkers();
-    this.applyDesiredPhysicsVisibility();
-    this.syncAssemblyDrawerForCollisionIntro();
-    this.requestRender();
-    this.emitProtonCollisionIntroFinished();
-  }
-
-  private updateCollisionSpray(deltaMs: number, fadeFactor: number): void {
-    if (!this.collisionSprayGroup || !this.collisionSprayVelocities) return;
-    const step = deltaMs / 1000;
-    const vel = this.collisionSprayVelocities;
-    for (let i = 0; i < this.collisionSprayMeshes.length; i++) {
-      const mesh = this.collisionSprayMeshes[i];
-      const ix = i * 3;
-      mesh.position.x += vel[ix] * step;
-      mesh.position.y += vel[ix + 1] * step;
-      mesh.position.z += vel[ix + 2] * step;
-      const mat = mesh.material as THREE.MeshBasicMaterial;
-      mat.opacity = Math.max(0, fadeFactor);
     }
   }
 
-  private updateProtonCollisionIntro(deltaWallMs: number): void {
-    if (
-      this.collisionIntroPhase !== 'approaching' &&
-      this.collisionIntroPhase !== 'exploding' &&
-      this.collisionIntroPhase !== 'spraying'
-    ) {
-      return;
-    }
-    const dt = Math.min(Math.max(deltaWallMs, 0), 72);
-
-    if (this.collisionIntroPhase === 'approaching' && this.protonPlusZMesh && this.protonMinusZMesh) {
-      this.protonPlusZMesh.position.z -= this.protonApproachSpeed * dt;
-      this.protonMinusZMesh.position.z += this.protonApproachSpeed * dt;
-      const sep = this.protonPlusZMesh.position.z - this.protonMinusZMesh.position.z;
-      if (sep <= 2 * this.protonRadiusWorld * 1.05) {
-        this.beginCollisionExplosion();
-      }
-      return;
-    }
-
-    if (this.collisionIntroPhase === 'exploding') {
-      this.collisionImpactElapsedMs += dt;
-      const t = Math.min(1, this.collisionImpactElapsedMs / this.COLLISION_EXPLOSION_MS);
-      const ease = 1 - Math.pow(1 - t, 3);
-
-      if (this.collisionImpactMesh) {
-        this.collisionImpactMesh.scale.setScalar(0.55 + ease * 4.2);
-        (this.collisionImpactMesh.material as THREE.MeshBasicMaterial).opacity = 1 - ease * 0.25;
-      }
-      if (this.collisionImpactHalo) {
-        this.collisionImpactHalo.scale.setScalar(0.7 + ease * 6.5);
-        (this.collisionImpactHalo.material as THREE.MeshBasicMaterial).opacity = 0.72 * (1 - ease * 0.55);
-      }
-      if (this.collisionImpactRing) {
-        const ringScale = 1 + ease * 10;
-        this.collisionImpactRing.scale.set(ringScale, ringScale, ringScale);
-        (this.collisionImpactRing.material as THREE.MeshBasicMaterial).opacity = 0.95 * (1 - ease * 0.35);
-      }
-      if (this.collisionFlashLight) {
-        this.collisionFlashLight.intensity = 6.5 * (1 - ease * 0.4);
-      }
-      // Particles already leave the vertex during the flash.
-      this.updateCollisionSpray(dt, 1);
-
-      if (t >= 1) {
-        this.collisionIntroPhase = 'spraying';
-        this.collisionSprayElapsedMs = 0;
-      }
-      return;
-    }
-
-    // spraying — flash fades, particles keep flying out then vanish
-    this.collisionSprayElapsedMs += dt;
-    const t = Math.min(1, this.collisionSprayElapsedMs / this.COLLISION_SPRAY_MS);
-    const fade = t < 0.55 ? 1 : 1 - (t - 0.55) / 0.45;
-
-    if (this.collisionImpactMesh) {
-      this.collisionImpactMesh.scale.setScalar(4.75 + t * 2.2);
-      (this.collisionImpactMesh.material as THREE.MeshBasicMaterial).opacity = 0.75 * fade;
-    }
-    if (this.collisionImpactHalo) {
-      this.collisionImpactHalo.scale.setScalar(7.2 + t * 3);
-      (this.collisionImpactHalo.material as THREE.MeshBasicMaterial).opacity = 0.32 * fade;
-    }
-    if (this.collisionImpactRing) {
-      const ringScale = 11 + t * 6;
-      this.collisionImpactRing.scale.set(ringScale, ringScale, ringScale);
-      (this.collisionImpactRing.material as THREE.MeshBasicMaterial).opacity = 0.6 * fade;
-    }
-    if (this.collisionFlashLight) {
-      this.collisionFlashLight.intensity = 3.8 * fade;
-    }
-    this.updateCollisionSpray(dt, fade);
-
-    if (t >= 1) {
-      this.finishCollisionIntroTheatre();
-    }
-  }
 
   private invariantMass(tracks: Track[]): number {
     let E = 0, px = 0, py = 0, pz = 0;
@@ -2942,6 +2576,58 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return mesh;
   }
 
+  private createLayerHitMarker(position: number[], color: number, labelKey: string): THREE.Group {
+    const scale = EventDisplayComponent.objectScale;
+    const group = new THREE.Group();
+    const labelData = {
+      vertexLabelKey: labelKey,
+      vertexLabel: this.translate.instant(labelKey)
+    };
+    (group as any).userData = labelData;
+
+    const x = position[0];
+    const y = position[1];
+    const r = Math.hypot(x, y) || 1;
+    // Tangent plane on the barrel: φ̂ and ẑ → classic “×” on the layer surface.
+    const phi = new THREE.Vector3(-y / r, x / r, 0);
+    const zHat = new THREE.Vector3(0, 0, 1);
+    const armA = phi.clone().add(zHat).normalize();
+    const armB = phi.clone().sub(zHat).normalize();
+
+    const half = EventDisplayComponent.LAYER_HIT_MARKER_HALF;
+    const thick = half * 0.22;
+    const mat =
+      color === EventDisplayComponent.LAYER_HIT_COLOR_TRD
+        ? this.layerHitTrdMaterial
+        : this.layerHitTofMaterial;
+    const zAxis = new THREE.Vector3(0, 0, 1);
+    const topOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 10000;
+
+    for (const dir of [armA, armB]) {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(thick, thick, half * 2), mat);
+      bar.quaternion.setFromUnitVectors(zAxis, dir);
+      bar.renderOrder = topOrder;
+      bar.frustumCulled = false;
+      (bar as any).userData = { ...labelData };
+      group.add(bar);
+    }
+
+    group.position.set(x * scale, y * scale, position[2] * scale);
+    group.renderOrder = topOrder;
+    group.frustumCulled = false;
+    return group;
+  }
+
+  private resolveMarkerLabel(userData: { vertexLabel?: string; vertexLabelKey?: string } | null | undefined): string {
+    if (!userData) {
+      return '';
+    }
+    if (userData.vertexLabelKey) {
+      return this.translate.instant(userData.vertexLabelKey);
+    }
+    return userData.vertexLabel ?? '';
+  }
+
   @Input()
   get event(): Event { return this._event; }
   set event(event: Event) {
@@ -2951,6 +2637,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.clusters.clear();
     this.cascadeVertexMarkers.clear();
     this.clearPrimaryVertexMarkers();
+    this.clearLayerHitMarkers();
     if (this.cascadeConnectorLine) {
       this.scene.remove(this.cascadeConnectorLine);
       this.cascadeConnectorLine.geometry.dispose();
@@ -2973,27 +2660,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cascadeMarkerOrigColors = [];
     this.closeVertexPanel();
     this.trackDrawAnimations = [];
-    this.pendingTrackDrawLines = [];
-    this.collisionIntroPhase = null;
-    this.lastRenderWallMs = 0;
-    const deferTrackDrawForIntro =
-      this._event !== null && this.showProtonCollisionIntro;
-    if (deferTrackDrawForIntro) {
-      this.collisionIntroFinishEmitted = false;
-      this.clearCollisionProtonModels();
-      this.collisionIntroPhase = 'loading';
-      this.syncAssemblyDrawerForCollisionIntro();
-    } else {
-      this.collisionIntroPhase = null;
-      this.clearCollisionProtonModels();
-      this.syncAssemblyDrawerForCollisionIntro();
-    }
-    this.trackDrawAnimationStartMs = deferTrackDrawForIntro
-      ? 0
-      : performance.now();
+    this.trackDrawAnimationStartMs = performance.now();
     this.loading = true;
     if (this._event !== null) {
-      this.rebuildTracksFromEvent(deferTrackDrawForIntro);
+      this.rebuildTracksFromEvent();
       if (this._event.clusters && this._event.clusters.length > 0) {
         const points: Array<THREE.Vector3> = [];
         for (let point of this._event.clusters) {
@@ -3021,9 +2691,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.rebuildCalorimeterReadouts();
     this.applyDesiredPhysicsVisibility();
-    if (deferTrackDrawForIntro) {
-      this.beginProtonCollisionIntroLoad();
-    }
     this.loading = false;
     this.requestRender();
   }
@@ -3066,7 +2733,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   @Input()
   cornerOverlayTemplate: TemplateRef<unknown> | null = null;
 
-  constructor(private cdr: ChangeDetectorRef) {
+  constructor(private cdr: ChangeDetectorRef, private translate: TranslateService) {
     const lineParams = {
       linewidth: this.effectiveTrackWidth,
       resolution: new THREE.Vector2(1, 1),
@@ -3114,6 +2781,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       alphaTest: 0.5,
       depthTest: false,
       sizeAttenuation: true,
+    });
+    const hitMatParams = { depthTest: false, depthWrite: false, toneMapped: false } as const;
+    this.layerHitTrdMaterial = new THREE.MeshBasicMaterial({
+      color: EventDisplayComponent.LAYER_HIT_COLOR_TRD,
+      ...hitMatParams
+    });
+    this.layerHitTofMaterial = new THREE.MeshBasicMaterial({
+      color: EventDisplayComponent.LAYER_HIT_COLOR_TOF,
+      ...hitMatParams
     });
     this.caloBarGeometry = new THREE.BoxGeometry(1, 1, 1);
     this.caloBarMaterial = new THREE.MeshStandardMaterial({
@@ -3214,9 +2890,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /** True while input/animations still need continuous frames (OrbitControls damping uses 'change'). */
   private isRenderActivityPending(): boolean {
-    if (this.isCollisionIntroActive()) {
-      return true;
-    }
     if (this.trackDrawAnimations.length > 0) return true;
     if (this.isMousePanning) return true;
     if (this.cameraMode === 'free' && this.hasPanKeysDown()) return true;
@@ -3311,7 +2984,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     window.removeEventListener('pointerup', this.onPointerUp);
     this.canvas?.removeEventListener('wheel', this.onWheel);
     this.clearGridBackground();
-    this.clearCollisionProtonModels();
     this.clearCalorimeterReadouts();
     this.caloBarGeometry?.dispose();
     this.caloBarMaterial?.dispose();
@@ -3448,10 +3120,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private render(): void {
     if (!this.renderer || !this.camera3D || !this.controls) return;
-    const nowWall = performance.now();
-    const deltaWall = this.lastRenderWallMs ? nowWall - this.lastRenderWallMs : 0;
-    this.lastRenderWallMs = nowWall;
-    this.updateProtonCollisionIntro(deltaWall);
     this.updateTrackDrawAnimations();
     this.resize(false);
     if (this.cameraMode === 'centered') {
@@ -3536,8 +3204,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     const intersects = this.findIntersect(event);
     if (intersects.length === 0) return;
-    const obj = intersects[0].object as THREE.Mesh & { userData?: { vertexLabel?: string } };
-    if (obj.userData?.vertexLabel != null) {
+    const obj = intersects[0].object as THREE.Mesh & {
+      userData?: { vertexLabel?: string; vertexLabelKey?: string };
+    };
+    const markerLabel = this.resolveMarkerLabel(obj.userData);
+    if (markerLabel) {
       const parent = this.canvas?.parentElement as HTMLElement;
       if (parent) {
         const rect = parent.getBoundingClientRect();
@@ -3547,7 +3218,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.vertexPanelX = 16;
         this.vertexPanelY = 16;
       }
-      this.vertexPanelOpen = { label: obj.userData.vertexLabel };
+      this.vertexPanelOpen = { label: markerLabel };
       return;
     }
     if (this.decays.visible) {
@@ -3581,8 +3252,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       return;
     }
     const intersects = this.findIntersect(event);
-    const first = intersects[0]?.object as THREE.Mesh & { userData?: { vertexLabel?: string; trackLabel?: string } };
-    const isMarkerByRaycast = first?.userData?.vertexLabel != null;
+    const first = intersects[0]?.object as THREE.Mesh & {
+      userData?: { vertexLabel?: string; vertexLabelKey?: string; trackLabel?: string };
+    };
+    const raycastLabel = this.resolveMarkerLabel(first?.userData);
+    const isMarkerByRaycast = !!raycastLabel;
     const markerByProximity = !isMarkerByRaycast ? this.findMarkerByProximity(event) : null;
     const isMarker = isMarkerByRaycast || markerByProximity != null;
     let trackLabel = first?.userData?.trackLabel;
@@ -3597,7 +3271,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     if (isMarker) {
       this.vertexMarkerTooltip = {
-        label: isMarkerByRaycast ? first.userData.vertexLabel : markerByProximity.label,
+        label: isMarkerByRaycast ? raycastLabel : markerByProximity.label,
         x: event.clientX,
         y: event.clientY
       };
@@ -3957,7 +3631,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private findMarkerByProximity(event: MouseEvent): { label: string } | null {
-    if (this.cascadeVertexMarkers.children.length === 0) return null;
+    const markers = [
+      ...this.cascadeVertexMarkers.children,
+      ...this.layerHitMarkers.children
+    ];
+    if (markers.length === 0) return null;
     const rect = this.renderer.domElement.getBoundingClientRect();
     const cursorX = event.clientX - rect.left;
     const cursorY = rect.height - (event.clientY - rect.top);
@@ -3971,7 +3649,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const ndcX = (cursorX - view.x) / view.z;
       const ndcY = (cursorY - view.y) / view.w;
       if (ndcX < 0 || ndcX > 1 || ndcY < 0 || ndcY > 1) continue;
-      for (const marker of this.cascadeVertexMarkers.children) {
+      for (const marker of markers) {
         marker.getWorldPosition(v);
         v.project(cam);
         const sx = (v.x * 0.5 + 0.5) * view.z + view.x;
@@ -3980,7 +3658,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         const dy = cursorY - sy;
         const d = dx * dx + dy * dy;
         if (d < maxDist && (closest == null || d < closest.dist)) {
-          const label = (marker as any).userData?.vertexLabel;
+          const label = this.resolveMarkerLabel((marker as any).userData);
           if (label) closest = { label, dist: d };
         }
       }
@@ -4028,6 +3706,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
       if (this.cascadeVertexMarkers.children.length > 0) {
         intersects.push(...raycaster.intersectObjects(this.cascadeVertexMarkers.children, false));
+      }
+      if (this.layerHitMarkers.children.length > 0) {
+        intersects.push(...raycaster.intersectObjects(this.layerHitMarkers.children, true));
       }
       if (this.cascadeConnectorLine) {
         intersects.push(...raycaster.intersectObject(this.cascadeConnectorLine, false));
@@ -4120,11 +3801,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.scene.add(this.tracks);
     this.scene.add(this.cascadeVertexMarkers);
     this.scene.add(this.primaryVertexMarkers);
+    this.layerHitMarkers.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 10000;
+    this.scene.add(this.layerHitMarkers);
     this.scene.add(this.clusters);
     this.scene.add(this.calorimeterReadouts);
     this.scene.add(this.decays);
-    this.collisionProtonsGroup.visible = false;
-    this.scene.add(this.collisionProtonsGroup);
     this.resize(true);
     this.syncSceneBackground();
     this.applyDarkModeStyling();

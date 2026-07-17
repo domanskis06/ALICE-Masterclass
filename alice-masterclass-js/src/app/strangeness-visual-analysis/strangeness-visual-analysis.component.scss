@@ -301,6 +301,40 @@
   }
 }
 
+/* Full-viewport intro: framed MP4 matching the coach card's CERN red border. */
+.collision-video-layer {
+  pointer-events: auto;
+  position: fixed;
+  inset: 0;
+  z-index: 1450;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(24px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-right, 0px))
+    max(24px, env(safe-area-inset-bottom, 0px)) max(24px, env(safe-area-inset-left, 0px));
+  background: rgba(10, 24, 50, 0.78);
+}
+
+.collision-video-frame {
+  width: min(920px, calc(100vw - 48px));
+  border: 2px solid rgba(183, 28, 28, 0.85);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 8px 28px rgba(15, 23, 42, 0.35),
+    0 0 0 1px rgba(183, 28, 28, 0.28);
+}
+
+.collision-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+}
+
 /* Fixed overlay so it is not swallowed by THREE canvas/stacking; palette on the right stays usable.
    Clear CERN toolbar (40px) + app toolbar (64px) = 104px, plus a small gap so the card
    does not visually fuse with the red toolbar. */
@@ -323,6 +357,33 @@
   border: 1px solid rgba(183, 28, 28, 0.45);
   border-radius: 10px;
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+}
+
+.va-coach-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.va-coach-photo-frame {
+  pointer-events: auto;
+  width: 100%;
+  border: 1px solid rgba(183, 28, 28, 0.45);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0a1832;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+}
+
+.va-coach-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center;
 }
 
 .va-coach-card .mat-mdc-card-content,
