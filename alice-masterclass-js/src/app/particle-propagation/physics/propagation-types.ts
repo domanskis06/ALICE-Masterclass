@@ -39,6 +39,12 @@ export interface BufferedTrack {
   positions: Float32Array;
   /** Time-of-flight at each vertex, in ns, monotonically increasing. Length = capacity. */
   times: Float32Array;
+  /**
+   * Optional presentation TOF (ns) for draw-range animation. When set, the
+   * timeline / track renderer reveal against this buffer instead of {@link times},
+   * so soft (low-|p|) tracks can be pedagogically slowed without mutating physics.
+   */
+  timesVis?: Float32Array;
   /** Number of valid points actually written into `positions`/`times`. */
   pointCount: number;
   charge: number;

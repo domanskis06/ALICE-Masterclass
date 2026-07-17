@@ -111,4 +111,17 @@ describe('updateDrawRange', () => {
     expect(line.geometry.instanceCount).toBe(1);
     expect(Array.from(track.times)).toEqual(timesBefore);
   });
+
+  it('prefers timesVis over physical times when present', () => {
+    const track = makeTrack(1, [0, 5, 10]);
+    track.timesVis = new Float32Array([0, 20, 40]);
+    const [line] = createTrackLines([track], 1);
+
+    updateDrawRange(line, track, 12);
+    // Physical times would reveal 2 segments at t=12; timesVis only 0 so far.
+    expect(line.geometry.instanceCount).toBe(0);
+
+    updateDrawRange(line, track, 25);
+    expect(line.geometry.instanceCount).toBe(1); // timesVis vertices 0..1
+  });
 });

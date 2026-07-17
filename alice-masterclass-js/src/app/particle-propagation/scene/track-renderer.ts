@@ -18,6 +18,7 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 
 import { BufferedTrack } from '../physics/propagation-types';
+import { revealTimes } from '../physics/momentum-reveal-timing';
 
 /**
  * Track colours by electric charge (HEP convention for this module):
@@ -108,11 +109,13 @@ export function createTrackLines(
 }
 
 /**
- * Binary-search the last index `i` such that `track.times[i] <= t`. Returns
- * -1 when `t` is before the first sample (nothing visible yet).
+ * Binary-search the last index `i` such that `revealTimes(track)[i] <= t`.
+ * Uses presentation `timesVis` when present, otherwise physical `times`.
+ * Returns -1 when `t` is before the first sample (nothing visible yet).
  */
 function lastVisibleIndex(track: BufferedTrack, t: number): number {
-  const { times, pointCount } = track;
+  const times = revealTimes(track);
+  const { pointCount } = track;
   if (pointCount === 0 || t < times[0]) return -1;
   if (t >= times[pointCount - 1]) return pointCount - 1;
 
@@ -127,10 +130,9 @@ function lastVisibleIndex(track: BufferedTrack, t: number): number {
 }
 
 /**
- * Reveals the prefix of `line` corresponding to the physics points already
- * reached by `tSincePropagationStart` (same units as `BufferedTrack.times`,
- * i.e. ns since the particle left its production vertex). Physics-free: pure
- * buffer lookup + `instanceCount` write.
+ * Reveals the prefix of `line` corresponding to the points already reached by
+ * `tSincePropagationStart` (ns since production vertex — presentation clock when
+ * `timesVis` is set). Physics-free: pure buffer lookup + `instanceCount` write.
  */
 export function updateDrawRange(line: Line2, track: BufferedTrack, tSincePropagationStart: number): void {
   const index = lastVisibleIndex(track, tSincePropagationStart);

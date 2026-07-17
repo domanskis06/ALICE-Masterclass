@@ -22,6 +22,7 @@ import { Subscription } from 'rxjs';
 
 import { InstructionsProvider } from '../shared/interfaces';
 import { MagneticFieldService } from './physics/magnetic-field.service';
+import { MomentumRevealTimingService } from './physics/momentum-reveal-timing.service';
 import { Rk4PropagatorService } from './physics/rk4-propagator.service';
 import { ParticleDataService, EventRef } from './data/particle-data.service';
 import { BufferedTrack, PropagationParticle } from './physics/propagation-types';
@@ -108,6 +109,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   isDarkMode = true;
   /** Same semantics as EventDisplay `sidebarOpened` — false hides the panel fully. */
   sidebarOpened = true;
+  /** Left overlay drawer for detector parts + dark mode. */
+  leftSidebarOpened = true;
   cameraMode: PropagationCameraMode = 'centered';
   detectorPartsForUi: DetectorPartUiModel[] = [];
 
@@ -193,6 +196,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   constructor(
     private readonly magneticField: MagneticFieldService,
     private readonly rk4Propagator: Rk4PropagatorService,
+    private readonly momentumRevealTiming: MomentumRevealTimingService,
     private readonly particleData: ParticleDataService,
     private readonly detectorLoader: DetectorLoaderService,
     private readonly dialog: MatDialog,
@@ -389,9 +393,18 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.requestRender();
   }
 
+  onFreeCameraChange(enabled: boolean): void {
+    this.cameraMode = enabled ? 'free' : 'centered';
+    this.onCameraModeChange();
+  }
+
   toggleSidebar(): void {
     this.sidebarOpened = !this.sidebarOpened;
     // Sidebar is an overlay (transform only) — canvas size stays fixed, no resize flash.
+  }
+
+  toggleLeftSidebar(): void {
+    this.leftSidebarOpened = !this.leftSidebarOpened;
   }
 
   // ---------------------------------------------------------------------
@@ -556,7 +569,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
           this.progressTotal = event.total;
           this.cdr.markForCheck();
         } else {
-          this.onPrecomputeResult(event.result.tracks, event.result.maxTimeNs);
+          this.onPrecomputeResult(event.result.tracks, event.result.maxTimeNs, particles);
         }
       },
       error: (err: Error) => {
@@ -566,11 +579,19 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     });
   }
 
-  private async onPrecomputeResult(tracks: BufferedTrack[], maxTimeNs: number): Promise<void> {
+  private async onPrecomputeResult(
+    tracks: BufferedTrack[],
+    maxTimeNs: number,
+    particles: PropagationParticle[]
+  ): Promise<void> {
     try {
       const collisionIntro = await this.ensureCollisionIntro();
       if (this.destroyed) return;
       this.clearTracks();
+
+      // Pedagogical |p|-based β_eff stretch for reveal pacing; physical `times` stay intact.
+      const revealMaxTimeNs = this.momentumRevealTiming.attachRevealTimes(tracks, particles);
+      const timelineMaxNs = revealMaxTimeNs > 0 ? revealMaxTimeNs : maxTimeNs;
 
       this.tracks = tracks;
       const host = this.sceneHostRef?.nativeElement;
@@ -587,7 +608,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
         this.scene!.tracksGroup,
         this.tracks,
         this.lines,
-        maxTimeNs,
+        timelineMaxNs,
         { nsPerMs: DEFAULT_NS_PER_MS, onCollisionMoment: () => this.triggerCollisionFlash() }
       );
       this.timeline.reset();

@@ -57,23 +57,35 @@ canvas {
 .sidebar-toggle {
   position: absolute;
   top: 8px;
-  right: 8px;
   z-index: 3;
   color: var(--pp-text);
   background: color-mix(in srgb, var(--pp-bg-panel-solid) 82%, transparent);
   backdrop-filter: blur(6px);
-  transition: right var(--pp-sidebar-duration) ease;
+  transition:
+    left var(--pp-sidebar-duration) ease,
+    right var(--pp-sidebar-duration) ease;
 }
 
-.particle-propagation-host:not(.pp-sidebar-collapsed) .sidebar-toggle {
+.sidebar-toggle--right {
+  right: 8px;
+}
+
+.sidebar-toggle--left {
+  left: 8px;
+}
+
+.particle-propagation-host:not(.pp-sidebar-collapsed) .sidebar-toggle--right {
   right: calc(var(--pp-sidebar-width) + 8px);
 }
 
-// Overlay drawer — scene keeps a fixed size so WebGL never flashes on toggle.
+.particle-propagation-host:not(.pp-left-sidebar-collapsed) .sidebar-toggle--left {
+  left: calc(var(--pp-sidebar-width) + 8px);
+}
+
+// Overlay drawers — scene keeps a fixed size so WebGL never flashes on toggle.
 .controls-sidebar {
   position: absolute;
   top: 0;
-  right: 0;
   bottom: 0;
   z-index: 2;
   width: var(--pp-sidebar-width);
@@ -83,15 +95,30 @@ canvas {
   box-sizing: border-box;
   padding: 16px 16px 24px;
   background: var(--pp-bg-panel-solid);
-  border-left: 1px solid var(--pp-border);
   color: var(--pp-text);
-  transform: translateX(0);
   transition: transform var(--pp-sidebar-duration) ease;
   will-change: transform;
 }
 
-.particle-propagation-host.pp-sidebar-collapsed .controls-sidebar {
+.controls-sidebar--right {
+  right: 0;
+  border-left: 1px solid var(--pp-border);
+  transform: translateX(0);
+}
+
+.controls-sidebar--left {
+  left: 0;
+  border-right: 1px solid var(--pp-border);
+  transform: translateX(0);
+}
+
+.particle-propagation-host.pp-sidebar-collapsed .controls-sidebar--right {
   transform: translateX(100%);
+  pointer-events: none;
+}
+
+.particle-propagation-host.pp-left-sidebar-collapsed .controls-sidebar--left {
+  transform: translateX(-100%);
   pointer-events: none;
 }
 
@@ -99,10 +126,13 @@ canvas {
   min-width: 0;
 }
 
-.camera-mode-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.event-select-field {
+  // No floating label — the section h4 already says "Event".
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 48px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
 }
 
 .field-toggles-grid {
@@ -110,7 +140,7 @@ canvas {
   grid-template-columns: 1fr 1fr;
   column-gap: 12px;
   row-gap: 10px;
-  margin: 8px 0 10px;
+  margin: 12px 0 0;
   align-items: center;
 
   mat-slide-toggle {
@@ -129,7 +159,7 @@ canvas {
 .field-strength-markers {
   position: relative;
   height: 34px;
-  margin: 2px 12px 0;
+  margin: 0 12px;
 }
 
 .field-strength-marker {
@@ -224,6 +254,7 @@ canvas {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+  margin-bottom: 4px;
 }
 
 .field-colorbar-bar {
@@ -240,11 +271,6 @@ canvas {
   color: var(--pp-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.field-colorbar-caption {
-  margin-top: 4px;
-  margin-bottom: 0;
 }
 
 .slider-label {
