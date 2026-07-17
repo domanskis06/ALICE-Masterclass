@@ -36,6 +36,7 @@ import {
 } from './physics/constants';
 import { PropagationScene, PropagationCameraMode } from './scene/propagation-scene';
 import { DetectorLoaderService } from './scene/detector-loader.service';
+import { scheduleDeferredLowLods } from './scene/detector-loader';
 import { CollisionIntro } from './scene/collision-intro';
 import { createTrackLines, setTrackLinesResolution } from './scene/track-renderer';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
@@ -192,6 +193,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private resizeObserver: ResizeObserver | null = null;
   private precomputeSub: Subscription | null = null;
   private destroyed = false;
+  private detectorLoadAbort: AbortController | null = null;
+  private cancelDeferredLowLods: (() => void) | null = null;
 
   constructor(
     private readonly magneticField: MagneticFieldService,
@@ -246,6 +249,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.detectorLoadAbort?.abort();
+    this.detectorLoadAbort = null;
+    this.cancelDeferredLowLods?.();
+    this.cancelDeferredLowLods = null;
     this.stopRenderLoop();
     this.precomputeSub?.unsubscribe();
     this.resizeObserver?.disconnect();
@@ -412,30 +419,60 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   // ---------------------------------------------------------------------
 
   private loadDetector(): void {
+    this.detectorLoadAbort?.abort();
+    this.cancelDeferredLowLods?.();
+    this.detectorLoadAbort = new AbortController();
+    const signal = this.detectorLoadAbort.signal;
+    let coreGroupAttached = false;
+
     this.detectorLoader
-      .load(PropagationScene.objectScale, this.isDarkMode)
-      .then((model) => {
-        if (this.destroyed || !this.scene) return;
-        this.scene.detectorGroup.add(model.group);
-        this.detectorPartRootByPath.clear();
-        for (const part of model.parts) {
-          this.detectorPartRootByPath.set(part.assetPath, part.root);
-        }
-        this.detectorPartsForUi = model.parts.map((part) => {
-          const visible = defaultDetectorPartVisible(part.assetPath);
-          setDetectorPartVisibility(part.root, visible);
-          return {
-            assetPath: part.assetPath,
-            label: part.label,
-            visible,
-            opacity: this.getPartOpacity(part.root),
-            accentColor: detectorPartAccentColor(part.assetPath),
-          };
-        });
-        this.requestRender();
-        this.cdr.markForCheck();
+      .loadProgressive(PropagationScene.objectScale, this.isDarkMode, {
+        signal,
+        deferLowLod: true,
+        onWave: (model, wave) => {
+          if (this.destroyed || !this.scene || signal.aborted) return;
+
+          if (wave === 'core' && !coreGroupAttached) {
+            this.scene.detectorGroup.add(model.group);
+            coreGroupAttached = true;
+            this.cancelDeferredLowLods?.();
+            this.cancelDeferredLowLods = scheduleDeferredLowLods(model.group, () => {
+              if (this.destroyed || signal.aborted) return;
+              this.requestRender();
+            });
+          } else if (wave === 'complete') {
+            // Secondary parts were added onto the same group; re-schedule so any
+            // newly pending Melax low-LODs attach after the next paint.
+            this.cancelDeferredLowLods?.();
+            this.cancelDeferredLowLods = scheduleDeferredLowLods(model.group, () => {
+              if (this.destroyed || signal.aborted) return;
+              this.requestRender();
+            });
+          }
+
+          this.detectorPartRootByPath.clear();
+          for (const part of model.parts) {
+            this.detectorPartRootByPath.set(part.assetPath, part.root);
+          }
+          this.detectorPartsForUi = model.parts.map((part) => {
+            const visible = defaultDetectorPartVisible(part.assetPath);
+            setDetectorPartVisibility(part.root, visible);
+            return {
+              assetPath: part.assetPath,
+              label: part.label,
+              visible,
+              opacity: this.getPartOpacity(part.root),
+              accentColor: detectorPartAccentColor(part.assetPath),
+            };
+          });
+          this.requestRender();
+          this.cdr.markForCheck();
+        },
       })
-      .catch((err) => console.error('[ParticlePropagation] detector load failed', err));
+      .catch((err) => {
+        if (signal.aborted) return;
+        console.error('[ParticlePropagation] detector load failed', err);
+      });
   }
 
   private loadFieldVisualization(): void {

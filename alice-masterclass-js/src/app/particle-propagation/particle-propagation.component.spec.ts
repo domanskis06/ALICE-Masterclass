@@ -89,10 +89,20 @@ describe('ParticlePropagationComponent', () => {
     const resultEvent: PrecomputeEvent = { type: 'result', result: { tracks: [fakeTrack], maxTimeNs: 1 } };
     precomputeSpy = jasmine.createSpy('precompute').and.returnValue(of(progressEvent, resultEvent));
     const fakeRk4 = { precompute: precomputeSpy };
-    // Real GLTF fetches for the 8 detector parts are orthogonal to this component-level spec
+    // Real GLTF fetches for the detector parts are orthogonal to this component-level spec
     // and, across many tests, needlessly heavy on headless Chrome's software (swiftshader) GL.
+    const emptyModel = { group: new THREE.Group(), parts: [] as [] };
     const fakeDetectorLoader = {
-      load: () => Promise.resolve({ group: new THREE.Group(), parts: [] }),
+      load: () => Promise.resolve(emptyModel),
+      loadProgressive: (
+        _scale: number,
+        _darkMode: boolean,
+        options: { onWave: (model: typeof emptyModel, wave: 'core' | 'complete') => void }
+      ) => {
+        options.onWave(emptyModel, 'core');
+        options.onWave(emptyModel, 'complete');
+        return Promise.resolve(emptyModel);
+      },
     };
 
     await TestBed.configureTestingModule({
