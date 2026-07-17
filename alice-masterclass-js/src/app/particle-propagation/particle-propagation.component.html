@@ -1,6 +1,16 @@
-<div class="particle-propagation-host" [class.pp-dark]="isDarkMode" [class.pp-sidebar-collapsed]="sidebarCollapsed">
+<div class="particle-propagation-host" [class.pp-dark]="isDarkMode" [class.pp-sidebar-collapsed]="!sidebarOpened">
   <div class="scene-column" #sceneHost>
     <canvas #canvas></canvas>
+
+    <button
+      mat-icon-button
+      type="button"
+      class="sidebar-toggle"
+      [attr.aria-label]="sidebarOpened ? 'Hide controls sidebar' : 'Show controls sidebar'"
+      [attr.aria-expanded]="sidebarOpened"
+      (click)="toggleSidebar()">
+      <mat-icon>{{ sidebarOpened ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
 
     @if (phase === 'loading-field' || phase === 'loading-event' || phase === 'precomputing') {
       <div class="loading-overlay">
@@ -33,20 +43,8 @@
     }
   </div>
 
-  <aside class="controls-sidebar" aria-label="Particle propagation controls">
-    <div class="sidebar-header">
-      <button
-        mat-icon-button
-        type="button"
-        class="sidebar-toggle"
-        [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-        [attr.aria-expanded]="!sidebarCollapsed"
-        (click)="sidebarCollapsed = !sidebarCollapsed">
-        <mat-icon>{{ sidebarCollapsed ? 'chevron_left' : 'chevron_right' }}</mat-icon>
-      </button>
-    </div>
-
-    <div class="sidebar-body" [attr.aria-hidden]="sidebarCollapsed">
+  <aside class="controls-sidebar" aria-label="Particle propagation controls" [attr.aria-hidden]="!sidebarOpened">
+    <div class="sidebar-body">
       <section class="controls-section">
         <h4>Event</h4>
         <mat-form-field appearance="outline" class="full-width">
@@ -92,7 +90,7 @@
             mat-icon-button
             type="button"
             aria-label="Replay"
-            [disabled]="!controlsEnabled"
+            [disabled]="!replayEnabled"
             (click)="onReplay()">
             <mat-icon>replay</mat-icon>
           </button>
@@ -135,12 +133,33 @@
       </section>
 
       <section class="controls-section">
+        <h4>Camera</h4>
+        <mat-radio-group
+          [(ngModel)]="cameraMode"
+          [ngModelOptions]="{ standalone: true }"
+          (change)="onCameraModeChange()"
+          class="camera-mode-group">
+          <mat-radio-button value="centered">Centered</mat-radio-button>
+          <mat-radio-button value="free">Free</mat-radio-button>
+        </mat-radio-group>
+      </section>
+
+      <section class="controls-section">
         <h4>Magnetic field</h4>
         <label class="slider-label" for="pp-field-strength">
           Field strength: {{ fieldStrengthT | number: '1.1-1' }} T
         </label>
+        <div class="field-strength-markers" aria-hidden="true">
+          @for (marker of fieldStrengthMarkers; track marker.label) {
+            <span class="field-strength-marker" [style.left.%]="marker.positionPct">
+              <span class="field-strength-marker-label">{{ marker.label }}</span>
+              <span class="field-strength-marker-value">{{ marker.tesla }} T</span>
+              <span class="field-strength-marker-tick"></span>
+            </span>
+          }
+        </div>
         <mat-slider
-          class="full-width"
+          class="full-width field-strength-slider"
           [min]="fieldStrengthMinT"
           [max]="fieldStrengthMaxT"
           [step]="fieldStrengthStepT"
@@ -153,19 +172,45 @@
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onFieldStrengthChange($event)" />
         </mat-slider>
-        <mat-slide-toggle
-          [(ngModel)]="fieldVisible"
-          [ngModelOptions]="{ standalone: true }"
-          (ngModelChange)="onFieldShowChange($event)">
-          Show field
-        </mat-slide-toggle>
-        <mat-slide-toggle
-          [(ngModel)]="fieldDipoleTransitionVisible"
-          [ngModelOptions]="{ standalone: true }"
-          [disabled]="!fieldVisible"
-          (ngModelChange)="onFieldDipoleTransitionChange($event)">
-          Dipole field (forward arcs + transverse brush)
-        </mat-slide-toggle>
+        @if (tracksNeedRecompute) {
+          <p class="slider-label field-recompute-hint">
+            Press Replay to recompute tracks with the new field.
+          </p>
+        }
+        <div class="field-toggles-grid">
+          <mat-slide-toggle
+            [(ngModel)]="fieldVisible"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="onFieldShowChange($event)">
+            Show field
+          </mat-slide-toggle>
+          <mat-slide-toggle
+            [(ngModel)]="fieldDipoleTransitionVisible"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="!fieldVisible"
+            (ngModelChange)="onFieldDipoleTransitionChange($event)">
+            Dipole field
+          </mat-slide-toggle>
+          <mat-slide-toggle
+            [ngModel]="fieldDensity === 'dense'"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="!fieldVisible"
+            (ngModelChange)="onFieldDensityChange($event)">
+            Dense field
+          </mat-slide-toggle>
+          <mat-slide-toggle
+            [ngModel]="solenoidPolarity < 0"
+            [ngModelOptions]="{ standalone: true }"
+            [disabled]="isBusy"
+            (ngModelChange)="onSolenoidReversedChange($event)"
+            [attr.aria-label]="
+              solenoidPolarity > 0
+                ? 'Reverse L3 solenoid field direction (currently +z)'
+                : 'Restore L3 solenoid field direction (currently −z)'
+            ">
+            Reverse L3
+          </mat-slide-toggle>
+        </div>
         <label class="slider-label">Field opacity</label>
         <mat-slider
           class="full-width"
@@ -179,21 +224,6 @@
             [(ngModel)]="fieldOpacity"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onFieldOpacityChange($event)" />
-        </mat-slider>
-        <label class="slider-label">Field line density (sparse → dense)</label>
-        <mat-slider
-          class="full-width"
-          [min]="0"
-          [max]="2"
-          [step]="1"
-          [discrete]="true"
-          [displayWith]="densityLabel"
-          [disabled]="!fieldVisible">
-          <input
-            matSliderThumb
-            [(ngModel)]="fieldDensityLevel"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="onFieldDensityLevelChange($event)" />
         </mat-slider>
         @if (fieldVisible) {
           <div class="field-colorbar" aria-label="Magnetic field strength colour scale">

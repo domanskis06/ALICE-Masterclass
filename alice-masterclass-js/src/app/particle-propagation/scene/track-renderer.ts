@@ -17,18 +17,16 @@ import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 
-import { trackColor } from '../../shared/globals/colors/colors';
 import { BufferedTrack } from '../physics/propagation-types';
 
 /**
- * Track colours:
- * - primary (collision background) → shared VA blue (`trackColor`)
- * - V0 daughters → red (+) / green (−) for charge sign (local to this module)
- * Neutral is only a defensive fallback for non-V0 / unknown charge.
+ * Track colours by electric charge (HEP convention for this module):
+ * - positive → red
+ * - negative → blue
+ * Neutral is only a defensive fallback for unknown charge.
  */
-export const PRIMARY_TRACK_COLOR = trackColor;
 export const POSITIVE_TRACK_COLOR = '#E53935';
-export const NEGATIVE_TRACK_COLOR = '#43A047';
+export const NEGATIVE_TRACK_COLOR = '#2F6BFF';
 export const NEUTRAL_TRACK_COLOR = '#B0BEC5';
 
 /**
@@ -45,9 +43,6 @@ export interface TrackLineOptions {
 }
 
 function colorForTrack(track: BufferedTrack): THREE.Color {
-  if (track.origin === 'primary') {
-    return new THREE.Color(PRIMARY_TRACK_COLOR);
-  }
   if (track.charge > 0) return new THREE.Color(POSITIVE_TRACK_COLOR);
   if (track.charge < 0) return new THREE.Color(NEGATIVE_TRACK_COLOR);
   return new THREE.Color(NEUTRAL_TRACK_COLOR);

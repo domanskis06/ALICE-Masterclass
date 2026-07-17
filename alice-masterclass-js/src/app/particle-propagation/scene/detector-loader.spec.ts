@@ -195,6 +195,20 @@ describe('loadDetectorModel', () => {
     expect(Math.abs(center.z)).toBeLessThan(0.05);
   });
 
+  it('lifts muon-arm parts so near-symmetric shells sit on the ITS beam axis (Y)', () => {
+    model.group.updateMatrixWorld(true);
+    // MCH / SHIL are roughly cylindrical about the beam — their AABB centre Y
+    // should land near 0 after the +30 cm frame lift + ITS recenter. ABSO/DIPO
+    // are asymmetric so AABB centre is not a reliable pipe proxy.
+    for (const re of [/\/mch\.glb$/i, /\/shil\.glb$/i]) {
+      const part = model.parts.find((p) => re.test(p.assetPath));
+      expect(part).toBeDefined();
+      const center = new THREE.Box3().setFromObject(part!.root).getCenter(new THREE.Vector3());
+      expect(Math.abs(center.x)).toBeLessThan(0.05);
+      expect(Math.abs(center.y)).toBeLessThan(0.05);
+    }
+  });
+
   it('collapses each non-LOD part down to a small number of draw calls', () => {
     for (const part of model.parts) {
       if ((part.root as THREE.LOD).isLOD) continue;

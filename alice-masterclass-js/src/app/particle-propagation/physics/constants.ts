@@ -42,10 +42,24 @@ export const NOMINAL_SOLENOID_B_T = 0.5;
 
 /** Inclusive UI range for the magnetic-field strength slider (Tesla). */
 export const FIELD_STRENGTH_MIN_T = 0.5;
-export const FIELD_STRENGTH_MAX_T = 2;
+export const FIELD_STRENGTH_MAX_T = 4;
 export const FIELD_STRENGTH_STEP_T = 0.1;
 /** Default slider / initial strength (matches the nominal map). */
 export const FIELD_STRENGTH_DEFAULT_T = NOMINAL_SOLENOID_B_T;
+
+/**
+ * Reference solenoid |B| plateaus at major LHC experiments (Tesla).
+ * Drawn as labelled ticks above the field-strength slider for comparison.
+ */
+export const FIELD_STRENGTH_EXPERIMENT_MARKERS: ReadonlyArray<{
+  label: string;
+  tesla: number;
+}> = [
+  { label: 'ALICE', tesla: 0.5 },
+  { label: 'LHCb', tesla: 1 },
+  { label: 'ATLAS', tesla: 2 },
+  { label: 'CMS', tesla: 3.8 },
+];
 
 /**
  * Cylindrical tracking volume (L3 free bore, slightly inset from the yoke wall):
@@ -75,8 +89,8 @@ export const RK4_STEP_CM = 1.5;
 export const MAX_RK4_STEPS = 500;
 
 /** Hard cap on the number of particles propagated per event (perf/UX guard).
- * Curated events already ship 15-40 charged tracks; this is just a safety net. */
-export const MAX_TRACKED_PARTICLES = 40;
+ * Curated events ship ~15–40 tracks; dense demos (event_9) up to ~60. */
+export const MAX_TRACKED_PARTICLES = 60;
 
 /** Chebyshev field-map dimensionality (x/y/z or r/phi/z components). */
 export const DIMENSIONS = 3;
@@ -125,7 +139,7 @@ export const FIELD_MAX_Z = SOL_MAX_Z;
 export const FIELD_DATA_BASE_PATH = 'assets/field';
 export const DETECTOR_MODEL_BASE_PATH = 'assets/models/alice components';
 export const PROTON_MODEL_PATH = 'assets/models/proton.glb';
-/** Curated Particle Propagation events from part1 (see scripts/curate-propagation-events.mjs). */
+/** Curated Particle Propagation events from gpu_propagator (see scripts/curate-propagation-events.mjs). */
 export const PARTICLE_EVENT_DATA_BASE_PATH = 'assets/exercises/particle-propagation';
-/** Number of curated `event_<n>.json` files shipped under the base path above. */
+/** Number of curated `event_<n>.json` files shipped under the base path above (event_0 … event_9). */
 export const PARTICLE_EVENT_COUNT = 10;

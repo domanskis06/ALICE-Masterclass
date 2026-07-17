@@ -34,10 +34,11 @@ import { Vec3 } from './propagation-types';
 
 export type FieldSampler = (posCm: Vec3) => Vec3;
 
-export type FieldLineDensity = 'sparse' | 'medium' | 'dense';
+/** Two UI levels: sparse, and dense (former medium — the old denser preset is gone). */
+export type FieldLineDensity = 'sparse' | 'dense';
 
 export interface FieldLineTracerOptions {
-  /** Seed-grid spacing preset. Defaults to `'medium'`. */
+  /** Seed-grid spacing preset. Defaults to `'dense'` (former medium). */
   density?: FieldLineDensity;
   /**
    * When true, extend barrel streamlines into the solenoid→dipole hand-off
@@ -109,12 +110,11 @@ const L3_SEED_RADIUS_CM = 490;
 
 /**
  * Inner disc seed-grid spacing per density preset, in cm.
- * sparse ≈ 50 lines, medium ≈ 120, dense ≈ 250.
+ * sparse ≈ 50 lines, dense ≈ 120 (former medium; old dense/16 cm removed).
  */
 const SEED_GRID_STEP_CM: Record<FieldLineDensity, number> = {
   sparse: 50,
-  medium: 28,
-  dense: 16,
+  dense: 28,
 };
 
 /**
@@ -132,8 +132,7 @@ const TRD_L3_RING_RADII_CM = [322, 378, 434, 490] as const;
 /** Azimuthal samples on mid rings (TPC→TRD). */
 const MID_RING_ANGLE_COUNT: Record<FieldLineDensity, number> = {
   sparse: 6,
-  medium: 8,
-  dense: 10,
+  dense: 8,
 };
 
 /**
@@ -142,7 +141,6 @@ const MID_RING_ANGLE_COUNT: Record<FieldLineDensity, number> = {
  */
 const TRD_L3_RING_ANGLE_COUNT: Record<FieldLineDensity, number> = {
   sparse: 24,
-  medium: 24,
   dense: 24,
 };
 
@@ -420,7 +418,7 @@ function buildL3RingSeeds(density: FieldLineDensity): Vec3[] {
   return seeds;
 }
 
-function buildBarrelSeeds(stepCm: number, density: FieldLineDensity = 'medium'): Vec3[] {
+function buildBarrelSeeds(stepCm: number, density: FieldLineDensity = 'dense'): Vec3[] {
   return [...buildInnerBarrelSeeds(stepCm), ...buildL3RingSeeds(density)];
 }
 
@@ -620,7 +618,7 @@ export function traceFieldLines(
   sample: FieldSampler,
   options: FieldLineTracerOptions = {}
 ): FieldLineTraceResult {
-  const { density = 'medium', includeDipoleTransition = false } = options;
+  const { density = 'dense', includeDipoleTransition = false } = options;
   const includeDipoleArcs = options.includeDipoleArcs ?? includeDipoleTransition;
   const bounds = includeDipoleTransition ? BARREL_WITH_DIPOLE_BOUNDS : BARREL_BOUNDS;
   const maxSteps = includeDipoleTransition ? MAX_STEPS_WITH_DIPOLE : MAX_STEPS_PER_DIRECTION;

@@ -27,12 +27,13 @@ import { ParticleDataService, EventRef } from './data/particle-data.service';
 import { BufferedTrack, PropagationParticle } from './physics/propagation-types';
 import {
   FIELD_STRENGTH_DEFAULT_T,
+  FIELD_STRENGTH_EXPERIMENT_MARKERS,
   FIELD_STRENGTH_MAX_T,
   FIELD_STRENGTH_MIN_T,
   FIELD_STRENGTH_STEP_T,
   PROTON_MODEL_PATH,
 } from './physics/constants';
-import { PropagationScene } from './scene/propagation-scene';
+import { PropagationScene, PropagationCameraMode } from './scene/propagation-scene';
 import { DetectorLoaderService } from './scene/detector-loader.service';
 import { CollisionIntro } from './scene/collision-intro';
 import { createTrackLines, setTrackLinesResolution } from './scene/track-renderer';
@@ -47,6 +48,7 @@ import {
 import {
   buildFieldLines,
   DEFAULT_FIELD_LINEWIDTH,
+  setFieldLinesColorRange,
   setFieldLinesOpacity,
   setFieldLinesResolution,
 } from './scene/field-line-visualizer';
@@ -104,7 +106,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   progressTotal = 0;
   errorMessage: string | null = null;
   isDarkMode = true;
-  sidebarCollapsed = false;
+  /** Same semantics as EventDisplay `sidebarOpened` — false hides the panel fully. */
+  sidebarOpened = true;
+  cameraMode: PropagationCameraMode = 'centered';
   detectorPartsForUi: DetectorPartUiModel[] = [];
 
   /** CDK overlay panel lives outside the host; class must be applied via panelClass. */
@@ -119,10 +123,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   selectedEventIndex = 0;
   hasStarted = false;
   /**
-   * True after the field-strength slider changes while tracks already exist.
-   * Replay (not the slider itself) re-runs RK4 so the student decides when to restart.
+   * True after field strength or L3 polarity changes while tracks already exist.
+   * Replay (not the control itself) re-runs RK4 so the student decides when to restart.
    */
-  private tracksNeedRecompute = false;
+  tracksNeedRecompute = false;
   isPlaying = false;
   currentTimeMs = 0;
   minTimeMs = -1;
@@ -131,19 +135,25 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   /** Field overlay on by default so students see |B|-coloured streamlines. */
   fieldVisible = true;
   /** Dipole-transition bend at the forward (negative-z) detector end. */
-  fieldDipoleTransitionVisible = false;
+  fieldDipoleTransitionVisible = true;
   fieldOpacity = 0.65;
-  /**
-   * 0 = sparse (default), 1 = medium, 2 = dense — drives {@link fieldDensity}.
-   */
-  fieldDensityLevel = 0;
+  /** Seed density: sparse ↔ dense (former medium). */
+  fieldDensity: FieldLineDensity = 'sparse';
   /** Stored line-width preference (native WebGL lines ignore linewidth). */
   fieldLinewidth = DEFAULT_FIELD_LINEWIDTH;
   /** Selected solenoid plateau |B| (Tesla); scales the Chebyshev map spatially. */
   fieldStrengthT = FIELD_STRENGTH_DEFAULT_T;
+  /** L3 solenoid direction: `+1` along +z (nominal), `-1` reversed. */
+  solenoidPolarity: 1 | -1 = 1;
   readonly fieldStrengthMinT = FIELD_STRENGTH_MIN_T;
   readonly fieldStrengthMaxT = FIELD_STRENGTH_MAX_T;
   readonly fieldStrengthStepT = FIELD_STRENGTH_STEP_T;
+  /** LHC experiment |B| ticks drawn above the field-strength slider. */
+  readonly fieldStrengthMarkers = FIELD_STRENGTH_EXPERIMENT_MARKERS.map((m) => ({
+    ...m,
+    positionPct:
+      ((m.tesla - FIELD_STRENGTH_MIN_T) / (FIELD_STRENGTH_MAX_T - FIELD_STRENGTH_MIN_T)) * 100,
+  }));
   readonly fieldColorbarGradient = fieldColorbarCssGradient();
 
   /** Colorbar scale ends (Tesla) — track the selected field strength / dipole view. */
@@ -164,7 +174,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private scene: PropagationScene | null = null;
   private readonly detectorPartRootByPath = new Map<string, THREE.Object3D>();
   private fieldLines: THREE.Object3D | null = null;
-  private fieldDensity: FieldLineDensity = 'sparse';
+  /** Plateau |B| (T) baked into {@link fieldLines} magnitudes at last full rebuild. */
+  private fieldLinesBuiltAtStrengthT = FIELD_STRENGTH_DEFAULT_T;
   private collisionIntroPromise: Promise<CollisionIntro> | null = null;
   private timeline: PropagationTimeline | null = null;
   private tracks: BufferedTrack[] = [];
@@ -202,15 +213,15 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     return this.phase === 'ready' && this.timeline !== null;
   }
 
+  /** Replay stays available after a field change that clears or stale-marks tracks. */
+  get replayEnabled(): boolean {
+    if (this.isBusy) return false;
+    return this.controlsEnabled || (this.hasStarted && this.tracksNeedRecompute);
+  }
+
   get isBusy(): boolean {
     return this.phase === 'loading-field' || this.phase === 'loading-event' || this.phase === 'precomputing';
   }
-
-  readonly densityLabel = (value: number): string => {
-    if (value >= 2) return 'Dense';
-    if (value >= 1) return 'Medium';
-    return 'Sparse';
-  };
 
   ngAfterViewInit(): void {
     this.scene = new PropagationScene(this.canvasRef.nativeElement);
@@ -261,7 +272,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   }
 
   onReplay(): void {
-    if (!this.controlsEnabled) return;
+    if (!this.replayEnabled) return;
     if (this.tracksNeedRecompute) {
       this.tracksNeedRecompute = false;
       this.runPrecomputePipeline();
@@ -320,9 +331,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.requestRender();
   }
 
-  onFieldDensityLevelChange(level: number): void {
-    this.fieldDensityLevel = level;
-    this.fieldDensity = level >= 2 ? 'dense' : level >= 1 ? 'medium' : 'sparse';
+  onFieldDensityChange(dense: boolean): void {
+    const next: FieldLineDensity = dense ? 'dense' : 'sparse';
+    if (next === this.fieldDensity) return;
+    this.fieldDensity = next;
     this.rebuildFieldVisualization();
   }
 
@@ -331,7 +343,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     if (!Number.isFinite(next) || next === this.magneticField.fieldStrengthT) return;
     this.fieldStrengthT = next;
     this.magneticField.setFieldStrengthT(next);
-    this.rebuildFieldVisualization();
+    // Streamlines follow B̂ — only |B| colours change with the slider. Full Chebyshev
+    // re-trace on every tick was freezing the UI (0.5→4 T × dense seeds).
+    this.recolorFieldVisualization();
     // Defer RK4 until Replay so adjusting the slider does not interrupt playback.
     if (this.hasStarted) {
       this.tracksNeedRecompute = true;
@@ -339,11 +353,45 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.cdr.markForCheck();
   }
 
+  onSolenoidReversedChange(reversed: boolean): void {
+    if (this.isBusy) return;
+    const next: 1 | -1 = reversed ? -1 : 1;
+    if (next === this.solenoidPolarity) return;
+    this.magneticField.setSolenoidPolarity(next);
+    this.solenoidPolarity = next;
+    this.rebuildFieldVisualization();
+    // Opposite B ⇒ opposite curvature; clear stale tracks until the student hits Replay.
+    if (this.hasStarted) {
+      this.invalidateTracksForFieldChange();
+    }
+    this.cdr.markForCheck();
+  }
+
+  /** Drops visible tracks and pauses playback until Replay re-runs RK4. */
+  private invalidateTracksForFieldChange(): void {
+    this.isPlaying = false;
+    this.lastFrameWallMs = 0;
+    this.clearTracks();
+    this.timeline = null;
+    this.tracksNeedRecompute = true;
+    this.requestRender();
+  }
+
   onDarkModeChange(darkMode: boolean): void {
     this.isDarkMode = darkMode;
     this.scene?.setDarkMode(darkMode);
     this.requestRender();
     this.cdr.markForCheck();
+  }
+
+  onCameraModeChange(): void {
+    this.scene?.setCameraMode(this.cameraMode);
+    this.requestRender();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpened = !this.sidebarOpened;
+    // Sidebar is an overlay (transform only) — canvas size stays fixed, no resize flash.
   }
 
   // ---------------------------------------------------------------------
@@ -408,7 +456,17 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       },
     });
     this.fieldLines.visible = this.fieldVisible;
+    this.fieldLinesBuiltAtStrengthT = this.fieldStrengthT;
     this.scene.fieldGroup.add(this.fieldLines);
+    this.requestRender();
+  }
+
+  /** Cheap |B|-only update for the field-strength slider (no Chebyshev re-trace). */
+  private recolorFieldVisualization(): void {
+    if (!this.fieldLines) return;
+    const builtAt = this.fieldLinesBuiltAtStrengthT;
+    const magnitudeScale = builtAt > 0 ? this.fieldStrengthT / builtAt : 1;
+    setFieldLinesColorRange(this.fieldLines, this.activeFieldColorRange(), magnitudeScale);
     this.requestRender();
   }
 
@@ -450,6 +508,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private runPrecomputePipeline(): void {
     this.precomputeSub?.unsubscribe();
     this.errorMessage = null;
+    this.tracksNeedRecompute = false;
     this.phase = 'loading-field';
     this.isPlaying = false;
     this.cdr.markForCheck();
@@ -596,6 +655,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
         this.lastFrameWallMs = nowMs;
 
         let dirty = scene.needsRender;
+        if (scene.isNavigating()) dirty = true;
         if (this.isPlaying && this.timeline) {
           dirty = true;
           const next = this.currentTimeMs + deltaMs * this.playbackSpeed;

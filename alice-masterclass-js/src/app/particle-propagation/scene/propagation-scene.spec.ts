@@ -47,9 +47,27 @@ describe('PropagationScene', () => {
     expect(scene.camera.aspect).toBe(before);
   });
 
-  it('disposes geometries/materials of objects added to its groups without throwing', () => {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial());
-    scene.detectorGroup.add(mesh);
-    expect(() => scene.dispose()).not.toThrow();
+  it('defaults to centered camera mode with pan disabled', () => {
+    expect(scene.cameraMode).toBe('centered');
+    expect(scene.controls.enablePan).toBe(false);
+    expect(scene.controls.enableRotate).toBe(true);
+  });
+
+  it('switches to free camera mode (pan on, rotate off) like EventDisplay', () => {
+    scene.setCameraMode('free');
+    expect(scene.cameraMode).toBe('free');
+    expect(scene.controls.enablePan).toBe(true);
+    expect(scene.controls.enableRotate).toBe(false);
+  });
+
+  it('restores centered mode and locks the orbit target to the origin', () => {
+    scene.setCameraMode('free');
+    scene.controls.target.set(1, 2, 3);
+    scene.setCameraMode('centered');
+    expect(scene.controls.enablePan).toBe(false);
+    expect(scene.controls.enableRotate).toBe(true);
+    expect(scene.controls.target.x).toBe(0);
+    expect(scene.controls.target.y).toBe(0);
+    expect(scene.controls.target.z).toBe(0);
   });
 });

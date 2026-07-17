@@ -102,6 +102,7 @@ export class Rk4PropagatorService {
         fieldBuffers: cloneFieldBuffers(fieldBuffers),
         options,
         fieldStrengthScale: this.magneticField.fieldStrengthScale,
+        fieldSolenoidPolarity: this.magneticField.fieldSolenoidPolarity,
       };
       const transferables: Transferable[] = [
         request.fieldBuffers.solSegments,
@@ -141,8 +142,9 @@ export class Rk4PropagatorService {
     const fieldData = parseChebFieldData(fieldBuffers);
     const evaluator = new ChebFieldEvaluator(fieldData);
     const scale = FIELD_SCALE * this.magneticField.fieldStrengthScale;
+    const polarity = this.magneticField.fieldSolenoidPolarity;
     const fieldTesla: FieldFn = (pos) => {
-      const raw = evaluator.field(pos);
+      const raw = evaluator.field(pos, polarity);
       return { x: raw.x * scale, y: raw.y * scale, z: raw.z * scale };
     };
 

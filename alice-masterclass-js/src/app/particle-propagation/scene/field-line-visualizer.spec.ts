@@ -2,10 +2,12 @@ import * as THREE from 'three';
 
 import {
   buildFieldLines,
+  setFieldLinesColorRange,
   setFieldLinesOpacity,
   setFieldLinesWidth,
 } from './field-line-visualizer';
 import { Vec3 } from '../physics/propagation-types';
+import { fieldColorRangeForStrength } from '../physics/field-colormap';
 
 /** Uniform 0.5 T field along +z, like the ALICE solenoid interior. */
 const uniformZField = (): Vec3 => ({ x: 0, y: 0, z: 0.5 });
@@ -130,5 +132,27 @@ describe('buildFieldLines', () => {
     // Weak = deep blue (higher B); strong = bright red (higher R).
     expect(weakColor.getZ(0)).toBeGreaterThan(strongColor.getZ(0));
     expect(weakColor.getX(0)).toBeLessThan(strongColor.getX(0));
+  });
+
+  it('recolours from stored magnitudes without rebuilding geometry', () => {
+    const group = buildFieldLines(uniformZField, {
+      scale: 1e-2,
+      density: 'sparse',
+      colorRange: fieldColorRangeForStrength(0.5),
+    });
+    const segments = fieldLineSegments(group)!;
+    const positionsBefore = (segments.geometry.attributes['position'].array as Float32Array).slice();
+    const colorBefore = (segments.geometry.attributes['color'].array as Float32Array).slice(0, 3);
+
+    setFieldLinesColorRange(group, fieldColorRangeForStrength(2), 4);
+    const colorAfter = segments.geometry.attributes['color'].array as Float32Array;
+    const positionsAfter = segments.geometry.attributes['position'].array as Float32Array;
+
+    expect(positionsAfter).toEqual(positionsBefore);
+    // Same relative palette position after proportional scale — colours stay put.
+    expect(colorAfter[0]).toBeCloseTo(colorBefore[0], 5);
+    expect(colorAfter[1]).toBeCloseTo(colorBefore[1], 5);
+    expect(colorAfter[2]).toBeCloseTo(colorBefore[2], 5);
+    expect(group.userData['fieldMagnitudeScale']).toBe(4);
   });
 });

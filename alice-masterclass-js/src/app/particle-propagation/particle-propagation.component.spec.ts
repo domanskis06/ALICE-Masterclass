@@ -64,10 +64,19 @@ describe('ParticlePropagationComponent', () => {
       isLoaded: false,
       fieldStrengthT: 0.5,
       fieldStrengthScale: 1,
+      fieldSolenoidPolarity: 1 as 1 | -1,
       load: jasmine.createSpy('load').and.returnValue(Promise.resolve()),
       setFieldStrengthT: jasmine.createSpy('setFieldStrengthT').and.callFake((t: number) => {
         fakeMagneticField.fieldStrengthT = t;
         fakeMagneticField.fieldStrengthScale = t / 0.5;
+      }),
+      setSolenoidPolarity: jasmine.createSpy('setSolenoidPolarity').and.callFake((p: 1 | -1) => {
+        fakeMagneticField.fieldSolenoidPolarity = p;
+      }),
+      toggleSolenoidPolarity: jasmine.createSpy('toggleSolenoidPolarity').and.callFake(() => {
+        fakeMagneticField.fieldSolenoidPolarity =
+          fakeMagneticField.fieldSolenoidPolarity === 1 ? -1 : 1;
+        return fakeMagneticField.fieldSolenoidPolarity;
       }),
       field: jasmine.createSpy('field').and.returnValue({ x: 0, y: 0, z: 0.5 }),
       getRawBuffers: jasmine.createSpy('getRawBuffers').and.returnValue(null),
@@ -159,12 +168,39 @@ describe('ParticlePropagationComponent', () => {
     await flushAsyncChain();
     expect(component.fieldStrengthT).toBe(1);
     expect(precomputeSpy).toHaveBeenCalledTimes(1); // slider alone does not recompute
-    expect(component.fieldColorMinT).toBeCloseTo(0.94, 6);
-    expect(component.fieldColorMaxT).toBeCloseTo(1.02, 6);
+    // Dipole view is on by default → wide |B| window scaled to 1 T plateau.
+    expect(component.fieldColorMinT).toBeCloseTo(0.1, 6);
+    expect(component.fieldColorMaxT).toBeCloseTo(1.8, 6);
 
     component.onReplay();
     await flushAsyncChain();
     expect(precomputeSpy).toHaveBeenCalledTimes(2);
+  }, 15000);
+
+  it('onSolenoidReversedChange() clears tracks and defers RK4 until Replay', async () => {
+    const magneticField = TestBed.inject(MagneticFieldService) as unknown as {
+      setSolenoidPolarity: jasmine.Spy;
+      fieldSolenoidPolarity: 1 | -1;
+    };
+
+    component.onStartAnimation();
+    await flushAsyncChain();
+    expect(component.phase).toBe('ready');
+    expect(precomputeSpy).toHaveBeenCalledTimes(1);
+
+    component.onSolenoidReversedChange(true);
+    expect(magneticField.setSolenoidPolarity).toHaveBeenCalledWith(-1);
+    expect(component.solenoidPolarity).toBe(-1);
+    expect(component.tracksNeedRecompute).toBe(true);
+    expect(component.replayEnabled).toBe(true);
+    expect(component.controlsEnabled).toBe(false); // timeline cleared with tracks
+    expect(precomputeSpy).toHaveBeenCalledTimes(1);
+
+    component.onReplay();
+    await flushAsyncChain();
+    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(component.phase).toBe('ready');
+    expect(component.tracksNeedRecompute).toBe(false);
   }, 15000);
 
   it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', () => {

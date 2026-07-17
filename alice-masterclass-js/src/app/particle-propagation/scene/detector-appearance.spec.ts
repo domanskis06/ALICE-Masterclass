@@ -66,10 +66,10 @@ describe('detectorPartAccentColor', () => {
     expect(detectorPartAccentColor('assets/models/alice components/its.glb')).toBe('#33FF71');
     expect(detectorPartAccentColor('assets/models/alice components/L3.glb')).toBe('#FF0D12');
     expect(detectorPartAccentColor('assets/models/alice components/tpc.glb')).toBe('#22C4FF');
-    expect(detectorPartAccentColor('assets/models/alice components/MCH.glb')).toBe('#C87840');
-    expect(detectorPartAccentColor('assets/models/alice components/ABSO.glb')).toBe('#8A9AB8');
-    expect(detectorPartAccentColor('assets/models/alice components/SHIL.glb')).toBe('#9A7FD4');
-    expect(detectorPartAccentColor('assets/models/alice components/DIPO.glb')).toBe('#6070D8');
+    expect(detectorPartAccentColor('assets/models/alice components/MCH.glb')).toBe('#814244');
+    expect(detectorPartAccentColor('assets/models/alice components/ABSO.glb')).toBe('#DE782B');
+    expect(detectorPartAccentColor('assets/models/alice components/SHIL.glb')).toBe('#BA92AB');
+    expect(detectorPartAccentColor('assets/models/alice components/DIPO.glb')).toBe('#0068D0');
   });
 
   it('falls back to the default orange accent for unknown parts', () => {
@@ -133,17 +133,17 @@ describe('isDipo', () => {
 });
 
 describe('defaultDetectorPartVisible', () => {
-  it('hides forward muon-arm parts by default', () => {
+  it('shows barrel and forward muon-arm parts by default', () => {
     expect(isForwardMuonPart('assets/models/alice components/MCH.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/ABSO.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/SHIL.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/DIPO.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/its.glb')).toBe(false);
 
-    expect(defaultDetectorPartVisible('assets/models/alice components/MCH.glb')).toBe(false);
-    expect(defaultDetectorPartVisible('assets/models/alice components/ABSO.glb')).toBe(false);
-    expect(defaultDetectorPartVisible('assets/models/alice components/SHIL.glb')).toBe(false);
-    expect(defaultDetectorPartVisible('assets/models/alice components/DIPO.glb')).toBe(false);
+    expect(defaultDetectorPartVisible('assets/models/alice components/MCH.glb')).toBe(true);
+    expect(defaultDetectorPartVisible('assets/models/alice components/ABSO.glb')).toBe(true);
+    expect(defaultDetectorPartVisible('assets/models/alice components/SHIL.glb')).toBe(true);
+    expect(defaultDetectorPartVisible('assets/models/alice components/DIPO.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/its.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/L3.glb')).toBe(true);
   });

@@ -30,16 +30,10 @@ describe('traceFieldLines', () => {
     expect(lines.length).toBe(0);
   });
 
-  it('medium density produces more seeds (and therefore lines) than sparse', () => {
+  it('dense density produces more seeds (and therefore lines) than sparse', () => {
     const sparse = traceFieldLines(uniformZField, { density: 'sparse' });
-    const medium = traceFieldLines(uniformZField, { density: 'medium' });
-    expect(medium.lines.length).toBeGreaterThan(sparse.lines.length);
-  });
-
-  it('dense density produces more seeds than medium', () => {
-    const medium = traceFieldLines(uniformZField, { density: 'medium' });
     const dense = traceFieldLines(uniformZField, { density: 'dense' });
-    expect(dense.lines.length).toBeGreaterThan(medium.lines.length);
+    expect(dense.lines.length).toBeGreaterThan(sparse.lines.length);
   });
 
   it('stops a line once it wanders out of the sampled radius', () => {
@@ -50,7 +44,7 @@ describe('traceFieldLines', () => {
       if (r === 0) return { x: 0, y: 0, z: 0 };
       return { x: (pos.x / r) * 0.5, y: (pos.y / r) * 0.5, z: 0 };
     };
-    const { lines } = traceFieldLines(radialField, { density: 'medium' });
+    const { lines } = traceFieldLines(radialField, { density: 'dense' });
     expect(lines.length).toBeGreaterThan(0);
     const maxR = __testing__.BARREL_BOUNDS.maxRadiusCm;
     for (const line of lines) {
