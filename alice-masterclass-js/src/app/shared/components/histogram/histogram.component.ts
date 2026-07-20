@@ -20,15 +20,17 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   readonly SVG = {
     W: 400,
-    H: 200
+    // Tall enough for axis ticks + x-axis label without viewBox clipping.
+    H: 220
   }
 
   readonly MARGIN = {
     TOP: 5,
     RIGHT: 10,
-    BOTTOM: 20,
-    BOTTOM_XLABEL: 10,
-    BOTTOM_TEXT: 0,
+    BOTTOM: 24,
+    BOTTOM_XLABEL: 26,
+    // Baseline inset from the viewBox bottom (descenders / ² need clear space).
+    BOTTOM_TEXT: 12,
     LEFT: 25,
     LEFT_YLABEL: 10
   };

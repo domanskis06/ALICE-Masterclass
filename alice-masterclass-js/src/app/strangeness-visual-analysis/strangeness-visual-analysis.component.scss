@@ -27,7 +27,8 @@
   width: 100%;
   // CERN toolbar 40px + app toolbar 64px
   min-height: calc(100vh - 104px);
-  padding: 10px;
+  // Flush with the red ALICE Masterclass toolbar; keep side/bottom breathing room.
+  padding: 0 0 10px;
 }
 
 .container.va-dark-mode {
@@ -111,14 +112,34 @@
   }
 
   app-event-display .detector-parts-panel,
-  app-event-display .assembly-palette {
+  app-event-display .assembly-palette,
+  app-event-display .event-meta-slot,
+  app-event-display .left-sidebar {
     background: var(--va-bg-panel-solid);
-    border-left: 1px solid var(--va-border);
     color: var(--va-text);
 
     h4 {
       color: var(--va-text);
     }
+  }
+
+  app-event-display .event-meta-slot {
+    border-bottom-color: var(--va-border);
+  }
+
+  app-event-display .detector-parts-panel,
+  app-event-display .assembly-palette {
+    border-left: 1px solid var(--va-border);
+  }
+
+  app-event-display .drawer-edge-toggle {
+    background: var(--va-control-bg);
+    color: var(--va-text);
+  }
+
+  app-event-display .event-label,
+  app-event-display #done {
+    color: var(--va-text);
   }
 
   app-event-display .assembly-hint,
@@ -224,6 +245,10 @@
     line {
       stroke: rgba(226, 232, 240, 0.72);
     }
+  }
+
+  app-mass-histograms .bin-control__label {
+    color: var(--va-muted);
   }
 
   /* Calculator Select / Add — same dark panel tone as other VA controls */
@@ -428,20 +453,59 @@
 app-event-display {
   display: block;
   width: 100%;
-  // Fill remaining viewport under toolbars; leave room for calculator + histograms.
-  height: calc(100vh - 104px - 12rem);
-  min-height: 520px;
+  // Fill remaining viewport under the red toolbar; leave room for calculator + histograms.
+  height: calc(100vh - 104px - 8.5rem);
+  min-height: 600px;
+}
+
+.va-lower-panels {
+  margin-top: 10px;
+  padding: 0 10px;
+}
+
+.va-histograms {
+  display: block;
+  margin-top: 10px;
+  padding: 0 10px;
 }
 
 #done {
-  line-height: 40px;
-  vertical-align: sub;
+  line-height: 1;
+  vertical-align: middle;
   margin-left: 0.2em;
+  font-size: 18px;
+}
+
+.event-meta-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
 .dataset-controls {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-start;
+  display: block;
+  width: 100%;
+}
+
+.dataset-select {
+  width: 100%;
+  margin: 0;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.event-label-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.event-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
 }

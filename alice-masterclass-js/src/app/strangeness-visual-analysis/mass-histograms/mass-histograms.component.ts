@@ -16,6 +16,15 @@ export interface MassHistogramBinIncrementedEvent extends HistogramBinIncremente
 export class MassHistogramsComponent implements OnInit {
   readonly ParticleType = ParticleType;
 
+  readonly binMin = 5;
+  readonly binMax = 50;
+  readonly defaultBins = 40;
+
+  kaonBins = this.defaultBins;
+  lambdaBins = this.defaultBins;
+  antiLambdaBins = this.defaultBins;
+  xiBins = this.defaultBins;
+
   kaonMasses: Array<number> = [];
   lambdaMasses: Array<number> = [];
   antiLambdaMasses: Array<number> = [];

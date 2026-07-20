@@ -89,6 +89,14 @@
         "B2": "Infer particle charge from the direction of track curvature.",
         "B3": "Measure particle momentum from how strongly tracks bend.",
         "B4": "Reveal the full curved event topology after the detector is assembled."
+      },
+      "CALORIMETERS": {
+        "TITLE": "EMCal & DCal",
+        "BODY": "The electromagnetic calorimeters measure the energy of electrons and photons. When such a particle enters the detector, it creates an electromagnetic shower that deposits its energy inside the calorimeter and from this cascade physicists reconstruct the original particle’s energy.\n\nALICE uses two sectors of the same technology, <strong>EMCal</strong> and <strong>DCal</strong>. Together they cover more of the detector, which is especially useful for studying jets and pairs of jets produced in opposite directions (di-jets).",
+        "LETS_US": "The calorimeters let us:",
+        "B1": "Measure the energy of electrons and photons with high precision.",
+        "B2": "Study jets and back-to-back jet pairs (di-jets).",
+        "B3": "Investigate how particles lose energy while passing through the quark gluon plasma."
       }
     }
   },
@@ -153,7 +161,8 @@
     "DETECTOR_ASSEMBLY_TITLE": "Build the detector",
     "DETECTOR_ASSEMBLY_HINT": "Drag each part from this panel onto the 3D view. When everything is placed, detector options (views, clusters, tracks) will appear here.",
     "TRD_READING": "TRD reading",
-    "TOF_READING": "TOF reading"
+    "TOF_READING": "TOF reading",
+    "DETECTOR_CALORIMETERS": "Calorimeters"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Please select dataset:",
@@ -201,7 +210,8 @@
       "INVARIANT_MASS": "Invariant Mass",
       "SIGNAL": "Signal",
       "BACKGROUND": "Background",
-      "TOTAL": "Total"
+      "TOTAL": "Total",
+      "BINS": "Bins"
     },
     "LARGE_SCALE_ANALYSIS_MENU": "Large Scale Analysis",
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {

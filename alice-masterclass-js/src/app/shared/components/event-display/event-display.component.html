@@ -1,79 +1,82 @@
 <mat-card appearance="outlined" fxLayout="column">
-  <mat-card-title fxLayout="row" fxLayoutAlign="space-between center">
-    <span class="title" fxLayout="row" fxLayoutAlign="start center" fxFlex="1 1 auto" fxLayoutGap="8px">
-      @if (detectorInteractiveAssemblyDone && detectorPartsForUi.length > 0) {
-        <button mat-icon-button type="button" class="layers-toggle-button"
-          aria-label="{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}"
-          (click)="detectorLayersPanelOpened = !detectorLayersPanelOpened">
-          <mat-icon>layers</mat-icon>
-        </button>
-      }
-      <span class="title-content" fxLayout="row" fxLayoutAlign="start center" fxFlex="1 1 auto" fxLayoutGap="16px">
-        <ng-content></ng-content>
-      </span>
-    </span>
-    @if (showControls) {
-      <button mat-icon-button aria-label="Options for Event Display" (click)="sidebarOpened = !sidebarOpened">
-        <mat-icon>filter_list</mat-icon>
-      </button>
-    }
-  </mat-card-title>
   <mat-card-content>
     <mat-drawer-container class="palette-drag-boundary">
-      <mat-drawer *ngIf="detectorInteractiveAssemblyDone && detectorPartsForUi.length > 0" class="detector-parts-drawer" mode="side" position="start"
-        [(opened)]="detectorLayersPanelOpened" (openedChange)="detectorLayersPanelOpened = $event">
-        <div class="detector-parts-panel">
-          <h4>{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}</h4>
-          @if (showThemeToggle) {
-            <div class="theme-toggle-row">
-              <mat-slide-toggle
-                [ngModel]="darkMode"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="darkModeChange.emit($event)"
-                aria-label="Toggle dark visual theme">
-                <mat-icon aria-hidden="true">dark_mode</mat-icon>
-              </mat-slide-toggle>
-            </div>
-          }
-          <div fxLayout="column" fxLayoutGap="8px">
-            @for (part of detectorPartsForUi; track part.assetPath) {
-              <div class="detector-part-controls" fxLayout="column" fxLayoutGap="4px">
-                <mat-slide-toggle [ngModel]="part.visible"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="setDetectorPartVisibility(part, $event)">
-                  <span [translate]="part.labelKey" [translateParams]="part.labelParams || {}"></span>
-                </mat-slide-toggle>
-                <input
-                  type="range"
-                  min="0.05"
-                  max="0.95"
-                  step="0.01"
-                  [disabled]="!part.visible"
-                  [ngModel]="part.opacity"
-                  [ngModelOptions]="{ standalone: true }"
-                  (ngModelChange)="setDetectorPartOpacity(part, $event)"
-                  aria-label="Detector part opacity slider" />
-                @if (isL3AssetPath(part.assetPath)) {
-                  <input
-                    type="range"
-                    class="magnetic-field-slider"
-                    min="0"
-                    [max]="magneticFieldStrengthMax"
-                    step="0.01"
-                    [disabled]="!part.visible"
-                    [ngModel]="magneticFieldStrength"
+      <mat-drawer class="detector-parts-drawer" mode="side" position="start"
+        [(opened)]="leftSidebarOpened" (openedChange)="leftSidebarOpened = $event">
+        <div class="left-sidebar">
+          <div class="event-meta-slot">
+            <ng-content></ng-content>
+          </div>
+          <div class="left-sidebar-toggle-row">
+            <button mat-icon-button type="button" class="layers-toggle-button"
+              aria-label="{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}"
+              [attr.aria-expanded]="leftSidebarOpened"
+              (click)="leftSidebarOpened = false">
+              <mat-icon>filter_list</mat-icon>
+            </button>
+          </div>
+          @if (detectorInteractiveAssemblyDone && detectorPartsForUi.length > 0) {
+            <div class="detector-parts-panel">
+              <h4>{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}</h4>
+              @if (showThemeToggle) {
+                <div class="theme-toggle-row">
+                  <mat-slide-toggle
+                    [ngModel]="darkMode"
                     [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="onMagneticFieldStrengthChange($event)"
-                    [attr.aria-label]="'EVENT_DISPLAY.MAGNETIC_FIELD' | translate" />
+                    (ngModelChange)="darkModeChange.emit($event)"
+                    aria-label="Toggle dark visual theme">
+                    <mat-icon aria-hidden="true">dark_mode</mat-icon>
+                  </mat-slide-toggle>
+                </div>
+              }
+              <div fxLayout="column" fxLayoutGap="8px">
+                @for (part of detectorPartsForUi; track part.assetPath) {
+                  <div class="detector-part-controls" fxLayout="column" fxLayoutGap="4px">
+                    <mat-slide-toggle [ngModel]="part.visible"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="setDetectorPartVisibility(part, $event)">
+                      <span [translate]="part.labelKey" [translateParams]="part.labelParams || {}"></span>
+                    </mat-slide-toggle>
+                    <input
+                      type="range"
+                      min="0.05"
+                      max="0.95"
+                      step="0.01"
+                      [disabled]="!part.visible"
+                      [ngModel]="part.opacity"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="setDetectorPartOpacity(part, $event)"
+                      aria-label="Detector part opacity slider" />
+                    @if (isL3AssetPath(part.assetPath)) {
+                      <input
+                        type="range"
+                        class="magnetic-field-slider"
+                        min="0"
+                        [max]="magneticFieldStrengthMax"
+                        step="0.01"
+                        [disabled]="!part.visible"
+                        [ngModel]="magneticFieldStrength"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onMagneticFieldStrengthChange($event)"
+                        [attr.aria-label]="'EVENT_DISPLAY.MAGNETIC_FIELD' | translate" />
+                    }
+                  </div>
                 }
               </div>
-            }
-          </div>
+            </div>
+          }
         </div>
       </mat-drawer>
       <mat-drawer *ngIf="showControls" #drawer class="sidenav detector-assembly-drawer" mode="side" position="end"
           [(opened)]="sidebarOpened"
           (openedChange)="sidebarOpened = $event">
+          <div class="right-sidebar-toggle-row">
+            <button mat-icon-button type="button"
+              aria-label="Options for Event Display"
+              (click)="sidebarOpened = !sidebarOpened">
+              <mat-icon>filter_list</mat-icon>
+            </button>
+          </div>
           @if (detectorMultipartAssemblyMode && !detectorInteractiveAssemblyDone) {
             <div class="assembly-palette">
               <h4>{{ 'EVENT_DISPLAY.DETECTOR_ASSEMBLY_TITLE' | translate }}</h4>
@@ -137,6 +140,20 @@
           }
       </mat-drawer>
       <mat-drawer-content>
+        @if (!leftSidebarOpened) {
+          <button mat-icon-button type="button" class="drawer-edge-toggle drawer-edge-toggle-start"
+            aria-label="{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}"
+            (click)="leftSidebarOpened = true">
+            <mat-icon>filter_list</mat-icon>
+          </button>
+        }
+        @if (showControls && !sidebarOpened) {
+          <button mat-icon-button type="button" class="drawer-edge-toggle drawer-edge-toggle-end"
+            aria-label="Options for Event Display"
+            (click)="sidebarOpened = true">
+            <mat-icon>filter_list</mat-icon>
+          </button>
+        }
         <aside class="event-display-corner-overlay">
           @if (cornerOverlayTemplate) {
             <ng-container *ngTemplateOutlet="cornerOverlayTemplate"></ng-container>

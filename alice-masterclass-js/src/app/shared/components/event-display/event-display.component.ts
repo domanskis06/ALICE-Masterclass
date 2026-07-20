@@ -35,6 +35,8 @@ export interface DetectorPaletteItem {
   labelKey: string;
   labelParams?: Record<string, string>;
   placed: boolean;
+  /** Extra GLBs placed together with this palette card (e.g. DCal with EMCal). */
+  companionAssetPaths?: string[];
 }
 
 /** Progressive detector assembly unlock flags (which multipart pieces are on the scene). */
@@ -83,6 +85,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * ~3.5× nearer than overview so the beam pipe / first layers dominate the view.
    */
   static readonly CAMERA_3D_ASSEMBLY_START = { x: -2.0, y: 2.0, z: 0.7 } as const;
+  /** Duration of the auto zoom-out after each assembly piece is snapped. */
+  static readonly ASSEMBLY_CAMERA_ZOOM_MS = 700;
   /**
    * ITS/TPC/TRD/FIT GLBs place the beam axis at local y=+30 (cm). After
    * `detectorModelScale` that is +0.3 in scene units. L3 / TOF / calorimeters
@@ -102,10 +106,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly TRACK_RADIUS_TRD = 370;
   /** Transverse radius (~cm) of the TOF barrel — used for hit markers, not track clip. */
   static readonly TRACK_RADIUS_TOF = 410;
-  static readonly LAYER_HIT_COLOR_TRD = 0xff0033;
-  static readonly LAYER_HIT_COLOR_TOF = 0x0099ff;
-  /** Half-length of each arm of a TRD/TOF hit “×” (scene units). */
-  static readonly LAYER_HIT_MARKER_HALF = 0.14;
+  /** Fluorescent yellow — matches TRD layer tint. */
+  static readonly LAYER_HIT_COLOR_TRD = 0xffe033;
+  /** Fluorescent orange — matches TOF layer tint. */
+  static readonly LAYER_HIT_COLOR_TOF = 0xff8a1a;
+  /** Radius of a TRD/TOF hit glow-dot (scene units; smaller than the old ×). */
+  static readonly LAYER_HIT_MARKER_RADIUS = 0.09;
+  /** Arc-length step (cm) when sampling simulated TPC clusters along a track. */
+  static readonly TPC_CLUSTER_SAMPLE_STEP_CM = 3;
+  /** Min transverse radius (cm) for simulated TPC clusters (strictly outside). */
+  static readonly TPC_CLUSTER_R_MIN_CM = 90;
+  /** Gaussian σ (cm) for soft spatial smear of simulated TPC clusters. */
+  static readonly TPC_CLUSTER_NOISE_SIGMA_CM = 0.2;
   /** Min segment length (trajectory data units) before falling back to momentum. */
   private static readonly STRAIGHT_TRACK_EPS = 1e-4;
 
@@ -173,6 +185,95 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       ];
     }
     return null;
+  }
+
+  /** Deterministic [0,1) from integer seed (mulberry32 step). */
+  static seededUnitRandom(seed: number): number {
+    let t = (seed >>> 0) + 0x6d2b79f5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  /** Box–Muller using two seeded unit draws → ~N(0,1). */
+  static seededGaussian(seedA: number, seedB: number): number {
+    const u1 = Math.max(1e-12, EventDisplayComponent.seededUnitRandom(seedA));
+    const u2 = EventDisplayComponent.seededUnitRandom(seedB);
+    return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  }
+
+  /**
+   * Samples points along a polyline (cm), keeps those with transverse radius
+   * strictly above rMin and below rMax (default: R > 90 cm / 0.9 m, inside TPC),
+   * and applies a small deterministic Gaussian smear.
+   */
+  static sampleNoisyClustersAlongTrajectory(
+    trajectory: number[][],
+    options?: {
+      stepCm?: number;
+      noiseSigmaCm?: number;
+      rMin?: number;
+      rMax?: number;
+      seed?: number;
+    }
+  ): number[][] {
+    if (!trajectory?.length) {
+      return [];
+    }
+    const step = options?.stepCm ?? EventDisplayComponent.TPC_CLUSTER_SAMPLE_STEP_CM;
+    const sigma = options?.noiseSigmaCm ?? EventDisplayComponent.TPC_CLUSTER_NOISE_SIGMA_CM;
+    const rMin = options?.rMin ?? EventDisplayComponent.TPC_CLUSTER_R_MIN_CM;
+    const rMax = options?.rMax ?? EventDisplayComponent.TRACK_RADIUS_TPC;
+    const seed0 = (options?.seed ?? 0) | 0;
+    if (!(step > 0) || !(rMax > rMin)) {
+      return [];
+    }
+
+    const out: number[][] = [];
+    let traveled = 0;
+    let nextSampleAt = 0;
+    let sampleIndex = 0;
+
+    const emitAt = (x: number, y: number, z: number) => {
+      const r = Math.hypot(x, y);
+      const n = sampleIndex++;
+      // Strictly above rMin (default 90 cm) and inside TPC outer radius.
+      if (r <= rMin || r >= rMax) {
+        return;
+      }
+      const dx = sigma * EventDisplayComponent.seededGaussian(seed0 + n * 6 + 1, seed0 + n * 6 + 2);
+      const dy = sigma * EventDisplayComponent.seededGaussian(seed0 + n * 6 + 3, seed0 + n * 6 + 4);
+      const dz = sigma * EventDisplayComponent.seededGaussian(seed0 + n * 6 + 5, seed0 + n * 6 + 6);
+      const nx = x + dx;
+      const ny = y + dy;
+      const nz = z + dz;
+      const nr = Math.hypot(nx, ny);
+      if (nr <= rMin || nr >= rMax) {
+        return;
+      }
+      out.push([nx, ny, nz]);
+    };
+
+    for (let i = 1; i < trajectory.length; i++) {
+      const a = trajectory[i - 1];
+      const b = trajectory[i];
+      const segLen = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      if (!(segLen > 0)) {
+        continue;
+      }
+      while (nextSampleAt <= traveled + segLen + 1e-9) {
+        const local = Math.min(Math.max(nextSampleAt - traveled, 0), segLen);
+        const t = local / segLen;
+        emitAt(
+          a[0] + t * (b[0] - a[0]),
+          a[1] + t * (b[1] - a[1]),
+          a[2] + t * (b[2] - a[2])
+        );
+        nextSampleAt += step;
+      }
+      traveled += segLen;
+    }
+    return out;
   }
 
   /** Same inside-out ordering as createLine (smaller R² first). */
@@ -464,11 +565,29 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return /(^|[/\\])(emcal|dcal)\.glb($|\?)/i.test(assetPath);
   }
 
+  static isEmcalAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])emcal\.glb($|\?)/i.test(assetPath);
+  }
+
+  static isDcalAssetPath(assetPath: string): boolean {
+    return /(^|[/\\])dcal\.glb($|\?)/i.test(assetPath);
+  }
+
   static calorimeterDetectorId(assetPath: string): CalorimeterDetectorId | null {
     const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
     if (file.startsWith('emcal')) return 'emcal';
     if (file.startsWith('dcal')) return 'dcal';
     return null;
+  }
+
+  /** Assembly palette / coach label: EMCal+DCal are one construction step. */
+  static assemblyPalettePresentation(
+    assetPath: string
+  ): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
+    if (EventDisplayComponent.isEmcalAssetPath(assetPath)) {
+      return { labelKey: 'EVENT_DISPLAY.DETECTOR_CALORIMETERS' };
+    }
+    return EventDisplayComponent.detectorPartPresentation(assetPath);
   }
 
   /**
@@ -706,7 +825,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   loading: boolean = false;
   sidebarOpened: boolean = true;
-  detectorLayersPanelOpened: boolean = true;
+  /** Left drawer: dataset/event meta + detector parts. */
+  leftSidebarOpened: boolean = true;
+  /** @deprecated Alias kept in sync for older call sites. */
+  get detectorLayersPanelOpened(): boolean {
+    return this.leftSidebarOpened;
+  }
+  set detectorLayersPanelOpened(value: boolean) {
+    this.leftSidebarOpened = value;
+  }
   detectorPartsForUi: DetectorPartToggleModel[] = [];
   detectorPaletteItems: DetectorPaletteItem[] = [];
   /** 0 = magnet off (straight), 1 = trajectory data (B₀), 5 = 5× B₀. */
@@ -719,6 +846,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private _detectorInteractiveAssemblyDone = true;
   private detectorMultipartModelPathsOrder: string[] = [];
   private detectorPreloadedRoots = new Map<string, THREE.Object3D>();
+  /** Session-restore fade-in: hold tracks/clusters until shells finish revealing. */
+  private deferPhysicsUntilDetectorReveal = false;
+  /** Cancels an in-flight assembly zoom-out when another piece is placed. */
+  private assemblyCameraZoomGeneration = 0;
   cameraMode: 'centered' | 'free' = 'centered';
   private trackHoverObj: THREE.Object3D = null;
   private trackHoverOrigMaterial: THREE.Material = null;
@@ -826,6 +957,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get detectorModel(): string | string[] { return this._detectorModel; }
   set detectorModel(detectorModel: string | string[]) {
     this._detectorModel = detectorModel;
+    this.deferPhysicsUntilDetectorReveal = false;
     this.detector.clear();
     this.detectorScene = null;
     this.detectorPartRootByPath.clear();
@@ -841,6 +973,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       multiPart && !this.isStoredDetectorAssemblyComplete(modelPaths);
     this.detectorMultipartAssemblyMode = useInteractiveMultipartAssembly;
     this._detectorInteractiveAssemblyDone = !useInteractiveMultipartAssembly;
+    // Session restore: hold final physics until staggered shell reveal finishes.
+    this.deferPhysicsUntilDetectorReveal = !useInteractiveMultipartAssembly && multiPart;
 
     if (modelPaths.length === 0) {
       this.loading = false;
@@ -880,17 +1014,20 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
       this.cdr.markForCheck();
       this.resize(true);
-      this.staggeredRevealDetectorParts(modelPaths);
       this.rebuildCalorimeterReadouts();
       this.requestRender();
-      // Event may have loaded before GLBs finished — rebuild tracks now that parts exist.
-      this.refreshPhysicsForAssemblyUnlock();
+      // Final physics (assembly already done) — reveal shells first, then tracks/clusters.
+      this.staggeredRevealDetectorParts(modelPaths, 350, 500, () => {
+        this.deferPhysicsUntilDetectorReveal = false;
+        this.refreshPhysicsForAssemblyUnlock();
+      });
     };
 
     const finishMultipartPreload = () => {
       this.detectorMultipartModelPathsOrder = [...modelPaths];
       this.detectorPreloadedRoots.clear();
       this.detectorPaletteItems = [];
+      const dcalPath = modelPaths.find((p) => EventDisplayComponent.isDcalAssetPath(p)) ?? null;
       for (const modelPath of modelPaths) {
         const scene = loadedByPath.get(modelPath);
         if (scene) {
@@ -899,15 +1036,25 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         } else {
           console.warn(`[EventDisplay] Model not loaded, will be skipped in 3D but kept in palette: ${modelPath}`);
         }
-        const pres = EventDisplayComponent.detectorPartPresentation(modelPath);
+        // DCal rides with EMCal as one "Calorimeters" construction card.
+        if (EventDisplayComponent.isDcalAssetPath(modelPath)) {
+          continue;
+        }
+        const pres = EventDisplayComponent.assemblyPalettePresentation(modelPath);
+        const companions =
+          EventDisplayComponent.isEmcalAssetPath(modelPath) && dcalPath
+            ? [dcalPath]
+            : undefined;
         this.detectorPaletteItems.push({
           assetPath: modelPath,
           labelKey: pres.labelKey,
           labelParams: pres.labelParams,
-          placed: false
+          placed: false,
+          companionAssetPaths: companions
         });
       }
-      this.detectorLayersPanelOpened = false;
+      // Keep the left meta panel (dataset / event) open during assembly.
+      this.leftSidebarOpened = true;
       this.detectorPartsForUi = [];
       this.detectorScene = null;
       this.loading = false;
@@ -1016,6 +1163,28 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Attach one preloaded GLB root onto the detector (fade-in + toggle row). */
+  private attachPreloadedDetectorPart(assetPath: string): boolean {
+    const root = this.detectorPreloadedRoots.get(assetPath);
+    if (!root || this.detectorPartRootByPath.has(assetPath)) {
+      return false;
+    }
+
+    this.zeroDetectorSceneOpacity(root);
+    this.detector.add(root);
+    this.detectorPartRootByPath.set(assetPath, root);
+    // Preload keeps roots hidden; mark visible before rebuilding sidebar toggles.
+    root.visible = true;
+    // Fade to the same default opacity the left-sidebar slider shows for this part.
+    this.fadeInDetectorScene(root, 500, () => {
+      const part = this.detectorPartsForUi.find((p) => p.assetPath === assetPath);
+      if (part) {
+        this.setDetectorPartOpacity(part, part.opacity);
+      }
+    });
+    return true;
+  }
+
   /** Returns true when the piece snaps into the detector (valid drop zone). */
   private tryPlaceDetectorPieceFromPalette(item: DetectorPaletteItem, clientX: number, clientY: number): boolean {
     // Guided assembly: only the currently coached part may be placed.
@@ -1039,29 +1208,29 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     if (!inside) return false;
 
-    const root = this.detectorPreloadedRoots.get(item.assetPath);
-    if (!root || item.placed) return false;
+    const primaryRoot = this.detectorPreloadedRoots.get(item.assetPath);
+    if (!primaryRoot || item.placed) return false;
 
-    this.zeroDetectorSceneOpacity(root);
-    this.detector.add(root);
-    this.detectorPartRootByPath.set(item.assetPath, root);
+    const pathsToPlace = [item.assetPath, ...(item.companionAssetPaths ?? [])];
+    let attachedAny = false;
+    for (const path of pathsToPlace) {
+      if (this.attachPreloadedDetectorPart(path)) {
+        attachedAny = true;
+      }
+    }
+    if (!attachedAny) return false;
+
     item.placed = true;
 
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
-    // Fade to the same default opacity the left-sidebar slider shows for this part.
-    this.fadeInDetectorScene(root, 500, () => {
-      const part = this.detectorPartsForUi.find((p) => p.assetPath === item.assetPath);
-      if (part) {
-        this.setDetectorPartOpacity(part, part.opacity);
-      }
-    });
     this.refreshPhysicsForAssemblyUnlock();
+    this.zoomOutCameraForAssemblyProgress();
     this.requestRender();
 
     const allPlaced = this.detectorPaletteItems.every((row) => row.placed);
     if (allPlaced) {
       this.completeMultipartDetectorAssembly();
-    } else if (EventDisplayComponent.isCalorimeterAssetPath(item.assetPath)) {
+    } else if (pathsToPlace.some((p) => EventDisplayComponent.isCalorimeterAssetPath(p))) {
       this.rebuildCalorimeterReadouts();
     }
 
@@ -1095,6 +1264,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this._detectorInteractiveAssemblyDone = true;
     this.detectorScene = this.detector;
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
+    // Assembly never exposes toggles mid-build; ensure every placed part starts on.
+    for (const part of this.detectorPartsForUi) {
+      this.setDetectorPartVisibility(part, true);
+    }
     if (this.detectorPartsForUi.length > 0) {
       this.detectorLayersPanelOpened = true;
     }
@@ -1119,12 +1292,67 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /**
+   * Camera framing along the assembly zoom path (t=0 close / ITS-scale, t=1 full overview).
+   */
+  static cameraPositionForAssemblyProgress(t: number): { x: number; y: number; z: number } {
+    const u = Math.min(1, Math.max(0, t));
+    const a = EventDisplayComponent.CAMERA_3D_ASSEMBLY_START;
+    const b = EventDisplayComponent.CAMERA_3D_OVERVIEW;
+    return {
+      x: a.x + (b.x - a.x) * u,
+      y: a.y + (b.y - a.y) * u,
+      z: a.z + (b.z - a.z) * u,
+    };
+  }
+
   /** Frames the 3D orbit camera (no-op until WebGL scene exists). */
   private applyCamera3DPosition(pos: { x: number; y: number; z: number }): void {
     if (!this.camera3D || !this.controls) return;
     this.camera3D.position.set(pos.x, pos.y, pos.z);
     this.controls.target.set(0, 0, 0);
     this.controls.update();
+  }
+
+  /**
+   * After each multipart piece snaps in, ease the orbit camera farther out so
+   * the growing detector stays framed (start → overview as placement progresses).
+   */
+  private zoomOutCameraForAssemblyProgress(): void {
+    if (!this.camera3D || !this.controls) return;
+
+    const total = this.detectorPaletteItems.length;
+    if (total <= 0) return;
+    const placed = this.detectorPaletteItems.filter((row) => row.placed).length;
+    const target = EventDisplayComponent.cameraPositionForAssemblyProgress(placed / total);
+
+    const from = {
+      x: this.camera3D.position.x,
+      y: this.camera3D.position.y,
+      z: this.camera3D.position.z,
+    };
+    const generation = ++this.assemblyCameraZoomGeneration;
+    const durationMs = EventDisplayComponent.ASSEMBLY_CAMERA_ZOOM_MS;
+    const start = performance.now();
+
+    const step = () => {
+      if (this.viewDestroyed || generation !== this.assemblyCameraZoomGeneration) return;
+      if (!this.camera3D || !this.controls) return;
+      const t = Math.min((performance.now() - start) / durationMs, 1);
+      const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+      this.camera3D.position.set(
+        from.x + (target.x - from.x) * ease,
+        from.y + (target.y - from.y) * ease,
+        from.z + (target.z - from.z) * ease
+      );
+      this.controls.target.set(0, 0, 0);
+      this.controls.update();
+      this.requestRender();
+      if (t < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    requestAnimationFrame(step);
   }
 
   setDetectorPartVisibility(part: DetectorPartToggleModel, visible: boolean): void {
@@ -1180,6 +1408,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private static readonly DETECTOR_RENDER_ORDER_LAYER_STRIDE = 10000;
   static readonly PHYSICS_RENDER_ORDER_BASE = 200000;
+  /** Draw TRD/TOF hits after transparent detector shells (opaque queue always runs first). */
+  private static readonly LAYER_HIT_RENDER_ORDER = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 50000;
 
   private setDetectorMaterialsWithPolygonOffset(object: THREE.Object3D, opacity: number, layerIndex = 0) {
     const layerOffset = -(layerIndex + 1) * 2;
@@ -1915,12 +2145,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private staggeredRevealDetectorParts(
     modelPaths: string[],
     staggerMs = 350,
-    fadeDurationMs = 500
+    fadeDurationMs = 500,
+    onComplete?: () => void
   ): void {
     let index = 0;
     const revealNext = () => {
       if (index >= modelPaths.length) {
         this.applyUiDetectorOpacities();
+        onComplete?.();
         return;
       }
       const path = modelPaths[index++];
@@ -1931,7 +2163,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (index < modelPaths.length) {
         setTimeout(revealNext, staggerMs);
       } else {
-        setTimeout(() => this.applyUiDetectorOpacities(), fadeDurationMs);
+        setTimeout(() => {
+          this.applyUiDetectorOpacities();
+          onComplete?.();
+        }, fadeDurationMs);
       }
     };
     revealNext();
@@ -2079,12 +2314,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /** Applies parent's track/decay/cluster toggles. */
   private applyDesiredPhysicsVisibility(): void {
-    this.tracks.visible = this.desiredTracksShown;
-    this.decays.visible = this.desiredDecaysShown;
-    this.clusters.visible = this.desiredClustersShown && this.assemblyAllowsClusters();
-    this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
-    this.primaryVertexMarkers.visible = this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0;
-    this.layerHitMarkers.visible = this.desiredTracksShown && this.layerHitMarkers.children.length > 0;
+    const show = !this.deferPhysicsUntilDetectorReveal;
+    this.tracks.visible = this.desiredTracksShown && show;
+    this.decays.visible = this.desiredDecaysShown && show;
+    this.clusters.visible = this.desiredClustersShown && this.assemblyAllowsClusters() && show;
+    this.cascadeVertexMarkers.visible = this.desiredDecaysShown && show;
+    this.primaryVertexMarkers.visible =
+      this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0 && show;
+    this.layerHitMarkers.visible =
+      this.desiredTracksShown && this.layerHitMarkers.children.length > 0 && show;
     this.syncCalorimeterReadoutVisibility();
   }
 
@@ -2130,22 +2368,27 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return null;
   }
 
-  /** Clusters unlock only after the full multipart detector is assembled. */
+  /** Clusters unlock once TPC is placed (simulated during assembly; real after complete). */
   private assemblyAllowsClusters(): boolean {
     if (!this.detectorModelHasTrackerUnlock()) {
       return true;
     }
-    return this._detectorInteractiveAssemblyDone;
+    if (this._detectorInteractiveAssemblyDone) {
+      return true;
+    }
+    return this.isDetectorPartPlaced(EventDisplayComponent.isTpcAssetPath);
   }
 
-  /** True when L3 has been placed in assembly → bent tracks (visibility toggle does not matter). */
+  /** True when L3 is active → bent tracks. After assembly: always on (final detector). */
   private isL3MagnetActive(): boolean {
+    if (this._detectorInteractiveAssemblyDone) {
+      return true;
+    }
     const expectsL3 =
       this.detectorMultipartModelPathsOrder.some((p) => EventDisplayComponent.isL3AssetPath(p)) ||
       (Array.isArray(this._detectorModel) &&
         this._detectorModel.some((p) => EventDisplayComponent.isL3AssetPath(p)));
     if (!expectsL3) {
-      // Non-multipart / no L3 in the model → keep legacy bent trajectories.
       return true;
     }
     return this.isDetectorPartPlaced(EventDisplayComponent.isL3AssetPath);
@@ -2196,6 +2439,112 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.rebuildTracksFromEvent();
     this.applyDesiredPhysicsVisibility();
     this.cdr.markForCheck();
+  }
+
+  private clearClusters(): void {
+    while (this.clusters.children.length > 0) {
+      const child = this.clusters.children[0];
+      this.clusters.remove(child);
+      const mesh = child as THREE.Points | THREE.Mesh;
+      if (mesh.geometry) {
+        mesh.geometry.dispose();
+      }
+    }
+  }
+
+  private addClusterPointsToScene(pointsCm: number[][]): void {
+    if (!pointsCm.length || !this.pointsMaterial) {
+      return;
+    }
+    const scale = EventDisplayComponent.objectScale;
+    const points = pointsCm.map(
+      (p) => new THREE.Vector3(scale * p[0], scale * p[1], scale * p[2])
+    );
+    if (this.CLUSTERS_USE_POINTS) {
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const pointsMesh = new THREE.Points(geometry, this.pointsMaterial);
+      pointsMesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 500;
+      this.clusters.add(pointsMesh);
+      return;
+    }
+    for (const point of points) {
+      const geometry = new THREE.SphereGeometry(this.clusterSize, 4, 4);
+      const sphereMesh = new THREE.Mesh(geometry, this.pointsMaterial as THREE.Material);
+      sphereMesh.position.set(point.x, point.y, point.z);
+      sphereMesh.scale.set(this.clusterSize, this.clusterSize, this.clusterSize);
+      this.clusters.add(sphereMesh);
+    }
+  }
+
+  /**
+   * During progressive assembly with TPC placed: clusters simulated along the
+   * same (usually straight) clipped tracks. After assembly (or non-progressive
+   * models): use real `event.clusters`.
+   */
+  private rebuildClustersFromEvent(
+    straight: boolean,
+    showFull: boolean,
+    cascadeVertices: { pos: number[]; label: string }[]
+  ): void {
+    this.clearClusters();
+    if (!this._event) {
+      return;
+    }
+
+    const useTrackerUnlock = this.detectorModelHasTrackerUnlock();
+    const assemblyDone = this._detectorInteractiveAssemblyDone;
+    const tpcActive = this.isDetectorPartPlaced(EventDisplayComponent.isTpcAssetPath);
+
+    if (useTrackerUnlock && !assemblyDone) {
+      if (!tpcActive || !showFull) {
+        return;
+      }
+      const rMax = EventDisplayComponent.TRACK_RADIUS_TPC;
+      const points: number[][] = [];
+      let trackSeed = 1;
+
+      const addForTrack = (track: Track, startOverride?: number[] | null) => {
+        const resolved = this.trajectoryForAssemblyMode(track, rMax, straight, startOverride);
+        if (!resolved?.points?.length) {
+          return;
+        }
+        const sampled = EventDisplayComponent.sampleNoisyClustersAlongTrajectory(resolved.points, {
+          seed: trackSeed * 9973 + (track.particleId | 0) * 131 + (track.sign | 0) * 17,
+        });
+        trackSeed++;
+        for (const p of sampled) {
+          points.push(p);
+        }
+      };
+
+      for (const track of this._event.tracks || []) {
+        addForTrack(track);
+      }
+      if (showFull) {
+        const v0Start = cascadeVertices[0]?.pos ?? null;
+        const cascadeStart = cascadeVertices[1]?.pos ?? null;
+        for (const particleList of this._event.decays || []) {
+          for (const track of particleList) {
+            let startOverride: number[] | null = null;
+            if (straight) {
+              if (track.type === TrackType.CASCADE_BACHELOR) {
+                startOverride = cascadeStart ?? v0Start;
+              } else if (v0Start) {
+                startOverride = v0Start;
+              }
+            }
+            addForTrack(track, startOverride);
+          }
+          break;
+        }
+      }
+      this.addClusterPointsToScene(points);
+      return;
+    }
+
+    if (this._event.clusters?.length) {
+      this.addClusterPointsToScene(this._event.clusters);
+    }
   }
 
   private clearPrimaryVertexMarkers(): void {
@@ -2336,6 +2685,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cascadeVertexMarkers.clear();
     this.clearPrimaryVertexMarkers();
     this.clearLayerHitMarkers();
+    this.clearClusters();
 
     if (!this._event) {
       return;
@@ -2351,6 +2701,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const showStubs = useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
 
     if (!showFull && !showStubs) {
+      this.applyDesiredPhysicsVisibility();
       return;
     }
 
@@ -2424,6 +2775,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
 
     this.rebuildLayerHitMarkers(straight, showFull, cascadeVertices);
+    this.rebuildClustersFromEvent(straight, showFull, cascadeVertices);
     this.applyDesiredPhysicsVisibility();
   }
 
@@ -2585,34 +2937,22 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     };
     (group as any).userData = labelData;
 
-    const x = position[0];
-    const y = position[1];
-    const r = Math.hypot(x, y) || 1;
-    // Tangent plane on the barrel: φ̂ and ẑ → classic “×” on the layer surface.
-    const phi = new THREE.Vector3(-y / r, x / r, 0);
-    const zHat = new THREE.Vector3(0, 0, 1);
-    const armA = phi.clone().add(zHat).normalize();
-    const armB = phi.clone().sub(zHat).normalize();
-
-    const half = EventDisplayComponent.LAYER_HIT_MARKER_HALF;
-    const thick = half * 0.22;
     const mat =
       color === EventDisplayComponent.LAYER_HIT_COLOR_TRD
         ? this.layerHitTrdMaterial
         : this.layerHitTofMaterial;
-    const zAxis = new THREE.Vector3(0, 0, 1);
-    const topOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 10000;
+    const topOrder = EventDisplayComponent.LAYER_HIT_RENDER_ORDER;
 
-    for (const dir of [armA, armB]) {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(thick, thick, half * 2), mat);
-      bar.quaternion.setFromUnitVectors(zAxis, dir);
-      bar.renderOrder = topOrder;
-      bar.frustumCulled = false;
-      (bar as any).userData = { ...labelData };
-      group.add(bar);
-    }
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(EventDisplayComponent.LAYER_HIT_MARKER_RADIUS, 16, 12),
+      mat
+    );
+    dot.renderOrder = topOrder;
+    dot.frustumCulled = false;
+    (dot as any).userData = { ...labelData };
+    group.add(dot);
 
-    group.position.set(x * scale, y * scale, position[2] * scale);
+    group.position.set(position[0] * scale, position[1] * scale, position[2] * scale);
     group.renderOrder = topOrder;
     group.frustumCulled = false;
     return group;
@@ -2662,32 +3002,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.trackDrawAnimations = [];
     this.trackDrawAnimationStartMs = performance.now();
     this.loading = true;
-    if (this._event !== null) {
+    if (this._event !== null && !this.deferPhysicsUntilDetectorReveal) {
       this.rebuildTracksFromEvent();
-      if (this._event.clusters && this._event.clusters.length > 0) {
-        const points: Array<THREE.Vector3> = [];
-        for (let point of this._event.clusters) {
-          points.push(new THREE.Vector3(
-            EventDisplayComponent.objectScale * point[0],
-            EventDisplayComponent.objectScale * point[1],
-            EventDisplayComponent.objectScale * point[2]
-          ));
-        }
-        if (this.CLUSTERS_USE_POINTS) {
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-          const pointsMesh = new THREE.Points(geometry, this.pointsMaterial);
-          pointsMesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 500;
-          this.clusters.add(pointsMesh);
-        } else {
-          for (let point of points) {
-            const geometry = new THREE.SphereGeometry(this.clusterSize, 4, 4);
-            const sphereMesh = new THREE.Mesh(geometry, this.pointsMaterial as THREE.Material);
-            sphereMesh.position.set(point.x, point.y, point.z);
-            sphereMesh.scale.set(this.clusterSize, this.clusterSize, this.clusterSize);
-            this.clusters.add(sphereMesh);
-          }
-        }
-      }
     }
     this.rebuildCalorimeterReadouts();
     this.applyDesiredPhysicsVisibility();
@@ -2782,7 +3098,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       depthTest: false,
       sizeAttenuation: true,
     });
-    const hitMatParams = { depthTest: false, depthWrite: false, toneMapped: false } as const;
+    // transparent:true puts hits in the transparent pass (drawn after opaque + detector shells).
+    // toneMapped:false keeps fluorescent dots bright enough for UnrealBloom.
+    const hitMatParams = {
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      transparent: true,
+      opacity: 1,
+    } as const;
     this.layerHitTrdMaterial = new THREE.MeshBasicMaterial({
       color: EventDisplayComponent.LAYER_HIT_COLOR_TRD,
       ...hitMatParams
@@ -2969,6 +3293,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.viewDestroyed = true;
+    this.assemblyCameraZoomGeneration++;
     if (this.rafId != null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
@@ -3801,7 +4126,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.scene.add(this.tracks);
     this.scene.add(this.cascadeVertexMarkers);
     this.scene.add(this.primaryVertexMarkers);
-    this.layerHitMarkers.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 10000;
+    this.layerHitMarkers.renderOrder = EventDisplayComponent.LAYER_HIT_RENDER_ORDER;
     this.scene.add(this.layerHitMarkers);
     this.scene.add(this.clusters);
     this.scene.add(this.calorimeterReadouts);

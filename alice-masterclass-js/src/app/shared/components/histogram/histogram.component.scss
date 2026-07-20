@@ -1,9 +1,14 @@
 figure {
   position: relative;
   margin: 0;
+  // Extra CSS padding so the scaled SVG is not flush with the next row / slider.
+  padding-bottom: 4px;
 }
 
 :host ::ng-deep svg {
+  display: block;
+  overflow: visible;
+
   #bars rect {
     fill: var(--bar-color);
   }
@@ -28,12 +33,3 @@ figure {
   width: 100%;
   text-align: center;
 }
-
-// #yAxisLabel {
-//   writing-mode: vertical-lr;
-//   transform: rotate(-180deg);
-// }
-
-// #xAxisLabel, #yAxisLabel {
-//   text-align: end;
-// }

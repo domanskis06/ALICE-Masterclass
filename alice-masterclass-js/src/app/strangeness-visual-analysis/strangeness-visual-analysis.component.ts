@@ -135,9 +135,19 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.flightParticleTimeouts = [];
   }
 
+  /**
+   * Coach / palette order: DCal is placed together with EMCal as "Calorimeters",
+   * so it is not a separate construction step.
+   */
+  private get assemblyCoachSteps(): string[] {
+    return this.ALICE_DETECTOR_MODEL.filter(
+      (path) => !EventDisplayComponent.isDcalAssetPath(path)
+    );
+  }
+
   get assemblyCoachHighlightPath(): string | null {
     if (!this.vaCoachOverlayVisible || this.vaCoachWelcomePhase || this.vaCoachVictoryPhase) return null;
-    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex] ?? null;
+    return this.assemblyCoachSteps[this.vaCoachPieceHintIndex] ?? null;
   }
 
   /**
@@ -151,7 +161,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.vaCoachOverlayVisible && this.vaCoachWelcomePhase) {
       return null;
     }
-    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex] ?? null;
+    return this.assemblyCoachSteps[this.vaCoachPieceHintIndex] ?? null;
   }
 
   /** True until the multipart detector has been fully assembled this session. */
@@ -172,8 +182,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
-    const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
-    return EventDisplayComponent.detectorPartPresentation(path);
+    const path = this.assemblyCoachSteps[this.vaCoachPieceHintIndex];
+    if (!path) {
+      return { labelKey: 'EVENT_DISPLAY.DETECTOR_LAYER_FALLBACK', labelParams: { name: '' } };
+    }
+    return EventDisplayComponent.assemblyPalettePresentation(path);
   }
 
   /** Real photos for selected detector parts (shown under "Next piece to place"). */
@@ -181,13 +194,16 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     ITS: 'assets/images/detector-parts/ITS.png',
     FIT: 'assets/images/detector-parts/FIT.png',
     TPC: 'assets/images/detector-parts/TPC.png',
+    TRD: 'assets/images/detector-parts/TRD.png',
+    TOF: 'assets/images/detector-parts/TOF.png',
     EMCAL: 'assets/images/detector-parts/EMCAL.png',
+    CALORIMETERS: 'assets/images/detector-parts/EMCAL.png',
     L3: 'assets/images/detector-parts/L3.png',
   };
 
   /** i18n key under VA_COACH.PART_DESC for the piece currently highlighted (e.g. ITS). */
   get vaCoachCurrentPartDescId(): string | null {
-    const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    const path = this.assemblyCoachSteps[this.vaCoachPieceHintIndex];
     if (!path) return null;
     const file = path.replace(/^.*[/\\]/, '').toLowerCase();
     const byFile: Record<string, string> = {
@@ -196,8 +212,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       'tpc.glb': 'TPC',
       'trd.glb': 'TRD',
       'tof.glb': 'TOF',
-      'emcal.glb': 'EMCAL',
-      'dcal.glb': 'DCAL',
+      'emcal.glb': 'CALORIMETERS',
       'l3.glb': 'L3',
     };
     return byFile[file] ?? null;
@@ -205,6 +220,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   /** Photo URL for the current assembly piece, when available. */
   get vaCoachCurrentPartPhotoUrl(): string | null {
+    const path = this.assemblyCoachSteps[this.vaCoachPieceHintIndex];
+    if (path && EventDisplayComponent.isEmcalAssetPath(path)) {
+      return StrangenessVisualAnalysisComponent.DETECTOR_PART_PHOTOS.CALORIMETERS;
+    }
     const id = this.vaCoachCurrentPartDescId;
     if (!id) return null;
     return StrangenessVisualAnalysisComponent.DETECTOR_PART_PHOTOS[id] ?? null;
@@ -249,10 +268,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
     if (!this.vaCoachOverlayVisible || this.vaCoachVictoryPhase || this.vaCoachWelcomePhase) return;
-    const expected = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    const steps = this.assemblyCoachSteps;
+    const expected = steps[this.vaCoachPieceHintIndex];
     if (assetPath !== expected) return;
     const next = this.vaCoachPieceHintIndex + 1;
-    if (next >= this.ALICE_DETECTOR_MODEL.length) {
+    if (next >= steps.length) {
       this.vaCoachVictoryPhase = true;
       return;
     }

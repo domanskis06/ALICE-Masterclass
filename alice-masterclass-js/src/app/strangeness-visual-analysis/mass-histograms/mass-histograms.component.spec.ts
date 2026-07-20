@@ -32,4 +32,11 @@ describe('MassHistogramsComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should default each histogram to 40 bins', () => {
+    expect(component.kaonBins).toBe(40);
+    expect(component.lambdaBins).toBe(40);
+    expect(component.antiLambdaBins).toBe(40);
+    expect(component.xiBins).toBe(40);
+  });
 });
