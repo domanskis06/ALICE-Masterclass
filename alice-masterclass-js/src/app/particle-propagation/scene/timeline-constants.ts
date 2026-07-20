@@ -21,6 +21,9 @@ export const PROTON_TARGET_DIAMETER_WORLD = 0.1;
  * (`PropagationTimeline`'s `nsPerMs` option). Chosen so a typical ~15ns
  * detector traversal plays out over a few visible seconds by default
  * (`propagationDurationMs = maxTimeNs / DEFAULT_NS_PER_MS`).
+ *
+ * When momentum-reveal exaggeration is active, `maxTimeNs` is the max of
+ * presentation `timesVis` (see `physics/momentum-reveal-timing.ts`).
  */
 export const DEFAULT_NS_PER_MS = 0.005;
 

@@ -7,7 +7,7 @@
  * The Tesla window is centred on the selected field strength (default 0.5 T).
  * Base offsets `[B − 0.03 T, B + 0.01 T]` at the nominal 0.5 T plateau are
  * scaled by `B / NOMINAL_SOLENOID_B_T`, so the axial fall-off keeps the same
- * relative colour distribution at every slider setting (0.5…2 T).
+ * relative colour distribution at every slider setting (0.5…4 T).
  */
 
 import { FIELD_STRENGTH_DEFAULT_T, NOMINAL_SOLENOID_B_T } from './constants';

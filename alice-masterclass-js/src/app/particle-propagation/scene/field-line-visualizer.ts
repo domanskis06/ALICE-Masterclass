@@ -89,7 +89,7 @@ function writeRgb(
 export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions): THREE.Group {
   const {
     scale,
-    density = 'medium',
+    density = 'dense',
     opacity = 0.65,
     linewidth = DEFAULT_FIELD_LINEWIDTH,
     colorRange = { minT: FIELD_COLOR_MIN_T, maxT: FIELD_COLOR_MAX_T },
@@ -112,8 +112,11 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
 
   const positions = new Float32Array(segmentCount * 2 * 3);
   const colors = new Float32Array(segmentCount * 2 * 3);
+  /** |B| (Tesla) at each line vertex — kept so strength-slider recolors skip re-tracing. */
+  const magnitudes = new Float32Array(segmentCount * 2);
   let cursor = 0;
   let colorCursor = 0;
+  let magCursor = 0;
   for (const line of lines) {
     for (let i = 0; i < line.pointCount - 1; i++) {
       const aBase = i * 3;
@@ -124,9 +127,13 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
       positions[cursor++] = line.positions[bBase] * scale;
       positions[cursor++] = line.positions[bBase + 1] * scale;
       positions[cursor++] = line.positions[bBase + 2] * scale;
-      writeRgb(colors, colorCursor, line.magnitudes[i], colorRange);
+      const magA = line.magnitudes[i];
+      const magB = line.magnitudes[i + 1];
+      magnitudes[magCursor++] = magA;
+      magnitudes[magCursor++] = magB;
+      writeRgb(colors, colorCursor, magA, colorRange);
       colorCursor += 3;
-      writeRgb(colors, colorCursor, line.magnitudes[i + 1], colorRange);
+      writeRgb(colors, colorCursor, magB, colorRange);
       colorCursor += 3;
     }
   }
@@ -149,6 +156,7 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
   const segments = new THREE.LineSegments(geometry, material);
   segments.name = 'field-line-segments';
   segments.frustumCulled = true;
+  segments.userData['fieldMagnitudes'] = magnitudes;
   group.add(segments);
 
   const arrows = buildDirectionArrows(lines, scale, opacity, colorRange);
@@ -158,6 +166,11 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
   group.userData['linewidth'] = linewidth;
   group.userData['fieldColorMinT'] = colorRange.minT;
   group.userData['fieldColorMaxT'] = colorRange.maxT;
+  /**
+   * Strength scale baked into {@link magnitudes} / arrow magnitudes at build time.
+   * Recolor multiplies stored |B| by `currentScale / this` when the UI slider moves.
+   */
+  group.userData['fieldMagnitudeScale'] = 1;
   return group;
 }
 
@@ -188,6 +201,7 @@ function buildDirectionArrows(
   mesh.frustumCulled = true;
   mesh.geometry.computeBoundingSphere();
 
+  const arrowMagnitudes = new Float32Array(placements.length);
   const quat = new THREE.Quaternion();
   const matrix = new THREE.Matrix4();
   const posWorld = new THREE.Vector3();
@@ -199,12 +213,14 @@ function buildDirectionArrows(
     posWorld.addScaledVector(p.dir, coneLenWorld * 0.5);
     matrix.compose(posWorld, quat, new THREE.Vector3(1, 1, 1));
     mesh.setMatrixAt(i, matrix);
+    arrowMagnitudes[i] = p.magnitude;
     const [r, g, b] = magnitudeToRgb(p.magnitude, colorRange);
     color.setRGB(r, g, b);
     mesh.setColorAt(i, color);
   }
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  mesh.userData['fieldMagnitudes'] = arrowMagnitudes;
   mesh.computeBoundingSphere();
   return mesh;
 }
@@ -268,6 +284,51 @@ export function setFieldLinesOpacity(group: THREE.Object3D, opacity: number): vo
       mat.needsUpdate = true;
     }
   });
+}
+
+/**
+ * Recolours existing field lines for a new `|B|` window / strength scale.
+ *
+ * Streamline geometry follows B̂ and is independent of |B|, so the field-strength
+ * slider must not re-trace the Chebyshev map — only remap stored magnitudes.
+ *
+ * @param magnitudeScale Multiplier applied to magnitudes stored at build time
+ *   (typically `B_ui_now / B_ui_at_build`, or absolute if build used scale 1).
+ */
+export function setFieldLinesColorRange(
+  group: THREE.Object3D,
+  colorRange: FieldColorRange,
+  magnitudeScale = 1
+): void {
+  const color = new THREE.Color();
+  group.traverse((o) => {
+    const line = o as THREE.LineSegments;
+    if (line.isLineSegments && o.name === 'field-line-segments') {
+      const mags = line.userData['fieldMagnitudes'] as Float32Array | undefined;
+      const attr = line.geometry.getAttribute('color') as THREE.BufferAttribute | undefined;
+      if (!mags || !attr || mags.length * 3 !== attr.array.length) return;
+      const colors = attr.array as Float32Array;
+      for (let i = 0; i < mags.length; i++) {
+        writeRgb(colors, i * 3, mags[i] * magnitudeScale, colorRange);
+      }
+      attr.needsUpdate = true;
+      return;
+    }
+    const mesh = o as THREE.InstancedMesh;
+    if (mesh.isInstancedMesh && o.name === 'field-line-arrows') {
+      const mags = mesh.userData['fieldMagnitudes'] as Float32Array | undefined;
+      if (!mags || !mesh.instanceColor) return;
+      for (let i = 0; i < mags.length; i++) {
+        const [r, g, b] = magnitudeToRgb(mags[i] * magnitudeScale, colorRange);
+        color.setRGB(r, g, b);
+        mesh.setColorAt(i, color);
+      }
+      mesh.instanceColor.needsUpdate = true;
+    }
+  });
+  group.userData['fieldColorMinT'] = colorRange.minT;
+  group.userData['fieldColorMaxT'] = colorRange.maxT;
+  group.userData['fieldMagnitudeScale'] = magnitudeScale;
 }
 
 /**

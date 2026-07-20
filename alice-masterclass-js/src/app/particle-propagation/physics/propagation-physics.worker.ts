@@ -4,7 +4,7 @@
  * Off-main-thread RK4 pre-computation of every particle trajectory for an event.
  *
  * This is the "main thread non-blocking" requirement from the plan: with up to
- * `MAX_TRACKED_PARTICLES` (200) particles x `MAX_RK4_STEPS` (500) steps, each
+ * `MAX_TRACKED_PARTICLES` particles x `MAX_RK4_STEPS` (500) steps, each
  * requiring 4 Chebyshev field evaluations (RK4 stages), a synchronous run on
  * the UI thread would freeze the browser for a noticeable amount of time.
  * Instead, `rk4-propagator.service.ts` posts the raw field-map buffers and the
@@ -27,13 +27,19 @@ const CHUNK_SIZE = 10;
 
 addEventListener('message', ({ data }: MessageEvent<PropagationWorkerRequest>) => {
   try {
-    const { particles, fieldBuffers, options, fieldStrengthScale = 1 } = data;
+    const {
+      particles,
+      fieldBuffers,
+      options,
+      fieldStrengthScale = 1,
+      fieldSolenoidPolarity = 1,
+    } = data;
     const fieldData = parseChebFieldData(fieldBuffers);
     const evaluator = new ChebFieldEvaluator(fieldData);
     const scale = FIELD_SCALE * fieldStrengthScale;
 
     const fieldTesla = (pos: Vec3): Vec3 => {
-      const raw = evaluator.field(pos);
+      const raw = evaluator.field(pos, fieldSolenoidPolarity);
       return { x: raw.x * scale, y: raw.y * scale, z: raw.z * scale };
     };
 

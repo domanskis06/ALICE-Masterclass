@@ -35,6 +35,8 @@ export class MagneticFieldService {
   private loadPromise: Promise<void> | null = null;
   /** Selected plateau |B| in Tesla (UI slider); scales the spatial Chebyshev map. */
   private targetStrengthT = FIELD_STRENGTH_DEFAULT_T;
+  /** L3 solenoid current sense: `+1` nominal, `-1` reversed (dipole unchanged). */
+  private solenoidPolarity: 1 | -1 = 1;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -56,9 +58,25 @@ export class MagneticFieldService {
     return this.targetStrengthT / NOMINAL_SOLENOID_B_T;
   }
 
+  /** `+1` nominal L3 solenoid direction, `-1` when reversed. */
+  get fieldSolenoidPolarity(): 1 | -1 {
+    return this.solenoidPolarity;
+  }
+
   /** Updates the selected plateau strength (Tesla). Does not reload the LUT. */
   setFieldStrengthT(tesla: number): void {
     this.targetStrengthT = tesla;
+  }
+
+  /** Sets L3 solenoid polarity (`+1` / `-1`). Does not reload the LUT. */
+  setSolenoidPolarity(polarity: 1 | -1): void {
+    this.solenoidPolarity = polarity;
+  }
+
+  /** Flips L3 solenoid polarity and returns the new value. */
+  toggleSolenoidPolarity(): 1 | -1 {
+    this.solenoidPolarity = this.solenoidPolarity === 1 ? -1 : 1;
+    return this.solenoidPolarity;
   }
 
   /**
@@ -101,7 +119,7 @@ export class MagneticFieldService {
         '[MagneticFieldService] field() called before load() resolved — await load() first.'
       );
     }
-    const raw = this.evaluator.field(pos);
+    const raw = this.evaluator.field(pos, this.solenoidPolarity);
     const scale = FIELD_SCALE * this.fieldStrengthScale;
     return { x: raw.x * scale, y: raw.y * scale, z: raw.z * scale };
   }

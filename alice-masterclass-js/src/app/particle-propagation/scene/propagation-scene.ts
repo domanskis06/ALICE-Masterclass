@@ -27,6 +27,9 @@ const INITIAL_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 const DARK_BACKGROUND = new THREE.Color(0x05070d);
 const LIGHT_BACKGROUND = new THREE.Color(0xeef1f6);
 
+/** Matches `EventDisplayComponent` camera radio: orbit-about-origin vs free-look pan. */
+export type PropagationCameraMode = 'centered' | 'free';
+
 function disposeObject3D(root: THREE.Object3D): void {
   root.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
@@ -49,6 +52,10 @@ export class PropagationScene {
   private static readonly FAR_CLIPPING_PLANE = 1500;
   /** OrbitControls default is 1 — lower values feel slower and less jumpy. */
   private static readonly ORBIT_ROTATE_SPEED = 0.5;
+  /** Same pan tuning as `EventDisplayComponent` free-camera mode. */
+  private static readonly PAN_SPEED_FACTOR = 0.005;
+  private static readonly WHEEL_PAN_FACTOR = 0.03;
+  private static readonly MOUSE_DRAG_PAN_FACTOR = 0.0008;
 
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
@@ -66,6 +73,14 @@ export class PropagationScene {
 
   private readonly lights = new THREE.Group();
   private _darkMode = true;
+  private _cameraMode: PropagationCameraMode = 'centered';
+  private readonly keysDown: Record<string, boolean> = {};
+  private isMousePanning = false;
+  private lastMousePanX = 0;
+  private lastMousePanY = 0;
+  private readonly panDir = new THREE.Vector3();
+  private readonly panRight = new THREE.Vector3();
+  private readonly panVec = new THREE.Vector3();
   /** Capped DPR for idle frames; interaction temporarily drops to 1. */
   private readonly maxPixelRatio: number;
   private viewWidth = 1;
@@ -116,12 +131,8 @@ export class PropagationScene {
     this.controls.rotateSpeed = PropagationScene.ORBIT_ROTATE_SPEED;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
-    // The collision vertex and the detector model are both centred on the
-    // world origin (see docs/particle-propagation.md); disabling pan is what
-    // guarantees they *stay* visually centred under the cursor no matter how
-    // the user orbits/zooms — same rationale as EventDisplayComponent's
-    // "centered" camera mode (`updateCameraMode`), applied here unconditionally
-    // since this scene has no free/pan mode to begin with.
+    // Default "centered" mode: no pan so the vertex stays under the cursor
+    // while orbiting (same as EventDisplayComponent). Free mode re-enables pan.
     this.controls.enablePan = false;
     this.controls.addEventListener('change', () => {
       this.needsRender = true;
@@ -137,6 +148,7 @@ export class PropagationScene {
     });
 
     this.setupLights();
+    this.attachCameraInputListeners();
 
     this.tracksGroup.visible = false;
     this.scene.add(this.lights, this.detectorGroup, this.fieldGroup, this.introGroup, this.tracksGroup);
@@ -148,6 +160,35 @@ export class PropagationScene {
   /** Whether the neon/dark look is active. */
   get darkMode(): boolean {
     return this._darkMode;
+  }
+
+  /** Current orbit vs free-look mode (matches EventDisplay camera radio). */
+  get cameraMode(): PropagationCameraMode {
+    return this._cameraMode;
+  }
+
+  /**
+   * Switches between centered orbit (rotate about origin) and free look
+   * (WASD / drag / wheel pan, no orbit rotate) — same behaviour as
+   * `EventDisplayComponent.updateCameraMode()`.
+   */
+  setCameraMode(mode: PropagationCameraMode): void {
+    this._cameraMode = mode;
+    if (mode === 'centered') {
+      this.controls.enablePan = false;
+      this.controls.enableRotate = true;
+      this.controls.target.set(0, 0, 0);
+    } else {
+      this.controls.enablePan = true;
+      this.controls.enableRotate = false;
+    }
+    this.isMousePanning = false;
+    this.needsRender = true;
+  }
+
+  /** True while free-cam mouse/keyboard navigation still needs continuous frames. */
+  isNavigating(): boolean {
+    return this.isMousePanning || this.hasPanKeysDown();
   }
 
   /** Toggles background + detector material treatment between dark and light. */
@@ -163,6 +204,7 @@ export class PropagationScene {
     this.camera.position.copy(INITIAL_CAMERA_POSITION);
     this.controls.target.copy(INITIAL_CAMERA_TARGET);
     this.controls.update();
+    this.needsRender = true;
   }
 
   private setupLights(): void {
@@ -173,6 +215,129 @@ export class PropagationScene {
     const directionalLightB = new THREE.DirectionalLight(0xffffff, 0.45);
     directionalLightB.position.set(-1, 1, -1);
     this.lights.add(ambientLight, hemisphereLight, directionalLightA, directionalLightB);
+  }
+
+  private attachCameraInputListeners(): void {
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
+    window.addEventListener('pointerup', this.onPointerUp);
+    this.canvas.addEventListener('pointerdown', this.onPointerDown);
+    this.canvas.addEventListener('pointermove', this.onPointerMove);
+    this.canvas.addEventListener('wheel', this.onWheel, { passive: false });
+  }
+
+  private detachCameraInputListeners(): void {
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
+    window.removeEventListener('pointerup', this.onPointerUp);
+    this.canvas.removeEventListener('pointerdown', this.onPointerDown);
+    this.canvas.removeEventListener('pointermove', this.onPointerMove);
+    this.canvas.removeEventListener('wheel', this.onWheel);
+  }
+
+  private onKeyDown = (e: KeyboardEvent): void => {
+    const t = e.target as HTMLElement;
+    if (t?.tagName === 'INPUT' || t?.tagName === 'TEXTAREA' || t?.isContentEditable) return;
+    this.keysDown[e.key] = true;
+    if (this._cameraMode === 'free' && this.hasPanKeysDown()) this.needsRender = true;
+  };
+
+  private onKeyUp = (e: KeyboardEvent): void => {
+    this.keysDown[e.key] = false;
+  };
+
+  private onPointerDown = (event: PointerEvent): void => {
+    if (this._cameraMode !== 'free' || event.button !== 0) return;
+    this.isMousePanning = true;
+    this.lastMousePanX = event.clientX;
+    this.lastMousePanY = event.clientY;
+    this.needsRender = true;
+  };
+
+  private onPointerMove = (event: PointerEvent): void => {
+    if (!this.isMousePanning) return;
+    const deltaX = event.clientX - this.lastMousePanX;
+    const deltaY = event.clientY - this.lastMousePanY;
+    this.lastMousePanX = event.clientX;
+    this.lastMousePanY = event.clientY;
+    this.applyMousePan(deltaX, deltaY);
+  };
+
+  private onPointerUp = (): void => {
+    this.isMousePanning = false;
+  };
+
+  private onWheel = (e: WheelEvent): void => {
+    if (this._cameraMode !== 'free') return;
+    e.preventDefault();
+    const distance = this.controls.target.distanceTo(this.camera.position);
+    const step = (e.deltaY > 0 ? 1 : -1) * distance * PropagationScene.WHEEL_PAN_FACTOR;
+    this.panDir.subVectors(this.controls.target, this.camera.position).normalize();
+    this.panVec.copy(this.panDir).multiplyScalar(step);
+    this.camera.position.add(this.panVec);
+    this.needsRender = true;
+  };
+
+  private applyMousePan(deltaX: number, deltaY: number): void {
+    const distance = this.controls.target.distanceTo(this.camera.position);
+    const scale = distance * PropagationScene.MOUSE_DRAG_PAN_FACTOR;
+    this.panDir.subVectors(this.controls.target, this.camera.position).normalize();
+    this.panRight.crossVectors(this.panDir, this.camera.up).normalize();
+    this.panVec.set(0, 0, 0);
+    this.panVec.addScaledVector(this.panRight, -deltaX * scale);
+    this.panVec.addScaledVector(this.camera.up, deltaY * scale);
+    this.camera.position.add(this.panVec);
+    this.controls.target.add(this.panVec);
+    this.needsRender = true;
+  }
+
+  private applyKeyboardPan(): void {
+    if (this._cameraMode !== 'free') return;
+    const focusEl = document.activeElement as HTMLElement;
+    if (focusEl?.tagName === 'INPUT' || focusEl?.tagName === 'TEXTAREA' || focusEl?.isContentEditable) {
+      return;
+    }
+    if (!this.hasPanKeysDown()) return;
+    const distance = this.controls.target.distanceTo(this.camera.position);
+    const step = distance * PropagationScene.PAN_SPEED_FACTOR;
+    this.panDir.subVectors(this.controls.target, this.camera.position).normalize();
+    this.panRight.crossVectors(this.panDir, this.camera.up).normalize();
+    this.panVec.set(0, 0, 0);
+    const k = this.keysDown;
+    if (k['w'] || k['W'] || k['ArrowUp']) this.panVec.add(this.panDir);
+    if (k['s'] || k['S'] || k['ArrowDown']) this.panVec.sub(this.panDir);
+    if (k['d'] || k['D'] || k['ArrowRight']) this.panVec.add(this.panRight);
+    if (k['a'] || k['A'] || k['ArrowLeft']) this.panVec.sub(this.panRight);
+    if (k['e'] || k['E']) this.panVec.y += 1;
+    if (k['q'] || k['Q']) this.panVec.y -= 1;
+    if (this.panVec.lengthSq() > 0) {
+      this.panVec.normalize().multiplyScalar(step);
+      this.camera.position.add(this.panVec);
+      this.controls.target.add(this.panVec);
+      this.needsRender = true;
+    }
+  }
+
+  private hasPanKeysDown(): boolean {
+    const k = this.keysDown;
+    return !!(
+      k['w'] ||
+      k['W'] ||
+      k['ArrowUp'] ||
+      k['s'] ||
+      k['S'] ||
+      k['ArrowDown'] ||
+      k['a'] ||
+      k['A'] ||
+      k['ArrowLeft'] ||
+      k['d'] ||
+      k['D'] ||
+      k['ArrowRight'] ||
+      k['q'] ||
+      k['Q'] ||
+      k['e'] ||
+      k['E']
+    );
   }
 
   /** Resizes the renderer/camera to match the canvas's current CSS size. */
@@ -200,15 +365,21 @@ export class PropagationScene {
    * @returns `true` if damping is still settling (caller should keep RAF alive).
    */
   render(): boolean {
+    if (this._cameraMode === 'centered') {
+      this.controls.target.set(0, 0, 0);
+    } else {
+      this.applyKeyboardPan();
+    }
     const dampingActive = this.controls.update();
     this.renderer.render(this.scene, this.camera);
     this.needsRender = false;
     // OrbitControls.update() returns true while damping still moves the camera.
-    if (dampingActive) this.needsRender = true;
-    return !!dampingActive;
+    if (dampingActive || this.isNavigating()) this.needsRender = true;
+    return !!dampingActive || this.isNavigating();
   }
 
   dispose(): void {
+    this.detachCameraInputListeners();
     this.controls.dispose();
     disposeObject3D(this.detectorGroup);
     disposeObject3D(this.fieldGroup);

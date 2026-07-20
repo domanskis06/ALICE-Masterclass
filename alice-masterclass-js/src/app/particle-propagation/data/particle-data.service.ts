@@ -3,9 +3,8 @@
  * module and maps it into `PropagationParticle`s ready for RK4 pre-computation.
  *
  * Source: `assets/exercises/particle-propagation/event_<n>.json`, distilled
- * from Strangeness Visual Analysis part1 by `scripts/curate-propagation-events.mjs`.
- * Primary tracks carry inferred `charge` (±1) and start at the IP; V0 daughters
- * carry VA `sign` as `charge` and start at the secondary vertex.
+ * from gpu_propagator by `scripts/curate-propagation-events.mjs`.
+ * Tracks carry ground-truth `charge` (±1) and start at the IP (`origin: primary`).
  */
 
 import { Injectable } from '@angular/core';

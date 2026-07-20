@@ -46,10 +46,14 @@ export class ChebFieldEvaluator {
     this.dipSegCache = -1;
   }
 
-  /** Raw field map lookup at `pos` (cm), in the map's native (unscaled) units. */
-  field(pos: Vec3): Vec3 {
+  /**
+   * Raw field map lookup at `pos` (cm), in the map's native (unscaled) units.
+   * @param solenoidPolarity `+1` / `-1` flips only the L3 solenoid contribution
+   *   (dipole / machine regions are unchanged).
+   */
+  field(pos: Vec3, solenoidPolarity: number = 1): Vec3 {
     if (pos.z > FIELD_MIN_Z && pos.z < FIELD_MAX_Z) {
-      return this.solDipField(pos);
+      return this.solDipField(pos, solenoidPolarity);
     }
     return this.machineField();
   }
@@ -64,20 +68,20 @@ export class ChebFieldEvaluator {
   // ---------------------------------------------------------------------
   // mag_cheb.cpp::SolDipField
   // ---------------------------------------------------------------------
-  private solDipField(pos: Vec3): Vec3 {
+  private solDipField(pos: Vec3, solenoidPolarity: number): Vec3 {
     if (pos.z > SOL_MIN_Z) {
       const rphiz = this.cartToCyl(pos);
 
       if (this.solSegCache >= 0 && this.isInsideSol(this.solSegCache, rphiz)) {
         const brphiz = this.evalSol(this.solSegCache, rphiz);
-        return this.cylToCartCylB(rphiz, brphiz);
+        return this.applySolenoidPolarity(this.cylToCartCylB(rphiz, brphiz), solenoidPolarity);
       }
 
       const segId = this.findSolSegment(rphiz);
       if (segId >= 0 && this.isInsideSol(segId, rphiz)) {
         this.solSegCache = segId;
         const brphiz = this.evalSol(segId, rphiz);
-        return this.cylToCartCylB(rphiz, brphiz);
+        return this.applySolenoidPolarity(this.cylToCartCylB(rphiz, brphiz), solenoidPolarity);
       }
     }
 
@@ -92,6 +96,11 @@ export class ChebFieldEvaluator {
     }
 
     return ZERO_FIELD;
+  }
+
+  private applySolenoidPolarity(b: Vec3, polarity: number): Vec3 {
+    if (polarity >= 0) return b;
+    return { x: -b.x, y: -b.y, z: -b.z };
   }
 
   // ---------------------------------------------------------------------

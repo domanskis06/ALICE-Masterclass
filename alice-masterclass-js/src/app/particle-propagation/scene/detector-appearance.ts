@@ -17,8 +17,8 @@
  * {@link OUTER_MAGNET_DEFAULT_OPACITY}. TPC uses a distance LOD whose far level
  * thins fine detail and decimates the heavy sector panels (see
  * {@link simplifyTpcForLowLod}). ITS uses a distance LOD whose far level
- * decimates the heavy shell mesh (Mesh_0). MCH / ABSO / SHIL are lightweight
- * muon-system shells with optional distance LOD decimation.
+ * decimates the heavy shell mesh (Mesh_0). MCH / ABSO / SHIL / DIPO use the same
+ * distance-LOD pattern with Melax on the heavier Mesh_* panels.
  */
 
 import * as THREE from 'three';
@@ -94,31 +94,37 @@ export const ITS_LOD_FAR_DISTANCE = 7;
 const ITS_SHELL_FAMILY_RE = /^(Mesh_0)(?:\.|$)/;
 
 /**
- * Fraction of vertices to keep when decimating MCH (Mesh_0 — ~4.4k tris from the
- * o2sim export). 0.55 keeps chamber ribs readable while trimming fill-rate cost.
+ * Fraction of vertices to keep when decimating heavy MCH chamber panels in the
+ * coloured multi-mesh export (~14k tris). 0.55 keeps ribs readable.
  */
 export const MCH_VERTEX_KEEP = 0.55;
 
 /**
- * Fraction of vertices to keep when decimating DIPO (Mesh_0). Dipole yoke is
- * mostly boxes/tubes from the o2sim export — 0.5 keeps the bend readable.
+ * Fraction of vertices to keep when decimating DIPO yoke panels. Dipole is
+ * mostly boxes/tubes — 0.5 keeps the bend silhouette readable.
  */
 export const DIPO_VERTEX_KEEP = 0.5;
 
 /**
- * Fraction of vertices to keep for the very light ABSO / SHIL shells (~300 tris).
- * A gentle trim is enough — mostly keeps draw-call count unchanged.
+ * Fraction of vertices to keep for ABSO / SHIL shells (~7k tris each in the
+ * coloured export). Gentle trim — silhouette stays intact.
  */
 export const MUON_AUX_VERTEX_KEEP = 0.7;
 
 /**
- * Camera distance (world units) at which MCH / ABSO / SHIL switch to simplified LOD.
- * Matches L3/TPC/ITS so the default orbit pose uses all low levels together.
+ * Camera distance (world units) at which MCH / ABSO / SHIL / DIPO switch to
+ * simplified LOD. Matches L3/TPC/ITS so the default orbit uses low levels.
  */
 export const MUON_AUX_LOD_FAR_DISTANCE = 7;
 
-/** Default mesh family for the single-mesh muon aux GLBs. */
-const MUON_AUX_MESH_RE = /^(Mesh_0)(?:\.|$)/;
+/**
+ * Skip Melax on tiny CAD fragments in the muon-arm GLBs (dozens of verts).
+ * Only panels above this count are worth decimating.
+ */
+export const MUON_DECIMATE_MIN_VERTICES = 128;
+
+/** Mesh_* families in the coloured muon-arm GLBs (Mesh_0_1, Mesh_33, …). */
+const MUON_AUX_MESH_RE = /^Mesh_/;
 
 const RENDER_ORDER_LAYER_STRIDE = 10000;
 
@@ -156,10 +162,10 @@ const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
   'dcal.glb': '#FF2FC0',
   'phos.glb': '#D1C30C',
   'l3.glb': '#FF0D12',
-  'mch.glb': '#C87840',
-  'abso.glb': '#8A9AB8',
-  'shil.glb': '#9A7FD4',
-  'dipo.glb': '#6070D8',
+  'mch.glb': '#814244',
+  'abso.glb': '#DE782B',
+  'shil.glb': '#BA92AB',
+  'dipo.glb': '#0068D0',
 };
 
 /** CSS hex accent for opacity sliders / part chips; falls back to orange. */
@@ -202,14 +208,14 @@ export function isDipo(assetPath: string): boolean {
   return /(^|[/\\])dipo\.glb($|\?)/i.test(assetPath);
 }
 
-/** Forward muon-arm shells (MCH / ABSO / SHIL / DIPO) — off by default until polished. */
+/** Forward muon-arm shells (MCH / ABSO / SHIL / DIPO). */
 export function isForwardMuonPart(assetPath: string): boolean {
   return isMch(assetPath) || isAuxiliaryMuonPart(assetPath) || isDipo(assetPath);
 }
 
-/** Default sidebar/scene visibility for a detector part. */
-export function defaultDetectorPartVisible(assetPath: string): boolean {
-  return !isForwardMuonPart(assetPath);
+/** Default sidebar/scene visibility — muon-arm parts match the barrel shells. */
+export function defaultDetectorPartVisible(_assetPath: string): boolean {
+  return true;
 }
 
 /** Default opacity for a layer given its depth index (inner -> outer lerp). */
@@ -323,7 +329,8 @@ export function simplifyTpcForLowLod(root: THREE.Object3D): void {
 function decimateMeshesByFamily(
   root: THREE.Object3D,
   familyRe: RegExp,
-  vertexKeepFraction: number
+  vertexKeepFraction: number,
+  minVertices = 0
 ): number {
   const keep = Math.min(1, Math.max(0.05, vertexKeepFraction));
   if (keep >= 0.999) return 0;
@@ -341,6 +348,10 @@ function decimateMeshesByFamily(
     let simplified = simplifiedBySource.get(source);
     if (!simplified) {
       const vertexCount = source.attributes.position.count;
+      if (vertexCount < minVertices) {
+        simplifiedBySource.set(source, source);
+        return;
+      }
       const removeCount = Math.max(0, Math.floor(vertexCount * (1 - keep)));
       if (removeCount <= 0) {
         simplifiedBySource.set(source, source);
@@ -379,13 +390,18 @@ export function simplifyItsForLowLod(root: THREE.Object3D): void {
 }
 
 /**
- * Decimates the MCH chamber mesh (Mesh_0) in place on `root`.
+ * Decimates heavy MCH chamber meshes in place on `root` (skips tiny fragments).
  */
 export function decimateMchShell(
   root: THREE.Object3D,
   vertexKeepFraction = MCH_VERTEX_KEEP
 ): number {
-  return decimateMeshesByFamily(root, MUON_AUX_MESH_RE, vertexKeepFraction);
+  return decimateMeshesByFamily(
+    root,
+    MUON_AUX_MESH_RE,
+    vertexKeepFraction,
+    MUON_DECIMATE_MIN_VERTICES
+  );
 }
 
 /** Applies MCH low-LOD geometry cuts. Mutates `root` (clone first for high LOD). */
@@ -393,12 +409,17 @@ export function simplifyMchForLowLod(root: THREE.Object3D): void {
   decimateMchShell(root, MCH_VERTEX_KEEP);
 }
 
-/** Decimates DIPO Mesh_0 in place on `root`. */
+/** Decimates heavy DIPO meshes in place on `root`. */
 export function decimateDipoShell(
   root: THREE.Object3D,
   vertexKeepFraction = DIPO_VERTEX_KEEP
 ): number {
-  return decimateMeshesByFamily(root, MUON_AUX_MESH_RE, vertexKeepFraction);
+  return decimateMeshesByFamily(
+    root,
+    MUON_AUX_MESH_RE,
+    vertexKeepFraction,
+    MUON_DECIMATE_MIN_VERTICES
+  );
 }
 
 /** Applies DIPO low-LOD geometry cuts. Mutates `root` (clone first for high LOD). */
@@ -407,13 +428,18 @@ export function simplifyDipoForLowLod(root: THREE.Object3D): void {
 }
 
 /**
- * Lightly decimates ABSO / SHIL Mesh_0. Mutates `root` (clone first for high LOD).
+ * Lightly decimates heavy ABSO / SHIL meshes. Mutates `root` (clone first for high LOD).
  */
 export function simplifyAuxiliaryForLowLod(
   root: THREE.Object3D,
   vertexKeepFraction = MUON_AUX_VERTEX_KEEP
 ): void {
-  decimateMeshesByFamily(root, MUON_AUX_MESH_RE, vertexKeepFraction);
+  decimateMeshesByFamily(
+    root,
+    MUON_AUX_MESH_RE,
+    vertexKeepFraction,
+    MUON_DECIMATE_MIN_VERTICES
+  );
 }
 
 /**

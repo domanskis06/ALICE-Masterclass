@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mergeStaticMeshesByMaterial } from './merge-static-meshes';
+import { mergeStaticMeshesByMaterial, toNonInterleavedGeometry } from './merge-static-meshes';
 
 function countMeshes(root: THREE.Object3D): number {
   let count = 0;
@@ -77,5 +77,47 @@ describe('mergeStaticMeshesByMaterial', () => {
     const merged = mergeStaticMeshesByMaterial(root);
 
     expect(countMeshes(merged)).toBe(0);
+  });
+
+  it('deinterleaves gltfpack-style attributes so mergeGeometries can batch them', () => {
+    const root = new THREE.Group();
+    const material = new THREE.MeshBasicMaterial({ color: 0x2b6cff });
+    // Two box meshes sharing one interleaved position+normal buffer (as gltfpack emits).
+    const proto = new THREE.BoxGeometry(1, 1, 1);
+    const interleaved = new THREE.InterleavedBuffer(
+      new Float32Array([
+        // pos.xyz + nrm.xyz per vertex — 8 verts * 6 floats
+        ...Array.from({ length: 8 }, (_, i) => {
+          const p = proto.attributes.position;
+          const n = proto.attributes.normal;
+          return [p.getX(i), p.getY(i), p.getZ(i), n.getX(i), n.getY(i), n.getZ(i)];
+        }).flat(),
+      ]),
+      6
+    );
+    const makeInterleavedGeo = () => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.InterleavedBufferAttribute(interleaved, 3, 0));
+      g.setAttribute('normal', new THREE.InterleavedBufferAttribute(interleaved, 3, 3));
+      g.setIndex(proto.index!.clone());
+      return g;
+    };
+
+    for (let i = 0; i < 4; i++) {
+      const mesh = new THREE.Mesh(makeInterleavedGeo(), material);
+      mesh.position.set(i * 2, 0, 0);
+      root.add(mesh);
+    }
+
+    const plain = toNonInterleavedGeometry(makeInterleavedGeo());
+    expect(
+      (plain.attributes.position as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute
+    ).toBeFalsy();
+
+    const merged = mergeStaticMeshesByMaterial(root);
+    expect(countMeshes(merged)).toBe(1);
+    const box = new THREE.Box3().setFromObject(merged);
+    expect(box.isEmpty()).toBe(false);
+    expect(box.getSize(new THREE.Vector3()).x).toBeGreaterThan(6);
   });
 });

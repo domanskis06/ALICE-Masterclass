@@ -57,6 +57,29 @@ describe('MagneticFieldService', () => {
     expect(atFarZ(service) / farNominal).toBeCloseTo(4, 2);
   });
 
+  it('reverses only the L3 solenoid contribution when polarity is flipped', async () => {
+    await service.load();
+    const atOrigin = () => service.field({ x: 0, y: 0, z: 0 });
+    const atDipole = () => service.field({ x: 0, y: -50, z: -900 });
+
+    const solBefore = atOrigin();
+    const dipBefore = atDipole();
+
+    expect(service.toggleSolenoidPolarity()).toBe(-1);
+    expect(service.fieldSolenoidPolarity).toBe(-1);
+
+    const solAfter = atOrigin();
+    const dipAfter = atDipole();
+
+    expect(solAfter.z).toBeCloseTo(-solBefore.z, 5);
+    expect(solAfter.x).toBeCloseTo(-solBefore.x, 5);
+    expect(solAfter.y).toBeCloseTo(-solBefore.y, 5);
+    // Dipole magnet is a separate circuit — polarity toggle must not flip it.
+    expect(dipAfter.x).toBeCloseTo(dipBefore.x, 5);
+    expect(dipAfter.y).toBeCloseTo(dipBefore.y, 5);
+    expect(dipAfter.z).toBeCloseTo(dipBefore.z, 5);
+  });
+
   it('exposes the raw parsed buffers once loaded, for handing off to the Web Worker', async () => {
     expect(service.getRawBuffers()).toBeNull();
     await service.load();

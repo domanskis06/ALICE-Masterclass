@@ -2,10 +2,10 @@
  * On-disk schema for the curated Particle Propagation events under
  * `assets/exercises/particle-propagation/event_<n>.json`.
  *
- * Distilled from Strangeness Visual Analysis `part1` events by
+ * Distilled from gpu_propagator `data/events.json` by
  * `scripts/curate-propagation-events.mjs`:
- *   - primary tracks (VA background) — charge inferred from helix trajectory
- *   - one V0 decay pair — charge from VA `sign`, vertex at the secondary
+ *   - primary tracks from the IP with ground-truth `charge` (±1)
+ *   - colouring is charge-based (red +, blue −); `origin` stays `primary`
  *
  * Kept deliberately minimal: only the fields the RK4 pre-computation + colouring need.
  */

@@ -1,5 +1,12 @@
 import * as THREE from 'three';
-import { DETECTOR_PART_PATHS, DetectorModel, loadDetectorModel } from './detector-loader';
+import {
+  DETECTOR_PART_PATHS,
+  DetectorModel,
+  attachDeferredLowLods,
+  isDetectorCorePart,
+  loadDetectorModel,
+  loadDetectorModelProgressive,
+} from './detector-loader';
 import {
   ITS_LOD_FAR_DISTANCE,
   MUON_AUX_LOD_FAR_DISTANCE,
@@ -13,7 +20,8 @@ describe('loadDetectorModel', () => {
   let model: DetectorModel;
 
   beforeAll(async () => {
-    model = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2);
+    // Eager Melax so LOD triangle assertions stay deterministic in CI.
+    model = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2, true, false);
   }, 90000);
 
   afterAll(() => {
@@ -41,6 +49,14 @@ describe('loadDetectorModel', () => {
       'assets/models/alice components/SHIL.glb',
       'assets/models/alice components/DIPO.glb',
     ]);
+  });
+
+  it('marks ITS/TPC/L3 as the progressive core wave', () => {
+    expect(isDetectorCorePart('assets/models/alice components/its.glb')).toBe(true);
+    expect(isDetectorCorePart('assets/models/alice components/tpc.glb')).toBe(true);
+    expect(isDetectorCorePart('assets/models/alice components/L3.glb')).toBe(true);
+    expect(isDetectorCorePart('assets/models/alice components/TRD.glb')).toBe(false);
+    expect(isDetectorCorePart('assets/models/alice components/MCH.glb')).toBe(false);
   });
 
   it('loads all real detector GLBs into a recentered group with one toggleable part each', () => {
@@ -195,6 +211,20 @@ describe('loadDetectorModel', () => {
     expect(Math.abs(center.z)).toBeLessThan(0.05);
   });
 
+  it('lifts muon-arm parts so near-symmetric shells sit on the ITS beam axis (Y)', () => {
+    model.group.updateMatrixWorld(true);
+    // MCH / SHIL are roughly cylindrical about the beam — their AABB centre Y
+    // should land near 0 after the +30 cm frame lift + ITS recenter. ABSO/DIPO
+    // are asymmetric so AABB centre is not a reliable pipe proxy.
+    for (const re of [/\/mch\.glb$/i, /\/shil\.glb$/i]) {
+      const part = model.parts.find((p) => re.test(p.assetPath));
+      expect(part).toBeDefined();
+      const center = new THREE.Box3().setFromObject(part!.root).getCenter(new THREE.Vector3());
+      expect(Math.abs(center.x)).toBeLessThan(0.05);
+      expect(Math.abs(center.y)).toBeLessThan(0.05);
+    }
+  });
+
   it('collapses each non-LOD part down to a small number of draw calls', () => {
     for (const part of model.parts) {
       if ((part.root as THREE.LOD).isLOD) continue;
@@ -218,4 +248,52 @@ describe('loadDetectorModel', () => {
     expect(partial.parts.length).toBe(1);
     expect(errorSpy).toHaveBeenCalled();
   }, 20000);
+});
+
+describe('loadDetectorModelProgressive + deferred Melax', () => {
+  it('emits core (ITS/TPC/L3) before the complete assembly', async () => {
+    const waves: Array<{ wave: string; count: number }> = [];
+    const model = await loadDetectorModelProgressive(DETECTOR_PART_PATHS, {
+      scale: 1e-2,
+      darkMode: true,
+      deferLowLod: true,
+      onWave: (m, wave) => waves.push({ wave, count: m.parts.length }),
+    });
+
+    expect(waves.map((w) => w.wave)).toEqual(['core', 'complete']);
+    expect(waves[0].count).toBe(3);
+    expect(waves[1].count).toBe(DETECTOR_PART_PATHS.length);
+    expect(model.parts.length).toBe(DETECTOR_PART_PATHS.length);
+
+    const corePaths = model.parts.slice(0, 3).map((p) => p.assetPath);
+    expect(corePaths.every(isDetectorCorePart)).toBe(true);
+  }, 90000);
+
+  it('defers Melax low-LOD until attachDeferredLowLods', async () => {
+    const deferred = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2, true, true);
+    const its = deferred.parts.find((p) => /its\.glb$/i.test(p.assetPath));
+    expect(its).toBeDefined();
+    expect((its!.root as THREE.LOD).levels.length).toBe(1);
+
+    const tpc = deferred.parts.find((p) => /tpc\.glb$/i.test(p.assetPath));
+    expect((tpc!.root as THREE.LOD).levels.length).toBe(1);
+
+    // L3 thinning is sync (no Melax) — both levels present immediately.
+    const l3 = deferred.parts.find((p) => /l3\.glb$/i.test(p.assetPath));
+    expect((l3!.root as THREE.LOD).levels.length).toBe(2);
+
+    const attached = attachDeferredLowLods(deferred.group);
+    expect(attached).toBeGreaterThan(0);
+    expect((its!.root as THREE.LOD).levels.length).toBe(2);
+    expect((tpc!.root as THREE.LOD).levels.length).toBe(2);
+    expect(attachDeferredLowLods(deferred.group)).toBe(0);
+
+    deferred.group.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      mesh.geometry?.dispose();
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const mat of materials) mat?.dispose();
+    });
+  }, 90000);
 });

@@ -36,6 +36,40 @@ function isMergeableSingleMaterialMesh(obj: THREE.Object3D): obj is THREE.Mesh {
 }
 
 /**
+ * Copies a geometry into a plain (non-interleaved) BufferGeometry.
+ *
+ * `gltfpack` / meshoptimizer emit InterleavedBufferAttributes. Three's
+ * `mergeGeometries` rejects those, and `applyMatrix4` on a shared interleaved
+ * buffer can also corrupt quantized positions — which made the muon-arm GLBs
+ * (ABSO/SHIL/MCH/DIPO) vanish after `mergeStaticMeshesByMaterial`.
+ */
+export function toNonInterleavedGeometry(source: THREE.BufferGeometry): THREE.BufferGeometry {
+  const out = new THREE.BufferGeometry();
+  for (const name of Object.keys(source.attributes)) {
+    const attr = source.attributes[name];
+    if ((attr as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute) {
+      const interleaved = attr as THREE.InterleavedBufferAttribute;
+      const itemSize = interleaved.itemSize;
+      const count = interleaved.count;
+      const array = new Float32Array(count * itemSize);
+      for (let i = 0; i < count; i++) {
+        if (itemSize >= 1) array[i * itemSize] = interleaved.getX(i);
+        if (itemSize >= 2) array[i * itemSize + 1] = interleaved.getY(i);
+        if (itemSize >= 3) array[i * itemSize + 2] = interleaved.getZ(i);
+        if (itemSize >= 4) array[i * itemSize + 3] = interleaved.getW(i);
+      }
+      out.setAttribute(name, new THREE.BufferAttribute(array, itemSize, false));
+    } else {
+      out.setAttribute(name, (attr as THREE.BufferAttribute).clone());
+    }
+  }
+  if (source.index) {
+    out.setIndex(source.index.clone());
+  }
+  return out;
+}
+
+/**
  * Returns a new `Object3D` visually equivalent to `root` (same world-space
  * appearance, assuming it's re-parented where `root` would have been), but
  * with far fewer meshes. `root` itself is left untouched but should be
@@ -53,7 +87,9 @@ export function mergeStaticMeshesByMaterial(root: THREE.Object3D): THREE.Object3
       if ((obj as { isMesh?: boolean }).isMesh) passthrough.push(obj as THREE.Mesh);
       return;
     }
-    const baked = (obj.geometry as THREE.BufferGeometry).clone().applyMatrix4(obj.matrixWorld);
+    const baked = toNonInterleavedGeometry(obj.geometry as THREE.BufferGeometry).applyMatrix4(
+      obj.matrixWorld
+    );
     const material = obj.material as THREE.Material;
     const list = geometriesByMaterial.get(material);
     if (list) {
@@ -77,7 +113,9 @@ export function mergeStaticMeshesByMaterial(root: THREE.Object3D): THREE.Object3
   }
 
   for (const mesh of passthrough) {
-    const baked = (mesh.geometry as THREE.BufferGeometry).clone().applyMatrix4(mesh.matrixWorld);
+    const baked = toNonInterleavedGeometry(mesh.geometry as THREE.BufferGeometry).applyMatrix4(
+      mesh.matrixWorld
+    );
     merged.add(new THREE.Mesh(baked, mesh.material));
   }
 

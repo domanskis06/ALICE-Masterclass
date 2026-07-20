@@ -31,7 +31,7 @@ describe('ParticleDataService (real curated event fixture)', () => {
     service = TestBed.inject(ParticleDataService);
   });
 
-  it('loads a real curated event with primary (IP) and V0 (secondary) tracks', async () => {
+  it('loads a real curated event with charged primary tracks at the IP', async () => {
     const particles = await firstValueFrom(service.loadEvent(0));
 
     expect(particles.length).toBeGreaterThanOrEqual(10);
@@ -39,22 +39,23 @@ describe('ParticleDataService (real curated event fixture)', () => {
     expect(particles.every((p) => p.charge === 1 || p.charge === -1)).toBe(true);
     expect(particles.some((p) => p.charge > 0)).toBe(true);
     expect(particles.some((p) => p.charge < 0)).toBe(true);
+    expect(particles.every((p) => p.origin === 'primary')).toBe(true);
 
-    const primary = particles.filter((p) => p.origin === 'primary');
-    const v0 = particles.filter((p) => p.origin === 'v0');
-    expect(primary.length).toBeGreaterThanOrEqual(8);
-    expect(v0.length).toBe(2);
-    expect(v0.some((p) => p.charge > 0)).toBe(true);
-    expect(v0.some((p) => p.charge < 0)).toBe(true);
-
-    for (const p of primary) {
+    for (const p of particles) {
       expect(p.vertex).toEqual({ x: 0, y: 0, z: 0 });
-    }
-    for (const p of v0) {
-      expect(Math.hypot(p.vertex.x, p.vertex.y)).toBeGreaterThan(0.3);
       expect(Number.isFinite(p.momentum.x)).toBe(true);
       expect(Number.isFinite(p.energy)).toBe(true);
     }
+  });
+
+  it('loads dense curated event 9 with ~50–60 tracks', async () => {
+    // PARTICLE_EVENT_COUNT=10 → event_0…event_9; only event_9 is the dense fixture.
+    const particles = await firstValueFrom(service.loadEvent(9));
+    expect(particles.length).toBeGreaterThanOrEqual(50);
+    expect(particles.length).toBeLessThanOrEqual(60);
+    expect(particles.every((p) => p.charge === 1 || p.charge === -1)).toBe(true);
+    expect(particles.some((p) => p.charge > 0)).toBe(true);
+    expect(particles.some((p) => p.charge < 0)).toBe(true);
   });
 
   it('lists exactly the curated event count', () => {

@@ -5,7 +5,6 @@ import {
   createTrackLines,
   updateDrawRange,
   DEFAULT_TRACK_LINEWIDTH,
-  PRIMARY_TRACK_COLOR,
   POSITIVE_TRACK_COLOR,
   NEGATIVE_TRACK_COLOR,
   NEUTRAL_TRACK_COLOR,
@@ -49,19 +48,23 @@ describe('createTrackLines', () => {
     expect(track.positions[3]).toBe(originalX1);
   });
 
-  it('colors primary tracks blue and V0 tracks by charge (red + / green −)', () => {
-    const [primaryLine] = createTrackLines([makeTrack(1, [0], 'primary')], 1);
-    const [posLine] = createTrackLines([makeTrack(1, [0], 'v0')], 1);
-    const [negLine] = createTrackLines([makeTrack(-1, [0], 'v0')], 1);
+  it('colors all tracks by charge (red + / blue −), ignoring origin', () => {
+    const [primaryPos] = createTrackLines([makeTrack(1, [0], 'primary')], 1);
+    const [primaryNeg] = createTrackLines([makeTrack(-1, [0], 'primary')], 1);
+    const [v0Pos] = createTrackLines([makeTrack(1, [0], 'v0')], 1);
+    const [v0Neg] = createTrackLines([makeTrack(-1, [0], 'v0')], 1);
     const [neutralLine] = createTrackLines([makeTrack(0, [0], 'v0')], 1);
 
-    expect((primaryLine.material as LineMaterial).color.getHexString()).toBe(
-      new THREE.Color(PRIMARY_TRACK_COLOR).getHexString()
-    );
-    expect((posLine.material as LineMaterial).color.getHexString()).toBe(
+    expect((primaryPos.material as LineMaterial).color.getHexString()).toBe(
       new THREE.Color(POSITIVE_TRACK_COLOR).getHexString()
     );
-    expect((negLine.material as LineMaterial).color.getHexString()).toBe(
+    expect((primaryNeg.material as LineMaterial).color.getHexString()).toBe(
+      new THREE.Color(NEGATIVE_TRACK_COLOR).getHexString()
+    );
+    expect((v0Pos.material as LineMaterial).color.getHexString()).toBe(
+      new THREE.Color(POSITIVE_TRACK_COLOR).getHexString()
+    );
+    expect((v0Neg.material as LineMaterial).color.getHexString()).toBe(
       new THREE.Color(NEGATIVE_TRACK_COLOR).getHexString()
     );
     expect((neutralLine.material as LineMaterial).color.getHexString()).toBe(
@@ -107,5 +110,18 @@ describe('updateDrawRange', () => {
     updateDrawRange(line, track, 7);
     expect(line.geometry.instanceCount).toBe(1);
     expect(Array.from(track.times)).toEqual(timesBefore);
+  });
+
+  it('prefers timesVis over physical times when present', () => {
+    const track = makeTrack(1, [0, 5, 10]);
+    track.timesVis = new Float32Array([0, 20, 40]);
+    const [line] = createTrackLines([track], 1);
+
+    updateDrawRange(line, track, 12);
+    // Physical times would reveal 2 segments at t=12; timesVis only 0 so far.
+    expect(line.geometry.instanceCount).toBe(0);
+
+    updateDrawRange(line, track, 25);
+    expect(line.geometry.instanceCount).toBe(1); // timesVis vertices 0..1
   });
 });

@@ -8,12 +8,15 @@
  * toggled/faded from the GUI, and a whole-model recenter onto the beam axis so
  * tracks starting at the world origin appear in the middle of the detector.
  *
+ * First paint is accelerated in two ways:
+ * 1. **Progressive waves** — ITS/TPC/L3 show first; calorimeters + muon-arm follow.
+ * 2. **Deferred Melax low-LOD** — high detail merges immediately; SimplifyModifier
+ *    low levels attach after the first painted frame (`scheduleDeferredLowLods`).
+ *
  * L3 is special-cased: sector families become {@link THREE.InstancedMesh} (no
  * material merge — that creates one giant transparent blob and hurts fill-rate)
- * wrapped in a distance {@link THREE.LOD}. TPC is also a distance LOD: full
- * merged geometry up close, fine-detail thinning + heavy-panel decimation far
- * away. ITS is a distance LOD with a decimated Mesh_0 shell in the far level.
- * Other parts still merge by material.
+ * wrapped in a distance {@link THREE.LOD}. TPC/ITS/muon Melax LODs follow the
+ * deferred path when requested. Other parts still merge by material.
  * It does NOT import `EventDisplayComponent` (god-node isolation, per
  * `.cursor/rules/architecture.mdc`).
  */
@@ -68,8 +71,24 @@ export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/DIPO.glb`,
 ];
 
+/** First-paint core: beam axis + outer magnet yoke. */
+export function isDetectorCorePart(assetPath: string): boolean {
+  return /(^|[/\\])(its|tpc|l3)\.glb($|\?)/i.test(assetPath);
+}
+
 /** Per-slider clamp for the layer radial inflate (reduces z-fighting between shells). */
 const LAYER_RADIAL_INFLATE_STEP = 0.0009;
+
+/**
+ * Barrel ITS/TPC GLBs are authored with the beam pipe ~+30 cm in Y, while
+ * MCH / SHIL / DIPO sit on the true ALICE axis at Y = 0. After
+ * {@link recenterOnBeamAxis} pins the collision vertex to the ITS tube, those
+ * three parts sit ~30 cm too low unless lifted by this amount. ABSO is excluded
+ * — its authored placement already matches the ITS frame after recenter.
+ * Applied as `position.y += MUON_ARM_BEAM_Y_LIFT_CM * scale` after the part
+ * scale so the translation is in world units and gets baked by merge/LOD.
+ */
+export const MUON_ARM_BEAM_Y_LIFT_CM = 30;
 
 /** One toggleable detector layer. */
 export interface DetectorPart {
@@ -84,6 +103,25 @@ export interface DetectorModel {
   /** Layers in load order, for building GUI controls. */
   parts: DetectorPart[];
 }
+
+export type DetectorLoadWave = 'core' | 'complete';
+
+export interface DetectorProgressiveOptions {
+  scale?: number;
+  darkMode?: boolean;
+  /** Skip Melax low-LOD at load; call {@link scheduleDeferredLowLods} after paint. */
+  deferLowLod?: boolean;
+  signal?: AbortSignal;
+  onWave: (model: DetectorModel, wave: DetectorLoadWave) => void;
+}
+
+interface PendingLowLod {
+  farDistance: number;
+  darkMode: boolean;
+  build: () => THREE.Object3D;
+}
+
+const PENDING_LOW_LOD_KEY = 'pendingLowLod';
 
 /** Materials + merge + target opacity for one static detector part graph. */
 function finalizePartMeshes(
@@ -101,9 +139,7 @@ function finalizePartMeshes(
 
 /**
  * Builds a distance LOD for L3: full InstancedMesh yoke up close, every-Nth
- * sector far away (default PP orbit distance uses the simplified level).
- * No `mergeStaticMeshesByMaterial` — instancing keeps draw calls low without
- * baking all sectors into one unsorted transparent mesh.
+ * sector far away. Sector thinning is cheap (no Melax) — both levels stay sync.
  */
 function buildOuterMagnetLod(
   root: THREE.Object3D,
@@ -127,124 +163,45 @@ function buildOuterMagnetLod(
   return lod;
 }
 
-/**
- * Builds a distance LOD for TPC: full merged barrel up close; far level drops
- * every other Mesh_15/17 fine piece and Melax-decimates Mesh_22/26 panels
- * (~half vertices) while keeping all 20 sector instances (no ring gaps).
- */
-function buildTpcLod(
-  root: THREE.Object3D,
-  opacity: number,
-  layerIndex: number,
-  userData: Record<string, unknown>
-): THREE.LOD {
-  const lowSrc = cloneDetectorSubtree(root);
-  simplifyTpcForLowLod(lowSrc);
+function buildMelaxLod(options: {
+  name: string;
+  root: THREE.Object3D;
+  opacity: number;
+  layerIndex: number;
+  userData: Record<string, unknown>;
+  farDistance: number;
+  deferLowLod: boolean;
+  darkMode: boolean;
+  simplify: (src: THREE.Object3D) => void;
+}): THREE.LOD {
+  const { name, root, opacity, layerIndex, userData, farDistance, deferLowLod, darkMode, simplify } =
+    options;
 
+  const lowSrc = cloneDetectorSubtree(root);
   const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
-  const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
 
   const lod = new THREE.LOD();
-  lod.name = 'tpc-lod';
+  lod.name = name;
   lod.userData = { ...userData };
   lod.addLevel(high, 0);
-  lod.addLevel(low, TPC_LOD_FAR_DISTANCE);
-  return lod;
-}
 
-/**
- * Builds a distance LOD for ITS: full merged shell up close; far level Melax-
- * decimates Mesh_0 (~half vertices) while keeping smaller detail meshes intact.
- */
-function buildItsLod(
-  root: THREE.Object3D,
-  opacity: number,
-  layerIndex: number,
-  userData: Record<string, unknown>
-): THREE.LOD {
-  const lowSrc = cloneDetectorSubtree(root);
-  simplifyItsForLowLod(lowSrc);
+  if (!deferLowLod) {
+    simplify(lowSrc);
+    const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
+    lod.addLevel(low, farDistance);
+  } else {
+    const pending: PendingLowLod = {
+      farDistance,
+      darkMode,
+      build: () => {
+        simplify(lowSrc);
+        return finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
+      },
+    };
+    lod.userData[PENDING_LOW_LOD_KEY] = pending;
+  }
 
-  const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
-  const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
-
-  const lod = new THREE.LOD();
-  lod.name = 'its-lod';
-  lod.userData = { ...userData };
-  lod.addLevel(high, 0);
-  lod.addLevel(low, ITS_LOD_FAR_DISTANCE);
-  return lod;
-}
-
-/**
- * Builds a distance LOD for MCH: full merged chamber up close; far level Melax-
- * decimates Mesh_0 (~half vertices).
- */
-function buildMchLod(
-  root: THREE.Object3D,
-  opacity: number,
-  layerIndex: number,
-  userData: Record<string, unknown>
-): THREE.LOD {
-  const lowSrc = cloneDetectorSubtree(root);
-  simplifyMchForLowLod(lowSrc);
-
-  const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
-  const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
-
-  const lod = new THREE.LOD();
-  lod.name = 'mch-lod';
-  lod.userData = { ...userData };
-  lod.addLevel(high, 0);
-  lod.addLevel(low, MUON_AUX_LOD_FAR_DISTANCE);
-  return lod;
-}
-
-/**
- * Builds a distance LOD for the dipole magnet (DIPO): full yoke up close,
- * decimated far level (same strategy as MCH).
- */
-function buildDipoLod(
-  root: THREE.Object3D,
-  opacity: number,
-  layerIndex: number,
-  userData: Record<string, unknown>
-): THREE.LOD {
-  const lowSrc = cloneDetectorSubtree(root);
-  simplifyDipoForLowLod(lowSrc);
-
-  const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
-  const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
-
-  const lod = new THREE.LOD();
-  lod.name = 'dipo-lod';
-  lod.userData = { ...userData };
-  lod.addLevel(high, 0);
-  lod.addLevel(low, MUON_AUX_LOD_FAR_DISTANCE);
-  return lod;
-}
-
-/**
- * Builds a distance LOD for lightweight muon aux layers (ABSO / SHIL): full mesh
- * up close, lightly decimated far level.
- */
-function buildAuxiliaryMuonLod(
-  root: THREE.Object3D,
-  opacity: number,
-  layerIndex: number,
-  userData: Record<string, unknown>
-): THREE.LOD {
-  const lowSrc = cloneDetectorSubtree(root);
-  simplifyAuxiliaryForLowLod(lowSrc);
-
-  const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
-  const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
-
-  const lod = new THREE.LOD();
-  lod.name = 'muon-aux-lod';
-  lod.userData = { ...userData };
-  lod.addLevel(high, 0);
-  lod.addLevel(low, MUON_AUX_LOD_FAR_DISTANCE);
+  setDetectorPartOpacity(lod, opacity);
   return lod;
 }
 
@@ -253,7 +210,9 @@ function loadOnePart(
   path: string,
   scale: number,
   layerIndex: number,
-  totalLayers: number
+  totalLayers: number,
+  deferLowLod: boolean,
+  darkMode: boolean
 ): Promise<THREE.Object3D | null> {
   return new Promise((resolve) => {
     loader.load(
@@ -265,6 +224,13 @@ function loadOnePart(
         stripCadHelperCubes(root);
         const radialInflate = 1 + layerIndex * LAYER_RADIAL_INFLATE_STEP;
         root.scale.setScalar(scale * radialInflate);
+        // Lift MCH/SHIL/DIPO into the ITS/TPC beam frame (see MUON_ARM_BEAM_Y_LIFT_CM).
+        // ABSO is already authored to sit correctly after ITS recenter — do not lift it.
+        // Applied after scale so the translation is in world units; merge/LOD then
+        // bakes matrixWorld into the static geometry.
+        if (isMch(path) || isDipo(path) || /(^|[/\\])shil\.glb($|\?)/i.test(path)) {
+          root.position.y += MUON_ARM_BEAM_Y_LIFT_CM * scale;
+        }
         root.updateMatrixWorld(true);
         const userData = {
           ...(root.userData || {}),
@@ -279,23 +245,83 @@ function loadOnePart(
           return;
         }
         if (isTpc(path)) {
-          resolve(buildTpcLod(root, opacity, layerIndex, userData));
+          resolve(
+            buildMelaxLod({
+              name: 'tpc-lod',
+              root,
+              opacity,
+              layerIndex,
+              userData,
+              farDistance: TPC_LOD_FAR_DISTANCE,
+              deferLowLod,
+              darkMode,
+              simplify: simplifyTpcForLowLod,
+            })
+          );
           return;
         }
         if (isIts(path)) {
-          resolve(buildItsLod(root, opacity, layerIndex, userData));
+          resolve(
+            buildMelaxLod({
+              name: 'its-lod',
+              root,
+              opacity,
+              layerIndex,
+              userData,
+              farDistance: ITS_LOD_FAR_DISTANCE,
+              deferLowLod,
+              darkMode,
+              simplify: simplifyItsForLowLod,
+            })
+          );
           return;
         }
         if (isMch(path)) {
-          resolve(buildMchLod(root, opacity, layerIndex, userData));
+          resolve(
+            buildMelaxLod({
+              name: 'mch-lod',
+              root,
+              opacity,
+              layerIndex,
+              userData,
+              farDistance: MUON_AUX_LOD_FAR_DISTANCE,
+              deferLowLod,
+              darkMode,
+              simplify: simplifyMchForLowLod,
+            })
+          );
           return;
         }
         if (isDipo(path)) {
-          resolve(buildDipoLod(root, opacity, layerIndex, userData));
+          resolve(
+            buildMelaxLod({
+              name: 'dipo-lod',
+              root,
+              opacity,
+              layerIndex,
+              userData,
+              farDistance: MUON_AUX_LOD_FAR_DISTANCE,
+              deferLowLod,
+              darkMode,
+              simplify: simplifyDipoForLowLod,
+            })
+          );
           return;
         }
         if (isAuxiliaryMuonPart(path)) {
-          resolve(buildAuxiliaryMuonLod(root, opacity, layerIndex, userData));
+          resolve(
+            buildMelaxLod({
+              name: 'muon-aux-lod',
+              root,
+              opacity,
+              layerIndex,
+              userData,
+              farDistance: MUON_AUX_LOD_FAR_DISTANCE,
+              deferLowLod,
+              darkMode,
+              simplify: simplifyAuxiliaryForLowLod,
+            })
+          );
           return;
         }
         resolve(finalizePartMeshes(root, opacity, layerIndex, userData));
@@ -343,25 +369,21 @@ function recenterOnBeamAxis(group: THREE.Object3D, parts: DetectorPart[]): void 
   group.updateMatrixWorld(true);
 }
 
-/**
- * Loads every detector part in parallel and returns the recentered group plus a
- * per-part list (failures are logged and skipped, never rejected, so one
- * missing asset doesn't block the whole scene).
- */
-export async function loadDetectorModel(
-  paths: readonly string[] = DETECTOR_PART_PATHS,
-  scale = 1,
-  darkMode = true
-): Promise<DetectorModel> {
-  const loader = new GLTFLoader();
-  const roots = await Promise.all(
-    paths.map((path, i) => loadOnePart(loader, path, scale, i, paths.length))
-  );
+/** Disables `matrixAutoUpdate` once world matrices are final. */
+function freezeStaticTransforms(root: THREE.Object3D): void {
+  root.updateMatrixWorld(true);
+  root.traverse((obj) => {
+    obj.matrixAutoUpdate = false;
+  });
+}
 
-  const group = new THREE.Group();
-  group.name = 'particle-propagation-detector';
-  const parts: DetectorPart[] = [];
-
+function appendLoadedParts(
+  group: THREE.Group,
+  parts: DetectorPart[],
+  paths: readonly string[],
+  roots: Array<THREE.Object3D | null>,
+  darkMode: boolean
+): void {
   roots.forEach((root, i) => {
     if (!root) return;
     const assetPath = paths[i];
@@ -369,17 +391,163 @@ export async function loadDetectorModel(
     group.add(root);
     parts.push({ assetPath, label: detectorPartLabel(assetPath), root });
   });
+}
+
+/**
+ * Attaches any Melax low-LOD levels stashed by {@link loadOnePart} when
+ * `deferLowLod` was true. Safe to call repeatedly (no-ops when nothing pending).
+ * @returns number of low levels attached.
+ */
+export function attachDeferredLowLods(root: THREE.Object3D): number {
+  let attached = 0;
+  const jobs: Array<{ lod: THREE.LOD; pending: PendingLowLod }> = [];
+  root.traverse((obj) => {
+    const lod = obj as THREE.LOD;
+    if (!(lod as THREE.LOD).isLOD) return;
+    const pending = lod.userData[PENDING_LOW_LOD_KEY] as PendingLowLod | undefined;
+    if (!pending) return;
+    jobs.push({ lod, pending });
+  });
+
+  for (const { lod, pending } of jobs) {
+    const low = pending.build();
+    applyDetectorDarkMode(low, pending.darkMode);
+    lod.addLevel(low, pending.farDistance);
+    delete lod.userData[PENDING_LOW_LOD_KEY];
+    freezeStaticTransforms(low);
+    attached += 1;
+  }
+  return attached;
+}
+
+/**
+ * Runs {@link attachDeferredLowLods} after the browser has painted at least one
+ * frame (double rAF), preferring `requestIdleCallback` when available.
+ * @returns cancel function (best-effort; in-flight Melax may still finish).
+ */
+export function scheduleDeferredLowLods(
+  root: THREE.Object3D,
+  onDone?: (attached: number) => void
+): () => void {
+  let cancelled = false;
+  let raf1 = 0;
+  let raf2 = 0;
+  let idleId: number | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const finish = (): void => {
+    if (cancelled) return;
+    const attached = attachDeferredLowLods(root);
+    onDone?.(attached);
+  };
+
+  raf1 = requestAnimationFrame(() => {
+    raf2 = requestAnimationFrame(() => {
+      const ric = (
+        window as Window & {
+          requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+        }
+      ).requestIdleCallback;
+      if (typeof ric === 'function') {
+        idleId = ric(finish, { timeout: 2000 });
+      } else {
+        timeoutId = setTimeout(finish, 0);
+      }
+    });
+  });
+
+  return () => {
+    cancelled = true;
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+    if (idleId != null) {
+      const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      cic?.(idleId);
+    }
+    if (timeoutId != null) clearTimeout(timeoutId);
+  };
+}
+
+/**
+ * Loads every detector part in parallel and returns the recentered group plus a
+ * per-part list (failures are logged and skipped, never rejected, so one
+ * missing asset doesn't block the whole scene).
+ *
+ * @param deferLowLod When true, Melax low-LOD levels are omitted until
+ *   {@link attachDeferredLowLods} / {@link scheduleDeferredLowLods}.
+ */
+export async function loadDetectorModel(
+  paths: readonly string[] = DETECTOR_PART_PATHS,
+  scale = 1,
+  darkMode = true,
+  deferLowLod = false
+): Promise<DetectorModel> {
+  const loader = new GLTFLoader();
+  const roots = await Promise.all(
+    paths.map((path, i) => loadOnePart(loader, path, scale, i, paths.length, deferLowLod, darkMode))
+  );
+
+  const group = new THREE.Group();
+  group.name = 'particle-propagation-detector';
+  const parts: DetectorPart[] = [];
+  appendLoadedParts(group, parts, paths, roots, darkMode);
 
   recenterOnBeamAxis(group, parts);
-  // Detector geometry is static after load — skip per-frame matrix walks.
   freezeStaticTransforms(group);
   return { group, parts };
 }
 
-/** Disables `matrixAutoUpdate` once world matrices are final. */
-function freezeStaticTransforms(root: THREE.Object3D): void {
-  root.updateMatrixWorld(true);
-  root.traverse((obj) => {
-    obj.matrixAutoUpdate = false;
-  });
+/**
+ * Progressive detector load: emits a core wave (ITS/TPC/L3) as soon as those
+ * GLBs are ready, then a complete wave once calorimeters + muon-arm join the
+ * same recentered group. Melax low-LOD is deferred by default.
+ */
+export async function loadDetectorModelProgressive(
+  paths: readonly string[] = DETECTOR_PART_PATHS,
+  options: DetectorProgressiveOptions
+): Promise<DetectorModel> {
+  const scale = options.scale ?? 1;
+  const darkMode = options.darkMode ?? true;
+  const deferLowLod = options.deferLowLod ?? true;
+  const signal = options.signal;
+
+  const corePaths = paths.filter(isDetectorCorePart);
+  const secondaryPaths = paths.filter((p) => !isDetectorCorePart(p));
+  const totalLayers = paths.length;
+  const indexInFull = (path: string): number => {
+    const i = paths.indexOf(path);
+    return i >= 0 ? i : 0;
+  };
+
+  const loader = new GLTFLoader();
+  const group = new THREE.Group();
+  group.name = 'particle-propagation-detector';
+  const parts: DetectorPart[] = [];
+
+  const loadWave = async (wavePaths: readonly string[]): Promise<void> => {
+    if (signal?.aborted || wavePaths.length === 0) return;
+    const roots = await Promise.all(
+      wavePaths.map((path) =>
+        loadOnePart(loader, path, scale, indexInFull(path), totalLayers, deferLowLod, darkMode)
+      )
+    );
+    if (signal?.aborted) return;
+    appendLoadedParts(group, parts, wavePaths, roots, darkMode);
+  };
+
+  await loadWave(corePaths);
+  if (signal?.aborted) return { group, parts };
+
+  recenterOnBeamAxis(group, parts);
+  freezeStaticTransforms(group);
+  options.onWave({ group, parts: parts.slice() }, 'core');
+
+  await loadWave(secondaryPaths);
+  if (signal?.aborted) return { group, parts };
+
+  // Group position already pins the ITS beam axis — do not re-recenter (would
+  // jump the core). Just freeze any newly attached secondary graphs.
+  freezeStaticTransforms(group);
+  options.onWave({ group, parts: parts.slice() }, 'complete');
+  return { group, parts };
 }

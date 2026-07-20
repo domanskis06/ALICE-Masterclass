@@ -12,7 +12,7 @@ export type ParticleOrigin = 'primary' | 'v0';
 export interface PropagationParticle {
   /** Stable identifier (e.g. `track-3` or `decay-1-0`), used to correlate results back to input. */
   id: string;
-  /** Production role: collision primary vs V0 daughter (drives track colour). */
+  /** Production role: collision primary vs V0 daughter. */
   origin: ParticleOrigin;
   /** Production vertex, in cm (IP for primary, secondary vertex for V0). */
   vertex: Vec3;
@@ -39,10 +39,16 @@ export interface BufferedTrack {
   positions: Float32Array;
   /** Time-of-flight at each vertex, in ns, monotonically increasing. Length = capacity. */
   times: Float32Array;
+  /**
+   * Optional presentation TOF (ns) for draw-range animation. When set, the
+   * timeline / track renderer reveal against this buffer instead of {@link times},
+   * so soft (low-|p|) tracks can be pedagogically slowed without mutating physics.
+   */
+  timesVis?: Float32Array;
   /** Number of valid points actually written into `positions`/`times`. */
   pointCount: number;
   charge: number;
-  /** Copied from the input particle so the renderer can colour primary vs V0. */
+  /** Copied from the input particle (primary vs V0). */
   origin: ParticleOrigin;
 }
 
@@ -73,6 +79,11 @@ export interface PropagationWorkerRequest {
    * matches the selected UI field strength (`B_ui / NOMINAL_SOLENOID_B_T`). Defaults to 1.
    */
   fieldStrengthScale?: number;
+  /**
+   * L3 solenoid polarity (`+1` / `-1`). Flips only the solenoid LUT contribution;
+   * the dipole region is unchanged. Defaults to `+1`.
+   */
+  fieldSolenoidPolarity?: number;
 }
 
 /** Messages posted *from* the worker back to the main thread. */

@@ -14,11 +14,10 @@
   --pp-control-bg: #f5f5f5;
   --pp-accent: #ff6f00;
   --pp-sidebar-width: 328px;
-  --pp-sidebar-collapsed-width: 44px;
+  --pp-sidebar-duration: 0.28s;
 
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
+  position: relative;
+  display: block;
   width: 100%;
   // CERN toolbar 40px + app toolbar 64px.
   height: calc(100vh - 104px);
@@ -41,8 +40,7 @@
 
 .scene-column {
   position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   background: var(--pp-bg-scene);
@@ -55,51 +53,153 @@ canvas {
   outline: none;
 }
 
-// Unified right sidebar (event / playback / field / detector parts).
+// Tracks the sidebar edge so it stays visible while the panel slides.
+.sidebar-toggle {
+  position: absolute;
+  top: 8px;
+  z-index: 3;
+  color: var(--pp-text);
+  background: color-mix(in srgb, var(--pp-bg-panel-solid) 82%, transparent);
+  backdrop-filter: blur(6px);
+  transition:
+    left var(--pp-sidebar-duration) ease,
+    right var(--pp-sidebar-duration) ease;
+}
+
+.sidebar-toggle--right {
+  right: 8px;
+}
+
+.sidebar-toggle--left {
+  left: 8px;
+}
+
+.particle-propagation-host:not(.pp-sidebar-collapsed) .sidebar-toggle--right {
+  right: calc(var(--pp-sidebar-width) + 8px);
+}
+
+.particle-propagation-host:not(.pp-left-sidebar-collapsed) .sidebar-toggle--left {
+  left: calc(var(--pp-sidebar-width) + 8px);
+}
+
+// Overlay drawers — scene keeps a fixed size so WebGL never flashes on toggle.
 .controls-sidebar {
-  flex: 0 0 var(--pp-sidebar-width);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
   width: var(--pp-sidebar-width);
   max-width: var(--pp-sidebar-width);
-  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
-  padding: 8px 16px 24px;
+  padding: 16px 16px 24px;
   background: var(--pp-bg-panel-solid);
+  color: var(--pp-text);
+  transition: transform var(--pp-sidebar-duration) ease;
+  will-change: transform;
+}
+
+.controls-sidebar--right {
+  right: 0;
   border-left: 1px solid var(--pp-border);
-  color: var(--pp-text);
-  transition: flex-basis 0.22s ease, width 0.22s ease, max-width 0.22s ease, padding 0.22s ease;
+  transform: translateX(0);
 }
 
-.particle-propagation-host.pp-sidebar-collapsed .controls-sidebar {
-  flex-basis: var(--pp-sidebar-collapsed-width);
-  width: var(--pp-sidebar-collapsed-width);
-  max-width: var(--pp-sidebar-collapsed-width);
-  padding: 8px 4px;
-  overflow: hidden;
+.controls-sidebar--left {
+  left: 0;
+  border-right: 1px solid var(--pp-border);
+  transform: translateX(0);
 }
 
-.sidebar-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 4px;
+.particle-propagation-host.pp-sidebar-collapsed .controls-sidebar--right {
+  transform: translateX(100%);
+  pointer-events: none;
 }
 
-.particle-propagation-host.pp-sidebar-collapsed .sidebar-header {
-  justify-content: center;
-}
-
-.sidebar-toggle {
-  color: var(--pp-text);
+.particle-propagation-host.pp-left-sidebar-collapsed .controls-sidebar--left {
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
 .sidebar-body {
   min-width: 0;
 }
 
-.particle-propagation-host.pp-sidebar-collapsed .sidebar-body {
-  display: none;
+.event-select-field {
+  // No floating label — the section h4 already says "Event".
+  ::ng-deep .mat-mdc-form-field-infix {
+    min-height: 48px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+.field-toggles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  row-gap: 10px;
+  margin: 12px 0 0;
+  align-items: center;
+
+  mat-slide-toggle {
+    min-width: 0;
+    white-space: nowrap;
+  }
+}
+
+.field-recompute-hint {
+  margin-top: 4px;
+  margin-bottom: 0;
+  color: var(--pp-accent);
+}
+
+// LHC experiment |B| ticks above the field-strength slider (align with mat-slider track inset).
+.field-strength-markers {
+  position: relative;
+  height: 34px;
+  margin: 0 12px;
+}
+
+.field-strength-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+  max-width: 52px;
+}
+
+.field-strength-marker-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  color: var(--pp-text);
+  white-space: nowrap;
+}
+
+.field-strength-marker-value {
+  font-size: 8px;
+  line-height: 1.1;
+  color: var(--pp-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.field-strength-marker-tick {
+  width: 1px;
+  height: 8px;
+  margin-top: 2px;
+  background: var(--pp-border);
+}
+
+.field-strength-slider {
+  margin-top: 0;
 }
 
 .controls-section {
@@ -154,6 +254,7 @@ canvas {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+  margin-bottom: 4px;
 }
 
 .field-colorbar-bar {
@@ -170,11 +271,6 @@ canvas {
   color: var(--pp-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.field-colorbar-caption {
-  margin-top: 4px;
-  margin-bottom: 0;
 }
 
 .slider-label {
@@ -298,6 +394,10 @@ canvas {
     color: var(--pp-text);
   }
 
+  .mat-mdc-radio-button {
+    color: var(--pp-text);
+  }
+
   .mat-mdc-slider {
     width: 100%;
     max-width: 100%;
@@ -312,5 +412,17 @@ canvas {
   .mdc-label,
   .mat-internal-form-field > label {
     color: var(--pp-text) !important;
+  }
+
+  .mat-mdc-radio-button .mdc-label {
+    color: var(--pp-text) !important;
+  }
+
+  .field-toggles-grid {
+    .mat-mdc-slide-toggle,
+    .mat-internal-form-field > label,
+    .mdc-label {
+      color: #ffffff !important;
+    }
   }
 }
