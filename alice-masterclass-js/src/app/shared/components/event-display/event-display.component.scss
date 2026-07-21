@@ -3,6 +3,10 @@ mat-card {
   box-sizing: border-box;
   height: 100%;
   width: 100%;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
 }
 
 
@@ -10,39 +14,124 @@ mat-card-content {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  padding: 0 !important;
+  margin: 0;
 }
 
-mat-drawer-container {
-  background-color: inherit;
+.event-display-host {
+  --ed-bg-panel-solid: #ffffff;
+  --ed-border: rgba(0, 0, 0, 0.14);
+  --ed-text: rgba(0, 0, 0, 0.82);
+  --ed-left-sidebar-width: 240px;
+  --ed-right-sidebar-width: 200px;
+  --ed-sidebar-duration: 0.28s;
+
+  position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background-color: inherit;
+  color: var(--ed-text);
 }
 
-
-mat-card-title {
-  line-height: 40px;
-
-  .dataset-select {
-    width: 140px;
-    margin: 0 0 0 -8px;
-
-    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-      display: none;
-    }
-  }
+.scene-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-.sidenav {
-  width: 200px;
+// Tracks the sidebar edge so it stays visible while the panel slides.
+.sidebar-toggle {
+  position: absolute;
+  top: 8px;
+  z-index: 5;
+  color: var(--ed-text);
+  background: color-mix(in srgb, var(--ed-bg-panel-solid) 82%, transparent);
+  backdrop-filter: blur(6px);
+  transition:
+    left var(--ed-sidebar-duration) ease,
+    right var(--ed-sidebar-duration) ease;
 }
 
-.detector-parts-drawer {
-  width: 228px;
+.sidebar-toggle--right {
+  right: 8px;
+}
+
+.sidebar-toggle--left {
+  left: 8px;
+}
+
+.event-display-host:not(.ed-sidebar-collapsed) .sidebar-toggle--right {
+  right: calc(var(--ed-right-sidebar-width) + 8px);
+}
+
+.event-display-host:not(.ed-left-sidebar-collapsed) .sidebar-toggle--left {
+  left: calc(var(--ed-left-sidebar-width) + 8px);
+}
+
+// Overlay drawers — scene keeps a fixed size so WebGL never flashes on toggle.
+.controls-sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--ed-bg-panel-solid);
+  color: var(--ed-text);
+  transition: transform var(--ed-sidebar-duration) ease;
+  will-change: transform;
+}
+
+.controls-sidebar--right {
+  right: 0;
+  width: var(--ed-right-sidebar-width);
+  max-width: var(--ed-right-sidebar-width);
+  border-left: 1px solid var(--ed-border);
+  transform: translateX(0);
+}
+
+.controls-sidebar--left {
+  left: 0;
+  width: var(--ed-left-sidebar-width);
+  max-width: var(--ed-left-sidebar-width);
+  border-right: 1px solid var(--ed-border);
+  transform: translateX(0);
+}
+
+.event-display-host.ed-sidebar-collapsed .controls-sidebar--right {
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.event-display-host.ed-left-sidebar-collapsed .controls-sidebar--left {
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.sidebar-body {
+  min-width: 0;
+}
+
+.left-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.event-meta-slot {
+  padding: 12px 14px 8px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--ed-border);
 }
 
 .detector-parts-panel {
-  padding: 16px 14px 24px;
+  padding: 8px 14px 24px;
   box-sizing: border-box;
+  flex: 1 1 auto;
 
   h4 {
     margin: 0 0 12px;
@@ -64,6 +153,69 @@ mat-card-title {
     input[type="range"] {
       width: 100%;
       margin: 0;
+    }
+
+    /* Per-part GLB accent (same hex map as Particle Propagation). */
+    .part-opacity-slider {
+      height: 22px;
+      background: transparent;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+      accent-color: var(--part-accent, #ff6f00);
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      &:focus {
+        outline: none;
+      }
+
+      &::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--part-accent, #ff6f00) 32%, transparent);
+      }
+
+      &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        margin-top: -5px;
+        border: none;
+        border-radius: 50%;
+        background: var(--part-accent, #ff6f00);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+        cursor: grab;
+      }
+
+      &:active::-webkit-slider-thumb {
+        cursor: grabbing;
+      }
+
+      &::-moz-range-track {
+        height: 4px;
+        border-radius: 2px;
+        background: color-mix(in srgb, var(--part-accent, #ff6f00) 32%, transparent);
+        border: none;
+      }
+
+      &::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border: none;
+        border-radius: 50%;
+        background: var(--part-accent, #ff6f00);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+        cursor: grab;
+      }
+
+      &:active::-moz-range-thumb {
+        cursor: grabbing;
+      }
     }
   }
 }
@@ -140,12 +292,8 @@ $magnetic-thumb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
   margin: -6px 0 12px;
 }
 
-.layers-toggle-button {
-  flex-shrink: 0;
-}
-
 .assembly-palette {
-  padding: 16px 14px 20px;
+  padding: 12px 14px 20px;
   box-sizing: border-box;
 
   h4 {
@@ -229,27 +377,80 @@ $magnetic-thumb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
   overflow: hidden;
 }
 
-mat-drawer-content {
+// Slide inward with the overlay sidebars so prev/next stay visible (no canvas resize).
+// Distinct from .sidebar-toggle: taller capsule, skip icons, no frosted blur.
+.event-nav-btn {
   position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  width: 36px !important;
+  height: 64px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  border: 1.5px solid var(--ed-border);
+  background: color-mix(in srgb, var(--ed-bg-panel-solid) 62%, transparent);
+  color: var(--ed-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+  transition:
+    transform var(--ed-sidebar-duration) ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
-  & > div {
-    width: 100%;
-    height: 100%;
+  &:hover:not([disabled]) {
+    background: color-mix(in srgb, var(--ed-bg-panel-solid) 92%, transparent);
+    border-color: color-mix(in srgb, var(--ed-text) 45%, var(--ed-border));
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--ed-text) 55%, transparent);
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    opacity: 0.32;
+    box-shadow: none;
+  }
+
+  .mat-mdc-button-persistent-ripple,
+  .mat-mdc-button-ripple {
+    border-radius: 10px;
+  }
+
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
   }
 }
 
-/* Projected tip panel: flush with the end assembly drawer, top-right of the viz. */
+.event-display-host:not(.ed-left-sidebar-collapsed) .event-nav-btn--prev {
+  transform: translateX(var(--ed-left-sidebar-width));
+}
+
+.event-display-host:not(.ed-sidebar-collapsed) .event-nav-btn--next {
+  transform: translateX(calc(-1 * var(--ed-right-sidebar-width)));
+}
+
+/* Above sidebar toggle (z=5) so LETS US is not covered by the chevron. */
 .event-display-corner-overlay {
   position: absolute;
   top: 0;
   right: 0;
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
   max-width: min(300px, 42%);
 }
 
+.event-display-host:not(.ed-sidebar-collapsed) .event-display-corner-overlay {
+  right: var(--ed-right-sidebar-width);
+}
+
 #spinner {
   position: absolute;
+  inset: 0;
   z-index: 1;
 }
 
@@ -258,8 +459,32 @@ mat-drawer-content {
   opacity: 0.4;
 }
 
-.options > * {
-  padding: 0 16px;
+.options {
+  padding: 12px 0 20px;
+
+  > * {
+    padding: 0 16px;
+  }
+
+  h4 {
+    margin: 12px 0 8px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+:host.event-display-dark .event-display-host {
+  --ed-bg-panel-solid: #0a1832;
+  --ed-border: rgba(148, 163, 184, 0.28);
+  --ed-text: #e5edf7;
+}
+
+:host.event-display-dark .detector-parts-panel h4,
+:host.event-display-dark .assembly-palette h4,
+:host.event-display-dark .options h4 {
+  color: var(--ed-text);
 }
 
 #render-area {
@@ -280,59 +505,6 @@ mat-drawer-content {
 
   canvas:focus {
     outline: none;
-  }
-
-  .vertex-panel {
-    position: absolute;
-    width: 280px;
-    max-height: 320px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .vertex-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 8px 12px 16px;
-    border-bottom: 1px solid #eee;
-    background: #fafafa;
-    cursor: move;
-    user-select: none;
-  }
-
-  .vertex-panel-title {
-    font-size: 14px;
-    font-weight: 500;
-  }
-
-  .vertex-panel-body {
-    padding: 12px;
-    flex: 1;
-    min-height: 180px;
-  }
-
-  .vertex-paste-area {
-    width: 100%;
-    min-height: 160px;
-    border: 2px dashed #ccc;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fafafa;
-  }
-
-  .vertex-paste-hint {
-    color: #999;
-    font-size: 13px;
-    text-align: center;
-    padding: 16px;
   }
 
   .vertex-tooltip {
@@ -366,7 +538,7 @@ mat-drawer-content {
       width: 100%;
     }
   }
-  
+
   #view1, #scales1 {
     position: absolute;
     left: 0;
@@ -381,7 +553,7 @@ mat-drawer-content {
       width: calc(100% * (1 - var(--primary-axis-ratio)));
     }
   }
-  
+
   #view2, #scales2 {
     position: absolute;
     right: 0;
@@ -403,6 +575,14 @@ mat-drawer-content {
     &.landscape {
       height: calc(100% * (1 - var(--secondary-axis-ratio)));
     }
+  }
+}
+
+:host.event-display-dark #render-area {
+  #view0,
+  #view1,
+  #view2 {
+    color: #ffffff;
   }
 }
 

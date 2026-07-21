@@ -4,19 +4,30 @@
  *
  * Palette matches typical ALICE / ParaView |B| heatmaps:
  * deep blue → cyan → green → yellow → orange → bright red (weak → strong).
- * The Tesla window is centred on the selected field strength (default 0.5 T).
- * Base offsets `[B − 0.03 T, B + 0.01 T]` at the nominal 0.5 T plateau are
- * scaled by `B / NOMINAL_SOLENOID_B_T`, so the axial fall-off keeps the same
- * relative colour distribution at every slider setting (0.5…4 T).
+ *
+ * The barrel window is sized to the Chebyshev solenoid map's real dynamic
+ * range (~0.29 T on axis at the L3 end-caps … ~0.56 T local peaks near mid-r
+ * end-caps at the nominal 0.5 T plateau). The old ±0.03 T band crushed that
+ * into clamp artefacts: outer midplane lines looked fully red, and genuine
+ * end-cap fall-off was invisible.
+ *
+ * Offsets scale with `B / NOMINAL_SOLENOID_B_T` so the same relative |B|
+ * distribution keeps its palette position at every slider setting (0.5…4 T).
  */
 
 import { FIELD_STRENGTH_DEFAULT_T, NOMINAL_SOLENOID_B_T } from './constants';
 
-/** Colorbar lower offset at the nominal 0.5 T strength (Tesla). */
-export const FIELD_COLOR_LOW_OFFSET_T = 0.03;
+/**
+ * Colorbar lower offset at the nominal 0.5 T strength (Tesla).
+ * 0.5 − 0.20 = 0.30 T — covers on-axis end-cap fall-off in the LUT.
+ */
+export const FIELD_COLOR_LOW_OFFSET_T = 0.2;
 
-/** Colorbar upper offset at the nominal 0.5 T strength (Tesla). */
-export const FIELD_COLOR_HIGH_OFFSET_T = 0.01;
+/**
+ * Colorbar upper offset at the nominal 0.5 T strength (Tesla).
+ * 0.5 + 0.08 = 0.58 T — covers mid-radius end-cap |B| peaks in the LUT.
+ */
+export const FIELD_COLOR_HIGH_OFFSET_T = 0.08;
 
 /** Inclusive Tesla window used when mapping `|B|` → RGB. */
 export interface FieldColorRange {
@@ -26,9 +37,8 @@ export interface FieldColorRange {
 
 /**
  * Colour-scale ends for a selected plateau strength `targetStrengthT`.
- * Offsets scale with `B / NOMINAL_SOLENOID_B_T` so a proportional longitudinal
- * |B| drop maps to the same palette position as at the nominal 0.5 T map.
- * At 0.5 T: `[0.47, 0.51]`; at 2 T: `[1.88, 2.04]`.
+ * Offsets scale with `B / NOMINAL_SOLENOID_B_T`.
+ * At 0.5 T: `[0.30, 0.58]`; at 2 T: `[1.20, 2.32]`.
  */
 export function fieldColorRangeForStrength(targetStrengthT: number): FieldColorRange {
   const strengthScale = targetStrengthT / NOMINAL_SOLENOID_B_T;
@@ -41,7 +51,7 @@ export function fieldColorRangeForStrength(targetStrengthT: number): FieldColorR
 /**
  * Wider |B| window when dipole arcs are shown. The solenoid plateau sits mid-scale
  * while the stronger dipole aperture (~0.7 T at nominal map) and weak fringe are
- * not crushed into a single colour (the narrow ±0.03 T barrel window did that).
+ * not crushed into a single colour.
  */
 export function fieldColorRangeForDipoleView(targetStrengthT: number): FieldColorRange {
   const strengthScale = targetStrengthT / NOMINAL_SOLENOID_B_T;

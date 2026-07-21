@@ -59,3 +59,10 @@ src/assets/exercises/strangeness/part1/*
 src/assets/exercises/strangeness/part2/*
 scripts/.cache/
 graphify-out/
+
+# Local one-off bake / A-B helpers (not part of the shipped app)
+scripts/bake-bp-lod.mjs
+tmp-*.cjs
+tmp-*.mjs
+*-tmp.cjs
+*-tmp.mjs

@@ -41,7 +41,7 @@ function isMergeableSingleMaterialMesh(obj: THREE.Object3D): obj is THREE.Mesh {
  * `gltfpack` / meshoptimizer emit InterleavedBufferAttributes. Three's
  * `mergeGeometries` rejects those, and `applyMatrix4` on a shared interleaved
  * buffer can also corrupt quantized positions — which made the muon-arm GLBs
- * (ABSO/SHIL/MCH/DIPO) vanish after `mergeStaticMeshesByMaterial`.
+ * (ABSO/MCH/DIPO) vanish after `mergeStaticMeshesByMaterial`.
  */
 export function toNonInterleavedGeometry(source: THREE.BufferGeometry): THREE.BufferGeometry {
   const out = new THREE.BufferGeometry();

@@ -2,9 +2,27 @@ import { Component, AfterViewInit, ViewChild, ElementRef, Input, HostBinding, Ou
 import { BehaviorSubject, Subscription } from 'rxjs';
 import * as d3 from 'd3';
 
-export interface HistogramBinIncrementedEvent {
+const BIN_LANDING_PULSE_CLASS = 'bin-landing-pulse';
+const BIN_LANDING_PULSE_MS = 480;
+/** From this bin count, x-axis tick labels are drawn at -45°. */
+const X_TICK_LABEL_ROTATE_BINS = 15;
+
+/** Logical bin that would receive a new value (no screen coordinates). */
+export interface HistogramIncomingBin {
+  binIndex: number;
+  /** Center of the destination bin in data units (same as xDomain). */
+  binCenter: number;
+  /** Projected count in that bin after the value is added. */
+  projectedCount: number;
+  /** Current y-domain max used for vertical placement hints. */
+  yMax: number;
+}
+
+/** Viewport-pixel landing spot for a flying particle. */
+export interface HistogramBinTarget {
   targetX: number;
   targetY: number;
+  binIndex: number;
 }
 
 @Component({
@@ -18,17 +36,24 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @HostBinding("style.--bar-color")
   public barColor: string = "#4169E1";
 
+  @HostBinding('class.histogram-x-ticks-rotated')
+  get xTicksRotated(): boolean {
+    return this.shouldRotateXTickLabels();
+  }
+
   readonly SVG = {
     W: 400,
-    H: 200
+    // Tall enough for axis ticks + x-axis label without viewBox clipping.
+    H: 220
   }
 
   readonly MARGIN = {
     TOP: 5,
     RIGHT: 10,
-    BOTTOM: 20,
-    BOTTOM_XLABEL: 10,
-    BOTTOM_TEXT: 0,
+    BOTTOM: 24,
+    BOTTOM_XLABEL: 26,
+    // Baseline inset from the viewBox bottom (descenders / ² need clear space).
+    BOTTOM_TEXT: 12,
     LEFT: 25,
     LEFT_YLABEL: 10
   };
@@ -45,7 +70,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @ViewChild('svg')
   private svgRef!: ElementRef;
 
-  private get svg(): SVGElement {
+  private get svg(): SVGSVGElement {
     return this.svgRef.nativeElement;
   }
 
@@ -133,7 +158,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Input()
   get data(): Array<number> { return this._data.getValue(); }
   set data(data: Array<number>) {
-    this.binGenerator.domain(this.xDomain).thresholds(this.bins);
+    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
 
     const bins = this.binGenerator(data);
 
@@ -145,8 +170,6 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       this.yDomain = [0, 1];
     }
 
-    this.pendingIncrementedBinIndex = this.detectIncrementedBin(bins);
-    this.previousBinCounts = bins.map((bin) => bin.length);
     this._data.next(data);
   }
   private _data: BehaviorSubject<Array<number>> = new BehaviorSubject<number[]>([]);
@@ -163,12 +186,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Output()
   zoomEvent: EventEmitter<[number, number]> = new EventEmitter<[number, number]>();
 
-  @Output()
-  binIncremented: EventEmitter<HistogramBinIncrementedEvent> = new EventEmitter<HistogramBinIncrementedEvent>();
-
   private viewInitialized = false;
-  private previousBinCounts: number[] = [];
-  private pendingIncrementedBinIndex: number | null = null;
+  private pulseClearTimeout: number | null = null;
 
   protected binCenter(bin: d3.Bin<number, number>) {
     const x0 = bin.x0 ?? 0;
@@ -196,11 +215,12 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       this.updateYDomain();
     });
 
-    this.binsSubscription = this._bins.subscribe((bins) => {
+    this.binsSubscription = this._bins.subscribe(() => {
       this.updateBars();
-    })
+      this.updateXDomain();
+    });
 
-    this.dataSubscription = this._data.subscribe((data) => {
+    this.dataSubscription = this._data.subscribe(() => {
       this.updateBars();
 
       this.resetZoom();
@@ -226,37 +246,141 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this.binsSubscription?.unsubscribe();
     this.dataSubscription?.unsubscribe();
     this.enableZoomSubscription?.unsubscribe();
+    if (this.pulseClearTimeout !== null) {
+      window.clearTimeout(this.pulseClearTimeout);
+      this.pulseClearTimeout = null;
+    }
+  }
+
+  /**
+   * Which bin would receive `value` (data-space only — screen mapping is done by the parent grid).
+   */
+  resolveIncomingBin(value: number): HistogramIncomingBin | null {
+    if (!this.viewInitialized || !Number.isFinite(value)) {
+      return null;
+    }
+
+    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
+    const currentBins = this.binGenerator(this.data);
+    const projectedBins = this.binGenerator([...this.data, value]);
+
+    const binIndex = projectedBins.findIndex(
+      (bin, index) => bin.length > (currentBins[index]?.length ?? 0)
+    );
+    if (binIndex < 0) {
+      return null;
+    }
+
+    const bin = projectedBins[binIndex];
+    const x0 = bin.x0 ?? this.xDomain[0];
+    const x1 = bin.x1 ?? x0;
+    const yMax = Math.max(d3.max(projectedBins, (d) => d.length) ?? 1, this.yDomain[1] || 1);
+
+    return {
+      binIndex,
+      binCenter: (x0 + x1) / 2,
+      projectedCount: bin.length,
+      yMax,
+    };
+  }
+
+  /** Smoothly scroll this plot into view (used before / with a cross-component flight). */
+  scrollPlotIntoView(): void {
+    if (!this.viewInitialized) {
+      return;
+    }
+    this.svg.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  }
+
+  /**
+   * Viewport landing spot: X = bin center, Y = vertical middle of this plot's SVG.
+   */
+  previewBinTarget(value: number): HistogramBinTarget | null {
+    const incoming = this.resolveIncomingBin(value);
+    if (!incoming) {
+      return null;
+    }
+
+    const svgRect = this.svg.getBoundingClientRect();
+    if (svgRect.width <= 0 || svgRect.height <= 0) {
+      return null;
+    }
+
+    const svgX = this.CONTENT_AREA.X + this.xScale(incoming.binCenter);
+    const svgY = this.CONTENT_AREA.Y + this.CONTENT_AREA.H / 2;
+    const ctm = this.svg.getScreenCTM();
+
+    let targetX = svgRect.left + svgRect.width / 2;
+    let targetY = svgRect.top + svgRect.height / 2;
+    if (ctm) {
+      const mapped = new DOMPoint(svgX, svgY).matrixTransform(ctm);
+      if (Number.isFinite(mapped.x) && Number.isFinite(mapped.y)) {
+        targetX = mapped.x;
+        targetY = mapped.y;
+      }
+    }
+
+    return {
+      binIndex: incoming.binIndex,
+      targetX,
+      targetY,
+    };
+  }
+
+  /** Brief highlight on the bar that just received a new entry. */
+  pulseBin(binIndex: number): void {
+    if (!this.viewInitialized || binIndex < 0) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const rect = this.bars.querySelector(`rect[data-bin-index="${binIndex}"]`) as SVGRectElement | null;
+      if (!rect) {
+        return;
+      }
+
+      rect.classList.remove(BIN_LANDING_PULSE_CLASS);
+      // Force reflow so re-adding the class restarts the CSS animation.
+      void rect.getBoundingClientRect();
+      rect.classList.add(BIN_LANDING_PULSE_CLASS);
+
+      if (this.pulseClearTimeout !== null) {
+        window.clearTimeout(this.pulseClearTimeout);
+      }
+      this.pulseClearTimeout = window.setTimeout(() => {
+        rect.classList.remove(BIN_LANDING_PULSE_CLASS);
+        this.pulseClearTimeout = null;
+      }, BIN_LANDING_PULSE_MS);
+    });
   }
 
   private updateBars(): void {
-    this.binGenerator.domain(this.xDomain).thresholds(this.bins);
+    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
 
     const bins = this.binGenerator(this.data);
 
-    let barWidth = 0;
+    const barX = (bin: d3.Bin<number, number>) => this.xScale(bin.x0 ?? this.xDomain[0]);
+    const barWidth = (bin: d3.Bin<number, number>) => {
+      const x0 = bin.x0 ?? this.xDomain[0];
+      const x1 = bin.x1 ?? x0;
+      // Tiny overlap so floating-point gaps between adjacent bars stay invisible.
+      return Math.max(0, this.xScale(x1) - this.xScale(x0)) + 0.5;
+    };
 
-    // One pixel wider to cover any floating point errors that definetely will happen
-    if (bins.length > 0) {
-      const x0 = bins[0].x0 ?? 0;
-      const x1 = bins[0].x1 ?? x0;
-      barWidth = (this.xScale(x1) - this.xScale(x0)) + 1;
-    }
+    const barsSelection = this.barsSelector.selectAll<SVGRectElement, d3.Bin<number, number>>('rect').data(bins);
 
-    const barsSelection = this.barsSelector.selectAll('rect').data(bins);
-
-    // If a new bar is needed, prematurely place it on the X axis with zero height
-    // to avoid an awkward animation from the upper left corner of the image (SVG origin point)
-    // If a bar has to be removed, remove it.
-    // Animate both the newly added and already existing bars to their final height
+    // Bars span [x0, x1] so they sit *between* axis tick labels (bin edges),
+    // not centered on them.
     barsSelection
       .join(
         (enter) => {
           return enter
             .append('rect')
             .attr('transform', (d) => {
-              return `translate(${this.xScale(this.binCenter(d))}, ${this.CONTENT_AREA.H})`;
+              return `translate(${barX(d)}, ${this.CONTENT_AREA.H})`;
             })
             .attr('width', barWidth)
+            .attr('height', 0);
         },
         (update) => {
           return update;
@@ -265,56 +389,15 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
           return exit.remove();
         }
       )
+      .attr('data-bin-index', (_d, i) => i)
       .transition().duration(this.ANIMATION_DURATION)
       .attr('width', barWidth)
       .attr('transform', (d) => {
-        return `translate(${this.xScale(this.binCenter(d))}, ${this.yScale(d.length)})`;
+        return `translate(${barX(d)}, ${this.yScale(d.length)})`;
       })
       .attr('height', (d) => {
         return this.CONTENT_AREA.H - this.yScale(d.length);
       });
-
-    if (this.pendingIncrementedBinIndex === null && this.previousBinCounts.length !== bins.length) {
-      this.previousBinCounts = bins.map((bin) => bin.length);
-    }
-    this.tryEmitBinIncremented(bins);
-  }
-
-  private detectIncrementedBin(bins: d3.Bin<number, number>[]): number | null {
-    if (!this.viewInitialized || this.previousBinCounts.length !== bins.length) {
-      return null;
-    }
-
-    const index = bins.findIndex((bin, binIndex) => bin.length > (this.previousBinCounts[binIndex] ?? 0));
-    return index >= 0 ? index : null;
-  }
-
-  private tryEmitBinIncremented(bins: d3.Bin<number, number>[]): void {
-    if (this.pendingIncrementedBinIndex === null) {
-      return;
-    }
-
-    const bin = bins[this.pendingIncrementedBinIndex];
-    this.pendingIncrementedBinIndex = null;
-    if (!bin) {
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      const svgRect = this.svg.getBoundingClientRect();
-      const scaleX = svgRect.width / this.SVG.W;
-      const scaleY = svgRect.height / this.SVG.H;
-      const x0 = bin.x0 ?? this.xDomain[0];
-      const x1 = bin.x1 ?? x0;
-      const binCenter = (x0 + x1) / 2;
-      const binTop = this.yScale(bin.length);
-      const binHeight = this.CONTENT_AREA.H - binTop;
-
-      this.binIncremented.emit({
-        targetX: svgRect.left + (this.CONTENT_AREA.X + this.xScale(binCenter)) * scaleX,
-        targetY: svgRect.top + (this.CONTENT_AREA.Y + binTop + Math.min(binHeight / 2, 16)) * scaleY,
-      });
-    });
   }
 
   protected onZoom(event: any): void {
@@ -336,8 +419,78 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this.zoomEvent.emit(this.xDomain);
   }
 
+  /**
+   * Interior edges of `bins` equal-width intervals on `xDomain`.
+   * 2 bins → 1 tick (midpoint), 3 bins → 2 ticks, etc.
+   */
+  protected getBinThresholds(): number[] {
+    const n = Math.max(1, Math.round(this.bins));
+    const [x0, x1] = this.xDomain;
+    if (!(x1 > x0) || n <= 1) {
+      return [];
+    }
+
+    const thresholds: number[] = [];
+    for (let i = 1; i < n; i++) {
+      thresholds.push(x0 + ((x1 - x0) * i) / n);
+    }
+    return thresholds;
+  }
+
+  protected getXTickValues(): number[] {
+    const [zoom0, zoom1] = this.xDomainZoom;
+    const thresholds = this.getBinThresholds();
+    if (thresholds.length === 0) {
+      const [x0, x1] = this.xDomain;
+      return [(x0 + x1) / 2];
+    }
+
+    const visible = thresholds.filter((value) => value >= zoom0 && value <= zoom1);
+    // Keep the axis readable when there are many bins (still land on bin edges).
+    const maxTicks = 25;
+    if (visible.length <= maxTicks) {
+      return visible;
+    }
+
+    const step = Math.ceil(visible.length / maxTicks);
+    return visible.filter((_, index) => index % step === 0);
+  }
+
+  protected getXTickFormat(): (value: number) => string {
+    return (value: number) => {
+      // Three decimals so adjacent bin edges stay distinct; drop trailing zeros
+      // (e.g. 0.500 → "0.5", 0.416 → "0.416").
+      return value.toFixed(3).replace(/\.?0+$/, '');
+    };
+  }
+
+  protected shouldRotateXTickLabels(): boolean {
+    return Math.round(this.bins) >= X_TICK_LABEL_ROTATE_BINS;
+  }
+
   protected updateXDomain(): void {
-    this.xAxisSelector.transition().duration(this.ANIMATION_DURATION).call(d3.axisBottom(this.xScale));
+    const axis = d3.axisBottom(this.xScale)
+      .tickValues(this.getXTickValues())
+      .tickFormat((d) => this.getXTickFormat()(d as number));
+
+    this.xAxisSelector
+      .transition()
+      .duration(this.ANIMATION_DURATION)
+      .call(axis)
+      .end()
+      .then(() => this.applyXTickLabelStyle())
+      .catch(() => this.applyXTickLabelStyle());
+  }
+
+  private applyXTickLabelStyle(): void {
+    const rotated = this.shouldRotateXTickLabels();
+
+    this.xAxisSelector
+      .selectAll<SVGTextElement, unknown>('text')
+      .attr('transform', rotated ? 'rotate(-45)' : null)
+      .style('text-anchor', rotated ? 'end' : null)
+      .attr('dx', rotated ? '-0.55em' : null)
+      .attr('dy', rotated ? '0.32em' : '0.71em');
   }
 
   protected updateYDomain(): void {

@@ -16,28 +16,49 @@
  * material merge) inside a distance {@link THREE.LOD}, with a default opacity of
  * {@link OUTER_MAGNET_DEFAULT_OPACITY}. TPC uses a distance LOD whose far level
  * thins fine detail and decimates the heavy sector panels (see
- * {@link simplifyTpcForLowLod}). ITS uses a distance LOD whose far level
- * decimates the heavy shell mesh (Mesh_0). MCH / ABSO / SHIL / DIPO use the same
- * distance-LOD pattern with Melax on the heavier Mesh_* panels.
+ * {@link simplifyTpcForLowLod}). MCH uses a distance LOD with Melax on the
+ * heavier Mesh_* panels. ITS / ABSO / DIPO stay at full merged detail — Melax
+ * shreds thin-shell / boxy CAD silhouettes at the default orbit distance. The
+ * beam pipe (BP) is a gltfpack-simplified cut tube (~20k tris) with a Melax far
+ * LOD; it keeps a higher render order and slightly stronger dark-mode emissive
+ * so the thin grey tube stays readable inside the barrel.
  */
 
 import * as THREE from 'three';
 import { SimplifyModifier } from 'three/examples/jsm/modifiers/SimplifyModifier';
+import { mergeStaticMeshesByMaterial } from '../../shared/three/merge-static-meshes';
 
-/** Inner shells slightly more opaque than outer, matching EventDisplay. */
-export const DETECTOR_INNER_OPACITY = 0.8;
-export const DETECTOR_OUTER_OPACITY = 0.75;
+/** Default opacity for every detector shell (sidebar starting value). */
+export const DETECTOR_DEFAULT_OPACITY = 0.75;
+/** Kept for the inner→outer lerp API; both ends share {@link DETECTOR_DEFAULT_OPACITY}. */
+export const DETECTOR_INNER_OPACITY = DETECTOR_DEFAULT_OPACITY;
+export const DETECTOR_OUTER_OPACITY = DETECTOR_DEFAULT_OPACITY;
 /** Calorimeter layers never go below this (they'd otherwise vanish). */
 export const CALORIMETER_MIN_OPACITY = 0.45;
 /** UI slider clamp. Upper bound is 1 so the L3 yoke can stay fully opaque. */
 export const MIN_PART_OPACITY = 0.05;
 export const MAX_PART_OPACITY = 1;
 
+/** Default L3 magnet opacity — same as the rest of the detector stack. */
+export const OUTER_MAGNET_DEFAULT_OPACITY = DETECTOR_DEFAULT_OPACITY;
+
+/** Default beam-pipe opacity (matches the sidebar starting value). */
+export const BEAM_PIPE_DEFAULT_OPACITY = 0.3;
+
 /**
- * Default L3 magnet opacity. Matches the outer-shell lerp (~0.75) used elsewhere
- * in the detector stack.
+ * Camera distance (world units) at which BP switches from the authored ~20k-tri
+ * mesh to the Melax far level. Matches L3/TPC/MCH so the default orbit uses low.
  */
-export const OUTER_MAGNET_DEFAULT_OPACITY = 0.75;
+export const BEAM_PIPE_LOD_FAR_DISTANCE = 7;
+
+/**
+ * Fraction of vertices to keep when building the BP far LOD from the merged
+ * high level (~20k → ~8k). Cheap at deferred attach time.
+ */
+export const BEAM_PIPE_LOW_VERTEX_KEEP = 0.4;
+
+/** Paint the pipe after every other detector shell. */
+const BEAM_PIPE_RENDER_ORDER = 500_000;
 
 /**
  * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3.glb) in
@@ -51,6 +72,22 @@ export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
  * Default orbit (~12 wu) uses the simplified level; zooming into the bore uses full.
  */
 export const OUTER_MAGNET_LOD_FAR_DISTANCE = 7;
+
+/**
+ * Hide L3 when the orbit distance drops to this (world units). ~10% closer
+ * than the previous 8 wu threshold so the yoke stays visible a bit longer
+ * while zooming into the barrel.
+ */
+export const OUTER_MAGNET_HIDE_NEAR_DISTANCE = 7.2;
+
+/**
+ * Re-show L3 once the camera pulls back past this distance (hysteresis so the
+ * yoke does not flicker at the hide threshold).
+ */
+export const OUTER_MAGNET_SHOW_NEAR_DISTANCE = 8.1;
+
+/** Scene-graph name of the L3 {@link THREE.LOD} root built by the detector loader. */
+export const OUTER_MAGNET_LOD_NAME = 'l3-magnet-lod';
 
 /** Sector mesh name families that make up the L3 yoke ring. */
 const OUTER_MAGNET_SECTOR_FAMILY_RE = /^(Mesh_[123])/;
@@ -79,14 +116,14 @@ const TPC_FINE_DETAIL_FAMILY_RE = /^(Mesh_15|Mesh_17)(?:\.|$)/;
 const TPC_HEAVY_PANEL_FAMILY_RE = /^(Mesh_22|Mesh_26)(?:\.|$)/;
 
 /**
- * Fraction of vertices to keep when decimating the heavy ITS shell (Mesh_0 —
- * ~26k tris, roughly half the ITS budget). 0.45 keeps the silhouette readable.
+ * Legacy Melax keep-ratio for ITS (unused in the loader). The coloured ITS GLB
+ * is thin concentric CAD shells — Melax at the default orbit shreds the rings,
+ * so ITS renders at full merged detail (mild-gltfpacked asset) without a far LOD.
  */
-export const ITS_SHELL_VERTEX_KEEP = 0.45;
+export const ITS_SHELL_VERTEX_KEEP = 1;
 
 /**
- * Camera distance (world units) at which ITS switches from full to decimated LOD.
- * Matches L3/TPC so the default orbit pose uses all low levels together.
+ * Legacy ITS far-LOD distance (unused — Melax LOD disabled for ITS, like DIPO).
  */
 export const ITS_LOD_FAR_DISTANCE = 7;
 
@@ -100,20 +137,24 @@ const ITS_SHELL_FAMILY_RE = /^(Mesh_0)(?:\.|$)/;
 export const MCH_VERTEX_KEEP = 0.55;
 
 /**
- * Fraction of vertices to keep when decimating DIPO yoke panels. Dipole is
- * mostly boxes/tubes — 0.5 keeps the bend silhouette readable.
+ * Legacy Melax keep-ratio for DIPO (unused in the loader). The yoke GLB is
+ * already ~750 tris of box/tube CAD — further Melax shreds the silhouette, so
+ * DIPO renders at full merged detail without a far LOD.
  */
-export const DIPO_VERTEX_KEEP = 0.5;
+export const DIPO_VERTEX_KEEP = 1;
 
 /**
- * Fraction of vertices to keep for ABSO / SHIL shells (~7k tris each in the
- * coloured export). Gentle trim — silhouette stays intact.
+ * Legacy Melax keep-ratio for ABSO (unused in the loader). The absorber GLB is
+ * already mild-gltfpacked (~6k tris); further Melax at the default orbit
+ * distance risks shredding fins/cone facets, so ABSO renders at full merged
+ * detail without a far LOD (same rationale as {@link DIPO_VERTEX_KEEP}).
  */
 export const MUON_AUX_VERTEX_KEEP = 0.7;
 
 /**
- * Camera distance (world units) at which MCH / ABSO / SHIL / DIPO switch to
- * simplified LOD. Matches L3/TPC/ITS so the default orbit uses low levels.
+ * Camera distance (world units) at which MCH switches to its simplified LOD.
+ * Matches L3/TPC/ITS so the default orbit uses the low level. ABSO / DIPO do
+ * not use a Melax far LOD.
  */
 export const MUON_AUX_LOD_FAR_DISTANCE = 7;
 
@@ -125,6 +166,27 @@ export const MUON_DECIMATE_MIN_VERTICES = 128;
 
 /** Mesh_* families in the coloured muon-arm GLBs (Mesh_0_1, Mesh_33, …). */
 const MUON_AUX_MESH_RE = /^Mesh_/;
+
+/**
+ * TPC azimuthal families collapsed to {@link THREE.InstancedMesh} (same idea as
+ * L3 Mesh_1/2/3). Fine detail (15/17) is thinned in low LOD; heavy panels
+ * (22/26) keep the full ring but Melax the shared prototype once.
+ */
+const TPC_INSTANCE_FAMILY_RE = /^(Mesh_15|Mesh_17|Mesh_22|Mesh_26)(?:\.|$)/;
+const TPC_FINE_INSTANCE_FAMILY_RE = /^(Mesh_15|Mesh_17)(?:\.|$)/;
+const TPC_HEAVY_INSTANCE_FAMILY_RE = /^(Mesh_22|Mesh_26)(?:\.|$)/;
+
+/**
+ * MCH chamber panels that repeat with a shared prototype — instanced like L3
+ * when a family has at least this many members (avoids one-off CAD fragments).
+ */
+export const MCH_INSTANCE_MIN_FAMILY_SIZE = 4;
+
+/**
+ * Low-LOD drawable count must stay within this factor of the high level
+ * (regression guard — the old per-mesh material clone blew past 100×).
+ */
+export const MAX_LOW_TO_HIGH_DRAWABLE_RATIO = 3;
 
 const RENDER_ORDER_LAYER_STRIDE = 10000;
 
@@ -142,38 +204,14 @@ export function detectorPartLabel(assetPath: string): string {
     'l3.glb': 'L3 magnet',
     'mch.glb': 'MCH',
     'abso.glb': 'ABSO',
-    'shil.glb': 'SHIL',
     'dipo.glb': 'DIPO magnet',
+    'bp.glb': 'Beam pipe',
   };
   return labels[file] ?? assetPath.replace(/^.*[/\\]/, '').replace(/\.glb$/i, '');
 }
 
-/**
- * Dominant UI accent colour per GLB (from each part's signature
- * `baseColorFactor` in `assets/models/alice components/*.glb`).
- * Grey structural materials are ignored in favour of the coloured shell.
- */
-const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
-  'its.glb': '#33FF71',
-  'tpc.glb': '#22C4FF',
-  'trd.glb': '#FFAA32',
-  'tof.glb': '#FF5E1C',
-  'emcal.glb': '#2B1FFF',
-  'dcal.glb': '#FF2FC0',
-  'phos.glb': '#D1C30C',
-  'l3.glb': '#FF0D12',
-  'mch.glb': '#814244',
-  'abso.glb': '#DE782B',
-  'shil.glb': '#BA92AB',
-  'dipo.glb': '#0068D0',
-};
-
-/** CSS hex accent for opacity sliders / part chips; falls back to orange. */
-export function detectorPartAccentColor(assetPath: string): string {
-  const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
-  return DETECTOR_PART_ACCENT_HEX[file] ?? '#ff6f00';
-}
-
+/** Re-export shared GLB accent colours used by opacity sliders / part chips. */
+export { detectorPartAccentColor } from '../../shared/three/detector-part-accent';
 function isCalorimeter(assetPath: string): boolean {
   return /(^|[/\\])(emcal|dcal|phos)\.glb($|\?)/i.test(assetPath);
 }
@@ -198,9 +236,9 @@ export function isMch(assetPath: string): boolean {
   return /(^|[/\\])mch\.glb($|\?)/i.test(assetPath);
 }
 
-/** Forward absorber / shield shells (ABSO, SHIL). */
+/** Forward absorber shell (ABSO). */
 export function isAuxiliaryMuonPart(assetPath: string): boolean {
-  return /(^|[/\\])(abso|shil)\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])abso\.glb($|\?)/i.test(assetPath);
 }
 
 /** Dipole magnet at the forward muon-arm end — bends field lines out of the solenoid. */
@@ -208,7 +246,12 @@ export function isDipo(assetPath: string): boolean {
   return /(^|[/\\])dipo\.glb($|\?)/i.test(assetPath);
 }
 
-/** Forward muon-arm shells (MCH / ABSO / SHIL / DIPO). */
+/** Accelerator beam pipe along the ALICE axis (BP.glb). */
+export function isBeamPipe(assetPath: string): boolean {
+  return /(^|[/\\])bp\.glb($|\?)/i.test(assetPath);
+}
+
+/** Forward muon-arm shells (MCH / ABSO / DIPO). */
 export function isForwardMuonPart(assetPath: string): boolean {
   return isMch(assetPath) || isAuxiliaryMuonPart(assetPath) || isDipo(assetPath);
 }
@@ -221,6 +264,7 @@ export function defaultDetectorPartVisible(_assetPath: string): boolean {
 /** Default opacity for a layer given its depth index (inner -> outer lerp). */
 export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
   if (isOuterMagnet(assetPath)) return OUTER_MAGNET_DEFAULT_OPACITY;
+  if (isBeamPipe(assetPath)) return BEAM_PIPE_DEFAULT_OPACITY;
   const t = totalLayers > 1 ? layerIndex / (totalLayers - 1) : 0;
   const opacity = DETECTOR_INNER_OPACITY * (1 - t) + DETECTOR_OUTER_OPACITY * t;
   return isCalorimeter(assetPath) ? Math.max(opacity, CALORIMETER_MIN_OPACITY) : opacity;
@@ -428,7 +472,8 @@ export function simplifyDipoForLowLod(root: THREE.Object3D): void {
 }
 
 /**
- * Lightly decimates heavy ABSO / SHIL meshes. Mutates `root` (clone first for high LOD).
+ * Legacy ABSO Melax helper (unused in the loader — ABSO has no far LOD).
+ * Mutates `root` (clone first if preserving a high level).
  */
 export function simplifyAuxiliaryForLowLod(
   root: THREE.Object3D,
@@ -440,6 +485,87 @@ export function simplifyAuxiliaryForLowLod(
     vertexKeepFraction,
     MUON_DECIMATE_MIN_VERTICES
   );
+}
+
+/**
+ * Counts Mesh / InstancedMesh drawables under `root` (for LOD regression tests).
+ * Does not recurse into invisible LOD siblings unless they are still in the graph —
+ * callers should pass a single LOD level object.
+ */
+export function countDetectorDrawables(root: THREE.Object3D): number {
+  let n = 0;
+  root.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) n += 1;
+  });
+  return n;
+}
+
+function melaxGeometry(
+  source: THREE.BufferGeometry,
+  vertexKeepFraction: number,
+  minVertices = 0
+): THREE.BufferGeometry {
+  const keep = Math.min(1, Math.max(0.05, vertexKeepFraction));
+  if (keep >= 0.999) return source.clone();
+  const vertexCount = source.attributes.position?.count ?? 0;
+  if (vertexCount < minVertices) return source.clone();
+  const removeCount = Math.max(0, Math.floor(vertexCount * (1 - keep)));
+  if (removeCount <= 0) return source.clone();
+  const simplified = new SimplifyModifier().modify(source, removeCount);
+  simplified.computeVertexNormals();
+  return simplified;
+}
+
+function collectMeshesByFamily(root: THREE.Object3D, familyRe: RegExp): Map<string, THREE.Mesh[]> {
+  const families = new Map<string, THREE.Mesh[]>();
+  root.traverse((o) => {
+    if (!(o as THREE.Mesh).isMesh) return;
+    const match = familyRe.exec(o.name || '');
+    if (!match) return;
+    const key = match[1];
+    const list = families.get(key);
+    if (list) list.push(o as THREE.Mesh);
+    else families.set(key, [o as THREE.Mesh]);
+  });
+  return families;
+}
+
+function cloneMaterialShared(
+  source: THREE.Material,
+  map: Map<THREE.Material, THREE.Material>
+): THREE.Material {
+  let cloned = map.get(source);
+  if (!cloned) {
+    cloned = source.clone();
+    // Material.clone() JSON-clones userData, which turns THREE.Color into a hex
+    // number (or `{}`). Restore a real Color so dark-mode / opacity keep the
+    // authored pigment instead of falling back to white.
+    const srcNeon = source.userData?.['neonBaseColor'];
+    if (srcNeon instanceof THREE.Color) {
+      cloned.userData = { ...(cloned.userData || {}), neonBaseColor: srcNeon.clone() };
+    } else if (typeof srcNeon === 'number') {
+      cloned.userData = {
+        ...(cloned.userData || {}),
+        neonBaseColor: new THREE.Color(srcNeon),
+      };
+    }
+    map.set(source, cloned);
+  }
+  return cloned;
+}
+
+/** Revive a Color that may have been JSON-cloned (hex number or {r,g,b}). */
+function reviveNeonBaseColor(
+  value: unknown,
+  fallback: THREE.Color
+): THREE.Color {
+  if (value instanceof THREE.Color) return value;
+  if (typeof value === 'number') return new THREE.Color(value);
+  if (value && typeof value === 'object' && 'r' in (value as object)) {
+    const c = value as { r: number; g: number; b: number };
+    return new THREE.Color(c.r, c.g, c.b);
+  }
+  return fallback.clone();
 }
 
 /**
@@ -501,17 +627,199 @@ export function buildOuterMagnetInstanced(
 }
 
 /**
- * Deep-clones an Object3D subgraph and clones each mesh material so the copy
- * can be independently thinned / restyled (Three's default clone shares materials).
+ * TPC high/low level: InstancedMesh for repeated Mesh_15/17/22/26 panels, then
+ * material-merge of everything else. Low LOD thins fine families and Melax-es
+ * the heavy-panel prototype once (full azimuthal ring kept).
+ */
+export function buildTpcInstanced(
+  root: THREE.Object3D,
+  options: { fineKeepEvery?: number; heavyVertexKeep?: number } = {}
+): THREE.Group {
+  const fineKeepEvery = options.fineKeepEvery ?? 1;
+  const heavyVertexKeep = options.heavyVertexKeep ?? 1;
+
+  root.updateMatrixWorld(true);
+  const group = new THREE.Group();
+  group.name = 'tpc-instanced';
+
+  const families = collectMeshesByFamily(root, TPC_INSTANCE_FAMILY_RE);
+  const consumed = new Set<THREE.Mesh>();
+  const materialMap = new Map<THREE.Material, THREE.Material>();
+
+  for (const [family, meshes] of families) {
+    const sorted = sortMeshesByAzimuth(meshes);
+    const isFine = TPC_FINE_INSTANCE_FAMILY_RE.test(family);
+    const kept =
+      isFine && fineKeepEvery > 1 ? sorted.filter((_, i) => i % fineKeepEvery === 0) : sorted;
+    if (kept.length === 0) {
+      for (const m of meshes) consumed.add(m);
+      continue;
+    }
+
+    const proto = kept[0];
+    let geometry = (proto.geometry as THREE.BufferGeometry).clone();
+    if (TPC_HEAVY_INSTANCE_FAMILY_RE.test(family) && heavyVertexKeep < 0.999) {
+      geometry = melaxGeometry(geometry, heavyVertexKeep);
+    }
+    const sourceMat = Array.isArray(proto.material)
+      ? (proto.material[0] as THREE.Material)
+      : (proto.material as THREE.Material);
+    const material = cloneMaterialShared(sourceMat, materialMap);
+
+    const instanced = new THREE.InstancedMesh(geometry, material, kept.length);
+    instanced.name = `${family}-instanced`;
+    instanced.frustumCulled = true;
+    instanced.renderOrder = proto.renderOrder;
+    for (let i = 0; i < kept.length; i++) {
+      instanced.setMatrixAt(i, kept[i].matrixWorld);
+    }
+    instanced.instanceMatrix.needsUpdate = true;
+    group.add(instanced);
+    for (const m of meshes) consumed.add(m);
+  }
+
+  const staging = new THREE.Group();
+  root.traverse((o) => {
+    if (!(o as THREE.Mesh).isMesh) return;
+    const mesh = o as THREE.Mesh;
+    if (consumed.has(mesh)) return;
+    if (Array.isArray(mesh.material)) return;
+    const proxy = new THREE.Mesh(mesh.geometry, mesh.material);
+    proxy.matrix.copy(mesh.matrixWorld);
+    proxy.matrixAutoUpdate = false;
+    staging.add(proxy);
+  });
+  const mergedRest = mergeStaticMeshesByMaterial(staging);
+  for (const child of [...mergedRest.children]) {
+    group.add(child);
+  }
+
+  return group;
+}
+
+/**
+ * MCH high/low level: InstancedMesh for Mesh_* families with enough repeats,
+ * Melax on the prototype for low LOD, then material-merge of leftovers.
+ */
+export function buildMchInstanced(
+  root: THREE.Object3D,
+  options: { vertexKeep?: number; minFamilySize?: number } = {}
+): THREE.Group {
+  const vertexKeep = options.vertexKeep ?? 1;
+  const minFamilySize = options.minFamilySize ?? MCH_INSTANCE_MIN_FAMILY_SIZE;
+
+  root.updateMatrixWorld(true);
+  const group = new THREE.Group();
+  group.name = 'mch-instanced';
+
+  const families = collectMeshesByFamily(root, /^(Mesh_[^.]+)/);
+  const consumed = new Set<THREE.Mesh>();
+  const materialMap = new Map<THREE.Material, THREE.Material>();
+
+  for (const [family, meshes] of families) {
+    if (meshes.length < minFamilySize) continue;
+    // Only instance when they share one geometry (true CAD repeats).
+    const geo0 = meshes[0].geometry;
+    if (!meshes.every((m) => m.geometry === geo0)) continue;
+
+    const sorted = sortMeshesByAzimuth(meshes);
+    const proto = sorted[0];
+    let geometry = (proto.geometry as THREE.BufferGeometry).clone();
+    if (vertexKeep < 0.999) {
+      geometry = melaxGeometry(geometry, vertexKeep, MUON_DECIMATE_MIN_VERTICES);
+    }
+    const sourceMat = Array.isArray(proto.material)
+      ? (proto.material[0] as THREE.Material)
+      : (proto.material as THREE.Material);
+    const material = cloneMaterialShared(sourceMat, materialMap);
+
+    const instanced = new THREE.InstancedMesh(geometry, material, sorted.length);
+    instanced.name = `${family}-instanced`;
+    instanced.frustumCulled = true;
+    instanced.renderOrder = proto.renderOrder;
+    for (let i = 0; i < sorted.length; i++) {
+      instanced.setMatrixAt(i, sorted[i].matrixWorld);
+    }
+    instanced.instanceMatrix.needsUpdate = true;
+    group.add(instanced);
+    for (const m of meshes) consumed.add(m);
+  }
+
+  const staging = new THREE.Group();
+  root.traverse((o) => {
+    if (!(o as THREE.Mesh).isMesh) return;
+    const mesh = o as THREE.Mesh;
+    if (consumed.has(mesh)) return;
+    if (Array.isArray(mesh.material)) return;
+    const proxy = new THREE.Mesh(mesh.geometry, mesh.material);
+    proxy.matrix.copy(mesh.matrixWorld);
+    proxy.matrixAutoUpdate = false;
+    staging.add(proxy);
+  });
+  const mergedRest = mergeStaticMeshesByMaterial(staging);
+  for (const child of [...mergedRest.children]) {
+    group.add(child);
+  }
+
+  return group;
+}
+
+/**
+ * Builds a far LOD level by cloning an already-merged/instanced high level and
+ * Melax-decimating each mesh geometry in place. Draw-call count stays ≈ high.
+ */
+export function buildLowLodFromMergedHigh(
+  high: THREE.Object3D,
+  vertexKeepFraction: number,
+  minVertices = 64
+): THREE.Object3D {
+  const low = high.clone(true);
+  const materialMap = new Map<THREE.Material, THREE.Material>();
+  const geoMap = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
+
+  low.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+
+    const raw = mesh.material;
+    if (Array.isArray(raw)) {
+      mesh.material = raw.map((m) => cloneMaterialShared(m, materialMap));
+    } else if (raw) {
+      mesh.material = cloneMaterialShared(raw, materialMap);
+    }
+
+    const source = mesh.geometry as THREE.BufferGeometry;
+    if (!source?.attributes?.position) return;
+    let simplified = geoMap.get(source);
+    if (!simplified) {
+      simplified = melaxGeometry(source, vertexKeepFraction, minVertices);
+      geoMap.set(source, simplified);
+    }
+    mesh.geometry = simplified;
+  });
+
+  low.userData = { ...high.userData, lodLevel: 'low' };
+  return low;
+}
+
+/**
+ * Deep-clones an Object3D subgraph. Materials that were shared on `root` stay
+ * shared on the clone (one clone per unique source material) so a later
+ * {@link mergeStaticMeshesByMaterial} still collapses draw calls. The clone's
+ * materials are independent of `root` (edits do not leak back).
  */
 export function cloneDetectorSubtree(root: THREE.Object3D): THREE.Object3D {
   const clone = root.clone(true);
+  const materialMap = new Map<THREE.Material, THREE.Material>();
   clone.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) return;
     const mesh = o as THREE.Mesh;
     const raw = mesh.material;
-    if (Array.isArray(raw)) mesh.material = raw.map((m) => m.clone());
-    else if (raw) mesh.material = raw.clone();
+    if (Array.isArray(raw)) {
+      mesh.material = raw.map((m) => cloneMaterialShared(m, materialMap));
+    } else if (raw) {
+      mesh.material = cloneMaterialShared(raw, materialMap);
+    }
   });
   return clone;
 }
@@ -526,8 +834,14 @@ export function cloneDetectorSubtree(root: THREE.Object3D): THREE.Object3D {
  */
 export function applyDetectorLayerMaterials(root: THREE.Object3D, opacity: number, layerIndex: number): void {
   const layerRenderOrderBase = layerIndex * RENDER_ORDER_LAYER_STRIDE;
-  const layerOffset = -(layerIndex + 1) * 2;
-  root.renderOrder = layerRenderOrderBase;
+  // Stronger per-layer bias than the old ×2 — linear or log depth both benefit
+  // when translucent ITS/TPC sit in front of opaque ABSO.
+  const layerOffset = -(layerIndex + 1) * 4;
+  const assetPath = String(root.userData?.['detectorAssetPath'] ?? '');
+  const beamPipe = isBeamPipe(assetPath);
+  // Paint BP after inner shells so the thin tube wins tie-breaks at the bore.
+  const renderOrderBase = beamPipe ? BEAM_PIPE_RENDER_ORDER : layerRenderOrderBase;
+  root.renderOrder = renderOrderBase;
 
   const tempVec = new THREE.Vector3();
   const meshes: THREE.Mesh[] = [];
@@ -542,17 +856,26 @@ export function applyDetectorLayerMaterials(root: THREE.Object3D, opacity: numbe
     return da - tempVec.lengthSq();
   });
 
+  const offsetByMaterial = new Map<THREE.Material, number>();
+
   meshes.forEach((mesh, meshIndex) => {
-    mesh.renderOrder = layerRenderOrderBase + meshIndex;
-    const subOffset = layerOffset - meshIndex * 0.01;
+    mesh.renderOrder = renderOrderBase + meshIndex;
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     for (const mat of materials) {
       if (!mat) continue;
       const m = mat as THREE.Material & { userData: Record<string, unknown> };
+      // One polygon-offset slot per unique material (not per mesh) so shared
+      // materials stay mergeable into a single draw call.
+      let subOffset = offsetByMaterial.get(m);
+      if (subOffset === undefined) {
+        subOffset = layerOffset - offsetByMaterial.size * 0.01;
+        offsetByMaterial.set(m, subOffset);
+      }
       m.transparent = false;
       m.opacity = 1;
       m.side = THREE.FrontSide;
       m.depthWrite = true;
+      m.depthTest = true;
       (m as THREE.Material & { polygonOffset: boolean }).polygonOffset = true;
       (m as THREE.Material & { polygonOffsetFactor: number }).polygonOffsetFactor = subOffset;
       (m as THREE.Material & { polygonOffsetUnits: number }).polygonOffsetUnits = subOffset * 2;
@@ -567,54 +890,170 @@ export function setDetectorPartVisibility(root: THREE.Object3D, visible: boolean
   root.visible = visible;
 }
 
+/** Dark-mode self-glow for most shells. */
+const DARK_EMISSIVE_INTENSITY = 0.12;
+/** Beam pipe is thin grey aluminium — needs extra punch without touching opacity. */
+export const BEAM_PIPE_DARK_EMISSIVE_INTENSITY = 0.28;
+
 /**
  * Sets a detector part's opacity (clamped to [MIN_PART_OPACITY,
- * MAX_PART_OPACITY]); keeps `depthWrite = true` so blending stays cheap.
+ * MAX_PART_OPACITY]). Shells use real material alpha. The beam pipe stops
+ * writing depth while translucent so it cannot punch a dark silhouette through
+ * detector layers rendered behind it.
  */
 export function setDetectorPartOpacity(root: THREE.Object3D, value: number): number {
   const opacity = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, value));
-  root.traverse((o) => {
-    if (!(o as THREE.Mesh).isMesh) return;
-    const raw = (o as THREE.Mesh).material;
-    const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
-    for (const mat of mats) {
-      const m = mat as THREE.Material & { userData: Record<string, unknown> };
-      m.transparent = opacity < 0.995;
-      m.opacity = opacity;
-      m.userData = { ...(m.userData || {}), baseOpacity: opacity };
-      m.needsUpdate = true;
-    }
-  });
+  applyDetectorPartOpacity(root, opacity, true);
   return opacity;
 }
 
-const DARK_EMISSIVE_INTENSITY = 0.12;
+/**
+ * Like {@link setDetectorPartOpacity} but allows opacity in [0, 1] (no UI
+ * slider floor). Used while fading a part in from invisible.
+ * @param updateBase When false, keeps `userData.baseOpacity` (slider target).
+ */
+export function applyDetectorPartOpacity(
+  root: THREE.Object3D,
+  opacity: number,
+  updateBase: boolean
+): void {
+  const o = Math.max(0, Math.min(1, opacity));
+  const transparent = o < 0.995;
+  const beamPipe = isBeamPipe(String(root.userData?.['detectorAssetPath'] ?? ''));
+  root.traverse((obj) => {
+    if (!(obj as THREE.Mesh).isMesh) return;
+    const mesh = obj as THREE.Mesh;
+    // mergeStaticMeshesByMaterial creates new Mesh instances and resets their
+    // renderOrder to 0. Restore BP's foreground order on the final meshes.
+    if (beamPipe) {
+      mesh.renderOrder = Math.max(mesh.renderOrder, BEAM_PIPE_RENDER_ORDER);
+    }
+    const raw = mesh.material;
+    const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    for (const mat of mats) {
+      const m = mat as THREE.Material & { userData: Record<string, unknown> };
+      m.transparent = transparent;
+      m.opacity = o;
+      m.depthWrite = beamPipe ? !transparent : true;
+      m.depthTest = true;
+      if (updateBase) {
+        m.userData = { ...(m.userData || {}), baseOpacity: o };
+      } else {
+        m.userData = { ...(m.userData || {}) };
+      }
+      m.needsUpdate = true;
+    }
+  });
+}
+
+/** Default fade-in duration for one detector shell during progressive load. */
+export const DETECTOR_REVEAL_DURATION_MS = 240;
+
+/** Start the next shell's fade after this fraction of the previous fade. */
+export const DETECTOR_REVEAL_STAGGER_FRACTION = 0.55;
+
+function easeOutCubic(t: number): number {
+  return 1 - (1 - t) ** 3;
+}
+
+/**
+ * Fades a detector part from opacity 0 up to `targetOpacity` (UI-clamped).
+ * `userData.baseOpacity` is set to the target immediately so sliders stay correct.
+ */
+export function fadeInDetectorPart(
+  root: THREE.Object3D,
+  targetOpacity: number,
+  options: {
+    durationMs?: number;
+    signal?: AbortSignal;
+    onFrame?: () => void;
+  } = {}
+): Promise<void> {
+  const target = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, targetOpacity));
+  const durationMs = options.durationMs ?? DETECTOR_REVEAL_DURATION_MS;
+
+  // Record the slider target even while the mesh is still invisible.
+  root.traverse((obj) => {
+    if (!(obj as THREE.Mesh).isMesh) return;
+    const raw = (obj as THREE.Mesh).material;
+    const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    for (const mat of mats) {
+      const m = mat as THREE.Material & { userData: Record<string, unknown> };
+      m.userData = { ...(m.userData || {}), baseOpacity: target };
+    }
+  });
+
+  if (durationMs <= 0 || options.signal?.aborted) {
+    setDetectorPartOpacity(root, target);
+    options.onFrame?.();
+    return Promise.resolve();
+  }
+
+  applyDetectorPartOpacity(root, 0, false);
+
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const tick = (now: number): void => {
+      if (options.signal?.aborted) {
+        setDetectorPartOpacity(root, target);
+        options.onFrame?.();
+        resolve();
+        return;
+      }
+      const t = Math.min(1, (now - start) / durationMs);
+      applyDetectorPartOpacity(root, target * easeOutCubic(t), false);
+      options.onFrame?.();
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        setDetectorPartOpacity(root, target);
+        options.onFrame?.();
+        resolve();
+      }
+    };
+    requestAnimationFrame(tick);
+  });
+}
 
 /** Boosts saturation + self-emissive glow (dark) or restores base colour (light). */
 export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): void {
   const hsl = { h: 0, s: 0, l: 0 };
+  const beamPipe = isBeamPipe(String(root.userData?.['detectorAssetPath'] ?? ''));
   root.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) return;
-    const raw = (o as THREE.Mesh).material;
-    const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    const mesh = o as THREE.Mesh;
+    const raw = mesh.material;
+    const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial & { userData: Record<string, unknown> };
       if (!m || !('color' in m)) continue;
-      const userData = (m.userData || (m.userData = {})) as { neonBaseColor?: THREE.Color };
-      if (!userData.neonBaseColor) {
-        userData.neonBaseColor = m.color.clone();
-      }
+      const userData = (m.userData || (m.userData = {})) as {
+        neonBaseColor?: THREE.Color | number | { r: number; g: number; b: number };
+      };
+      userData.neonBaseColor = reviveNeonBaseColor(userData.neonBaseColor, m.color);
+      const baseColor = userData.neonBaseColor as THREE.Color;
       if (darkMode) {
-        userData.neonBaseColor.getHSL(hsl);
-        m.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.1 + 0.05), Math.min(0.55, Math.max(0.3, hsl.l)));
+        baseColor.getHSL(hsl);
+        const litLightness = beamPipe
+          ? Math.min(0.72, Math.max(0.45, hsl.l * 1.12 + 0.06))
+          : Math.min(0.55, Math.max(0.3, hsl.l));
+        const lit = new THREE.Color().setHSL(
+          hsl.h,
+          Math.min(1, hsl.s * 1.1 + 0.05),
+          litLightness
+        );
+        m.color.copy(lit);
         if ('emissive' in m) {
           m.emissive.copy(m.color);
-          m.emissiveIntensity = DARK_EMISSIVE_INTENSITY;
+          m.emissiveIntensity = beamPipe
+            ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
+            : DARK_EMISSIVE_INTENSITY;
         }
       } else {
-        m.color.copy(userData.neonBaseColor);
+        m.color.copy(baseColor);
         if ('emissive' in m) {
           m.emissive.setRGB(0, 0, 0);
+          m.emissiveIntensity = 0;
         }
       }
       m.needsUpdate = true;

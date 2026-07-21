@@ -36,7 +36,7 @@ import {
 } from './physics/constants';
 import { PropagationScene, PropagationCameraMode } from './scene/propagation-scene';
 import { DetectorLoaderService } from './scene/detector-loader.service';
-import { scheduleDeferredLowLods } from './scene/detector-loader';
+import { attachDeferredLowLods, DetectorModel } from './scene/detector-loader';
 import { CollisionIntro } from './scene/collision-intro';
 import { createTrackLines, setTrackLinesResolution } from './scene/track-renderer';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
@@ -44,6 +44,7 @@ import { PropagationTimeline } from './scene/propagation-timeline';
 import {
   defaultDetectorPartVisible,
   detectorPartAccentColor,
+  isOuterMagnet,
   setDetectorPartOpacity,
   setDetectorPartVisibility,
 } from './scene/detector-appearance';
@@ -67,6 +68,7 @@ import {
 } from './scene/timeline-constants';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { PropagationWelcomeDialogComponent } from './welcome-dialog/propagation-welcome-dialog.component';
+import { PropagationSessionCacheService } from './propagation-session-cache.service';
 
 export type ParticlePropagationPhase =
   | 'idle'
@@ -104,6 +106,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   instructionsComponent: Type<unknown> = InstructionsComponent;
 
   phase: ParticlePropagationPhase = 'idle';
+  /** Splash until ITS/TPC/L3 paint and the welcome dialog can open. */
+  showDetectorSplash = true;
   progressDone = 0;
   progressTotal = 0;
   errorMessage: string | null = null;
@@ -194,7 +198,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private precomputeSub: Subscription | null = null;
   private destroyed = false;
   private detectorLoadAbort: AbortController | null = null;
-  private cancelDeferredLowLods: (() => void) | null = null;
+  private welcomeDialogOpened = false;
+  /** Owned detector assembly (also stored in {@link PropagationSessionCacheService}). */
+  private detectorModel: DetectorModel | null = null;
 
   constructor(
     private readonly magneticField: MagneticFieldService,
@@ -202,6 +208,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     private readonly momentumRevealTiming: MomentumRevealTimingService,
     private readonly particleData: ParticleDataService,
     private readonly detectorLoader: DetectorLoaderService,
+    private readonly sessionCache: PropagationSessionCacheService,
     private readonly dialog: MatDialog,
     private readonly cdr: ChangeDetectorRef,
     private readonly ngZone: NgZone
@@ -212,8 +219,11 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       label: `Event ${ref.event + 1}`,
     }));
     this.selectedEventIndex = this.eventOptions[0]?.id ?? 0;
-    // Keep the shared field service in sync with this instance's default slider.
     this.magneticField.setFieldStrengthT(this.fieldStrengthT);
+    // Warm cache → no boot splash; set before the first CD to avoid NG0100.
+    if (this.sessionCache.hasSceneAssets) {
+      this.showDetectorSplash = false;
+    }
   }
 
   get controlsEnabled(): boolean {
@@ -227,38 +237,43 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   }
 
   get isBusy(): boolean {
-    return this.phase === 'loading-field' || this.phase === 'loading-event' || this.phase === 'precomputing';
+    return (
+      this.showDetectorSplash ||
+      this.phase === 'loading-field' ||
+      this.phase === 'loading-event' ||
+      this.phase === 'precomputing'
+    );
   }
 
   ngAfterViewInit(): void {
     this.scene = new PropagationScene(this.canvasRef.nativeElement);
     this.isDarkMode = this.scene.darkMode;
 
-    this.loadDetector();
-    this.loadFieldVisualization();
-
     if (typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => this.onResize());
       this.resizeObserver.observe(this.sceneHostRef.nativeElement);
     }
     this.onResize();
-
     this.startRenderLoop();
-    this.openWelcomeDialog();
+
+    if (this.sessionCache.hasSceneAssets) {
+      this.restoreSessionFromCache();
+    } else {
+      void this.bootLoadSceneAssets();
+    }
   }
 
   ngOnDestroy(): void {
     this.destroyed = true;
     this.detectorLoadAbort?.abort();
     this.detectorLoadAbort = null;
-    this.cancelDeferredLowLods?.();
-    this.cancelDeferredLowLods = null;
     this.stopRenderLoop();
     this.precomputeSub?.unsubscribe();
     this.resizeObserver?.disconnect();
-    this.clearTracks();
-    void this.collisionIntroPromise?.then((intro) => intro.dispose());
+    this.persistSessionToCache();
+    // Renderer only — detector / field / intro geometries stay alive in the session cache.
     this.scene?.dispose();
+    this.scene = null;
   }
 
   // ---------------------------------------------------------------------
@@ -314,7 +329,12 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   onDetectorPartVisibility(part: DetectorPartUiModel, visible: boolean): void {
     part.visible = visible;
     const root = this.detectorPartRootByPath.get(part.assetPath);
-    if (root) setDetectorPartVisibility(root, visible);
+    if (isOuterMagnet(part.assetPath)) {
+      // L3 visibility is owned by the scene (auto-hide on orbit / near-TRD zoom).
+      this.scene?.setOuterMagnetUserVisible(visible);
+    } else if (root) {
+      setDetectorPartVisibility(root, visible);
+    }
     this.requestRender();
   }
 
@@ -418,77 +438,131 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   // Detector / field loading
   // ---------------------------------------------------------------------
 
-  private loadDetector(): void {
-    this.detectorLoadAbort?.abort();
-    this.cancelDeferredLowLods?.();
-    this.detectorLoadAbort = new AbortController();
-    const signal = this.detectorLoadAbort.signal;
-    let coreGroupAttached = false;
+  /**
+   * Cold boot: splash until the full detector, Melax far-LODs, field map, and
+   * streamlines are ready — then open the welcome dialog (Start runs instantly).
+   */
+  private async bootLoadSceneAssets(): Promise<void> {
+    this.showDetectorSplash = true;
+    this.cdr.markForCheck();
 
-    this.detectorLoader
-      .loadProgressive(PropagationScene.objectScale, this.isDarkMode, {
-        signal,
-        deferLowLod: true,
-        onWave: (model, wave) => {
-          if (this.destroyed || !this.scene || signal.aborted) return;
-
-          if (wave === 'core' && !coreGroupAttached) {
-            this.scene.detectorGroup.add(model.group);
-            coreGroupAttached = true;
-            this.cancelDeferredLowLods?.();
-            this.cancelDeferredLowLods = scheduleDeferredLowLods(model.group, () => {
-              if (this.destroyed || signal.aborted) return;
-              this.requestRender();
-            });
-          } else if (wave === 'complete') {
-            // Secondary parts were added onto the same group; re-schedule so any
-            // newly pending Melax low-LODs attach after the next paint.
-            this.cancelDeferredLowLods?.();
-            this.cancelDeferredLowLods = scheduleDeferredLowLods(model.group, () => {
-              if (this.destroyed || signal.aborted) return;
-              this.requestRender();
-            });
-          }
-
-          this.detectorPartRootByPath.clear();
-          for (const part of model.parts) {
-            this.detectorPartRootByPath.set(part.assetPath, part.root);
-          }
-          this.detectorPartsForUi = model.parts.map((part) => {
-            const visible = defaultDetectorPartVisible(part.assetPath);
-            setDetectorPartVisibility(part.root, visible);
-            return {
-              assetPath: part.assetPath,
-              label: part.label,
-              visible,
-              opacity: this.getPartOpacity(part.root),
-              accentColor: detectorPartAccentColor(part.assetPath),
-            };
-          });
-          this.requestRender();
-          this.cdr.markForCheck();
-        },
-      })
-      .catch((err) => {
-        if (signal.aborted) return;
-        console.error('[ParticlePropagation] detector load failed', err);
-      });
+    try {
+      await Promise.all([this.loadDetectorFully(), this.loadFieldVisualizationFully(), this.ensureCollisionIntro()]);
+      if (this.destroyed) return;
+      this.showDetectorSplash = false;
+      this.cdr.markForCheck();
+      this.requestRender();
+      this.openWelcomeDialogOnce();
+    } catch (err) {
+      if (this.destroyed) return;
+      console.error('[ParticlePropagation] boot load failed', err);
+      this.showDetectorSplash = false;
+      this.phase = 'error';
+      this.errorMessage = err instanceof Error ? err.message : String(err);
+      this.cdr.markForCheck();
+    }
   }
 
-  private loadFieldVisualization(): void {
-    this.magneticField
-      .load()
-      .then(() => {
-        if (this.destroyed) return;
-        this.rebuildFieldVisualization();
-      })
-      .catch((err) => console.error('[ParticlePropagation] field visualization failed', err));
+  private loadDetectorFully(): Promise<void> {
+    this.detectorLoadAbort?.abort();
+    this.detectorLoadAbort = new AbortController();
+    const signal = this.detectorLoadAbort.signal;
+
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const settleOk = (): void => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+
+      this.detectorLoader
+        .loadProgressive(PropagationScene.objectScale, this.isDarkMode, {
+          signal,
+          deferLowLod: true,
+          animateReveal: true,
+          onRevealFrame: () => this.requestRender(),
+          onPart: (model) => {
+            if (this.destroyed || !this.scene || signal.aborted) return;
+            this.applyDetectorModel(model);
+            if (model.group.parent !== this.scene.detectorGroup) {
+              this.scene.detectorGroup.add(model.group);
+            }
+          },
+          onWave: (model, wave) => {
+            if (this.destroyed || !this.scene || signal.aborted) return;
+            this.applyDetectorModel(model);
+            if (model.group.parent !== this.scene.detectorGroup) {
+              this.scene.detectorGroup.add(model.group);
+            }
+            if (wave === 'complete') {
+              attachDeferredLowLods(model.group);
+              this.requestRender();
+              settleOk();
+            }
+          },
+        })
+        .then((model) => {
+          if (signal.aborted) return;
+          if (!settled) {
+            if (model.group.parent !== this.scene?.detectorGroup && this.scene) {
+              this.scene.detectorGroup.add(model.group);
+            }
+            attachDeferredLowLods(model.group);
+            settleOk();
+          }
+        })
+        .catch((err) => {
+          if (signal.aborted) return;
+          if (!settled) {
+            settled = true;
+            reject(err);
+          }
+        });
+    });
+  }
+
+  private applyDetectorModel(model: DetectorModel): void {
+    this.detectorModel = model;
+    this.detectorPartRootByPath.clear();
+    for (const part of model.parts) {
+      this.detectorPartRootByPath.set(part.assetPath, part.root);
+    }
+    this.detectorPartsForUi = model.parts.map((part) => {
+      const visible = defaultDetectorPartVisible(part.assetPath);
+      if (isOuterMagnet(part.assetPath)) {
+        // Preference only — root may not be under detectorGroup yet; visibility
+        // is applied on the next render() / after the group is attached.
+        this.scene?.setOuterMagnetUserVisible(visible);
+      } else {
+        setDetectorPartVisibility(part.root, visible);
+      }
+      return {
+        assetPath: part.assetPath,
+        label: part.label,
+        visible,
+        opacity: this.getPartOpacity(part.root),
+        accentColor: detectorPartAccentColor(part.assetPath),
+      };
+    });
+    this.requestRender();
+    this.cdr.markForCheck();
+  }
+
+  private async loadFieldVisualizationFully(): Promise<void> {
+    await this.magneticField.load();
+    if (this.destroyed) return;
+    this.rebuildFieldVisualization();
   }
 
   private rebuildFieldVisualization(): void {
     if (!this.scene || !this.magneticField.isLoaded) return;
     if (this.fieldLines) {
       this.scene.fieldGroup.remove(this.fieldLines);
+      if (this.sessionCache.fieldLines === this.fieldLines) {
+        this.sessionCache.fieldLines = null;
+      }
+      // Drop previous streamlines fully — not shared with the session cache after rebuild.
       this.disposeObject(this.fieldLines);
       this.fieldLines = null;
     }
@@ -551,6 +625,137 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       });
   }
 
+  private openWelcomeDialogOnce(): void {
+    if (this.destroyed || this.welcomeDialogOpened) return;
+    this.welcomeDialogOpened = true;
+    this.openWelcomeDialog();
+  }
+
+  // ---------------------------------------------------------------------
+  // Session cache (survive route leave / re-enter)
+  // ---------------------------------------------------------------------
+
+  private persistSessionToCache(): void {
+    const cache = this.sessionCache;
+
+    if (this.detectorModel) {
+      this.detectorModel.group.removeFromParent();
+      cache.detectorModel = this.detectorModel;
+      cache.detectorPartsForUi = this.detectorPartsForUi.map((p) => ({ ...p }));
+    }
+
+    if (this.fieldLines) {
+      this.fieldLines.removeFromParent();
+      cache.fieldLines = this.fieldLines;
+      cache.fieldLinesBuiltAtStrengthT = this.fieldLinesBuiltAtStrengthT;
+      this.fieldLines = null;
+    }
+
+    if (this.collisionIntroPromise || this.sessionCache.collisionIntro) {
+      this.sessionCache.collisionIntro?.group.removeFromParent();
+    }
+
+    // Keep detector + field + UI prefs warm; drop tracks so the next visit
+    // always gets the welcome dialog and a fresh RK4 / animation from t=0.
+    cache.clearTracksOnly();
+    cache.ui = {
+      selectedEventIndex: this.selectedEventIndex,
+      isDarkMode: this.isDarkMode,
+      cameraMode: this.cameraMode,
+      fieldVisible: this.fieldVisible,
+      fieldDipoleTransitionVisible: this.fieldDipoleTransitionVisible,
+      fieldOpacity: this.fieldOpacity,
+      fieldDensity: this.fieldDensity,
+      fieldLinewidth: this.fieldLinewidth,
+      fieldStrengthT: this.fieldStrengthT,
+      solenoidPolarity: this.solenoidPolarity,
+      playbackSpeed: this.playbackSpeed,
+    };
+
+    // Dispose only fat-line GPU resources; BufferedTrack payloads are not kept.
+    this.disposeTrackLinesOnly();
+    this.timeline = null;
+    this.detectorModel = null;
+  }
+
+  private restoreSessionFromCache(): void {
+    const cache = this.sessionCache;
+    const scene = this.scene!;
+    const ui = cache.ui;
+
+    if (ui) {
+      this.selectedEventIndex = ui.selectedEventIndex;
+      this.cameraMode = ui.cameraMode;
+      this.fieldVisible = ui.fieldVisible;
+      this.fieldDipoleTransitionVisible = ui.fieldDipoleTransitionVisible;
+      this.fieldOpacity = ui.fieldOpacity;
+      this.fieldDensity = ui.fieldDensity;
+      this.fieldLinewidth = ui.fieldLinewidth;
+      this.fieldStrengthT = ui.fieldStrengthT;
+      this.solenoidPolarity = ui.solenoidPolarity;
+      this.playbackSpeed = ui.playbackSpeed;
+      this.magneticField.setFieldStrengthT(ui.fieldStrengthT);
+      this.magneticField.setSolenoidPolarity(ui.solenoidPolarity);
+      if (ui.isDarkMode !== this.isDarkMode) {
+        this.isDarkMode = ui.isDarkMode;
+        scene.setDarkMode(ui.isDarkMode);
+      }
+      scene.setCameraMode(ui.cameraMode);
+    }
+
+    if (cache.detectorModel) {
+      this.applyDetectorModel(cache.detectorModel);
+      if (cache.detectorPartsForUi) {
+        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => ({ ...p }));
+        for (const part of this.detectorPartsForUi) {
+          const root = this.detectorPartRootByPath.get(part.assetPath);
+          if (!root) continue;
+          if (isOuterMagnet(part.assetPath)) {
+            scene.setOuterMagnetUserVisible(part.visible);
+          } else {
+            setDetectorPartVisibility(root, part.visible);
+          }
+          setDetectorPartOpacity(root, part.opacity);
+        }
+      }
+      scene.detectorGroup.add(cache.detectorModel.group);
+      this.detectorModel = cache.detectorModel;
+    }
+
+    if (cache.fieldLines) {
+      this.fieldLines = cache.fieldLines;
+      this.fieldLinesBuiltAtStrengthT = cache.fieldLinesBuiltAtStrengthT;
+      this.fieldLines.visible = this.fieldVisible;
+      scene.fieldGroup.add(this.fieldLines);
+    }
+
+    if (cache.collisionIntro) {
+      this.collisionIntroPromise = Promise.resolve(cache.collisionIntro);
+      scene.introGroup.add(cache.collisionIntro.group);
+    }
+
+    this.showDetectorSplash = false;
+
+    // Scene assets are warm, but every revisit starts idle with the welcome /
+    // Start dialog — tracks are never restored across navigations.
+    this.hasStarted = false;
+    this.tracks = [];
+    this.tracksNeedRecompute = false;
+    this.timeline = null;
+    this.minTimeMs = 0;
+    this.maxTimeMs = 1;
+    this.currentTimeMs = 0;
+    this.isPlaying = false;
+    this.phase = 'idle';
+    // Defer dialog past the current CD cycle (opened from ngAfterViewInit).
+    queueMicrotask(() => {
+      if (!this.destroyed) this.openWelcomeDialogOnce();
+    });
+
+    this.requestRender();
+    this.cdr.markForCheck();
+  }
+
   // ---------------------------------------------------------------------
   // Precompute pipeline
   // ---------------------------------------------------------------------
@@ -559,7 +764,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.precomputeSub?.unsubscribe();
     this.errorMessage = null;
     this.tracksNeedRecompute = false;
-    this.phase = 'loading-field';
+    this.phase = this.magneticField.isLoaded ? 'loading-event' : 'loading-field';
     this.isPlaying = false;
     this.cdr.markForCheck();
 
@@ -663,10 +868,19 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   }
 
   private ensureCollisionIntro(): Promise<CollisionIntro> {
+    if (this.sessionCache.collisionIntro) {
+      const intro = this.sessionCache.collisionIntro;
+      if (this.scene && intro.group.parent !== this.scene.introGroup) {
+        this.scene.introGroup.add(intro.group);
+      }
+      this.collisionIntroPromise = Promise.resolve(intro);
+      return this.collisionIntroPromise;
+    }
     if (!this.collisionIntroPromise) {
-      this.collisionIntroPromise = CollisionIntro.create(PROTON_MODEL_PATH);
-      this.collisionIntroPromise.then((intro) => {
+      this.collisionIntroPromise = CollisionIntro.create(PROTON_MODEL_PATH).then((intro) => {
+        this.sessionCache.collisionIntro = intro;
         if (!this.destroyed) this.scene?.introGroup.add(intro.group);
+        return intro;
       });
     }
     return this.collisionIntroPromise;
@@ -680,7 +894,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.cdr.markForCheck();
   }
 
-  private clearTracks(): void {
+  /** Disposes Line2 GPU resources only; keeps {@link tracks} payloads. */
+  private disposeTrackLinesOnly(): void {
     for (const line of this.lines) {
       line.geometry.dispose();
       const material = line.material as THREE.Material | THREE.Material[];
@@ -689,6 +904,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     }
     this.scene?.tracksGroup.clear();
     this.lines = [];
+  }
+
+  private clearTracks(): void {
+    this.disposeTrackLinesOnly();
     this.tracks = [];
   }
 

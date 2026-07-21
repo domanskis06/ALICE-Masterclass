@@ -1,3 +1,49 @@
 :host {
-  
+  display: block;
+}
+
+/*
+ * Global flight overlay — mounted inside mat-sidenav-content (see AppComponent).
+ * position:absolute + coords relative to that scroll container so the ball stays
+ * on the correct histogram while the sidenav content scrolls.
+ */
+.flying-ball {
+  --flight-color: #62d9ff;
+
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1200;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-100px, -100px, 0) scale(0.55);
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    var(--flight-color) 45%,
+    color-mix(in srgb, var(--flight-color) 55%, #003366) 100%
+  );
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--flight-color) 95%, transparent),
+    0 0 28px color-mix(in srgb, var(--flight-color) 70%, transparent);
+
+  &.is-flying {
+    opacity: 1;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: -20px;
+    top: 6px;
+    width: 24px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--flight-color) 85%, transparent));
+    filter: blur(1px);
+  }
 }
