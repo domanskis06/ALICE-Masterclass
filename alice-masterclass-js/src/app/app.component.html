@@ -1,1 +1,8 @@
 <app-nav [languages]="LANGUAGES"></app-nav>
+
+<div
+  #flyingBall
+  class="flying-ball"
+  aria-hidden="true"
+  [style.--flight-color]="activeFlight()?.color ?? '#62d9ff'"
+></div>

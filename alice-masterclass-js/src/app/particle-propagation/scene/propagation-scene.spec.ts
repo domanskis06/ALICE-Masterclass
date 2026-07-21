@@ -56,6 +56,7 @@ describe('PropagationScene', () => {
     expect(scene.cameraMode).toBe('centered');
     expect(scene.controls.enablePan).toBe(false);
     expect(scene.controls.enableRotate).toBe(true);
+    expect(scene.controls.enableZoom).toBe(true);
   });
 
   it('allows full polar orbit (view from below), matching EventDisplay', () => {
@@ -63,11 +64,12 @@ describe('PropagationScene', () => {
     expect(scene.controls.maxPolarAngle).toBe(Math.PI);
   });
 
-  it('switches to free camera mode (pan on, rotate off) like EventDisplay', () => {
+  it('switches to free camera mode (pan on, rotate/zoom off) like EventDisplay', () => {
     scene.setCameraMode('free');
     expect(scene.cameraMode).toBe('free');
     expect(scene.controls.enablePan).toBe(true);
     expect(scene.controls.enableRotate).toBe(false);
+    expect(scene.controls.enableZoom).toBe(false);
   });
 
   it('restores centered mode and locks the orbit target to the origin', () => {
@@ -76,6 +78,7 @@ describe('PropagationScene', () => {
     scene.setCameraMode('centered');
     expect(scene.controls.enablePan).toBe(false);
     expect(scene.controls.enableRotate).toBe(true);
+    expect(scene.controls.enableZoom).toBe(true);
     expect(scene.controls.target.x).toBe(0);
     expect(scene.controls.target.y).toBe(0);
     expect(scene.controls.target.z).toBe(0);
@@ -123,5 +126,23 @@ describe('PropagationScene', () => {
     scene.setOuterMagnetUserVisible(false);
     scene.render();
     expect(l3.visible).toBe(false);
+  });
+
+  it('free-cam wheel flies along the look axis without changing orbit distance', () => {
+    scene.setCameraMode('free');
+    const distBefore = scene.controls.target.distanceTo(scene.camera.position);
+    const camBefore = scene.camera.position.clone();
+    const targetBefore = scene.controls.target.clone();
+
+    canvas.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true }));
+
+    const distAfter = scene.controls.target.distanceTo(scene.camera.position);
+    expect(distAfter).toBeCloseTo(distBefore, 5);
+    // Scroll up = forward toward the previous look point.
+    expect(scene.camera.position.distanceTo(camBefore)).toBeGreaterThan(0);
+    expect(scene.controls.target.distanceTo(targetBefore)).toBeGreaterThan(0);
+    const camDelta = new THREE.Vector3().subVectors(scene.camera.position, camBefore);
+    const targetDelta = new THREE.Vector3().subVectors(scene.controls.target, targetBefore);
+    expect(camDelta.distanceTo(targetDelta)).toBeCloseTo(0, 5);
   });
 });

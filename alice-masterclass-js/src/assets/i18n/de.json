@@ -76,6 +76,14 @@
         "B2": "Jet-Paare (Di-Jets) untersuchen, die in entgegengesetzte Richtungen entstehen.",
         "B3": "untersuchen, wie Jets beim Durchqueren des Quark-Gluon-Plasmas Energie verlieren."
       },
+      "PHOS": {
+        "TITLE": "PHOS (Photon Spectrometer)",
+        "BODY": "Der PHOS ist ein hochauflösendes elektromagnetisches Kalorimeter, das die Energie von Photonen und Elektronen mit außergewöhnlicher Präzision misst. Anders als andere Kalorimeter, die eine größere Fläche abdecken, ist PHOS auf möglichst genaue Energiemessungen optimiert. Er besteht aus dichten szintillierenden Kristallen, die winzige Lichtblitze erzeugen, wenn Teilchen sie durchqueren — daraus lässt sich ihre Energie sehr präzise bestimmen.\n\nPHOS ist besonders wichtig für die Untersuchung von Teilchen, die in Photonen zerfallen, etwa Pionen.",
+        "LETS_US": "Mit dem PHOS können wir:",
+        "B1": "die Energie von Photonen und Elektronen mit sehr hoher Präzision messen.",
+        "B2": "Teilchen untersuchen, die in Photonen zerfallen, etwa Pionen.",
+        "B3": "das Quark-Gluon-Plasma mit elektromagnetischen Sonden erforschen."
+      },
       "L3": {
         "TITLE": "L3 (Solenoid Magnet)",
         "BODY": "Der L3-Magnet ist der große Solenoid, der die ALICE-Detektoren umgibt und ein starkes Magnetfeld entlang der Strahlachse erzeugt. Wenn ein geladenes Teilchen durch dieses Feld fliegt, krümmt die Lorentzkraft seine Bahn. Die Richtung der Krümmung zeigt das Vorzeichen der Ladung, während der Krümmungsradius mit dem Impuls zusammenhängt: schnellere Teilchen mit höherem Impuls biegen sich weniger stark als langsamere.\n\nOhne Magnetfeld erscheinen rekonstruierte Spuren als Geraden. Mit dem L3 werden daraus die gekrümmten Trajektorien, aus denen der Impuls gemessen wird — ein zentraler Schritt zum Verständnis der Teilchen aus Hochenergiekollisionen.",
@@ -84,6 +92,14 @@
         "B2": "aus der Richtung der Spurkrümmung auf die Teilchenladung schließen.",
         "B3": "den Teilchenimpuls aus der Stärke der Bahnkrümmung messen.",
         "B4": "nach dem Zusammenbau des Detektors die volle gekrümmte Ereignistopologie sehen."
+      },
+      "CALORIMETERS": {
+        "TITLE": "EMCal & DCal",
+        "BODY": "Die elektromagnetischen Kalorimeter messen die Energie von Elektronen und Photonen. Wenn ein solches Teilchen in den Detektor eintritt, entsteht ein elektromagnetischer Schauer, der seine Energie im Kalorimeter abgibt, und aus diesem Schauer rekonstruieren Physiker die Energie des ursprünglichen Teilchens.\n\nALICE nutzt zwei Sektoren derselben Technologie, <strong>EMCal</strong> und <strong>DCal</strong>. Zusammen decken sie einen größeren Teil des Detektors ab, was besonders nützlich für die Untersuchung von Jets und Jetpaaren ist, die in entgegengesetzten Richtungen erzeugt werden (Di-Jets).",
+        "LETS_US": "Die Kalorimeter ermöglichen uns:",
+        "B1": "Die Energie von Elektronen und Photonen mit hoher Präzision zu messen.",
+        "B2": "Jets und gegenüberliegende Jetpaare (Di-Jets) zu untersuchen.",
+        "B3": "Zu untersuchen, wie Teilchen Energie verlieren, während sie das Quark Gluon Plasma durchqueren."
       }
     }
   },
@@ -154,7 +170,10 @@
     "DETECTOR_ASSEMBLY_TITLE": "Detektor zusammenbauen",
     "DETECTOR_ASSEMBLY_HINT": "Ziehen Sie jedes Teil aus diesem Panel in die 3D-Ansicht. Wenn alles platziert ist, erscheinen hier die Detektoroptionen (Ansichten, Cluster, Spuren).",
     "TRD_READING": "TRD-Auslesung",
-    "TOF_READING": "TOF-Auslesung"
+    "TOF_READING": "TOF-Auslesung",
+    "DETECTOR_CALORIMETERS": "Kalorimeter",
+    "PREVIOUS_EVENT": "Vorheriges",
+    "NEXT_EVENT": "Nächstes"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Bitte wählen Sie den Datensatz:",
@@ -195,7 +214,8 @@
       "INVARIANT_MASS": "Invariante Masse",
       "SIGNAL": "Signal",
       "BACKGROUND": "Untergrund",
-      "TOTAL": "Gesamt"
+      "TOTAL": "Gesamt",
+      "BINS": "Bins"
     },
     "HISTOGRAM_SELECTOR": {
       "TITLE": "Histogrammauswahl",

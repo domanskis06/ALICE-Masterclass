@@ -27,7 +27,8 @@
   width: 100%;
   // CERN toolbar 40px + app toolbar 64px
   min-height: calc(100vh - 104px);
-  padding: 10px;
+  // Flush with the red ALICE Masterclass toolbar; keep side/bottom breathing room.
+  padding: 0 0 10px;
 }
 
 .container.va-dark-mode {
@@ -99,26 +100,41 @@
   }
 
   mat-card-content,
-  app-event-display mat-drawer-container,
-  app-event-display mat-drawer-content,
+  app-event-display .event-display-host,
+  app-event-display .scene-area,
   app-event-display #render-area {
     background: var(--va-bg-panel-solid);
   }
 
-  app-event-display mat-drawer {
-    background: transparent;
-    color: var(--va-text);
-  }
-
+  app-event-display .controls-sidebar,
   app-event-display .detector-parts-panel,
-  app-event-display .assembly-palette {
+  app-event-display .assembly-palette,
+  app-event-display .event-meta-slot,
+  app-event-display .left-sidebar {
     background: var(--va-bg-panel-solid);
-    border-left: 1px solid var(--va-border);
     color: var(--va-text);
 
     h4 {
       color: var(--va-text);
     }
+  }
+
+  app-event-display .event-meta-slot {
+    border-bottom-color: var(--va-border);
+  }
+
+  app-event-display .controls-sidebar {
+    border-color: var(--va-border);
+  }
+
+  app-event-display .sidebar-toggle {
+    background: color-mix(in srgb, var(--va-control-bg) 82%, transparent);
+    color: var(--va-text);
+  }
+
+  app-event-display .event-label,
+  app-event-display #done {
+    color: var(--va-text);
   }
 
   app-event-display .assembly-hint,
@@ -223,6 +239,40 @@
     path,
     line {
       stroke: rgba(226, 232, 240, 0.72);
+    }
+  }
+
+  app-mass-histograms .bin-control {
+    background: #000000;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  app-mass-histograms .bin-control__caption {
+    color: #ffffff;
+  }
+
+  app-mass-histograms .upload-data-button.mat-mdc-raised-button {
+    --mdc-protected-button-label-text-color: #ffffff;
+    --mdc-protected-button-disabled-label-text-color: #ffffff;
+    --mat-protected-button-label-text-color: #ffffff;
+    --mat-protected-button-disabled-label-text-color: #ffffff;
+    color: #ffffff;
+
+    .upload-data-button__text,
+    mat-icon {
+      color: #ffffff;
+    }
+  }
+
+  app-mass-histograms .bin-control__input {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: #111111;
+    color: #ffffff;
+
+    &:focus {
+      border-color: #b71c1c;
+      box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.35);
     }
   }
 
@@ -428,20 +478,59 @@
 app-event-display {
   display: block;
   width: 100%;
-  // Fill remaining viewport under toolbars; leave room for calculator + histograms.
-  height: calc(100vh - 104px - 12rem);
-  min-height: 520px;
+  // Fill remaining viewport under the red toolbar; leave room for calculator + histograms.
+  height: calc(100vh - 104px - 8.5rem);
+  min-height: 600px;
+}
+
+.va-lower-panels {
+  margin-top: 10px;
+  padding: 0 10px;
+}
+
+.va-histograms {
+  display: block;
+  margin-top: 10px;
+  padding: 0 10px;
 }
 
 #done {
-  line-height: 40px;
-  vertical-align: sub;
+  line-height: 1;
+  vertical-align: middle;
   margin-left: 0.2em;
+  font-size: 18px;
+}
+
+.event-meta-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
 .dataset-controls {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: flex-start;
+  display: block;
+  width: 100%;
+}
+
+.dataset-select {
+  width: 100%;
+  margin: 0;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.event-label-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.event-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
 }

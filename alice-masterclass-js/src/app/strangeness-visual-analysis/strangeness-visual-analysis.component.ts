@@ -1,4 +1,4 @@
-import { AfterViewInit, ApplicationRef, Component, ElementRef, OnDestroy, OnInit, Type, ViewChild } from '@angular/core';
+import { AfterViewInit, ApplicationRef, Component, ElementRef, OnDestroy, OnInit, Type, ViewChild, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InstructionsProvider } from '../shared/interfaces';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -6,28 +6,40 @@ import { forkJoin, Observable } from 'rxjs';
 import { map, shareReplay, filter, take } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { SelectDatasetDialogComponent } from '../select-dataset-dialog/select-dataset-dialog.component';
 import { Event, Track, TrackType } from '../shared/models';
 
-import { StrangenessDataService } from '../services/strangeness-data.service';
+import {
+  DATASET_PICKER_DEMO,
+  DATASET_PICKER_FULL_EVENT,
+  StrangenessDataService,
+} from '../services/strangeness-data.service';
 import { ParticleType, VisualAnalysisResultsEntry } from '../shared/services/api.service';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DetectorPartToggleModel, EventDisplayComponent } from '../shared/components/event-display/event-display.component';
-import { MassHistogramBinIncrementedEvent } from './mass-histograms/mass-histograms.component';
+import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
+import { FlightService } from '../shared/services/flight.service';
+import {
+  antiLambdaHistogramColor,
+  backgroundHistogramColor,
+  kaonHistogramColor,
+  lambdaHistogramColor,
+  xiHistogramColor,
+} from '../shared/globals';
 
 export interface SubmitHistogramEntry {
   type: ParticleType,
   mass: number
 }
 
-interface HistogramFlightParticle {
-  id: number;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-}
+/** Same palette as mass-histogram bars — flight particle matches its destination plot. */
+const FLIGHT_COLORS: Record<ParticleType, string> = {
+  [ParticleType.KAON]: kaonHistogramColor,
+  [ParticleType.LAMBDA]: lambdaHistogramColor,
+  [ParticleType.ANTI_LAMBDA]: antiLambdaHistogramColor,
+  [ParticleType.XI]: xiHistogramColor,
+  [ParticleType.BACKGROUND]: backgroundHistogramColor,
+};
 
 @Component({
     selector: 'app-strangeness-visual-analysis',
@@ -36,9 +48,6 @@ interface HistogramFlightParticle {
     standalone: false
 })
 export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit, OnDestroy, InstructionsProvider {
-  @ViewChild('visualAnalysisContainer')
-  private visualAnalysisContainerRef!: ElementRef<HTMLElement>;
-
   @ViewChild('eventDisplayHost')
   private eventDisplay!: EventDisplayComponent;
 
@@ -47,6 +56,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   @ViewChild('collisionVideo')
   private collisionVideoRef?: ElementRef<HTMLVideoElement>;
+
+  @ViewChild('massHistograms')
+  private massHistograms?: MassHistogramsComponent;
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
@@ -77,7 +89,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     'assets/models/alice components/L3.glb',
   ];
 
-  datasetID: number = SelectDatasetDialogComponent.DEMO;
+  datasetID: number = DATASET_PICKER_DEMO;
   eventID: number = 0;
   maxEvents: number = 0;
   event: Event = {tracks: [], decays: [], clusters: []};
@@ -89,13 +101,19 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   visualDarkMode = false;
   readonly visualLightBackgroundColor = 0xFFFFFF;
   readonly visualDarkBackgroundColor = 0x0a1832;
-  flightParticles: HistogramFlightParticle[] = [];
-  private nextFlightParticleId = 0;
-  private flightParticleTimeouts: number[] = [];
 
-  uploadDisabledDatasets: Array<Number> = [SelectDatasetDialogComponent.DEMO];
+  uploadDisabledDatasets: Array<Number> = [DATASET_PICKER_DEMO];
   
   isLandscape$: Observable<boolean>;
+
+  private readonly flightService = inject(FlightService);
+  /** Entries waiting for the global flying-ball animation to finish before commit. */
+  private pendingFlightEntries = new Map<number, {
+    entry: VisualAnalysisResultsEntry;
+    particle: ParticleType;
+    binIndex: number;
+  }>();
+  private nextPendingFlightId = 0;
 
   get isCurrentEventDone(): boolean {
     return this.dataService.visualAnalysisResults.has(String(this.eventID));
@@ -106,7 +124,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     private snackBar: MatSnackBar,
     public dataService: StrangenessDataService,
     private translateService: TranslateService,
-    private appRef: ApplicationRef
+    private appRef: ApplicationRef,
     ) { 
       this.isLandscape$ = this.breakpointObserver.observe('(orientation: landscape)')
     .pipe(
@@ -131,13 +149,26 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   ngOnDestroy(): void {
     this.vaCoachScheduleSub?.unsubscribe();
     this.vaCoachScheduleSub = null;
-    this.flightParticleTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
-    this.flightParticleTimeouts = [];
+    // Commit entries still in flight so a mid-animation destroy does not drop them.
+    for (const pending of this.pendingFlightEntries.values()) {
+      this.commitHistogramEntry(pending.entry);
+    }
+    this.pendingFlightEntries.clear();
+  }
+
+  /**
+   * Coach / palette order: DCal is placed together with EMCal as "Calorimeters",
+   * so it is not a separate construction step.
+   */
+  private get assemblyCoachSteps(): string[] {
+    return this.ALICE_DETECTOR_MODEL.filter(
+      (path) => !EventDisplayComponent.isDcalAssetPath(path)
+    );
   }
 
   get assemblyCoachHighlightPath(): string | null {
     if (!this.vaCoachOverlayVisible || this.vaCoachWelcomePhase || this.vaCoachVictoryPhase) return null;
-    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex] ?? null;
+    return this.assemblyCoachSteps[this.vaCoachPieceHintIndex] ?? null;
   }
 
   /**
@@ -151,7 +182,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.vaCoachOverlayVisible && this.vaCoachWelcomePhase) {
       return null;
     }
-    return this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex] ?? null;
+    return this.assemblyCoachSteps[this.vaCoachPieceHintIndex] ?? null;
   }
 
   /** True until the multipart detector has been fully assembled this session. */
@@ -172,8 +203,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
-    const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
-    return EventDisplayComponent.detectorPartPresentation(path);
+    const path = this.assemblyCoachSteps[this.vaCoachPieceHintIndex];
+    if (!path) {
+      return { labelKey: 'EVENT_DISPLAY.DETECTOR_LAYER_FALLBACK', labelParams: { name: '' } };
+    }
+    return EventDisplayComponent.assemblyPalettePresentation(path);
   }
 
   /** Real photos for selected detector parts (shown under "Next piece to place"). */
@@ -181,13 +215,17 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     ITS: 'assets/images/detector-parts/ITS.png',
     FIT: 'assets/images/detector-parts/FIT.png',
     TPC: 'assets/images/detector-parts/TPC.png',
+    TRD: 'assets/images/detector-parts/TRD.png',
+    TOF: 'assets/images/detector-parts/TOF.png',
     EMCAL: 'assets/images/detector-parts/EMCAL.png',
+    CALORIMETERS: 'assets/images/detector-parts/EMCAL.png',
+    PHOS: 'assets/images/detector-parts/PHOS.png',
     L3: 'assets/images/detector-parts/L3.png',
   };
 
   /** i18n key under VA_COACH.PART_DESC for the piece currently highlighted (e.g. ITS). */
   get vaCoachCurrentPartDescId(): string | null {
-    const path = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    const path = this.assemblyCoachSteps[this.vaCoachPieceHintIndex];
     if (!path) return null;
     const file = path.replace(/^.*[/\\]/, '').toLowerCase();
     const byFile: Record<string, string> = {
@@ -196,8 +234,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       'tpc.glb': 'TPC',
       'trd.glb': 'TRD',
       'tof.glb': 'TOF',
-      'emcal.glb': 'EMCAL',
-      'dcal.glb': 'DCAL',
+      'emcal.glb': 'CALORIMETERS',
+      'phos.glb': 'PHOS',
       'l3.glb': 'L3',
     };
     return byFile[file] ?? null;
@@ -205,6 +243,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   /** Photo URL for the current assembly piece, when available. */
   get vaCoachCurrentPartPhotoUrl(): string | null {
+    const path = this.assemblyCoachSteps[this.vaCoachPieceHintIndex];
+    if (path && EventDisplayComponent.isEmcalAssetPath(path)) {
+      return StrangenessVisualAnalysisComponent.DETECTOR_PART_PHOTOS.CALORIMETERS;
+    }
     const id = this.vaCoachCurrentPartDescId;
     if (!id) return null;
     return StrangenessVisualAnalysisComponent.DETECTOR_PART_PHOTOS[id] ?? null;
@@ -249,10 +291,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
     if (!this.vaCoachOverlayVisible || this.vaCoachVictoryPhase || this.vaCoachWelcomePhase) return;
-    const expected = this.ALICE_DETECTOR_MODEL[this.vaCoachPieceHintIndex];
+    const steps = this.assemblyCoachSteps;
+    const expected = steps[this.vaCoachPieceHintIndex];
     if (assetPath !== expected) return;
     const next = this.vaCoachPieceHintIndex + 1;
-    if (next >= this.ALICE_DETECTOR_MODEL.length) {
+    if (next >= steps.length) {
       this.vaCoachVictoryPhase = true;
       return;
     }
@@ -311,9 +354,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private loadEvent() {
     let datasetNum;
 
-    if (this.datasetID === SelectDatasetDialogComponent.DEMO) {
+    if (this.datasetID === DATASET_PICKER_DEMO) {
       datasetNum = this.dataService.DEMO_DATASET_ID;
-    } else if (this.datasetID === SelectDatasetDialogComponent.FULL_EVENT) {
+    } else if (this.datasetID === DATASET_PICKER_FULL_EVENT) {
       datasetNum = this.dataService.FULL_DATASET_ID;
     } else {
       datasetNum = this.datasetID;
@@ -329,9 +372,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.dataService.clearVisualAnalysisResults();
     this.datasetID = newDatasetID;
 
-    if (this.datasetID === SelectDatasetDialogComponent.DEMO) {
+    if (this.datasetID === DATASET_PICKER_DEMO) {
       this.maxEvents = this.dataService.EVENTS_IN_DEMO_DATASET;
-    } else if (this.datasetID === SelectDatasetDialogComponent.FULL_EVENT) {
+    } else if (this.datasetID === DATASET_PICKER_FULL_EVENT) {
       this.maxEvents = this.dataService.EVENTS_IN_FULL_DATASET;
     } else {
       this.maxEvents = this.dataService.EVENTS_IN_DATASET;
@@ -400,36 +443,57 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   onAddToHistogram(event: SubmitHistogramEntry) {
     const value: VisualAnalysisResultsEntry = {particle: event.type, mass: event.mass};
 
-    this.dataService.addVisualAnalysisResult(String(this.eventID), value);
-  }
-
-  onHistogramBinIncremented(event: MassHistogramBinIncrementedEvent): void {
-    this.spawnParticleFlight(event.targetX, event.targetY);
-  }
-
-  private spawnParticleFlight(targetX: number, targetY: number): void {
-    const container = this.visualAnalysisContainerRef?.nativeElement;
-    const renderArea = this.eventDisplayHostRef?.nativeElement.querySelector('#render-area') as HTMLElement | null;
-    if (!container || !renderArea) {
+    // Background has no dedicated mass histogram — commit immediately.
+    if (event.type === ParticleType.BACKGROUND) {
+      this.commitHistogramEntry(value);
       return;
     }
 
-    const containerRect = container.getBoundingClientRect();
-    const renderRect = renderArea.getBoundingClientRect();
-    const particle: HistogramFlightParticle = {
-      id: this.nextFlightParticleId++,
-      startX: renderRect.left + renderRect.width / 2 - containerRect.left,
-      startY: renderRect.top + renderRect.height / 2 - containerRect.top,
-      endX: targetX - containerRect.left,
-      endY: targetY - containerRect.top,
-    };
+    const renderArea = this.eventDisplayHostRef?.nativeElement.querySelector('#render-area') as HTMLElement | null;
+    if (!renderArea) {
+      this.commitHistogramEntry(value);
+      return;
+    }
 
-    this.flightParticles = [...this.flightParticles, particle];
-    const timeoutId = window.setTimeout(() => {
-      this.flightParticles = this.flightParticles.filter((item) => item.id !== particle.id);
-      this.flightParticleTimeouts = this.flightParticleTimeouts.filter((item) => item !== timeoutId);
-    }, 850);
-    this.flightParticleTimeouts.push(timeoutId);
+    // Measure at the current scroll position (overlay coords stay valid while we smooth-scroll).
+    const target = this.massHistograms?.previewBinTarget(event.type, event.mass) ?? null;
+    const renderRect = renderArea.getBoundingClientRect();
+    if (!target || renderRect.width <= 0 || renderRect.height <= 0) {
+      this.commitHistogramEntry(value);
+      return;
+    }
+
+    const pendingId = ++this.nextPendingFlightId;
+    this.pendingFlightEntries.set(pendingId, {
+      entry: value,
+      particle: event.type,
+      binIndex: target.binIndex,
+    });
+
+    void this.flightService
+      .fly(
+        { x: renderRect.left + renderRect.width / 2, y: renderRect.top + renderRect.height / 2 },
+        { x: target.targetX, y: target.targetY },
+        { color: FLIGHT_COLORS[event.type] }
+      )
+      .then(() => {
+        const pending = this.pendingFlightEntries.get(pendingId);
+        this.pendingFlightEntries.delete(pendingId);
+        if (!pending) {
+          return;
+        }
+        this.commitHistogramEntry(pending.entry);
+        window.setTimeout(() => {
+          this.massHistograms?.pulseBin(pending.particle, pending.binIndex);
+        }, 40);
+      });
+
+    // Smooth scroll runs in parallel with the flight so the jump is not a hard teleport.
+    this.massHistograms?.scrollHistogramIntoView(event.type);
+  }
+
+  private commitHistogramEntry(value: VisualAnalysisResultsEntry): void {
+    this.dataService.addVisualAnalysisResult(String(this.eventID), value);
   }
 
   onUploadResults() {

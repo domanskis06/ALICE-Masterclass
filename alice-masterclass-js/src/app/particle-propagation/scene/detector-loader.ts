@@ -31,7 +31,6 @@
 import * as THREE from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { DETECTOR_MODEL_BASE_PATH } from '../physics/constants';
-import { stripCadHelperCubes } from '../../shared/three/cad-helper-cubes';
 import { mergeStaticMeshesByMaterial } from '../../shared/three/merge-static-meshes';
 import {
   applyDetectorLayerMaterials,
@@ -337,9 +336,6 @@ function loadOnePart(
       path,
       (gltf: GLTF) => {
         const root = gltf.scene;
-        // Drop Blender/CAD helper boxes before material merge / instancing —
-        // otherwise they get baked into draw calls (visible=false is not enough).
-        stripCadHelperCubes(root);
         const radialInflate = 1 + layerIndex * LAYER_RADIAL_INFLATE_STEP;
         root.scale.setScalar(scale * radialInflate);
         // Lift MCH/DIPO into the ITS/TPC beam frame (see MUON_ARM_BEAM_Y_LIFT_CM).

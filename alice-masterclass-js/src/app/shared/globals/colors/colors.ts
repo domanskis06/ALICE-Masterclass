@@ -10,3 +10,10 @@ export const neonTrackColor = '#FFFFFF';
 export const caloBarColorLight = '#C62828';
 /** EMCal/DCal energy-readout bars — dark / neon scene (brighter red + bloom). */
 export const caloBarColorDark = '#FF3B3B';
+
+/** Mass-histogram bar / flying-particle colors (one hue per strange particle). */
+export const kaonHistogramColor = '#3F51B5';
+export const lambdaHistogramColor = '#7E57C2';
+export const antiLambdaHistogramColor = '#EC407A';
+export const xiHistogramColor = '#00897B';
+export const backgroundHistogramColor = '#78909C';

@@ -60,9 +60,9 @@ export class PropagationScene {
   /** OrbitControls default is 1 — lower values feel slower and less jumpy. */
   private static readonly ORBIT_ROTATE_SPEED = 0.5;
   /** Same pan tuning as `EventDisplayComponent` free-camera mode. */
-  private static readonly PAN_SPEED_FACTOR = 0.005;
-  private static readonly WHEEL_PAN_FACTOR = 0.03;
-  private static readonly MOUSE_DRAG_PAN_FACTOR = 0.0008;
+  private static readonly PAN_SPEED_FACTOR = 0.007;
+  private static readonly WHEEL_PAN_FACTOR = 0.05;
+  private static readonly MOUSE_DRAG_PAN_FACTOR = 0.001;
 
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
@@ -210,10 +210,14 @@ export class PropagationScene {
     if (mode === 'centered') {
       this.controls.enablePan = false;
       this.controls.enableRotate = true;
+      this.controls.enableZoom = true;
       this.controls.target.set(0, 0, 0);
     } else {
+      // Free look: custom WASD / drag / wheel fly. Disable OrbitControls
+      // dolly so it does not fight the wheel handler (opposing directions).
       this.controls.enablePan = true;
       this.controls.enableRotate = false;
+      this.controls.enableZoom = false;
     }
     this.isMousePanning = false;
     this.needsRender = true;
@@ -305,11 +309,14 @@ export class PropagationScene {
   private onWheel = (e: WheelEvent): void => {
     if (this._cameraMode !== 'free') return;
     e.preventDefault();
+    // Fly along the look axis (same as WASD W/S): move camera and target
+    // together so distance stays constant. Scroll up = forward.
     const distance = this.controls.target.distanceTo(this.camera.position);
-    const step = (e.deltaY > 0 ? 1 : -1) * distance * PropagationScene.WHEEL_PAN_FACTOR;
+    const step = (e.deltaY > 0 ? -1 : 1) * distance * PropagationScene.WHEEL_PAN_FACTOR;
     this.panDir.subVectors(this.controls.target, this.camera.position).normalize();
     this.panVec.copy(this.panDir).multiplyScalar(step);
     this.camera.position.add(this.panVec);
+    this.controls.target.add(this.panVec);
     this.needsRender = true;
   };
 

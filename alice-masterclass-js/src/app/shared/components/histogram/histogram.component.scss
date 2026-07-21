@@ -1,11 +1,30 @@
 figure {
   position: relative;
   margin: 0;
+  // Reserve space above the plot for the particle title.
+  padding-top: 32px;
+  // Extra CSS padding so the scaled SVG is not flush with the next row / slider.
+  padding-bottom: 4px;
+}
+
+:host.histogram-x-ticks-rotated figure {
+  padding-bottom: 20px;
 }
 
 :host ::ng-deep svg {
+  display: block;
+  overflow: visible;
+
+  #xAxis text {
+    font-size: 0.75em;
+  }
+
   #bars rect {
     fill: var(--bar-color);
+  }
+
+  #bars rect.bin-landing-pulse {
+    animation: bin-landing-pulse 480ms ease-out;
   }
 
   #yAxisLabel, #xAxisLabel {
@@ -17,23 +36,29 @@ figure {
   }
 }
 
+@keyframes bin-landing-pulse {
+  0% {
+    filter: brightness(1);
+  }
+
+  35% {
+    filter: brightness(1.55) saturate(1.25);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
 .no-interaction {
   pointer-events: none;
 }
 
 #title {
   position: absolute;
-  top: -8px;
+  top: 0;
   left: 0;
   width: 100%;
   text-align: center;
+  line-height: 1;
 }
-
-// #yAxisLabel {
-//   writing-mode: vertical-lr;
-//   transform: rotate(-180deg);
-// }
-
-// #xAxisLabel, #yAxisLabel {
-//   text-align: end;
-// }

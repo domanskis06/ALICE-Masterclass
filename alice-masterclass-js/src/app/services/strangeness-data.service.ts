@@ -9,6 +9,10 @@ export interface CollisionCentralityEntry {
   centrality: CentralityType;
 }
 
+/** UI picker values for special datasets (not server dataset IDs). */
+export const DATASET_PICKER_DEMO = -1;
+export const DATASET_PICKER_FULL_EVENT = -2;
+
 @Injectable({
   providedIn: 'root'
 })
