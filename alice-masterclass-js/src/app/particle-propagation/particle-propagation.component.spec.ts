@@ -243,4 +243,36 @@ describe('ParticlePropagationComponent', () => {
     await waitForBoot();
     expect(() => fixture.destroy()).not.toThrow();
   });
+
+  it('revisit restores detector/field from cache but reopens the welcome dialog without tracks', async () => {
+    await waitForBoot();
+    component.onStartAnimation();
+    await flushAsyncChain();
+    expect(component.phase).toBe('ready');
+    expect(precomputeSpy).toHaveBeenCalledTimes(1);
+
+    const cache = TestBed.inject(PropagationSessionCacheService);
+    fixture.destroy();
+
+    expect(cache.hasSceneAssets).toBe(true);
+    expect(cache.hasStarted).toBe(false);
+    expect(cache.tracks.length).toBe(0);
+
+    dialogOpenSpy.calls.reset();
+    fixture = TestBed.createComponent(ParticlePropagationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await flushAsyncChain(4);
+
+    expect(component.showDetectorSplash).toBe(false);
+    expect(component.phase).toBe('idle');
+    expect(component.hasStarted).toBe(false);
+    expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
+    expect(precomputeSpy).toHaveBeenCalledTimes(1); // no auto-start / no restore of tracks
+
+    component.onStartAnimation();
+    await flushAsyncChain();
+    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(component.phase).toBe('ready');
+  }, 15000);
 });

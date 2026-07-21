@@ -10,7 +10,8 @@
  * tracks starting at the world origin appear in the middle of the detector.
  *
  * First paint is accelerated in two ways:
- * 1. **Progressive waves** — ITS/TPC/L3 show first; calorimeters + muon-arm follow.
+ * 1. **Inside→out reveal** — GLBs prefetch in parallel, then shells fade in
+ *    from the beam pipe outward (BP → ITS → … → L3 → muon arm).
  * 2. **Deferred low-LOD** — high detail attaches immediately; far levels
  *    (Melax-from-merged / InstancedMesh thinning) attach after the first painted
  *    frame (`scheduleDeferredLowLods`).
@@ -42,7 +43,10 @@ import {
   buildOuterMagnetInstanced,
   buildTpcInstanced,
   defaultLayerOpacity,
+  DETECTOR_REVEAL_DURATION_MS,
+  DETECTOR_REVEAL_STAGGER_FRACTION,
   detectorPartLabel,
+  fadeInDetectorPart,
   isBeamPipe,
   isDipo,
   isMch,
@@ -52,6 +56,7 @@ import {
   MUON_AUX_LOD_FAR_DISTANCE,
   MUON_DECIMATE_MIN_VERTICES,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
+  OUTER_MAGNET_LOD_NAME,
   OUTER_MAGNET_SECTOR_KEEP_EVERY,
   setDetectorPartOpacity,
   TPC_FINE_DETAIL_KEEP_EVERY,
@@ -60,11 +65,12 @@ import {
 } from './detector-appearance';
 
 /**
- * ALICE detector shell for Particle Propagation (inner -> outer).
- * Includes the VA assembly, forward muon-system layers (MCH / ABSO / DIPO),
- * and the accelerator beam pipe (BP).
+ * ALICE detector shell for Particle Propagation (inner → outer).
+ * Beam pipe first, then barrel layers, L3 yoke, then forward muon arm
+ * (absorber → dipole → chambers).
  */
 export const DETECTOR_PART_PATHS: readonly string[] = [
+  `${DETECTOR_MODEL_BASE_PATH}/BP.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/its.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/tpc.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/TRD.glb`,
@@ -73,19 +79,26 @@ export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/DCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/PHOS.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/L3.glb`,
-  `${DETECTOR_MODEL_BASE_PATH}/MCH.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/ABSO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DIPO.glb`,
-  `${DETECTOR_MODEL_BASE_PATH}/BP.glb`,
+  `${DETECTOR_MODEL_BASE_PATH}/MCH.glb`,
 ];
 
-/** First-paint core: beam axis + outer magnet yoke. */
+/**
+ * Inner barrel used for the first usable frame (and optional
+ * {@link DetectorProgressiveOptions.waitBeforeSecondary} gate).
+ */
+export function isDetectorInnerPart(assetPath: string): boolean {
+  return /(^|[/\\])(bp|its|tpc)\.glb($|\?)/i.test(assetPath);
+}
+
+/** @deprecated Prefer {@link isDetectorInnerPart}; kept for older call sites/tests. */
 export function isDetectorCorePart(assetPath: string): boolean {
   return /(^|[/\\])(its|tpc|l3)\.glb($|\?)/i.test(assetPath);
 }
 
 /** Per-slider clamp for the layer radial inflate (reduces z-fighting between shells). */
-const LAYER_RADIAL_INFLATE_STEP = 0.0009;
+const LAYER_RADIAL_INFLATE_STEP = 0.0015;
 
 /**
  * Barrel ITS/TPC GLBs are authored with the beam pipe ~+30 cm in Y, while
@@ -121,10 +134,18 @@ export interface DetectorProgressiveOptions {
   deferLowLod?: boolean;
   signal?: AbortSignal;
   /**
-   * When set, calorimeters / BP / muon-arm wait until this resolves (e.g. after
-   * the welcome dialog closes) so the main thread stays free for UI.
+   * When set, outer shells (TRD…MCH) wait until this resolves after the inner
+   * barrel (BP/ITS/TPC) has been revealed — e.g. after the welcome dialog.
    */
   waitBeforeSecondary?: () => Promise<void>;
+  /** Fade each shell in from opacity 0 (default true). */
+  animateReveal?: boolean;
+  /** Per-shell fade duration; default {@link DETECTOR_REVEAL_DURATION_MS}. */
+  revealDurationMs?: number;
+  /** Host should re-render the WebGL canvas (called during fades). */
+  onRevealFrame?: () => void;
+  /** Fired after each part is attached (before/while its fade runs). */
+  onPart?: (model: DetectorModel, part: DetectorPart) => void;
   onWave: (model: DetectorModel, wave: DetectorLoadWave) => void;
 }
 
@@ -168,7 +189,7 @@ function buildOuterMagnetLod(
   low.userData = { ...userData, lodLevel: 'low' };
 
   const lod = new THREE.LOD();
-  lod.name = 'l3-magnet-lod';
+  lod.name = OUTER_MAGNET_LOD_NAME;
   lod.userData = { ...userData };
   lod.addLevel(high, 0);
   lod.addLevel(low, OUTER_MAGNET_LOD_FAR_DISTANCE);
@@ -373,6 +394,10 @@ function loadOnePart(
  * the origin while ITS/TPC (the visual "tube") are systematically offset in the
  * authored GLBs (~+30 cm in Y). Centering on ITS/TPC is what puts the collision
  * vertex at the middle of the pipe.
+ *
+ * Intentionally ignores BP: the cut beam-pipe mesh is not centered on the
+ * interaction point, so using it (e.g. when it loads first in the inside→out
+ * reveal) would shift the whole detector along Z relative to tracks / field lines.
  */
 function beamAxisReference(parts: DetectorPart[]): THREE.Object3D | null {
   const prefer = [/\/its\.glb$/i, /\/tpc\.glb$/i, /\/l3\.glb$/i];
@@ -380,7 +405,7 @@ function beamAxisReference(parts: DetectorPart[]): THREE.Object3D | null {
     const hit = parts.find((p) => re.test(p.assetPath));
     if (hit) return hit.root;
   }
-  return parts[0]?.root ?? null;
+  return null;
 }
 
 /**
@@ -414,14 +439,49 @@ function appendLoadedParts(
   parts: DetectorPart[],
   paths: readonly string[],
   roots: Array<THREE.Object3D | null>,
-  darkMode: boolean
-): void {
+  darkMode: boolean,
+  startOpacity = -1
+): DetectorPart[] {
+  const added: DetectorPart[] = [];
   roots.forEach((root, i) => {
     if (!root) return;
     const assetPath = paths[i];
     applyDetectorDarkMode(root, darkMode);
+    if (startOpacity >= 0) {
+      setDetectorPartOpacity(root, startOpacity);
+    }
     group.add(root);
-    parts.push({ assetPath, label: detectorPartLabel(assetPath), root });
+    const part = { assetPath, label: detectorPartLabel(assetPath), root };
+    parts.push(part);
+    added.push(part);
+  });
+  return added;
+}
+
+function readTargetOpacity(root: THREE.Object3D): number {
+  let found: number | null = null;
+  root.traverse((obj) => {
+    if (found !== null || !(obj as THREE.Mesh).isMesh) return;
+    const raw = (obj as THREE.Mesh).material;
+    const mat = Array.isArray(raw) ? raw[0] : raw;
+    const base = (mat as THREE.Material | undefined)?.userData?.['baseOpacity'];
+    if (typeof base === 'number' && Number.isFinite(base)) found = base;
+  });
+  return found ?? 0.75;
+}
+
+function delayMs(ms: number, signal?: AbortSignal): Promise<void> {
+  if (ms <= 0 || signal?.aborted) return Promise.resolve();
+  return new Promise((resolve) => {
+    const id = setTimeout(() => resolve(), ms);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(id);
+        resolve();
+      },
+      { once: true }
+    );
   });
 }
 
@@ -530,9 +590,9 @@ export async function loadDetectorModel(
 }
 
 /**
- * Progressive detector load: emits a core wave (ITS/TPC/L3) as soon as those
- * GLBs are ready, then a complete wave once calorimeters + muon-arm join the
- * same recentered group. Melax low-LOD is deferred by default.
+ * Progressive detector load: GLBs prefetch in parallel within each wave, then
+ * shells attach and fade in **inside → out** (path order). Emits `core` after
+ * the inner barrel (BP/ITS/TPC), then `complete` when the full assembly is in.
  */
 export async function loadDetectorModelProgressive(
   paths: readonly string[] = DETECTOR_PART_PATHS,
@@ -542,9 +602,14 @@ export async function loadDetectorModelProgressive(
   const darkMode = options.darkMode ?? true;
   const deferLowLod = options.deferLowLod ?? true;
   const signal = options.signal;
+  const animateReveal = options.animateReveal !== false;
+  const revealDurationMs = options.revealDurationMs ?? DETECTOR_REVEAL_DURATION_MS;
+  const staggerMs = animateReveal
+    ? Math.round(revealDurationMs * DETECTOR_REVEAL_STAGGER_FRACTION)
+    : 0;
 
-  const corePaths = paths.filter(isDetectorCorePart);
-  const secondaryPaths = paths.filter((p) => !isDetectorCorePart(p));
+  const innerPaths = paths.filter(isDetectorInnerPart);
+  const outerPaths = paths.filter((p) => !isDetectorInnerPart(p));
   const totalLayers = paths.length;
   const indexInFull = (path: string): number => {
     const i = paths.indexOf(path);
@@ -555,36 +620,88 @@ export async function loadDetectorModelProgressive(
   const group = new THREE.Group();
   group.name = 'particle-propagation-detector';
   const parts: DetectorPart[] = [];
+  let recentered = false;
+  let coreEmitted = false;
+  const fadeJobs: Promise<void>[] = [];
 
-  const loadWave = async (wavePaths: readonly string[]): Promise<void> => {
-    if (signal?.aborted || wavePaths.length === 0) return;
-    const roots = await Promise.all(
-      wavePaths.map((path) =>
-        loadOnePart(loader, path, scale, indexInFull(path), totalLayers, deferLowLod, darkMode)
-      )
-    );
-    if (signal?.aborted) return;
-    appendLoadedParts(group, parts, wavePaths, roots, darkMode);
+  const snapshot = (): DetectorModel => ({ group, parts: parts.slice() });
+
+  const maybeRecenter = (): void => {
+    if (recentered) return;
+    if (!beamAxisReference(parts)) return;
+    recenterOnBeamAxis(group, parts);
+    freezeStaticTransforms(group);
+    recentered = true;
   };
 
-  await loadWave(corePaths);
-  if (signal?.aborted) return { group, parts };
+  const revealWave = async (wavePaths: readonly string[]): Promise<void> => {
+    if (signal?.aborted || wavePaths.length === 0) return;
 
-  recenterOnBeamAxis(group, parts);
-  freezeStaticTransforms(group);
-  options.onWave({ group, parts: parts.slice() }, 'core');
+    // Prefetch the whole wave in parallel; reveal stays strictly ordered.
+    const loadPromises = wavePaths.map((path) =>
+      loadOnePart(loader, path, scale, indexInFull(path), totalLayers, deferLowLod, darkMode)
+    );
+
+    for (let i = 0; i < wavePaths.length; i++) {
+      if (signal?.aborted) return;
+      const root = await loadPromises[i];
+      if (!root) continue;
+
+      const added = appendLoadedParts(group, parts, [wavePaths[i]], [root], darkMode);
+      const part = added[0];
+      if (!part) continue;
+
+      maybeRecenter();
+      if (!recentered) freezeStaticTransforms(part.root);
+
+      options.onPart?.(snapshot(), part);
+
+      if (animateReveal) {
+        const target = readTargetOpacity(part.root);
+        const fade = fadeInDetectorPart(part.root, target, {
+          durationMs: revealDurationMs,
+          signal,
+          onFrame: options.onRevealFrame,
+        });
+        fadeJobs.push(fade);
+        if (staggerMs > 0 && i < wavePaths.length - 1) {
+          await delayMs(staggerMs, signal);
+        }
+      } else {
+        options.onRevealFrame?.();
+      }
+
+      if (!coreEmitted && innerPaths.every((p) => parts.some((part) => part.assetPath === p))) {
+        coreEmitted = true;
+        options.onWave(snapshot(), 'core');
+      }
+    }
+  };
+
+  await revealWave(innerPaths);
+  if (signal?.aborted) {
+    await Promise.all(fadeJobs);
+    return { group, parts };
+  }
+
+  if (!coreEmitted && parts.length > 0) {
+    coreEmitted = true;
+    options.onWave(snapshot(), 'core');
+  }
 
   if (options.waitBeforeSecondary) {
     await options.waitBeforeSecondary();
-    if (signal?.aborted) return { group, parts };
+    if (signal?.aborted) {
+      await Promise.all(fadeJobs);
+      return { group, parts };
+    }
   }
 
-  await loadWave(secondaryPaths);
+  await revealWave(outerPaths);
+  await Promise.all(fadeJobs);
   if (signal?.aborted) return { group, parts };
 
-  // Group position already pins the ITS beam axis — do not re-recenter (would
-  // jump the core). Just freeze any newly attached secondary graphs.
   freezeStaticTransforms(group);
-  options.onWave({ group, parts: parts.slice() }, 'complete');
+  options.onWave(snapshot(), 'complete');
   return { group, parts };
 }

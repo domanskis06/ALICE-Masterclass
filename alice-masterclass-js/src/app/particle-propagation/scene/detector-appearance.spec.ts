@@ -28,8 +28,11 @@ import {
   MAX_PART_OPACITY,
   MIN_PART_OPACITY,
   OUTER_MAGNET_DEFAULT_OPACITY,
+  OUTER_MAGNET_HIDE_NEAR_DISTANCE,
+  OUTER_MAGNET_SHOW_NEAR_DISTANCE,
   setDetectorPartOpacity,
   setDetectorPartVisibility,
+  fadeInDetectorPart,
   thinOuterMagnetSectors,
   thinTpcFineDetail,
 } from './detector-appearance';
@@ -103,6 +106,11 @@ describe('defaultLayerOpacity', () => {
     expect(defaultLayerOpacity('assets/models/alice components/L3.glb', 7, 8)).toBe(
       OUTER_MAGNET_DEFAULT_OPACITY
     );
+  });
+
+  it('exports near-hide distances inside the outer magnet with hysteresis', () => {
+    expect(OUTER_MAGNET_HIDE_NEAR_DISTANCE).toBeLessThan(OUTER_MAGNET_SHOW_NEAR_DISTANCE);
+    expect(OUTER_MAGNET_HIDE_NEAR_DISTANCE).toBeCloseTo(7.2, 5);
   });
 
   it('defaults the beam pipe to BEAM_PIPE_DEFAULT_OPACITY (30%)', () => {
@@ -498,6 +506,26 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(1);
     expect(mat.depthWrite).toBe(true);
     expect(mat.depthTest).toBe(true);
+  });
+});
+
+describe('fadeInDetectorPart', () => {
+  it('animates opacity from 0 to the target and stores baseOpacity', async () => {
+    const part = makePart();
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/its.glb';
+    applyDetectorLayerMaterials(part, 0.75, 1);
+    setDetectorPartOpacity(part, 0.75);
+
+    const frames: number[] = [];
+    await fadeInDetectorPart(part, 0.75, {
+      durationMs: 50,
+      onFrame: () => frames.push(firstMaterial(part).opacity),
+    });
+
+    expect(frames.length).toBeGreaterThan(1);
+    expect(frames[0]).toBeLessThan(0.75);
+    expect(firstMaterial(part).opacity).toBeCloseTo(0.75, 5);
+    expect(firstMaterial(part).userData['baseOpacity']).toBeCloseTo(0.75, 5);
   });
 });
 

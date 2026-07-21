@@ -73,6 +73,22 @@ export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
  */
 export const OUTER_MAGNET_LOD_FAR_DISTANCE = 7;
 
+/**
+ * Hide L3 when the orbit distance drops to this (world units). ~10% closer
+ * than the previous 8 wu threshold so the yoke stays visible a bit longer
+ * while zooming into the barrel.
+ */
+export const OUTER_MAGNET_HIDE_NEAR_DISTANCE = 7.2;
+
+/**
+ * Re-show L3 once the camera pulls back past this distance (hysteresis so the
+ * yoke does not flicker at the hide threshold).
+ */
+export const OUTER_MAGNET_SHOW_NEAR_DISTANCE = 8.1;
+
+/** Scene-graph name of the L3 {@link THREE.LOD} root built by the detector loader. */
+export const OUTER_MAGNET_LOD_NAME = 'l3-magnet-lod';
+
 /** Sector mesh name families that make up the L3 yoke ring. */
 const OUTER_MAGNET_SECTOR_FAMILY_RE = /^(Mesh_[123])/;
 
@@ -842,7 +858,9 @@ export function cloneDetectorSubtree(root: THREE.Object3D): THREE.Object3D {
  */
 export function applyDetectorLayerMaterials(root: THREE.Object3D, opacity: number, layerIndex: number): void {
   const layerRenderOrderBase = layerIndex * RENDER_ORDER_LAYER_STRIDE;
-  const layerOffset = -(layerIndex + 1) * 2;
+  // Stronger per-layer bias than the old ×2 — linear or log depth both benefit
+  // when translucent ITS/TPC sit in front of opaque ABSO.
+  const layerOffset = -(layerIndex + 1) * 4;
   const assetPath = String(root.userData?.['detectorAssetPath'] ?? '');
   const beamPipe = isBeamPipe(assetPath);
   // Paint BP after inner shells so the thin tube wins tie-breaks at the bore.
@@ -909,11 +927,26 @@ export const BEAM_PIPE_DARK_EMISSIVE_INTENSITY = 0.28;
  */
 export function setDetectorPartOpacity(root: THREE.Object3D, value: number): number {
   const opacity = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, value));
-  const transparent = opacity < 0.995;
+  applyDetectorPartOpacity(root, opacity, true);
+  return opacity;
+}
+
+/**
+ * Like {@link setDetectorPartOpacity} but allows opacity in [0, 1] (no UI
+ * slider floor). Used while fading a part in from invisible.
+ * @param updateBase When false, keeps `userData.baseOpacity` (slider target).
+ */
+export function applyDetectorPartOpacity(
+  root: THREE.Object3D,
+  opacity: number,
+  updateBase: boolean
+): void {
+  const o = Math.max(0, Math.min(1, opacity));
+  const transparent = o < 0.995;
   const beamPipe = isBeamPipe(String(root.userData?.['detectorAssetPath'] ?? ''));
-  root.traverse((o) => {
-    if (!(o as THREE.Mesh).isMesh) return;
-    const mesh = o as THREE.Mesh;
+  root.traverse((obj) => {
+    if (!(obj as THREE.Mesh).isMesh) return;
+    const mesh = obj as THREE.Mesh;
     // mergeStaticMeshesByMaterial creates new Mesh instances and resets their
     // renderOrder to 0. Restore BP's foreground order on the final meshes.
     if (beamPipe) {
@@ -924,14 +957,86 @@ export function setDetectorPartOpacity(root: THREE.Object3D, value: number): num
     for (const mat of mats) {
       const m = mat as THREE.Material & { userData: Record<string, unknown> };
       m.transparent = transparent;
-      m.opacity = opacity;
+      m.opacity = o;
       m.depthWrite = beamPipe ? !transparent : true;
       m.depthTest = true;
-      m.userData = { ...(m.userData || {}), baseOpacity: opacity };
+      if (updateBase) {
+        m.userData = { ...(m.userData || {}), baseOpacity: o };
+      } else {
+        m.userData = { ...(m.userData || {}) };
+      }
       m.needsUpdate = true;
     }
   });
-  return opacity;
+}
+
+/** Default fade-in duration for one detector shell during progressive load. */
+export const DETECTOR_REVEAL_DURATION_MS = 240;
+
+/** Start the next shell's fade after this fraction of the previous fade. */
+export const DETECTOR_REVEAL_STAGGER_FRACTION = 0.55;
+
+function easeOutCubic(t: number): number {
+  return 1 - (1 - t) ** 3;
+}
+
+/**
+ * Fades a detector part from opacity 0 up to `targetOpacity` (UI-clamped).
+ * `userData.baseOpacity` is set to the target immediately so sliders stay correct.
+ */
+export function fadeInDetectorPart(
+  root: THREE.Object3D,
+  targetOpacity: number,
+  options: {
+    durationMs?: number;
+    signal?: AbortSignal;
+    onFrame?: () => void;
+  } = {}
+): Promise<void> {
+  const target = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, targetOpacity));
+  const durationMs = options.durationMs ?? DETECTOR_REVEAL_DURATION_MS;
+
+  // Record the slider target even while the mesh is still invisible.
+  root.traverse((obj) => {
+    if (!(obj as THREE.Mesh).isMesh) return;
+    const raw = (obj as THREE.Mesh).material;
+    const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    for (const mat of mats) {
+      const m = mat as THREE.Material & { userData: Record<string, unknown> };
+      m.userData = { ...(m.userData || {}), baseOpacity: target };
+    }
+  });
+
+  if (durationMs <= 0 || options.signal?.aborted) {
+    setDetectorPartOpacity(root, target);
+    options.onFrame?.();
+    return Promise.resolve();
+  }
+
+  applyDetectorPartOpacity(root, 0, false);
+
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const tick = (now: number): void => {
+      if (options.signal?.aborted) {
+        setDetectorPartOpacity(root, target);
+        options.onFrame?.();
+        resolve();
+        return;
+      }
+      const t = Math.min(1, (now - start) / durationMs);
+      applyDetectorPartOpacity(root, target * easeOutCubic(t), false);
+      options.onFrame?.();
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        setDetectorPartOpacity(root, target);
+        options.onFrame?.();
+        resolve();
+      }
+    };
+    requestAnimationFrame(tick);
+  });
 }
 
 /** Boosts saturation + self-emissive glow (dark) or restores base colour (light). */

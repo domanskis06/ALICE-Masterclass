@@ -4,6 +4,7 @@ import {
   DetectorModel,
   attachDeferredLowLods,
   isDetectorCorePart,
+  isDetectorInnerPart,
   loadDetectorModel,
   loadDetectorModelProgressive,
 } from './detector-loader';
@@ -36,8 +37,9 @@ describe('loadDetectorModel', () => {
     });
   });
 
-  it('lists the PP detector assembly including forward muon-system layers', () => {
+  it('lists the PP detector assembly inside→out (BP → barrel → L3 → muon arm)', () => {
     expect(DETECTOR_PART_PATHS).toEqual([
+      'assets/models/alice components/BP.glb',
       'assets/models/alice components/its.glb',
       'assets/models/alice components/tpc.glb',
       'assets/models/alice components/TRD.glb',
@@ -46,19 +48,20 @@ describe('loadDetectorModel', () => {
       'assets/models/alice components/DCAL.glb',
       'assets/models/alice components/PHOS.glb',
       'assets/models/alice components/L3.glb',
-      'assets/models/alice components/MCH.glb',
       'assets/models/alice components/ABSO.glb',
       'assets/models/alice components/DIPO.glb',
-      'assets/models/alice components/BP.glb',
+      'assets/models/alice components/MCH.glb',
     ]);
   });
 
-  it('marks ITS/TPC/L3 as the progressive core wave', () => {
+  it('marks BP/ITS/TPC as the inner reveal wave', () => {
+    expect(isDetectorInnerPart('assets/models/alice components/BP.glb')).toBe(true);
+    expect(isDetectorInnerPart('assets/models/alice components/its.glb')).toBe(true);
+    expect(isDetectorInnerPart('assets/models/alice components/tpc.glb')).toBe(true);
+    expect(isDetectorInnerPart('assets/models/alice components/L3.glb')).toBe(false);
+    expect(isDetectorInnerPart('assets/models/alice components/TRD.glb')).toBe(false);
     expect(isDetectorCorePart('assets/models/alice components/its.glb')).toBe(true);
-    expect(isDetectorCorePart('assets/models/alice components/tpc.glb')).toBe(true);
     expect(isDetectorCorePart('assets/models/alice components/L3.glb')).toBe(true);
-    expect(isDetectorCorePart('assets/models/alice components/TRD.glb')).toBe(false);
-    expect(isDetectorCorePart('assets/models/alice components/MCH.glb')).toBe(false);
     expect(isDetectorCorePart('assets/models/alice components/BP.glb')).toBe(false);
   });
 
@@ -300,12 +303,13 @@ describe('loadDetectorModel', () => {
 });
 
 describe('loadDetectorModelProgressive + deferred Melax', () => {
-  it('emits core (ITS/TPC/L3) before the complete assembly', async () => {
+  it('reveals the inner barrel (BP/ITS/TPC) before the complete assembly', async () => {
     const waves: Array<{ wave: string; count: number }> = [];
     const model = await loadDetectorModelProgressive(DETECTOR_PART_PATHS, {
       scale: 1e-2,
       darkMode: true,
       deferLowLod: true,
+      animateReveal: false,
       onWave: (m, wave) => waves.push({ wave, count: m.parts.length }),
     });
 
@@ -314,26 +318,28 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
     expect(waves[1].count).toBe(DETECTOR_PART_PATHS.length);
     expect(model.parts.length).toBe(DETECTOR_PART_PATHS.length);
 
-    const corePaths = model.parts.slice(0, 3).map((p) => p.assetPath);
-    expect(corePaths.every(isDetectorCorePart)).toBe(true);
+    const innerPaths = model.parts.slice(0, 3).map((p) => p.assetPath);
+    expect(innerPaths.every(isDetectorInnerPart)).toBe(true);
+    expect(model.parts.map((p) => p.assetPath)).toEqual([...DETECTOR_PART_PATHS]);
   }, 90000);
 
-  it('waits for waitBeforeSecondary before emitting the complete wave', async () => {
+  it('waits for waitBeforeSecondary before revealing outer shells', async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
     const waves: string[] = [];
-    // Tiny path set keeps this fast: one core + one secondary.
+    // Tiny path set keeps this fast: one inner (BP) + one outer (L3).
     const paths = [
-      DETECTOR_PART_PATHS.find((p) => /l3\.glb$/i.test(p))!,
       DETECTOR_PART_PATHS.find((p) => /bp\.glb$/i.test(p))!,
+      DETECTOR_PART_PATHS.find((p) => /l3\.glb$/i.test(p))!,
     ];
 
     const loading = loadDetectorModelProgressive(paths, {
       scale: 1e-2,
       darkMode: true,
       deferLowLod: true,
+      animateReveal: false,
       waitBeforeSecondary: () => gate,
       onWave: (_m, wave) => waves.push(wave),
     });
@@ -347,6 +353,49 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
     await loading;
     expect(waves).toEqual(['core', 'complete']);
   }, 60000);
+
+  it('fades each part in inside→out order when animateReveal is on', async () => {
+    const order: string[] = [];
+    const paths = [
+      DETECTOR_PART_PATHS.find((p) => /bp\.glb$/i.test(p))!,
+      DETECTOR_PART_PATHS.find((p) => /its\.glb$/i.test(p))!,
+    ];
+
+    await loadDetectorModelProgressive(paths, {
+      scale: 1e-2,
+      darkMode: true,
+      deferLowLod: true,
+      animateReveal: true,
+      revealDurationMs: 40,
+      onPart: (_m, part) => order.push(part.assetPath),
+      onWave: () => undefined,
+    });
+
+    expect(order).toEqual(paths);
+  }, 60000);
+
+  it('recenters on ITS even when BP is revealed first (cut pipe is not the IP)', async () => {
+    const model = await loadDetectorModelProgressive(DETECTOR_PART_PATHS, {
+      scale: 1e-2,
+      darkMode: true,
+      deferLowLod: true,
+      animateReveal: false,
+      onWave: () => undefined,
+    });
+
+    model.group.updateMatrixWorld(true);
+    const its = model.parts.find((p) => /\/its\.glb$/i.test(p.assetPath));
+    expect(its).toBeDefined();
+    const center = new THREE.Box3().setFromObject(its!.root).getCenter(new THREE.Vector3());
+    expect(Math.abs(center.x)).toBeLessThan(0.05);
+    expect(Math.abs(center.y)).toBeLessThan(0.05);
+    expect(Math.abs(center.z)).toBeLessThan(0.05);
+
+    // BP's authored cut is Z-asymmetric — its AABB must NOT pin the assembly.
+    const bp = model.parts.find((p) => /\/bp\.glb$/i.test(p.assetPath));
+    const bpCenter = new THREE.Box3().setFromObject(bp!.root).getCenter(new THREE.Vector3());
+    expect(Math.abs(bpCenter.z)).toBeGreaterThan(0.5);
+  }, 90000);
 
   it('defers Melax low-LOD until attachDeferredLowLods', async () => {
     const deferred = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2, true, true);

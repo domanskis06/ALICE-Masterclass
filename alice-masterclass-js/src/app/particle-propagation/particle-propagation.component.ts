@@ -44,6 +44,7 @@ import { PropagationTimeline } from './scene/propagation-timeline';
 import {
   defaultDetectorPartVisible,
   detectorPartAccentColor,
+  isOuterMagnet,
   setDetectorPartOpacity,
   setDetectorPartVisibility,
 } from './scene/detector-appearance';
@@ -67,7 +68,6 @@ import {
 } from './scene/timeline-constants';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { PropagationWelcomeDialogComponent } from './welcome-dialog/propagation-welcome-dialog.component';
-import { revealTimes } from './physics/momentum-reveal-timing';
 import { PropagationSessionCacheService } from './propagation-session-cache.service';
 
 export type ParticlePropagationPhase =
@@ -220,6 +220,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     }));
     this.selectedEventIndex = this.eventOptions[0]?.id ?? 0;
     this.magneticField.setFieldStrengthT(this.fieldStrengthT);
+    // Warm cache → no boot splash; set before the first CD to avoid NG0100.
+    if (this.sessionCache.hasSceneAssets) {
+      this.showDetectorSplash = false;
+    }
   }
 
   get controlsEnabled(): boolean {
@@ -325,7 +329,12 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   onDetectorPartVisibility(part: DetectorPartUiModel, visible: boolean): void {
     part.visible = visible;
     const root = this.detectorPartRootByPath.get(part.assetPath);
-    if (root) setDetectorPartVisibility(root, visible);
+    if (isOuterMagnet(part.assetPath)) {
+      // L3 visibility is owned by the scene (auto-hide on orbit / near-TRD zoom).
+      this.scene?.setOuterMagnetUserVisible(visible);
+    } else if (root) {
+      setDetectorPartVisibility(root, visible);
+    }
     this.requestRender();
   }
 
@@ -471,10 +480,19 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
         .loadProgressive(PropagationScene.objectScale, this.isDarkMode, {
           signal,
           deferLowLod: true,
+          animateReveal: true,
+          onRevealFrame: () => this.requestRender(),
+          onPart: (model) => {
+            if (this.destroyed || !this.scene || signal.aborted) return;
+            this.applyDetectorModel(model);
+            if (model.group.parent !== this.scene.detectorGroup) {
+              this.scene.detectorGroup.add(model.group);
+            }
+          },
           onWave: (model, wave) => {
             if (this.destroyed || !this.scene || signal.aborted) return;
             this.applyDetectorModel(model);
-            if (wave === 'core' && model.group.parent !== this.scene.detectorGroup) {
+            if (model.group.parent !== this.scene.detectorGroup) {
               this.scene.detectorGroup.add(model.group);
             }
             if (wave === 'complete') {
@@ -512,7 +530,13 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     }
     this.detectorPartsForUi = model.parts.map((part) => {
       const visible = defaultDetectorPartVisible(part.assetPath);
-      setDetectorPartVisibility(part.root, visible);
+      if (isOuterMagnet(part.assetPath)) {
+        // Preference only — root may not be under detectorGroup yet; visibility
+        // is applied on the next render() / after the group is attached.
+        this.scene?.setOuterMagnetUserVisible(visible);
+      } else {
+        setDetectorPartVisibility(part.root, visible);
+      }
       return {
         assetPath: part.assetPath,
         label: part.label,
@@ -631,12 +655,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.sessionCache.collisionIntro?.group.removeFromParent();
     }
 
-    cache.hasStarted = this.hasStarted;
-    cache.tracks = this.tracks;
-    cache.minTimeMs = this.minTimeMs;
-    cache.maxTimeMs = this.maxTimeMs;
-    cache.currentTimeMs = this.currentTimeMs;
-    cache.tracksNeedRecompute = this.tracksNeedRecompute;
+    // Keep detector + field + UI prefs warm; drop tracks so the next visit
+    // always gets the welcome dialog and a fresh RK4 / animation from t=0.
+    cache.clearTracksOnly();
     cache.ui = {
       selectedEventIndex: this.selectedEventIndex,
       isDarkMode: this.isDarkMode,
@@ -651,7 +672,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       playbackSpeed: this.playbackSpeed,
     };
 
-    // Dispose only fat-line GPU resources; keep BufferedTrack payloads in the cache.
+    // Dispose only fat-line GPU resources; BufferedTrack payloads are not kept.
     this.disposeTrackLinesOnly();
     this.timeline = null;
     this.detectorModel = null;
@@ -689,7 +710,11 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
         for (const part of this.detectorPartsForUi) {
           const root = this.detectorPartRootByPath.get(part.assetPath);
           if (!root) continue;
-          setDetectorPartVisibility(root, part.visible);
+          if (isOuterMagnet(part.assetPath)) {
+            scene.setOuterMagnetUserVisible(part.visible);
+          } else {
+            setDetectorPartVisibility(root, part.visible);
+          }
           setDetectorPartOpacity(root, part.opacity);
         }
       }
@@ -711,69 +736,24 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
 
     this.showDetectorSplash = false;
 
-    if (cache.hasPlayableSession) {
-      this.hasStarted = true;
-      this.tracksNeedRecompute = cache.tracksNeedRecompute;
-      this.tracks = cache.tracks;
-      this.minTimeMs = cache.minTimeMs;
-      this.maxTimeMs = cache.maxTimeMs;
-      this.currentTimeMs = cache.currentTimeMs;
-      void this.rebuildTimelineFromCachedTracks();
-    } else {
-      this.hasStarted = false;
-      this.phase = 'idle';
-      this.openWelcomeDialogOnce();
-    }
+    // Scene assets are warm, but every revisit starts idle with the welcome /
+    // Start dialog — tracks are never restored across navigations.
+    this.hasStarted = false;
+    this.tracks = [];
+    this.tracksNeedRecompute = false;
+    this.timeline = null;
+    this.minTimeMs = 0;
+    this.maxTimeMs = 1;
+    this.currentTimeMs = 0;
+    this.isPlaying = false;
+    this.phase = 'idle';
+    // Defer dialog past the current CD cycle (opened from ngAfterViewInit).
+    queueMicrotask(() => {
+      if (!this.destroyed) this.openWelcomeDialogOnce();
+    });
 
     this.requestRender();
     this.cdr.markForCheck();
-  }
-
-  private async rebuildTimelineFromCachedTracks(): Promise<void> {
-    try {
-      const collisionIntro = await this.ensureCollisionIntro();
-      if (this.destroyed || !this.scene) return;
-
-      const host = this.sceneHostRef?.nativeElement;
-      this.lines = createTrackLines(this.tracks, PropagationScene.objectScale, {
-        resolution: {
-          width: host?.clientWidth || 1,
-          height: host?.clientHeight || 1,
-        },
-      });
-      this.scene.tracksGroup.add(...this.lines);
-
-      let timelineMaxNs = 0;
-      for (const t of this.tracks) {
-        if (t.pointCount > 0) {
-          const times = revealTimes(t);
-          timelineMaxNs = Math.max(timelineMaxNs, times[t.pointCount - 1]);
-        }
-      }
-      if (timelineMaxNs <= 0) timelineMaxNs = 1;
-
-      this.timeline = new PropagationTimeline(
-        collisionIntro,
-        this.scene.tracksGroup,
-        this.tracks,
-        this.lines,
-        timelineMaxNs,
-        { nsPerMs: DEFAULT_NS_PER_MS, onCollisionMoment: () => this.triggerCollisionFlash() }
-      );
-      this.minTimeMs = this.timeline.minTimeMs;
-      this.maxTimeMs = this.timeline.maxTimeMs;
-      this.currentTimeMs = Math.min(
-        Math.max(this.currentTimeMs, this.minTimeMs),
-        this.maxTimeMs
-      );
-      this.timeline.applyTime(this.currentTimeMs);
-      this.phase = 'ready';
-      this.isPlaying = false;
-      this.cdr.markForCheck();
-      this.requestRender();
-    } catch (err) {
-      if (!this.destroyed) this.onPipelineError(err as Error);
-    }
   }
 
   // ---------------------------------------------------------------------
