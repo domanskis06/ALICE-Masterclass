@@ -18,8 +18,10 @@
  * L3 is special-cased: sector families become {@link THREE.InstancedMesh} (no
  * material merge — that creates one giant transparent blob and hurts fill-rate)
  * wrapped in a distance {@link THREE.LOD}. TPC / MCH use InstancedMesh families
- * for repeated panels. ITS / ABSO / DIPO build far LODs from the already-merged
- * high level so draw-call counts stay comparable. TRD / TOF / calorimeters / BP
+ * for repeated panels. BP uses a distance LOD (gltfpack ~20k high + Melax far).
+ * ITS / ABSO / DIPO stay on the full merged mesh (ITS is mild-gltfpacked ~50k
+ * tris of thin concentric shells; ABSO ~6k; DIPO ~750 — Melax far-LOD shreds
+ * those silhouettes at the default orbit distance). TRD / TOF / calorimeters
  * still merge by material.
  * It does NOT import `EventDisplayComponent` (god-node isolation, per
  * `.cursor/rules/architecture.mdc`).
@@ -33,25 +35,22 @@ import { mergeStaticMeshesByMaterial } from '../../shared/three/merge-static-mes
 import {
   applyDetectorLayerMaterials,
   applyDetectorDarkMode,
+  BEAM_PIPE_LOD_FAR_DISTANCE,
+  BEAM_PIPE_LOW_VERTEX_KEEP,
   buildLowLodFromMergedHigh,
   buildMchInstanced,
   buildOuterMagnetInstanced,
   buildTpcInstanced,
   defaultLayerOpacity,
   detectorPartLabel,
-  isAuxiliaryMuonPart,
+  isBeamPipe,
   isDipo,
-  isIts,
   isMch,
   isOuterMagnet,
   isTpc,
-  ITS_LOD_FAR_DISTANCE,
-  ITS_SHELL_VERTEX_KEEP,
   MCH_VERTEX_KEEP,
   MUON_AUX_LOD_FAR_DISTANCE,
-  MUON_AUX_VERTEX_KEEP,
   MUON_DECIMATE_MIN_VERTICES,
-  DIPO_VERTEX_KEEP,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
   OUTER_MAGNET_SECTOR_KEEP_EVERY,
   setDetectorPartOpacity,
@@ -121,6 +120,11 @@ export interface DetectorProgressiveOptions {
   /** Skip Melax low-LOD at load; call {@link scheduleDeferredLowLods} after paint. */
   deferLowLod?: boolean;
   signal?: AbortSignal;
+  /**
+   * When set, calorimeters / BP / muon-arm wait until this resolves (e.g. after
+   * the welcome dialog closes) so the main thread stays free for UI.
+   */
+  waitBeforeSecondary?: () => Promise<void>;
   onWave: (model: DetectorModel, wave: DetectorLoadWave) => void;
 }
 
@@ -257,49 +261,38 @@ function buildMchLod(
 }
 
 /**
- * Melax far LOD built from the already-merged high level — draw-call count
- * stays ≈ high (never re-expands the CAD graph).
+ * Beam pipe: merged gltfpack ~20k high level + deferred Melax far level.
+ * The authored cut length is preserved in the asset; we only drop tessellation.
  */
-function buildMergedMelaxLod(options: {
-  name: string;
-  root: THREE.Object3D;
-  opacity: number;
-  layerIndex: number;
-  userData: Record<string, unknown>;
-  farDistance: number;
-  deferLowLod: boolean;
-  darkMode: boolean;
-  vertexKeep: number;
-  minVertices?: number;
-}): THREE.LOD {
-  const {
-    name,
-    root,
-    opacity,
-    layerIndex,
-    userData,
-    farDistance,
-    deferLowLod,
-    darkMode,
-    vertexKeep,
-    minVertices = 64,
-  } = options;
-
-  const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
+function buildBpLod(
+  root: THREE.Object3D,
+  opacity: number,
+  layerIndex: number,
+  userData: Record<string, unknown>,
+  deferLowLod: boolean,
+  darkMode: boolean
+): THREE.LOD {
+  applyDetectorLayerMaterials(root, opacity, layerIndex);
+  const high = mergeStaticMeshesByMaterial(root);
+  high.userData = { ...userData, lodLevel: 'high' };
 
   const lod = new THREE.LOD();
-  lod.name = name;
+  lod.name = 'bp-lod';
   lod.userData = { ...userData };
   lod.addLevel(high, 0);
+  setDetectorPartOpacity(high, opacity);
 
-  const buildLow = (): THREE.Object3D =>
-    buildLowLodFromMergedHigh(high, vertexKeep, minVertices);
+  const buildLow = (): THREE.Object3D => {
+    const low = buildLowLodFromMergedHigh(high, BEAM_PIPE_LOW_VERTEX_KEEP, 64);
+    setDetectorPartOpacity(low, opacity);
+    return low;
+  };
 
   if (!deferLowLod) {
-    lod.addLevel(buildLow(), farDistance);
+    lod.addLevel(buildLow(), BEAM_PIPE_LOD_FAR_DISTANCE);
   } else {
     lod.userData[PENDING_LOW_LOD_KEY] = {
-      farDistance,
+      farDistance: BEAM_PIPE_LOD_FAR_DISTANCE,
       darkMode,
       build: buildLow,
     } satisfies PendingLowLod;
@@ -356,56 +349,13 @@ function loadOnePart(
           resolve(buildMchLod(root, opacity, layerIndex, userData, deferLowLod, darkMode));
           return;
         }
-        if (isIts(path)) {
-          resolve(
-            buildMergedMelaxLod({
-              name: 'its-lod',
-              root,
-              opacity,
-              layerIndex,
-              userData,
-              farDistance: ITS_LOD_FAR_DISTANCE,
-              deferLowLod,
-              darkMode,
-              vertexKeep: ITS_SHELL_VERTEX_KEEP,
-            })
-          );
+        if (isBeamPipe(path)) {
+          resolve(buildBpLod(root, opacity, layerIndex, userData, deferLowLod, darkMode));
           return;
         }
-        if (isDipo(path)) {
-          resolve(
-            buildMergedMelaxLod({
-              name: 'dipo-lod',
-              root,
-              opacity,
-              layerIndex,
-              userData,
-              farDistance: MUON_AUX_LOD_FAR_DISTANCE,
-              deferLowLod,
-              darkMode,
-              vertexKeep: DIPO_VERTEX_KEEP,
-              minVertices: MUON_DECIMATE_MIN_VERTICES,
-            })
-          );
-          return;
-        }
-        if (isAuxiliaryMuonPart(path)) {
-          resolve(
-            buildMergedMelaxLod({
-              name: 'muon-aux-lod',
-              root,
-              opacity,
-              layerIndex,
-              userData,
-              farDistance: MUON_AUX_LOD_FAR_DISTANCE,
-              deferLowLod,
-              darkMode,
-              vertexKeep: MUON_AUX_VERTEX_KEEP,
-              minVertices: MUON_DECIMATE_MIN_VERTICES,
-            })
-          );
-          return;
-        }
+        // ITS / ABSO / DIPO: no Melax LOD. ITS is mild-gltfpacked thin-shell CAD
+        // (~50k tris); ABSO ~6k; DIPO ~750 box/tube. Melax at the default orbit
+        // distance shreds those silhouettes — MCH / BP keep their own LODs.
         resolve(finalizePartMeshes(root, opacity, layerIndex, userData));
       },
       undefined,
@@ -623,6 +573,11 @@ export async function loadDetectorModelProgressive(
   recenterOnBeamAxis(group, parts);
   freezeStaticTransforms(group);
   options.onWave({ group, parts: parts.slice() }, 'core');
+
+  if (options.waitBeforeSecondary) {
+    await options.waitBeforeSecondary();
+    if (signal?.aborted) return { group, parts };
+  }
 
   await loadWave(secondaryPaths);
   if (signal?.aborted) return { group, parts };

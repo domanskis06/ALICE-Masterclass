@@ -15,6 +15,7 @@ import { CollisionIntro } from './scene/collision-intro';
 import { DetectorLoaderService } from './scene/detector-loader.service';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { ParticlePropagationComponent } from './particle-propagation.component';
+import { PropagationSessionCacheService } from './propagation-session-cache.service';
 
 /** Real fetch of `proton.glb` is orthogonal to what this component-level spec is testing. */
 function stubCollisionIntro(): CollisionIntro {
@@ -65,7 +66,10 @@ describe('ParticlePropagationComponent', () => {
       fieldStrengthT: 0.5,
       fieldStrengthScale: 1,
       fieldSolenoidPolarity: 1 as 1 | -1,
-      load: jasmine.createSpy('load').and.returnValue(Promise.resolve()),
+      load: jasmine.createSpy('load').and.callFake(() => {
+        fakeMagneticField.isLoaded = true;
+        return Promise.resolve();
+      }),
       setFieldStrengthT: jasmine.createSpy('setFieldStrengthT').and.callFake((t: number) => {
         fakeMagneticField.fieldStrengthT = t;
         fakeMagneticField.fieldStrengthScale = t / 0.5;
@@ -94,14 +98,18 @@ describe('ParticlePropagationComponent', () => {
     const emptyModel = { group: new THREE.Group(), parts: [] as [] };
     const fakeDetectorLoader = {
       load: () => Promise.resolve(emptyModel),
-      loadProgressive: (
+      loadProgressive: async (
         _scale: number,
         _darkMode: boolean,
-        options: { onWave: (model: typeof emptyModel, wave: 'core' | 'complete') => void }
+        options: {
+          onWave: (model: typeof emptyModel, wave: 'core' | 'complete') => void;
+          waitBeforeSecondary?: () => Promise<void>;
+        }
       ) => {
         options.onWave(emptyModel, 'core');
+        await options.waitBeforeSecondary?.();
         options.onWave(emptyModel, 'complete');
-        return Promise.resolve(emptyModel);
+        return emptyModel;
       },
     };
 
@@ -123,17 +131,30 @@ describe('ParticlePropagationComponent', () => {
   });
 
   beforeEach(() => {
+    TestBed.inject(PropagationSessionCacheService).clearAll();
     fixture = TestBed.createComponent(ParticlePropagationComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
+  /** Boot splash must finish before Start is accepted (`isBusy` while loading). */
+  async function waitForBoot(): Promise<void> {
+    await flushAsyncChain(12);
+    expect(component.showDetectorSplash).toBe(false);
+  }
+
   afterEach(() => {
     fixture.destroy();
+    TestBed.inject(PropagationSessionCacheService).clearAll();
   });
 
-  it('creates the component, its scene, and opens the welcome dialog once', () => {
+  it('shows a detector splash then opens the welcome dialog once assets are ready', async () => {
     expect(component).toBeTruthy();
+    expect(component.showDetectorSplash).toBe(true);
+    expect(dialogOpenSpy).not.toHaveBeenCalled();
+
+    await waitForBoot();
+
     expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
     expect(component.phase).toBe('idle');
   });
@@ -142,9 +163,11 @@ describe('ParticlePropagationComponent', () => {
     expect(component.instructionsComponent).toBe(InstructionsComponent);
   });
 
-  it('onStartAnimation() drives the pipeline through loading-field -> loading-event -> precomputing -> ready', async () => {
+  it('onStartAnimation() drives the pipeline through loading-event -> precomputing -> ready', async () => {
+    await waitForBoot();
     component.onStartAnimation();
-    expect(component.phase).toBe('loading-field');
+    // Field map was loaded during boot, so the pipeline skips loading-field.
+    expect(component.phase).toBe('loading-event');
 
     await flushAsyncChain();
 
@@ -152,14 +175,16 @@ describe('ParticlePropagationComponent', () => {
     expect(component.phase).toBe('ready');
   }, 15000);
 
-  it('does not restart an already in-flight precompute pipeline', () => {
+  it('does not restart an already in-flight precompute pipeline', async () => {
+    await waitForBoot();
     component.onStartAnimation();
-    expect(component.phase).toBe('loading-field');
+    expect(component.phase).toBe('loading-event');
     component.onStartAnimation();
-    expect(precomputeSpy).not.toHaveBeenCalled(); // still stuck at loading-field; second call is a no-op.
+    expect(precomputeSpy).not.toHaveBeenCalled(); // still in-flight; second call is a no-op.
   });
 
   it('onFieldStrengthChange() updates the field but defers RK4 until Replay', async () => {
+    await waitForBoot();
     const magneticField = TestBed.inject(MagneticFieldService) as unknown as {
       setFieldStrengthT: jasmine.Spy;
       fieldStrengthT: number;
@@ -188,6 +213,7 @@ describe('ParticlePropagationComponent', () => {
   }, 15000);
 
   it('onSolenoidReversedChange() clears tracks and defers RK4 until Replay', async () => {
+    await waitForBoot();
     const magneticField = TestBed.inject(MagneticFieldService) as unknown as {
       setSolenoidPolarity: jasmine.Spy;
       fieldSolenoidPolarity: 1 | -1;
@@ -213,7 +239,8 @@ describe('ParticlePropagationComponent', () => {
     expect(component.tracksNeedRecompute).toBe(false);
   }, 15000);
 
-  it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', () => {
+  it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', async () => {
+    await waitForBoot();
     expect(() => fixture.destroy()).not.toThrow();
   });
 });

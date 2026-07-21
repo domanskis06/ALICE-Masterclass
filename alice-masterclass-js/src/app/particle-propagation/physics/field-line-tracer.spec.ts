@@ -64,12 +64,11 @@ describe('traceFieldLines', () => {
     }
   });
 
-  it('L3 ring seeds use 24×15° azimuths and ~56 cm radial step in TRD–L3', () => {
+  it('L3 ring seeds fill the TRD–L3 gap with room to flare inside the LUT', () => {
     const rings = __testing__.buildL3RingSeeds('sparse');
     // mid (2×6) + TRD–L3 gap (4×24) = 108 at sparse
     expect(rings.length).toBe(108);
 
-    // Mid radii [280, 340] interleave with TRD–L3 [322, …] — match by rounded R.
     const trdL3Radii = new Set([322, 378, 434, 490]);
     const trdL3 = rings.filter((s) => trdL3Radii.has(Math.round(Math.hypot(s.x, s.y))));
     expect(trdL3.length).toBe(96);
@@ -77,12 +76,12 @@ describe('traceFieldLines', () => {
     const radii = [...new Set(trdL3.map((s) => Math.round(Math.hypot(s.x, s.y))))].sort(
       (a, b) => a - b
     );
-    // Outermost stays inside Chebyshev map edge (R ≤ 500).
     expect(radii).toEqual([322, 378, 434, 490]);
     for (let i = 1; i < radii.length; i++) {
       expect(radii[i] - radii[i - 1]).toBe(56);
     }
-    expect(Math.max(...radii)).toBeLessThanOrEqual(__testing__.L3_SEED_RADIUS_CM);
+    expect(Math.max(...radii)).toBe(__testing__.L3_SEED_RADIUS_CM);
+    expect(Math.max(...radii)).toBeLessThanOrEqual(490);
 
     const angles = new Set<number>();
     for (const seed of trdL3) {
@@ -96,6 +95,64 @@ describe('traceFieldLines', () => {
     );
   });
 
+  it('barrel seeds include both the inner disc and TRD–L3 rings', () => {
+    const barrel = __testing__.buildBarrelSeeds(__testing__.SEED_GRID_STEP_CM.sparse, 'sparse');
+    const inner = __testing__.buildInnerBarrelSeeds(__testing__.SEED_GRID_STEP_CM.sparse);
+    const rings = __testing__.buildL3RingSeeds('sparse');
+    expect(barrel.length).toBe(inner.length + rings.length);
+    const trdL3Radii = new Set([322, 378, 434, 490]);
+    const inGap = barrel.filter((s) => trdL3Radii.has(Math.round(Math.hypot(s.x, s.y))));
+    expect(inGap.length).toBe(96);
+  });
+
+  it('field-line walk radius allows end-cap flaring past the Chebyshev bore edge', () => {
+    expect(__testing__.BARREL_BOUNDS.maxRadiusCm).toBe(__testing__.FIELD_LINE_MAX_RADIUS_CM);
+    expect(__testing__.BARREL_WITH_DIPOLE_BOUNDS.maxRadiusCm).toBe(
+      __testing__.FIELD_LINE_MAX_RADIUS_CM
+    );
+    expect(__testing__.FIELD_LINE_MAX_RADIUS_CM).toBeGreaterThan(500);
+  });
+
+  it('end-cap fringing can carry a streamline past r = 498 cm', () => {
+    // Strong Br that grows with |z| so an outer-disc seed flares past the old
+    // hard cap (498 cm) — only possible with FIELD_LINE_MAX_RADIUS_CM.
+    const flaringField = (pos: Vec3): Vec3 => {
+      const r = Math.hypot(pos.x, pos.y);
+      const br = 0.55 * Math.min(1, Math.abs(pos.z) / 350);
+      const bx = r > 1e-6 ? (br * pos.x) / r : 0;
+      const by = r > 1e-6 ? (br * pos.y) / r : 0;
+      return { x: bx, y: by, z: 0.35 };
+    };
+    const { lines } = traceFieldLines(flaringField, { density: 'sparse' });
+    expect(lines.length).toBeGreaterThan(0);
+    let maxR = 0;
+    for (const line of lines) {
+      for (let i = 0; i < line.pointCount; i++) {
+        maxR = Math.max(maxR, Math.hypot(line.positions[i * 3], line.positions[i * 3 + 1]));
+      }
+    }
+    expect(maxR).toBeGreaterThan(498);
+    expect(maxR).toBeLessThanOrEqual(__testing__.FIELD_LINE_MAX_RADIUS_CM + 1);
+  });
+
+  it('stores continuous |B| magnitudes along each streamline for the heatmap', () => {
+    // Plateau 0.5 T with a smooth axial fall-off — colours must track the same
+    // sampled |B| on every vertex (no separate outer-seed magnitude path).
+    const taperedBz = (pos: Vec3): Vec3 => {
+      const fall = Math.max(0.2, 1 - Math.abs(pos.z) / 1200);
+      return { x: 0, y: 0, z: 0.5 * fall };
+    };
+    const { lines } = traceFieldLines(taperedBz, { density: 'sparse' });
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      expect(line.magnitudes.length).toBe(line.pointCount);
+      for (let i = 0; i < line.pointCount; i++) {
+        const z = line.positions[i * 3 + 2];
+        const expected = 0.5 * Math.max(0.2, 1 - Math.abs(z) / 1200);
+        expect(line.magnitudes[i]).toBeCloseTo(expected, 5);
+      }
+    }
+  });
   it('barrel lines reach near the L3 magnet ends in a uniform Bz field', () => {
     const { lines } = traceFieldLines(uniformZField, { density: 'sparse' });
     let maxAbsZ = 0;

@@ -8,7 +8,7 @@ import {
   loadDetectorModelProgressive,
 } from './detector-loader';
 import {
-  ITS_LOD_FAR_DISTANCE,
+  BEAM_PIPE_LOD_FAR_DISTANCE,
   MAX_LOW_TO_HIGH_DRAWABLE_RATIO,
   MUON_AUX_LOD_FAR_DISTANCE,
   OUTER_MAGNET_DEFAULT_OPACITY,
@@ -155,6 +155,33 @@ describe('loadDetectorModel', () => {
     expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
   });
 
+  it('wraps BP in a distance LOD with a Melax far level (cut length kept in asset)', () => {
+    const bp = model.parts.find((p) => /bp\.glb$/i.test(p.assetPath));
+    expect(bp).toBeDefined();
+    expect(bp!.root).toBeInstanceOf(THREE.LOD);
+    const lod = bp!.root as THREE.LOD;
+    expect(lod.levels.length).toBe(2);
+    expect(lod.levels[0].distance).toBe(0);
+    expect(lod.levels[1].distance).toBe(BEAM_PIPE_LOD_FAR_DISTANCE);
+
+    const triCount = (root: THREE.Object3D): number => {
+      let tris = 0;
+      root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const g = mesh.geometry as THREE.BufferGeometry;
+        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+      });
+      return tris;
+    };
+    const highTris = triCount(lod.levels[0].object);
+    const lowTris = triCount(lod.levels[1].object);
+    // gltfpack ~20k high; Melax far must be lighter and stay in the 10–30k band for high.
+    expect(highTris).toBeGreaterThan(5_000);
+    expect(highTris).toBeLessThan(35_000);
+    expect(lowTris).toBeLessThan(highTris);
+  });
+
   it('keeps low-LOD drawable counts within MAX_LOW_TO_HIGH_DRAWABLE_RATIO of high', () => {
     for (const part of model.parts) {
       const lod = part.root as THREE.LOD;
@@ -167,29 +194,13 @@ describe('loadDetectorModel', () => {
     }
   });
 
-  it('wraps ITS in a distance LOD with a lighter far level (decimated Mesh_0)', () => {
+  it('keeps ITS at full merged detail (no Melax far LOD)', () => {
     const its = model.parts.find((p) => /its\.glb$/i.test(p.assetPath));
     expect(its).toBeDefined();
-    expect(its!.root).toBeInstanceOf(THREE.LOD);
-    const lod = its!.root as THREE.LOD;
-    expect(lod.levels.length).toBe(2);
-    expect(lod.levels[0].distance).toBe(0);
-    expect(lod.levels[1].distance).toBe(ITS_LOD_FAR_DISTANCE);
-
-    const triCount = (root: THREE.Object3D): number => {
-      let tris = 0;
-      root.traverse((obj) => {
-        const mesh = obj as THREE.Mesh;
-        if (!mesh.isMesh) return;
-        const g = mesh.geometry as THREE.BufferGeometry;
-        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
-      });
-      return tris;
-    };
-    expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
+    expect(its!.root).not.toBeInstanceOf(THREE.LOD);
   });
 
-  it('wraps MCH / ABSO / DIPO in distance LODs with lighter far levels', () => {
+  it('wraps MCH in a distance LOD; ABSO / DIPO stay full merged meshes', () => {
     const triCount = (root: THREE.Object3D): number => {
       let tris = 0;
       root.traverse((obj) => {
@@ -203,15 +214,19 @@ describe('loadDetectorModel', () => {
       return tris;
     };
 
-    for (const re of [/mch\.glb$/i, /abso\.glb$/i, /dipo\.glb$/i]) {
+    const mch = model.parts.find((p) => /mch\.glb$/i.test(p.assetPath));
+    expect(mch).toBeDefined();
+    expect(mch!.label.length).toBeGreaterThan(0);
+    expect(mch!.root).toBeInstanceOf(THREE.LOD);
+    const lod = mch!.root as THREE.LOD;
+    expect(lod.levels.length).toBe(2);
+    expect(lod.levels[1].distance).toBe(MUON_AUX_LOD_FAR_DISTANCE);
+    expect(triCount(lod.levels[1].object)).toBeLessThanOrEqual(triCount(lod.levels[0].object));
+
+    for (const re of [/abso\.glb$/i, /dipo\.glb$/i]) {
       const part = model.parts.find((p) => re.test(p.assetPath));
       expect(part).toBeDefined();
-      expect(part!.label.length).toBeGreaterThan(0);
-      expect(part!.root).toBeInstanceOf(THREE.LOD);
-      const lod = part!.root as THREE.LOD;
-      expect(lod.levels.length).toBe(2);
-      expect(lod.levels[1].distance).toBe(MUON_AUX_LOD_FAR_DISTANCE);
-      expect(triCount(lod.levels[1].object)).toBeLessThanOrEqual(triCount(lod.levels[0].object));
+      expect(part!.root).not.toBeInstanceOf(THREE.LOD);
     }
   });
 
@@ -303,14 +318,50 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
     expect(corePaths.every(isDetectorCorePart)).toBe(true);
   }, 90000);
 
+  it('waits for waitBeforeSecondary before emitting the complete wave', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const waves: string[] = [];
+    // Tiny path set keeps this fast: one core + one secondary.
+    const paths = [
+      DETECTOR_PART_PATHS.find((p) => /l3\.glb$/i.test(p))!,
+      DETECTOR_PART_PATHS.find((p) => /bp\.glb$/i.test(p))!,
+    ];
+
+    const loading = loadDetectorModelProgressive(paths, {
+      scale: 1e-2,
+      darkMode: true,
+      deferLowLod: true,
+      waitBeforeSecondary: () => gate,
+      onWave: (_m, wave) => waves.push(wave),
+    });
+
+    for (let i = 0; i < 40 && !waves.includes('core'); i++) {
+      await new Promise<void>((r) => setTimeout(r, 50));
+    }
+    expect(waves).toEqual(['core']);
+
+    release();
+    await loading;
+    expect(waves).toEqual(['core', 'complete']);
+  }, 60000);
+
   it('defers Melax low-LOD until attachDeferredLowLods', async () => {
     const deferred = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2, true, true);
+
+    // ITS / ABSO / DIPO no longer use Melax far LOD — stay full merged meshes.
     const its = deferred.parts.find((p) => /its\.glb$/i.test(p.assetPath));
     expect(its).toBeDefined();
-    expect((its!.root as THREE.LOD).levels.length).toBe(1);
+    expect(its!.root).not.toBeInstanceOf(THREE.LOD);
 
     const tpc = deferred.parts.find((p) => /tpc\.glb$/i.test(p.assetPath));
     expect((tpc!.root as THREE.LOD).levels.length).toBe(1);
+
+    const bp = deferred.parts.find((p) => /bp\.glb$/i.test(p.assetPath));
+    expect(bp!.root).toBeInstanceOf(THREE.LOD);
+    expect((bp!.root as THREE.LOD).levels.length).toBe(1);
 
     // L3 thinning is sync (no Melax) — both levels present immediately.
     const l3 = deferred.parts.find((p) => /l3\.glb$/i.test(p.assetPath));
@@ -318,8 +369,8 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
 
     const attached = attachDeferredLowLods(deferred.group);
     expect(attached).toBeGreaterThan(0);
-    expect((its!.root as THREE.LOD).levels.length).toBe(2);
     expect((tpc!.root as THREE.LOD).levels.length).toBe(2);
+    expect((bp!.root as THREE.LOD).levels.length).toBe(2);
     expect(attachDeferredLowLods(deferred.group)).toBe(0);
 
     deferred.group.traverse((obj) => {

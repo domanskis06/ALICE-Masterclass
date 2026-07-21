@@ -11,7 +11,12 @@
  * momentum, no curvature term) — hence its own small RK4 stepper here rather
  * than reusing `rk4-integrator.ts`.
  *
- * Seeds sit on a disc / rings at `z = 0` (TPC bore + sparse L3 / TRD–L3 rings).
+ * Seeds sit on a disc / rings at `z = 0` (TPC bore + mid / TRD–L3 rings).
+ * Outer rings match `main` so the TRD→L3 gap mid-volume stays populated.
+ * Walk radius is soft ({@link FIELD_LINE_MAX_RADIUS_CM} past the Chebyshev
+ * edge) so those outer lines can still flare at the end-caps instead of
+ * stopping as straight stubs; `|B| → 0` outside the LUT ends the walk.
+ *
  * Tracing both ways along B̂ sweeps the solenoid; when
  * {@link FieldLineTracerOptions.includeDipoleTransition} is on, the same
  * streamlines continue past the solenoid exit into the dipole LUT (variant 1 —
@@ -23,10 +28,8 @@
  * - a **transverse** seed layer on \(x \approx 0\) inside the dipole (lines along
  *   \(B_x\), the “vertical” brush on Fig. 19). Neither densifies the z = 0 disc.
  *
- * Each polyline vertex also stores `|B|` (Tesla) for downstream colour-mapping.
- *
- * Note: the Chebyshev solenoid map ends at R ≈ 500 cm. Seeds and walk bounds
- * stay slightly inside that edge so a tiny Br does not step into B = 0.
+ * Each polyline vertex also stores `|B|` (Tesla) for downstream colour-mapping
+ * so the heatmap is continuous along every streamline (same sampler / scale).
  */
 
 import { MAX_DETECTOR_Z_CM, SOL_MIN_Z } from './constants';
@@ -97,16 +100,10 @@ interface WalkBounds {
 }
 
 /**
- * Dense seed disc (TPC / inner barrel). Outer L3 volume uses a separate sparse
- * ring set so the yoke is not flooded with streamlines.
+ * Dense seed disc (TPC / inner barrel). Outer free bore uses separate sparse
+ * rings so the yoke gap stays populated without flooding the TPC brush.
  */
 const INNER_SEED_RADIUS_CM = 220;
-
-/**
- * Outer seed radius (cm). Kept ~10 cm inside the Chebyshev solenoid map edge
- * (R ≤ 500 cm) so the first RK4 step does not walk into B = 0.
- */
-const L3_SEED_RADIUS_CM = 490;
 
 /**
  * Inner disc seed-grid spacing per density preset, in cm.
@@ -124,10 +121,18 @@ const SEED_GRID_STEP_CM: Record<FieldLineDensity, number> = {
 const MID_RING_RADII_CM = [280, 340] as const;
 
 /**
- * Rings filling the TRD → L3 free-bore gap (cm). Radial step 56 cm
- * (= previous ~40 cm × 1.4); outermost at {@link L3_SEED_RADIUS_CM}.
+ * Rings filling the TRD → L3 free-bore gap (cm). Same layout as `main`
+ * (radial step 56 cm; outermost at {@link L3_SEED_RADIUS_CM}) so the gap
+ * mid-volume stays visibly populated.
  */
 const TRD_L3_RING_RADII_CM = [322, 378, 434, 490] as const;
+
+/**
+ * Outermost TRD–L3 seed radius (cm) — must match the last entry of
+ * {@link TRD_L3_RING_RADII_CM}. Kept ~10 cm inside the Chebyshev map edge
+ * (R ≤ 500 cm); end-cap flaring uses {@link FIELD_LINE_MAX_RADIUS_CM}.
+ */
+const L3_SEED_RADIUS_CM = 490;
 
 /** Azimuthal samples on mid rings (TPC→TRD). */
 const MID_RING_ANGLE_COUNT: Record<FieldLineDensity, number> = {
@@ -136,8 +141,7 @@ const MID_RING_ANGLE_COUNT: Record<FieldLineDensity, number> = {
 };
 
 /**
- * Azimuthal samples on TRD–L3 rings: 24 × 15° (full clock). Combined with
- * 4 radii this doubles the previous sparse TRD–L3 budget (4×12 → 4×24).
+ * Azimuthal samples on TRD–L3 rings: 24 × 15° (full clock).
  */
 const TRD_L3_RING_ANGLE_COUNT: Record<FieldLineDensity, number> = {
   sparse: 24,
@@ -181,12 +185,20 @@ const DIPOLE_CLIP_Z_CM = -560;
 const DIPOLE_KEEP_DEEP_Z_CM = -720;
 
 /**
+ * Soft radial ceiling for field-line *visualization* (cm). Past the Chebyshev
+ * solenoid edge (R ≈ 500 cm) the LUT returns B ≈ 0 and the walk stops on
+ * {@link WalkBounds.minFieldT}; this limit only prevents runaway steps when
+ * end-cap fringing carries a streamline slightly outside the mapped bore.
+ * (Particle RK4 tracking still uses the tighter L3 free-bore cutoffs.)
+ */
+const FIELD_LINE_MAX_RADIUS_CM = 620;
+
+/**
  * Barrel / L3 walk bounds (dipole toggle off). z ≈ ±{@link MAX_DETECTOR_Z_CM}
- * ≈ L3 magnet ends (same cap as RK4 track rendering);
- * r stays inside the Chebyshev map (R ≤ 500 cm).
+ * ≈ L3 magnet ends (same cap as RK4 track rendering).
  */
 const BARREL_BOUNDS: WalkBounds = {
-  maxRadiusCm: 498,
+  maxRadiusCm: FIELD_LINE_MAX_RADIUS_CM,
   maxZPosCm: MAX_DETECTOR_Z_CM,
   maxZNegCm: MAX_DETECTOR_Z_CM,
   minFieldT: 0.01,
@@ -197,7 +209,7 @@ const BARREL_BOUNDS: WalkBounds = {
  * matched to the LUT (~±330 cm) so arcs can flare inside the mapped volume.
  */
 const BARREL_WITH_DIPOLE_BOUNDS: WalkBounds = {
-  maxRadiusCm: 498,
+  maxRadiusCm: FIELD_LINE_MAX_RADIUS_CM,
   dipoleHalfExtentCm: 325,
   maxZPosCm: MAX_DETECTOR_Z_CM,
   maxZNegCm: 1700,
@@ -211,7 +223,7 @@ const BARREL_WITH_DIPOLE_BOUNDS: WalkBounds = {
  * dipole without densifying the z = 0 barrel disc.
  */
 const DIPOLE_PAPER_BOUNDS: WalkBounds = {
-  maxRadiusCm: 498,
+  maxRadiusCm: FIELD_LINE_MAX_RADIUS_CM,
   dipoleHalfExtentCm: 325,
   maxZPosCm: MAX_DETECTOR_Z_CM,
   maxZNegCm: 1700,
@@ -405,7 +417,7 @@ function pushRingSeeds(
 
 /**
  * Sparse rings filling the L3 free volume outside the TPC disc. TRD–L3 rings
- * sample 24 azimuths every 15° with ~56 cm radial spacing.
+ * sample 24 azimuths every 15° so the gap between TRD and the yoke is visible.
  */
 function buildL3RingSeeds(density: FieldLineDensity): Vec3[] {
   const seeds: Vec3[] = [];
@@ -670,6 +682,7 @@ export const __testing__ = {
   INNER_SEED_RADIUS_CM,
   L3_SEED_RADIUS_CM,
   TRD_L3_AZIMUTH_OFFSET_RAD,
+  FIELD_LINE_MAX_RADIUS_CM,
   DIPOLE_BEND_MIN_SPAN_CM,
   DIPOLE_CLIP_Z_CM,
   DIPOLE_PAPER_SEED_Z_CM,

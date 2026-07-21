@@ -17,8 +17,8 @@ import { applyDetectorDarkMode } from './detector-appearance';
 /**
  * Default camera pose: a 3/4 "down the barrel" view (looking into the L3 magnet
  * opening from front-left-above), matching the module's reference screenshot.
- * Z-dominant so the beam axis recedes into the frame. Applied on every open of
- * `/particle-propagation` (no session persistence) — see plan §6.
+ * Z-dominant so the beam axis recedes into the frame. Detector / field / tracks
+ * may be re-attached from the in-memory session cache on revisit.
  */
 const INITIAL_CAMERA_POSITION = new THREE.Vector3(-2.8, 2.4, 11.5);
 const INITIAL_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);

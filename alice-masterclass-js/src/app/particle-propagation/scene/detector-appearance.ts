@@ -16,12 +16,12 @@
  * material merge) inside a distance {@link THREE.LOD}, with a default opacity of
  * {@link OUTER_MAGNET_DEFAULT_OPACITY}. TPC uses a distance LOD whose far level
  * thins fine detail and decimates the heavy sector panels (see
- * {@link simplifyTpcForLowLod}). ITS uses a distance LOD whose far level
- * decimates the heavy shell mesh (Mesh_0). MCH / ABSO / DIPO use the same
- * distance-LOD pattern with Melax on the heavier Mesh_* panels. The beam pipe
- * (BP) uses the same translucent shell path as ITS/TPC but keeps a higher
- * render order and slightly stronger dark-mode emissive so the thin grey tube
- * stays readable inside the barrel.
+ * {@link simplifyTpcForLowLod}). MCH uses a distance LOD with Melax on the
+ * heavier Mesh_* panels. ITS / ABSO / DIPO stay at full merged detail — Melax
+ * shreds thin-shell / boxy CAD silhouettes at the default orbit distance. The
+ * beam pipe (BP) is a gltfpack-simplified cut tube (~20k tris) with a Melax far
+ * LOD; it keeps a higher render order and slightly stronger dark-mode emissive
+ * so the thin grey tube stays readable inside the barrel.
  */
 
 import * as THREE from 'three';
@@ -44,6 +44,18 @@ export const OUTER_MAGNET_DEFAULT_OPACITY = DETECTOR_DEFAULT_OPACITY;
 
 /** Default beam-pipe opacity (matches the sidebar starting value). */
 export const BEAM_PIPE_DEFAULT_OPACITY = 0.3;
+
+/**
+ * Camera distance (world units) at which BP switches from the authored ~20k-tri
+ * mesh to the Melax far level. Matches L3/TPC/MCH so the default orbit uses low.
+ */
+export const BEAM_PIPE_LOD_FAR_DISTANCE = 7;
+
+/**
+ * Fraction of vertices to keep when building the BP far LOD from the merged
+ * high level (~20k → ~8k). Cheap at deferred attach time.
+ */
+export const BEAM_PIPE_LOW_VERTEX_KEEP = 0.4;
 
 /** Paint the pipe after every other detector shell. */
 const BEAM_PIPE_RENDER_ORDER = 500_000;
@@ -88,14 +100,14 @@ const TPC_FINE_DETAIL_FAMILY_RE = /^(Mesh_15|Mesh_17)(?:\.|$)/;
 const TPC_HEAVY_PANEL_FAMILY_RE = /^(Mesh_22|Mesh_26)(?:\.|$)/;
 
 /**
- * Fraction of vertices to keep when decimating the heavy ITS shell (Mesh_0 —
- * ~26k tris, roughly half the ITS budget). 0.45 keeps the silhouette readable.
+ * Legacy Melax keep-ratio for ITS (unused in the loader). The coloured ITS GLB
+ * is thin concentric CAD shells — Melax at the default orbit shreds the rings,
+ * so ITS renders at full merged detail (mild-gltfpacked asset) without a far LOD.
  */
-export const ITS_SHELL_VERTEX_KEEP = 0.45;
+export const ITS_SHELL_VERTEX_KEEP = 1;
 
 /**
- * Camera distance (world units) at which ITS switches from full to decimated LOD.
- * Matches L3/TPC so the default orbit pose uses all low levels together.
+ * Legacy ITS far-LOD distance (unused — Melax LOD disabled for ITS, like DIPO).
  */
 export const ITS_LOD_FAR_DISTANCE = 7;
 
@@ -109,20 +121,24 @@ const ITS_SHELL_FAMILY_RE = /^(Mesh_0)(?:\.|$)/;
 export const MCH_VERTEX_KEEP = 0.55;
 
 /**
- * Fraction of vertices to keep when decimating DIPO yoke panels. Dipole is
- * mostly boxes/tubes — 0.5 keeps the bend silhouette readable.
+ * Legacy Melax keep-ratio for DIPO (unused in the loader). The yoke GLB is
+ * already ~750 tris of box/tube CAD — further Melax shreds the silhouette, so
+ * DIPO renders at full merged detail without a far LOD.
  */
-export const DIPO_VERTEX_KEEP = 0.5;
+export const DIPO_VERTEX_KEEP = 1;
 
 /**
- * Fraction of vertices to keep for the ABSO shell (~7k tris in the coloured
- * export). Gentle trim — silhouette stays intact.
+ * Legacy Melax keep-ratio for ABSO (unused in the loader). The absorber GLB is
+ * already mild-gltfpacked (~6k tris); further Melax at the default orbit
+ * distance risks shredding fins/cone facets, so ABSO renders at full merged
+ * detail without a far LOD (same rationale as {@link DIPO_VERTEX_KEEP}).
  */
 export const MUON_AUX_VERTEX_KEEP = 0.7;
 
 /**
- * Camera distance (world units) at which MCH / ABSO / DIPO switch to
- * simplified LOD. Matches L3/TPC/ITS so the default orbit uses low levels.
+ * Camera distance (world units) at which MCH switches to its simplified LOD.
+ * Matches L3/TPC/ITS so the default orbit uses the low level. ABSO / DIPO do
+ * not use a Melax far LOD.
  */
 export const MUON_AUX_LOD_FAR_DISTANCE = 7;
 
@@ -464,7 +480,8 @@ export function simplifyDipoForLowLod(root: THREE.Object3D): void {
 }
 
 /**
- * Lightly decimates heavy ABSO meshes. Mutates `root` (clone first for high LOD).
+ * Legacy ABSO Melax helper (unused in the loader — ABSO has no far LOD).
+ * Mutates `root` (clone first if preserving a high level).
  */
 export function simplifyAuxiliaryForLowLod(
   root: THREE.Object3D,

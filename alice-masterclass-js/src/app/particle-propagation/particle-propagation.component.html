@@ -26,7 +26,14 @@
       <mat-icon>{{ sidebarOpened ? 'chevron_right' : 'chevron_left' }}</mat-icon>
     </button>
 
-    @if (phase === 'loading-field' || phase === 'loading-event' || phase === 'precomputing') {
+    @if (showDetectorSplash) {
+      <div class="loading-overlay">
+        <mat-spinner [diameter]="56"></mat-spinner>
+        <p class="loading-label">{{ 'STRANGENESS.PARTICLE_PROPAGATION.LOADING_DETECTOR' | translate }}</p>
+      </div>
+    }
+
+    @if (!showDetectorSplash && (phase === 'loading-field' || phase === 'loading-event' || phase === 'precomputing')) {
       <div class="loading-overlay">
         <mat-spinner [diameter]="56"></mat-spinner>
         @if (phase === 'loading-field') {
