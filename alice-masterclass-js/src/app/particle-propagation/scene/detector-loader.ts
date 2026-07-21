@@ -11,13 +11,16 @@
  *
  * First paint is accelerated in two ways:
  * 1. **Progressive waves** — ITS/TPC/L3 show first; calorimeters + muon-arm follow.
- * 2. **Deferred Melax low-LOD** — high detail merges immediately; SimplifyModifier
- *    low levels attach after the first painted frame (`scheduleDeferredLowLods`).
+ * 2. **Deferred low-LOD** — high detail attaches immediately; far levels
+ *    (Melax-from-merged / InstancedMesh thinning) attach after the first painted
+ *    frame (`scheduleDeferredLowLods`).
  *
  * L3 is special-cased: sector families become {@link THREE.InstancedMesh} (no
  * material merge — that creates one giant transparent blob and hurts fill-rate)
- * wrapped in a distance {@link THREE.LOD}. TPC/ITS/muon Melax LODs follow the
- * deferred path when requested. Other parts still merge by material.
+ * wrapped in a distance {@link THREE.LOD}. TPC / MCH use InstancedMesh families
+ * for repeated panels. ITS / ABSO / DIPO build far LODs from the already-merged
+ * high level so draw-call counts stay comparable. TRD / TOF / calorimeters / BP
+ * still merge by material.
  * It does NOT import `EventDisplayComponent` (god-node isolation, per
  * `.cursor/rules/architecture.mdc`).
  */
@@ -30,8 +33,10 @@ import { mergeStaticMeshesByMaterial } from '../../shared/three/merge-static-mes
 import {
   applyDetectorLayerMaterials,
   applyDetectorDarkMode,
+  buildLowLodFromMergedHigh,
+  buildMchInstanced,
   buildOuterMagnetInstanced,
-  cloneDetectorSubtree,
+  buildTpcInstanced,
   defaultLayerOpacity,
   detectorPartLabel,
   isAuxiliaryMuonPart,
@@ -41,15 +46,17 @@ import {
   isOuterMagnet,
   isTpc,
   ITS_LOD_FAR_DISTANCE,
+  ITS_SHELL_VERTEX_KEEP,
+  MCH_VERTEX_KEEP,
   MUON_AUX_LOD_FAR_DISTANCE,
+  MUON_AUX_VERTEX_KEEP,
+  MUON_DECIMATE_MIN_VERTICES,
+  DIPO_VERTEX_KEEP,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
   OUTER_MAGNET_SECTOR_KEEP_EVERY,
   setDetectorPartOpacity,
-  simplifyAuxiliaryForLowLod,
-  simplifyDipoForLowLod,
-  simplifyItsForLowLod,
-  simplifyMchForLowLod,
-  simplifyTpcForLowLod,
+  TPC_FINE_DETAIL_KEEP_EVERY,
+  TPC_HEAVY_PANEL_VERTEX_KEEP,
   TPC_LOD_FAR_DISTANCE,
 } from './detector-appearance';
 
@@ -165,7 +172,95 @@ function buildOuterMagnetLod(
   return lod;
 }
 
-function buildMelaxLod(options: {
+/** TPC: InstancedMesh repeated panels + merged remainder; low thins / Melax-es. */
+function buildTpcLod(
+  root: THREE.Object3D,
+  opacity: number,
+  layerIndex: number,
+  userData: Record<string, unknown>,
+  deferLowLod: boolean,
+  darkMode: boolean
+): THREE.LOD {
+  applyDetectorLayerMaterials(root, opacity, layerIndex);
+
+  const high = buildTpcInstanced(root, { fineKeepEvery: 1, heavyVertexKeep: 1 });
+  high.userData = { ...userData, lodLevel: 'high' };
+
+  const lod = new THREE.LOD();
+  lod.name = 'tpc-lod';
+  lod.userData = { ...userData };
+  lod.addLevel(high, 0);
+  setDetectorPartOpacity(high, opacity);
+
+  const buildLow = (): THREE.Object3D => {
+    const low = buildTpcInstanced(root, {
+      fineKeepEvery: TPC_FINE_DETAIL_KEEP_EVERY,
+      heavyVertexKeep: TPC_HEAVY_PANEL_VERTEX_KEEP,
+    });
+    low.userData = { ...userData, lodLevel: 'low' };
+    setDetectorPartOpacity(low, opacity);
+    return low;
+  };
+
+  if (!deferLowLod) {
+    lod.addLevel(buildLow(), TPC_LOD_FAR_DISTANCE);
+  } else {
+    lod.userData[PENDING_LOW_LOD_KEY] = {
+      farDistance: TPC_LOD_FAR_DISTANCE,
+      darkMode,
+      build: buildLow,
+    } satisfies PendingLowLod;
+  }
+
+  setDetectorPartOpacity(lod, opacity);
+  return lod;
+}
+
+/** MCH: InstancedMesh for repeated Mesh_* families; low Melax from the high level. */
+function buildMchLod(
+  root: THREE.Object3D,
+  opacity: number,
+  layerIndex: number,
+  userData: Record<string, unknown>,
+  deferLowLod: boolean,
+  darkMode: boolean
+): THREE.LOD {
+  applyDetectorLayerMaterials(root, opacity, layerIndex);
+
+  const high = buildMchInstanced(root, { vertexKeep: 1 });
+  high.userData = { ...userData, lodLevel: 'high' };
+
+  const lod = new THREE.LOD();
+  lod.name = 'mch-lod';
+  lod.userData = { ...userData };
+  lod.addLevel(high, 0);
+  setDetectorPartOpacity(high, opacity);
+
+  const buildLow = (): THREE.Object3D => {
+    const low = buildLowLodFromMergedHigh(high, MCH_VERTEX_KEEP, MUON_DECIMATE_MIN_VERTICES);
+    setDetectorPartOpacity(low, opacity);
+    return low;
+  };
+
+  if (!deferLowLod) {
+    lod.addLevel(buildLow(), MUON_AUX_LOD_FAR_DISTANCE);
+  } else {
+    lod.userData[PENDING_LOW_LOD_KEY] = {
+      farDistance: MUON_AUX_LOD_FAR_DISTANCE,
+      darkMode,
+      build: buildLow,
+    } satisfies PendingLowLod;
+  }
+
+  setDetectorPartOpacity(lod, opacity);
+  return lod;
+}
+
+/**
+ * Melax far LOD built from the already-merged high level — draw-call count
+ * stays ≈ high (never re-expands the CAD graph).
+ */
+function buildMergedMelaxLod(options: {
   name: string;
   root: THREE.Object3D;
   opacity: number;
@@ -174,12 +269,22 @@ function buildMelaxLod(options: {
   farDistance: number;
   deferLowLod: boolean;
   darkMode: boolean;
-  simplify: (src: THREE.Object3D) => void;
+  vertexKeep: number;
+  minVertices?: number;
 }): THREE.LOD {
-  const { name, root, opacity, layerIndex, userData, farDistance, deferLowLod, darkMode, simplify } =
-    options;
+  const {
+    name,
+    root,
+    opacity,
+    layerIndex,
+    userData,
+    farDistance,
+    deferLowLod,
+    darkMode,
+    vertexKeep,
+    minVertices = 64,
+  } = options;
 
-  const lowSrc = cloneDetectorSubtree(root);
   const high = finalizePartMeshes(root, opacity, layerIndex, { ...userData, lodLevel: 'high' });
 
   const lod = new THREE.LOD();
@@ -187,20 +292,17 @@ function buildMelaxLod(options: {
   lod.userData = { ...userData };
   lod.addLevel(high, 0);
 
+  const buildLow = (): THREE.Object3D =>
+    buildLowLodFromMergedHigh(high, vertexKeep, minVertices);
+
   if (!deferLowLod) {
-    simplify(lowSrc);
-    const low = finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
-    lod.addLevel(low, farDistance);
+    lod.addLevel(buildLow(), farDistance);
   } else {
-    const pending: PendingLowLod = {
+    lod.userData[PENDING_LOW_LOD_KEY] = {
       farDistance,
       darkMode,
-      build: () => {
-        simplify(lowSrc);
-        return finalizePartMeshes(lowSrc, opacity, layerIndex, { ...userData, lodLevel: 'low' });
-      },
-    };
-    lod.userData[PENDING_LOW_LOD_KEY] = pending;
+      build: buildLow,
+    } satisfies PendingLowLod;
   }
 
   setDetectorPartOpacity(lod, opacity);
@@ -247,24 +349,16 @@ function loadOnePart(
           return;
         }
         if (isTpc(path)) {
-          resolve(
-            buildMelaxLod({
-              name: 'tpc-lod',
-              root,
-              opacity,
-              layerIndex,
-              userData,
-              farDistance: TPC_LOD_FAR_DISTANCE,
-              deferLowLod,
-              darkMode,
-              simplify: simplifyTpcForLowLod,
-            })
-          );
+          resolve(buildTpcLod(root, opacity, layerIndex, userData, deferLowLod, darkMode));
+          return;
+        }
+        if (isMch(path)) {
+          resolve(buildMchLod(root, opacity, layerIndex, userData, deferLowLod, darkMode));
           return;
         }
         if (isIts(path)) {
           resolve(
-            buildMelaxLod({
+            buildMergedMelaxLod({
               name: 'its-lod',
               root,
               opacity,
@@ -273,30 +367,14 @@ function loadOnePart(
               farDistance: ITS_LOD_FAR_DISTANCE,
               deferLowLod,
               darkMode,
-              simplify: simplifyItsForLowLod,
-            })
-          );
-          return;
-        }
-        if (isMch(path)) {
-          resolve(
-            buildMelaxLod({
-              name: 'mch-lod',
-              root,
-              opacity,
-              layerIndex,
-              userData,
-              farDistance: MUON_AUX_LOD_FAR_DISTANCE,
-              deferLowLod,
-              darkMode,
-              simplify: simplifyMchForLowLod,
+              vertexKeep: ITS_SHELL_VERTEX_KEEP,
             })
           );
           return;
         }
         if (isDipo(path)) {
           resolve(
-            buildMelaxLod({
+            buildMergedMelaxLod({
               name: 'dipo-lod',
               root,
               opacity,
@@ -305,14 +383,15 @@ function loadOnePart(
               farDistance: MUON_AUX_LOD_FAR_DISTANCE,
               deferLowLod,
               darkMode,
-              simplify: simplifyDipoForLowLod,
+              vertexKeep: DIPO_VERTEX_KEEP,
+              minVertices: MUON_DECIMATE_MIN_VERTICES,
             })
           );
           return;
         }
         if (isAuxiliaryMuonPart(path)) {
           resolve(
-            buildMelaxLod({
+            buildMergedMelaxLod({
               name: 'muon-aux-lod',
               root,
               opacity,
@@ -321,7 +400,8 @@ function loadOnePart(
               farDistance: MUON_AUX_LOD_FAR_DISTANCE,
               deferLowLod,
               darkMode,
-              simplify: simplifyAuxiliaryForLowLod,
+              vertexKeep: MUON_AUX_VERTEX_KEEP,
+              minVertices: MUON_DECIMATE_MIN_VERTICES,
             })
           );
           return;

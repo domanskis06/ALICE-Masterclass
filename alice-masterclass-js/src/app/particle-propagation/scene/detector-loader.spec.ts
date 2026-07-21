@@ -9,11 +9,12 @@ import {
 } from './detector-loader';
 import {
   ITS_LOD_FAR_DISTANCE,
+  MAX_LOW_TO_HIGH_DRAWABLE_RATIO,
   MUON_AUX_LOD_FAR_DISTANCE,
   OUTER_MAGNET_DEFAULT_OPACITY,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
-  BEAM_PIPE_DEFAULT_OPACITY,
   TPC_LOD_FAR_DISTANCE,
+  countDetectorDrawables,
 } from './detector-appearance';
 
 describe('loadDetectorModel', () => {
@@ -78,7 +79,7 @@ describe('loadDetectorModel', () => {
       expect(size.length()).toBeGreaterThan(0);
       expect(size.length()).toBeLessThan(50); // detector ~500cm across -> ~5 units at 1e-2 scale.
 
-        const isL3 = /l3\.glb$/i.test(part.assetPath);
+      const isL3 = /l3\.glb$/i.test(part.assetPath);
       const isBp = /bp\.glb$/i.test(part.assetPath);
       let sawMesh = false;
       part.root.traverse((obj) => {
@@ -86,24 +87,16 @@ describe('loadDetectorModel', () => {
         if (!mesh.isMesh) return;
         sawMesh = true;
         const material = mesh.material as THREE.Material;
-        // BP is an opaque overlay (depthTest off); other shells keep depthWrite.
-        if (isBp) {
-          expect(material.depthWrite).toBe(false);
-          expect(material.depthTest).toBe(false);
-          expect(material.transparent).toBe(false);
-          expect(material.opacity).toBe(1);
-          expect(material.userData['baseOpacity']).toBeCloseTo(BEAM_PIPE_DEFAULT_OPACITY, 5);
+        expect(material.depthWrite).toBe(!isBp);
+        expect(material.depthTest).toBe(true);
+        if (isBp) expect(mesh.renderOrder).toBeGreaterThan(0);
+        expect(material.opacity).toBeGreaterThan(0);
+        if (isL3) {
+          expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
+          expect(material.transparent).toBe(true);
         } else {
-          expect(material.depthWrite).toBe(true);
-          expect(material.depthTest).toBe(true);
-          expect(material.opacity).toBeGreaterThan(0);
-          if (isL3) {
-            expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
-            expect(material.transparent).toBe(true);
-          } else {
-            expect(material.transparent).toBe(true);
-            expect(material.opacity).toBeLessThan(1);
-          }
+          expect(material.transparent).toBe(true);
+          expect(material.opacity).toBeLessThan(1);
         }
       });
       expect(sawMesh).toBe(true);
@@ -153,11 +146,25 @@ describe('loadDetectorModel', () => {
         const mesh = obj as THREE.Mesh;
         if (!mesh.isMesh) return;
         const g = mesh.geometry as THREE.BufferGeometry;
-        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+        const local = g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+        const instanced = obj as THREE.InstancedMesh;
+        tris += local * (instanced.isInstancedMesh ? instanced.count : 1);
       });
       return tris;
     };
     expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
+  });
+
+  it('keeps low-LOD drawable counts within MAX_LOW_TO_HIGH_DRAWABLE_RATIO of high', () => {
+    for (const part of model.parts) {
+      const lod = part.root as THREE.LOD;
+      if (!lod.isLOD || lod.levels.length < 2) continue;
+      const high = countDetectorDrawables(lod.levels[0].object);
+      const low = countDetectorDrawables(lod.levels[1].object);
+      expect(low)
+        .withContext(`${part.assetPath}: low=${low} high=${high}`)
+        .toBeLessThanOrEqual(Math.max(high * MAX_LOW_TO_HIGH_DRAWABLE_RATIO, high + 4));
+    }
   });
 
   it('wraps ITS in a distance LOD with a lighter far level (decimated Mesh_0)', () => {
@@ -189,7 +196,9 @@ describe('loadDetectorModel', () => {
         const mesh = obj as THREE.Mesh;
         if (!mesh.isMesh) return;
         const g = mesh.geometry as THREE.BufferGeometry;
-        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+        const base = g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
+        const instanced = obj as THREE.InstancedMesh;
+        tris += instanced.isInstancedMesh ? base * instanced.count : base;
       });
       return tris;
     };
