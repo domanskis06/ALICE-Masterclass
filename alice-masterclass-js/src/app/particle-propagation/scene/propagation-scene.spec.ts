@@ -53,6 +53,11 @@ describe('PropagationScene', () => {
     expect(scene.controls.enableRotate).toBe(true);
   });
 
+  it('allows full polar orbit (view from below), matching EventDisplay', () => {
+    expect(scene.controls.minPolarAngle).toBe(0);
+    expect(scene.controls.maxPolarAngle).toBe(Math.PI);
+  });
+
   it('switches to free camera mode (pan on, rotate off) like EventDisplay', () => {
     scene.setCameraMode('free');
     expect(scene.cameraMode).toBe('free');

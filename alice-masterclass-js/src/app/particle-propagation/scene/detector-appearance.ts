@@ -17,8 +17,9 @@
  * {@link OUTER_MAGNET_DEFAULT_OPACITY}. TPC uses a distance LOD whose far level
  * thins fine detail and decimates the heavy sector panels (see
  * {@link simplifyTpcForLowLod}). ITS uses a distance LOD whose far level
- * decimates the heavy shell mesh (Mesh_0). MCH / ABSO / SHIL / DIPO use the same
- * distance-LOD pattern with Melax on the heavier Mesh_* panels.
+ * decimates the heavy shell mesh (Mesh_0). MCH / ABSO / DIPO use the same
+ * distance-LOD pattern with Melax on the heavier Mesh_* panels. The beam pipe
+ * (BP) uses an unlit overlay (slider scales luminance; no depth test/write).
  */
 
 import * as THREE from 'three';
@@ -38,6 +39,12 @@ export const MAX_PART_OPACITY = 1;
  * in the detector stack.
  */
 export const OUTER_MAGNET_DEFAULT_OPACITY = 0.75;
+
+/** Default beam-pipe opacity (matches the sidebar starting value). */
+export const BEAM_PIPE_DEFAULT_OPACITY = 0.4;
+
+/** Paint the pipe after every other detector shell. */
+const BEAM_PIPE_RENDER_ORDER = 500_000;
 
 /**
  * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3.glb) in
@@ -106,13 +113,13 @@ export const MCH_VERTEX_KEEP = 0.55;
 export const DIPO_VERTEX_KEEP = 0.5;
 
 /**
- * Fraction of vertices to keep for ABSO / SHIL shells (~7k tris each in the
- * coloured export). Gentle trim — silhouette stays intact.
+ * Fraction of vertices to keep for the ABSO shell (~7k tris in the coloured
+ * export). Gentle trim — silhouette stays intact.
  */
 export const MUON_AUX_VERTEX_KEEP = 0.7;
 
 /**
- * Camera distance (world units) at which MCH / ABSO / SHIL / DIPO switch to
+ * Camera distance (world units) at which MCH / ABSO / DIPO switch to
  * simplified LOD. Matches L3/TPC/ITS so the default orbit uses low levels.
  */
 export const MUON_AUX_LOD_FAR_DISTANCE = 7;
@@ -142,8 +149,8 @@ export function detectorPartLabel(assetPath: string): string {
     'l3.glb': 'L3 magnet',
     'mch.glb': 'MCH',
     'abso.glb': 'ABSO',
-    'shil.glb': 'SHIL',
     'dipo.glb': 'DIPO magnet',
+    'bp.glb': 'Beam pipe',
   };
   return labels[file] ?? assetPath.replace(/^.*[/\\]/, '').replace(/\.glb$/i, '');
 }
@@ -164,8 +171,8 @@ const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
   'l3.glb': '#FF0D12',
   'mch.glb': '#814244',
   'abso.glb': '#DE782B',
-  'shil.glb': '#BA92AB',
   'dipo.glb': '#0068D0',
+  'bp.glb': '#9EB0C4',
 };
 
 /** CSS hex accent for opacity sliders / part chips; falls back to orange. */
@@ -198,9 +205,9 @@ export function isMch(assetPath: string): boolean {
   return /(^|[/\\])mch\.glb($|\?)/i.test(assetPath);
 }
 
-/** Forward absorber / shield shells (ABSO, SHIL). */
+/** Forward absorber shell (ABSO). */
 export function isAuxiliaryMuonPart(assetPath: string): boolean {
-  return /(^|[/\\])(abso|shil)\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])abso\.glb($|\?)/i.test(assetPath);
 }
 
 /** Dipole magnet at the forward muon-arm end — bends field lines out of the solenoid. */
@@ -208,7 +215,12 @@ export function isDipo(assetPath: string): boolean {
   return /(^|[/\\])dipo\.glb($|\?)/i.test(assetPath);
 }
 
-/** Forward muon-arm shells (MCH / ABSO / SHIL / DIPO). */
+/** Accelerator beam pipe along the ALICE axis (BP.glb). */
+export function isBeamPipe(assetPath: string): boolean {
+  return /(^|[/\\])bp\.glb($|\?)/i.test(assetPath);
+}
+
+/** Forward muon-arm shells (MCH / ABSO / DIPO). */
 export function isForwardMuonPart(assetPath: string): boolean {
   return isMch(assetPath) || isAuxiliaryMuonPart(assetPath) || isDipo(assetPath);
 }
@@ -221,6 +233,7 @@ export function defaultDetectorPartVisible(_assetPath: string): boolean {
 /** Default opacity for a layer given its depth index (inner -> outer lerp). */
 export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
   if (isOuterMagnet(assetPath)) return OUTER_MAGNET_DEFAULT_OPACITY;
+  if (isBeamPipe(assetPath)) return BEAM_PIPE_DEFAULT_OPACITY;
   const t = totalLayers > 1 ? layerIndex / (totalLayers - 1) : 0;
   const opacity = DETECTOR_INNER_OPACITY * (1 - t) + DETECTOR_OUTER_OPACITY * t;
   return isCalorimeter(assetPath) ? Math.max(opacity, CALORIMETER_MIN_OPACITY) : opacity;
@@ -428,7 +441,7 @@ export function simplifyDipoForLowLod(root: THREE.Object3D): void {
 }
 
 /**
- * Lightly decimates heavy ABSO / SHIL meshes. Mutates `root` (clone first for high LOD).
+ * Lightly decimates heavy ABSO meshes. Mutates `root` (clone first for high LOD).
  */
 export function simplifyAuxiliaryForLowLod(
   root: THREE.Object3D,
@@ -517,6 +530,64 @@ export function cloneDetectorSubtree(root: THREE.Object3D): THREE.Object3D {
 }
 
 /**
+ * Unlit BP overlay: colour brightness tracks the opacity slider, but the pipe
+ * stays fully opaque and depth-agnostic. That reproduces the black-clear look
+ * (`grey * opacity`) over every detector shell — front and rear stay identical.
+ */
+function toBeamPipeBasicMaterial(source: THREE.Material): THREE.MeshBasicMaterial {
+  const tagged = source as THREE.MeshBasicMaterial & { userData: Record<string, unknown> };
+  if (tagged.userData?.['isBeamPipeBasic'] && tagged.isMeshBasicMaterial) {
+    return tagged;
+  }
+
+  const fromColor =
+    'color' in source && (source as THREE.MeshStandardMaterial).color
+      ? (source as THREE.MeshStandardMaterial).color.clone()
+      : new THREE.Color(DETECTOR_PART_ACCENT_HEX['bp.glb']);
+  const base =
+    (source.userData?.['neonBaseColor'] as THREE.Color | undefined)?.clone() ?? fromColor;
+
+  const basic = new THREE.MeshBasicMaterial({
+    color: base.clone(),
+    side: THREE.DoubleSide,
+    toneMapped: false,
+    transparent: false,
+    opacity: 1,
+    depthTest: false,
+    depthWrite: false,
+  });
+  basic.userData = {
+    ...(source.userData || {}),
+    isBeamPipeBasic: true,
+    neonBaseColor: base.clone(),
+  };
+  return basic;
+}
+
+function styleBeamPipeMesh(mesh: THREE.Mesh, opacity: number, _transparent: boolean): void {
+  const raw = mesh.material;
+  const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const next = list.map((mat) => {
+    const basic = toBeamPipeBasicMaterial(mat);
+    const base = (basic.userData['neonBaseColor'] as THREE.Color | undefined) ?? basic.color;
+    // Slider drives luminance, not alpha — same pixels as transparent-over-black.
+    basic.color.copy(base).multiplyScalar(opacity);
+    basic.transparent = false;
+    basic.opacity = 1;
+    basic.depthTest = false;
+    basic.depthWrite = false;
+    basic.side = THREE.DoubleSide;
+    basic.toneMapped = false;
+    basic.blending = THREE.NormalBlending;
+    basic.userData = { ...basic.userData, baseOpacity: opacity };
+    basic.needsUpdate = true;
+    return basic;
+  });
+  mesh.material = Array.isArray(raw) ? next : next[0]!;
+  mesh.renderOrder = Math.max(mesh.renderOrder, BEAM_PIPE_RENDER_ORDER);
+}
+
+/**
  * Applies EventDisplay-style per-mesh polygon offset + render order to a freshly
  * loaded (pre-merge) detector part, and records the target opacity in each
  * material's `userData.baseOpacity`. Materials start solid (`opacity 1`,
@@ -527,7 +598,11 @@ export function cloneDetectorSubtree(root: THREE.Object3D): THREE.Object3D {
 export function applyDetectorLayerMaterials(root: THREE.Object3D, opacity: number, layerIndex: number): void {
   const layerRenderOrderBase = layerIndex * RENDER_ORDER_LAYER_STRIDE;
   const layerOffset = -(layerIndex + 1) * 2;
-  root.renderOrder = layerRenderOrderBase;
+  const assetPath = String(root.userData?.['detectorAssetPath'] ?? '');
+  const beamPipe = isBeamPipe(assetPath);
+  // Paint BP after every other detector shell so grey composites over L3/TRD.
+  const renderOrderBase = beamPipe ? BEAM_PIPE_RENDER_ORDER : layerRenderOrderBase;
+  root.renderOrder = renderOrderBase;
 
   const tempVec = new THREE.Vector3();
   const meshes: THREE.Mesh[] = [];
@@ -543,7 +618,16 @@ export function applyDetectorLayerMaterials(root: THREE.Object3D, opacity: numbe
   });
 
   meshes.forEach((mesh, meshIndex) => {
-    mesh.renderOrder = layerRenderOrderBase + meshIndex;
+    mesh.renderOrder = renderOrderBase + meshIndex;
+    if (beamPipe) {
+      styleBeamPipeMesh(mesh, 1, false);
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const mat of mats) {
+        if (!mat) continue;
+        mat.userData = { ...(mat.userData || {}), baseOpacity: opacity };
+      }
+      return;
+    }
     const subOffset = layerOffset - meshIndex * 0.01;
     const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     for (const mat of materials) {
@@ -553,6 +637,7 @@ export function applyDetectorLayerMaterials(root: THREE.Object3D, opacity: numbe
       m.opacity = 1;
       m.side = THREE.FrontSide;
       m.depthWrite = true;
+      m.depthTest = true;
       (m as THREE.Material & { polygonOffset: boolean }).polygonOffset = true;
       (m as THREE.Material & { polygonOffsetFactor: number }).polygonOffsetFactor = subOffset;
       (m as THREE.Material & { polygonOffsetUnits: number }).polygonOffsetUnits = subOffset * 2;
@@ -567,20 +652,38 @@ export function setDetectorPartVisibility(root: THREE.Object3D, visible: boolean
   root.visible = visible;
 }
 
+/** Dark-mode self-glow for most shells. */
+const DARK_EMISSIVE_INTENSITY = 0.12;
+
 /**
  * Sets a detector part's opacity (clamped to [MIN_PART_OPACITY,
- * MAX_PART_OPACITY]); keeps `depthWrite = true` so blending stays cheap.
+ * MAX_PART_OPACITY]). Barrel shells keep `depthWrite = true` (cheap fill).
+ * The beam pipe is an unlit foreground overlay: slider opacity scales grey
+ * luminance while the mesh stays opaque and depth-agnostic so front/rear match
+ * black-clear.
  */
 export function setDetectorPartOpacity(root: THREE.Object3D, value: number): number {
   const opacity = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, value));
+  const transparent = opacity < 0.995;
+  const path = String(root.userData?.['detectorAssetPath'] ?? '');
+  const beamPipe = isBeamPipe(path);
+  // Barrel shells write depth while translucent (cheap fill-rate).
+  const depthWrite = true;
   root.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) return;
-    const raw = (o as THREE.Mesh).material;
+    const mesh = o as THREE.Mesh;
+    if (beamPipe) {
+      styleBeamPipeMesh(mesh, opacity, transparent);
+      return;
+    }
+    const raw = mesh.material;
     const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
     for (const mat of mats) {
       const m = mat as THREE.Material & { userData: Record<string, unknown> };
-      m.transparent = opacity < 0.995;
+      m.transparent = transparent;
       m.opacity = opacity;
+      m.depthWrite = depthWrite;
+      m.depthTest = true;
       m.userData = { ...(m.userData || {}), baseOpacity: opacity };
       m.needsUpdate = true;
     }
@@ -588,15 +691,22 @@ export function setDetectorPartOpacity(root: THREE.Object3D, value: number): num
   return opacity;
 }
 
-const DARK_EMISSIVE_INTENSITY = 0.12;
-
 /** Boosts saturation + self-emissive glow (dark) or restores base colour (light). */
 export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): void {
   const hsl = { h: 0, s: 0, l: 0 };
+  const beamPipe = isBeamPipe(String(root.userData?.['detectorAssetPath'] ?? ''));
   root.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) return;
-    const raw = (o as THREE.Mesh).material;
-    const mats = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    const mesh = o as THREE.Mesh;
+    const raw = mesh.material;
+    const opacity = Number(
+      (Array.isArray(raw) ? raw[0] : raw)?.userData?.['baseOpacity'] ??
+        (beamPipe ? BEAM_PIPE_DEFAULT_OPACITY : 1)
+    );
+    if (beamPipe) {
+      styleBeamPipeMesh(mesh, opacity, opacity < 0.995);
+    }
+    const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial & { userData: Record<string, unknown> };
       if (!m || !('color' in m)) continue;
@@ -606,15 +716,27 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
       }
       if (darkMode) {
         userData.neonBaseColor.getHSL(hsl);
-        m.color.setHSL(hsl.h, Math.min(1, hsl.s * 1.1 + 0.05), Math.min(0.55, Math.max(0.3, hsl.l)));
-        if ('emissive' in m) {
-          m.emissive.copy(m.color);
-          m.emissiveIntensity = DARK_EMISSIVE_INTENSITY;
+        const lit = new THREE.Color().setHSL(
+          hsl.h,
+          Math.min(1, hsl.s * 1.1 + 0.05),
+          Math.min(0.55, Math.max(0.3, hsl.l))
+        );
+        if (beamPipe) {
+          m.color.copy(lit).multiplyScalar(opacity);
+        } else {
+          m.color.copy(lit);
+          if ('emissive' in m) {
+            m.emissive.copy(m.color);
+            m.emissiveIntensity = DARK_EMISSIVE_INTENSITY;
+          }
         }
+      } else if (beamPipe) {
+        m.color.copy(userData.neonBaseColor).multiplyScalar(opacity);
       } else {
         m.color.copy(userData.neonBaseColor);
         if ('emissive' in m) {
           m.emissive.setRGB(0, 0, 0);
+          m.emissiveIntensity = 0;
         }
       }
       m.needsUpdate = true;

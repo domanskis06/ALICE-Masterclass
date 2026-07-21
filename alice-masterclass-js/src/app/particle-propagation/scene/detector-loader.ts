@@ -1,6 +1,7 @@
 /**
  * Loads the ALICE detector shell (ITS/TPC/TRD/TOF/calorimeters/L3 magnet plus
- * forward muon-system layers MCH/ABSO/SHIL/DIPO) for the Particle Propagation module.
+ * forward muon-system layers MCH/ABSO/DIPO and the beam pipe BP) for the
+ * Particle Propagation module.
  *
  * Reproduces the interactive Visual Analysis / EventDisplay look and
  * performance profile — per-layer materials (opaque with polygon offset, see
@@ -54,7 +55,8 @@ import {
 
 /**
  * ALICE detector shell for Particle Propagation (inner -> outer).
- * Includes the VA assembly plus forward muon-system layers (MCH / ABSO / SHIL / DIPO).
+ * Includes the VA assembly, forward muon-system layers (MCH / ABSO / DIPO),
+ * and the accelerator beam pipe (BP).
  */
 export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/its.glb`,
@@ -67,8 +69,8 @@ export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/L3.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/MCH.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/ABSO.glb`,
-  `${DETECTOR_MODEL_BASE_PATH}/SHIL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DIPO.glb`,
+  `${DETECTOR_MODEL_BASE_PATH}/BP.glb`,
 ];
 
 /** First-paint core: beam axis + outer magnet yoke. */
@@ -81,10 +83,10 @@ const LAYER_RADIAL_INFLATE_STEP = 0.0009;
 
 /**
  * Barrel ITS/TPC GLBs are authored with the beam pipe ~+30 cm in Y, while
- * MCH / SHIL / DIPO sit on the true ALICE axis at Y = 0. After
+ * MCH / DIPO sit on the true ALICE axis at Y = 0. After
  * {@link recenterOnBeamAxis} pins the collision vertex to the ITS tube, those
- * three parts sit ~30 cm too low unless lifted by this amount. ABSO is excluded
- * — its authored placement already matches the ITS frame after recenter.
+ * parts sit ~30 cm too low unless lifted by this amount. ABSO is excluded —
+ * its authored placement already matches the ITS frame after recenter.
  * Applied as `position.y += MUON_ARM_BEAM_Y_LIFT_CM * scale` after the part
  * scale so the translation is in world units and gets baked by merge/LOD.
  */
@@ -224,11 +226,11 @@ function loadOnePart(
         stripCadHelperCubes(root);
         const radialInflate = 1 + layerIndex * LAYER_RADIAL_INFLATE_STEP;
         root.scale.setScalar(scale * radialInflate);
-        // Lift MCH/SHIL/DIPO into the ITS/TPC beam frame (see MUON_ARM_BEAM_Y_LIFT_CM).
+        // Lift MCH/DIPO into the ITS/TPC beam frame (see MUON_ARM_BEAM_Y_LIFT_CM).
         // ABSO is already authored to sit correctly after ITS recenter — do not lift it.
         // Applied after scale so the translation is in world units; merge/LOD then
         // bakes matrixWorld into the static geometry.
-        if (isMch(path) || isDipo(path) || /(^|[/\\])shil\.glb($|\?)/i.test(path)) {
+        if (isMch(path) || isDipo(path)) {
           root.position.y += MUON_ARM_BEAM_Y_LIFT_CM * scale;
         }
         root.updateMatrixWorld(true);

@@ -68,10 +68,12 @@ export const FIELD_STRENGTH_EXPERIMENT_MARKERS: ReadonlyArray<{
 export const MAX_DETECTOR_RXY_CM = 480;
 
 /**
- * Half-length of the tracking cylinder along the beam axis (cm). Forward tracks
- * can reach the dipole region (z ≲ −536 cm) before hitting this cap.
+ * Half-length of the tracking cylinder along the beam axis (cm).
+ * Matches the L3 magnet end-caps (same ±580 cm used by barrel field-line walks),
+ * so rendered tracks stop at the yoke boundary on both +z and −z — they do not
+ * continue into the muon-arm / dipole volume.
  */
-export const MAX_DETECTOR_Z_CM = 750;
+export const MAX_DETECTOR_Z_CM = 580;
 
 /**
  * Legacy alias: spherical outer radius used by older call sites / specs.
@@ -84,7 +86,8 @@ export const RK4_STEP_CM = 1.5;
 
 /**
  * Hard cap on the number of RK4 steps per particle.
- * With {@link RK4_STEP_CM} = 1.5 cm this allows a ~750 cm path (matches {@link MAX_DETECTOR_Z_CM}).
+ * With {@link RK4_STEP_CM} = 1.5 cm this allows a ~750 cm path — enough for a
+ * diagonal through the L3 cylinder (`hypot(Rxy, Z) ≈ 753 cm`).
  */
 export const MAX_RK4_STEPS = 500;
 

@@ -29,5 +29,6 @@ Entry point for the monorepo: [`../README.md`](../README.md).
 | Doc | Topic |
 | --- | --- |
 | [`dev-deployment.md`](dev-deployment.md) | Dev OpenShift / CI deploy — **redeploy via `v*-dev` tag**: §7.1 |
+| [`dev-remote-access.md`](dev-remote-access.md) | Dev app from outside CERN — SSH SOCKS tunnel + Firefox |
 | [`prod-database.md`](prod-database.md) | Production database notes |
 | [`../openshift/dev/README.md`](../openshift/dev/README.md) | OpenShift dev cluster helpers |

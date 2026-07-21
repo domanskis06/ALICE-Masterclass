@@ -122,7 +122,9 @@ export class PropagationScene {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.target.copy(INITIAL_CAMERA_TARGET);
-    this.controls.maxPolarAngle = 0.5 * Math.PI;
+    // Full vertical orbit (same as EventDisplay): allow viewing from below.
+    this.controls.minPolarAngle = 0;
+    this.controls.maxPolarAngle = Math.PI;
     // Clamp zoom: without a floor the camera can sit on the target and trip
     // near-plane clipping. Keep this low enough to enter the ITS bore
     // (outer ~0.4 wu at scale 1e-2) while staying above NEAR_CLIPPING_PLANE.

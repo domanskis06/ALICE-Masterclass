@@ -29,7 +29,7 @@
  * stay slightly inside that edge so a tiny Br does not step into B = 0.
  */
 
-import { SOL_MIN_Z } from './constants';
+import { MAX_DETECTOR_Z_CM, SOL_MIN_Z } from './constants';
 import { Vec3 } from './propagation-types';
 
 export type FieldSampler = (posCm: Vec3) => Vec3;
@@ -181,13 +181,14 @@ const DIPOLE_CLIP_Z_CM = -560;
 const DIPOLE_KEEP_DEEP_Z_CM = -720;
 
 /**
- * Barrel / L3 walk bounds (dipole toggle off). z ≈ ±580 cm ≈ L3 magnet ends;
+ * Barrel / L3 walk bounds (dipole toggle off). z ≈ ±{@link MAX_DETECTOR_Z_CM}
+ * ≈ L3 magnet ends (same cap as RK4 track rendering);
  * r stays inside the Chebyshev map (R ≤ 500 cm).
  */
 const BARREL_BOUNDS: WalkBounds = {
   maxRadiusCm: 498,
-  maxZPosCm: 580,
-  maxZNegCm: 580,
+  maxZPosCm: MAX_DETECTOR_Z_CM,
+  maxZNegCm: MAX_DETECTOR_Z_CM,
   minFieldT: 0.01,
 };
 
@@ -198,7 +199,7 @@ const BARREL_BOUNDS: WalkBounds = {
 const BARREL_WITH_DIPOLE_BOUNDS: WalkBounds = {
   maxRadiusCm: 498,
   dipoleHalfExtentCm: 325,
-  maxZPosCm: 580,
+  maxZPosCm: MAX_DETECTOR_Z_CM,
   maxZNegCm: 1700,
   minFieldT: 0.01,
   minFieldDipoleT: 0.001,
@@ -212,7 +213,7 @@ const BARREL_WITH_DIPOLE_BOUNDS: WalkBounds = {
 const DIPOLE_PAPER_BOUNDS: WalkBounds = {
   maxRadiusCm: 498,
   dipoleHalfExtentCm: 325,
-  maxZPosCm: 580,
+  maxZPosCm: MAX_DETECTOR_Z_CM,
   maxZNegCm: 1700,
   minFieldT: 0.008,
   minFieldDipoleT: 0.001,

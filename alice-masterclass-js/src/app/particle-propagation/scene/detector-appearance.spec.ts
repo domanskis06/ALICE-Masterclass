@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
   applyDetectorDarkMode,
   applyDetectorLayerMaterials,
+  BEAM_PIPE_DEFAULT_OPACITY,
   buildOuterMagnetInstanced,
   CALORIMETER_MIN_OPACITY,
   cloneDetectorSubtree,
@@ -13,6 +14,7 @@ import {
   detectorPartAccentColor,
   detectorPartLabel,
   isAuxiliaryMuonPart,
+  isBeamPipe,
   isDipo,
   isForwardMuonPart,
   isIts,
@@ -37,10 +39,12 @@ function makePart(color = 0x3366cc): THREE.Object3D {
   return root;
 }
 
-function firstMaterial(root: THREE.Object3D): THREE.MeshStandardMaterial {
-  let found: THREE.MeshStandardMaterial | null = null;
+function firstMaterial(root: THREE.Object3D): THREE.MeshStandardMaterial & THREE.MeshBasicMaterial {
+  let found: (THREE.MeshStandardMaterial & THREE.MeshBasicMaterial) | null = null;
   root.traverse((o) => {
-    if (!found && (o as THREE.Mesh).isMesh) found = (o as THREE.Mesh).material as THREE.MeshStandardMaterial;
+    if (!found && (o as THREE.Mesh).isMesh) {
+      found = (o as THREE.Mesh).material as THREE.MeshStandardMaterial & THREE.MeshBasicMaterial;
+    }
   });
   return found!;
 }
@@ -52,8 +56,8 @@ describe('detectorPartLabel', () => {
     expect(detectorPartLabel('assets/models/alice components/EMCAL.glb')).toBe('EMCal');
     expect(detectorPartLabel('assets/models/alice components/MCH.glb')).toBe('MCH');
     expect(detectorPartLabel('assets/models/alice components/ABSO.glb')).toBe('ABSO');
-    expect(detectorPartLabel('assets/models/alice components/SHIL.glb')).toBe('SHIL');
     expect(detectorPartLabel('assets/models/alice components/DIPO.glb')).toBe('DIPO magnet');
+    expect(detectorPartLabel('assets/models/alice components/BP.glb')).toBe('Beam pipe');
   });
 
   it('falls back to the bare filename (minus extension) for unknown parts', () => {
@@ -68,8 +72,8 @@ describe('detectorPartAccentColor', () => {
     expect(detectorPartAccentColor('assets/models/alice components/tpc.glb')).toBe('#22C4FF');
     expect(detectorPartAccentColor('assets/models/alice components/MCH.glb')).toBe('#814244');
     expect(detectorPartAccentColor('assets/models/alice components/ABSO.glb')).toBe('#DE782B');
-    expect(detectorPartAccentColor('assets/models/alice components/SHIL.glb')).toBe('#BA92AB');
     expect(detectorPartAccentColor('assets/models/alice components/DIPO.glb')).toBe('#0068D0');
+    expect(detectorPartAccentColor('assets/models/alice components/BP.glb')).toBe('#9EB0C4');
   });
 
   it('falls back to the default orange accent for unknown parts', () => {
@@ -92,6 +96,12 @@ describe('defaultLayerOpacity', () => {
   it('defaults the L3 magnet to OUTER_MAGNET_DEFAULT_OPACITY', () => {
     expect(defaultLayerOpacity('assets/models/alice components/L3.glb', 7, 8)).toBe(
       OUTER_MAGNET_DEFAULT_OPACITY
+    );
+  });
+
+  it('defaults the beam pipe to BEAM_PIPE_DEFAULT_OPACITY (40%)', () => {
+    expect(defaultLayerOpacity('assets/models/alice components/BP.glb', 11, 12)).toBe(
+      BEAM_PIPE_DEFAULT_OPACITY
     );
   });
 });
@@ -118,10 +128,10 @@ describe('isMch', () => {
 });
 
 describe('isAuxiliaryMuonPart', () => {
-  it('detects abso.glb and shil.glb paths', () => {
+  it('detects abso.glb paths', () => {
     expect(isAuxiliaryMuonPart('assets/models/alice components/ABSO.glb')).toBe(true);
-    expect(isAuxiliaryMuonPart('assets/models/alice components/SHIL.glb')).toBe(true);
     expect(isAuxiliaryMuonPart('assets/models/alice components/MCH.glb')).toBe(false);
+    expect(isAuxiliaryMuonPart('assets/models/alice components/DIPO.glb')).toBe(false);
   });
 });
 
@@ -132,18 +142,24 @@ describe('isDipo', () => {
   });
 });
 
+describe('isBeamPipe', () => {
+  it('detects bp.glb paths', () => {
+    expect(isBeamPipe('assets/models/alice components/BP.glb')).toBe(true);
+    expect(isBeamPipe('assets/models/alice components/DIPO.glb')).toBe(false);
+  });
+});
+
 describe('defaultDetectorPartVisible', () => {
   it('shows barrel and forward muon-arm parts by default', () => {
     expect(isForwardMuonPart('assets/models/alice components/MCH.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/ABSO.glb')).toBe(true);
-    expect(isForwardMuonPart('assets/models/alice components/SHIL.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/DIPO.glb')).toBe(true);
     expect(isForwardMuonPart('assets/models/alice components/its.glb')).toBe(false);
 
     expect(defaultDetectorPartVisible('assets/models/alice components/MCH.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/ABSO.glb')).toBe(true);
-    expect(defaultDetectorPartVisible('assets/models/alice components/SHIL.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/DIPO.glb')).toBe(true);
+    expect(defaultDetectorPartVisible('assets/models/alice components/BP.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/its.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/L3.glb')).toBe(true);
   });
@@ -340,6 +356,39 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(1);
     expect(mat.transparent).toBe(false);
     expect(mat.depthWrite).toBe(true);
+  });
+
+  it('uses unlit opaque overlay on the beam pipe so front/rear match black-clear', () => {
+    const part = makePart(0x9eb0c4);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/BP.glb';
+    const authored = new THREE.Color(0x9eb0c4);
+
+    setDetectorPartOpacity(part, BEAM_PIPE_DEFAULT_OPACITY);
+    let mat = firstMaterial(part);
+    expect(mat.isMeshBasicMaterial).toBe(true);
+    expect(mat.transparent).toBe(false);
+    expect(mat.opacity).toBe(1);
+    expect(mat.depthWrite).toBe(false);
+    expect(mat.depthTest).toBe(false);
+    expect(mat.side).toBe(THREE.DoubleSide);
+    expect(mat.toneMapped).toBe(false);
+    // Slider scales luminance (same ColorManagement space as authored grey).
+    expect(mat.color.r).toBeCloseTo(authored.r * BEAM_PIPE_DEFAULT_OPACITY, 2);
+    expect(mat.userData['baseOpacity']).toBeCloseTo(BEAM_PIPE_DEFAULT_OPACITY, 5);
+
+    setDetectorPartOpacity(part, 0.05);
+    mat = firstMaterial(part);
+    expect(mat.transparent).toBe(false);
+    expect(mat.depthWrite).toBe(false);
+    expect(mat.depthTest).toBe(false);
+    expect(mat.color.r).toBeCloseTo(authored.r * 0.05, 2);
+
+    setDetectorPartOpacity(part, 1);
+    mat = firstMaterial(part);
+    expect(mat.transparent).toBe(false);
+    expect(mat.depthWrite).toBe(false);
+    expect(mat.depthTest).toBe(false);
+    expect(mat.color.r).toBeCloseTo(authored.r, 2);
   });
 });
 

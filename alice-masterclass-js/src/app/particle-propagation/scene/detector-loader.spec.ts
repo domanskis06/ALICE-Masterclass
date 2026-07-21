@@ -12,6 +12,7 @@ import {
   MUON_AUX_LOD_FAR_DISTANCE,
   OUTER_MAGNET_DEFAULT_OPACITY,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
+  BEAM_PIPE_DEFAULT_OPACITY,
   TPC_LOD_FAR_DISTANCE,
 } from './detector-appearance';
 
@@ -46,8 +47,8 @@ describe('loadDetectorModel', () => {
       'assets/models/alice components/L3.glb',
       'assets/models/alice components/MCH.glb',
       'assets/models/alice components/ABSO.glb',
-      'assets/models/alice components/SHIL.glb',
       'assets/models/alice components/DIPO.glb',
+      'assets/models/alice components/BP.glb',
     ]);
   });
 
@@ -57,6 +58,7 @@ describe('loadDetectorModel', () => {
     expect(isDetectorCorePart('assets/models/alice components/L3.glb')).toBe(true);
     expect(isDetectorCorePart('assets/models/alice components/TRD.glb')).toBe(false);
     expect(isDetectorCorePart('assets/models/alice components/MCH.glb')).toBe(false);
+    expect(isDetectorCorePart('assets/models/alice components/BP.glb')).toBe(false);
   });
 
   it('loads all real detector GLBs into a recentered group with one toggleable part each', () => {
@@ -76,21 +78,32 @@ describe('loadDetectorModel', () => {
       expect(size.length()).toBeGreaterThan(0);
       expect(size.length()).toBeLessThan(50); // detector ~500cm across -> ~5 units at 1e-2 scale.
 
-      const isL3 = /l3\.glb$/i.test(part.assetPath);
+        const isL3 = /l3\.glb$/i.test(part.assetPath);
+      const isBp = /bp\.glb$/i.test(part.assetPath);
       let sawMesh = false;
       part.root.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         if (!mesh.isMesh) return;
         sawMesh = true;
         const material = mesh.material as THREE.Material;
-        expect(material.depthWrite).toBe(true);
-        expect(material.opacity).toBeGreaterThan(0);
-        if (isL3) {
-          expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
-          expect(material.transparent).toBe(true);
+        // BP is an opaque overlay (depthTest off); other shells keep depthWrite.
+        if (isBp) {
+          expect(material.depthWrite).toBe(false);
+          expect(material.depthTest).toBe(false);
+          expect(material.transparent).toBe(false);
+          expect(material.opacity).toBe(1);
+          expect(material.userData['baseOpacity']).toBeCloseTo(BEAM_PIPE_DEFAULT_OPACITY, 5);
         } else {
-          expect(material.transparent).toBe(true);
-          expect(material.opacity).toBeLessThan(1);
+          expect(material.depthWrite).toBe(true);
+          expect(material.depthTest).toBe(true);
+          expect(material.opacity).toBeGreaterThan(0);
+          if (isL3) {
+            expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
+            expect(material.transparent).toBe(true);
+          } else {
+            expect(material.transparent).toBe(true);
+            expect(material.opacity).toBeLessThan(1);
+          }
         }
       });
       expect(sawMesh).toBe(true);
@@ -169,7 +182,7 @@ describe('loadDetectorModel', () => {
     expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
   });
 
-  it('wraps MCH / ABSO / SHIL in distance LODs with lighter far levels', () => {
+  it('wraps MCH / ABSO / DIPO in distance LODs with lighter far levels', () => {
     const triCount = (root: THREE.Object3D): number => {
       let tris = 0;
       root.traverse((obj) => {
@@ -181,7 +194,7 @@ describe('loadDetectorModel', () => {
       return tris;
     };
 
-    for (const re of [/mch\.glb$/i, /abso\.glb$/i, /shil\.glb$/i, /dipo\.glb$/i]) {
+    for (const re of [/mch\.glb$/i, /abso\.glb$/i, /dipo\.glb$/i]) {
       const part = model.parts.find((p) => re.test(p.assetPath));
       expect(part).toBeDefined();
       expect(part!.label.length).toBeGreaterThan(0);
@@ -213,16 +226,26 @@ describe('loadDetectorModel', () => {
 
   it('lifts muon-arm parts so near-symmetric shells sit on the ITS beam axis (Y)', () => {
     model.group.updateMatrixWorld(true);
-    // MCH / SHIL are roughly cylindrical about the beam — their AABB centre Y
-    // should land near 0 after the +30 cm frame lift + ITS recenter. ABSO/DIPO
-    // are asymmetric so AABB centre is not a reliable pipe proxy.
-    for (const re of [/\/mch\.glb$/i, /\/shil\.glb$/i]) {
-      const part = model.parts.find((p) => re.test(p.assetPath));
-      expect(part).toBeDefined();
-      const center = new THREE.Box3().setFromObject(part!.root).getCenter(new THREE.Vector3());
-      expect(Math.abs(center.x)).toBeLessThan(0.05);
-      expect(Math.abs(center.y)).toBeLessThan(0.05);
-    }
+    // MCH is roughly cylindrical about the beam — its AABB centre Y should land
+    // near 0 after the +30 cm frame lift + ITS recenter. ABSO/DIPO are
+    // asymmetric so AABB centre is not a reliable pipe proxy.
+    const part = model.parts.find((p) => /\/mch\.glb$/i.test(p.assetPath));
+    expect(part).toBeDefined();
+    const center = new THREE.Box3().setFromObject(part!.root).getCenter(new THREE.Vector3());
+    expect(Math.abs(center.x)).toBeLessThan(0.05);
+    expect(Math.abs(center.y)).toBeLessThan(0.05);
+  });
+
+  it('keeps the beam pipe on the ITS beam axis without a muon-arm Y lift', () => {
+    model.group.updateMatrixWorld(true);
+    const part = model.parts.find((p) => /\/bp\.glb$/i.test(p.assetPath));
+    expect(part).toBeDefined();
+    expect(part!.label).toBe('Beam pipe');
+    // Main tube meshes are authored at Y≈30 (ITS frame); after ITS recenter the
+    // pipe AABB centre drifts a bit from flanges, but X stays on axis.
+    const center = new THREE.Box3().setFromObject(part!.root).getCenter(new THREE.Vector3());
+    expect(Math.abs(center.x)).toBeLessThan(0.05);
+    expect(Math.abs(center.y)).toBeLessThan(0.25);
   });
 
   it('collapses each non-LOD part down to a small number of draw calls', () => {
@@ -233,7 +256,9 @@ describe('loadDetectorModel', () => {
         if ((obj as THREE.Mesh).isMesh) meshCount += 1;
       });
       expect(meshCount).toBeGreaterThan(0);
-      expect(meshCount).toBeLessThan(50);
+      // BP.glb keeps many distinct CAD materials; other static parts merge tightly.
+      const isBp = /bp\.glb$/i.test(part.assetPath);
+      expect(meshCount).withContext(part.assetPath).toBeLessThan(isBp ? 250 : 50);
     }
   });
 
