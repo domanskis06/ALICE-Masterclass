@@ -48,15 +48,14 @@ describe('ParticleDataService (real curated event fixture)', () => {
     }
   });
 
-  it('loads dense curated events 9 and 10 with ~50–60 tracks', async () => {
-    for (const eventId of [9, 10]) {
-      const particles = await firstValueFrom(service.loadEvent(eventId));
-      expect(particles.length).toBeGreaterThanOrEqual(50);
-      expect(particles.length).toBeLessThanOrEqual(60);
-      expect(particles.every((p) => p.charge === 1 || p.charge === -1)).toBe(true);
-      expect(particles.some((p) => p.charge > 0)).toBe(true);
-      expect(particles.some((p) => p.charge < 0)).toBe(true);
-    }
+  it('loads dense curated event 9 with ~50–60 tracks', async () => {
+    // PARTICLE_EVENT_COUNT=10 → event_0…event_9; only event_9 is the dense fixture.
+    const particles = await firstValueFrom(service.loadEvent(9));
+    expect(particles.length).toBeGreaterThanOrEqual(50);
+    expect(particles.length).toBeLessThanOrEqual(60);
+    expect(particles.every((p) => p.charge === 1 || p.charge === -1)).toBe(true);
+    expect(particles.some((p) => p.charge > 0)).toBe(true);
+    expect(particles.some((p) => p.charge < 0)).toBe(true);
   });
 
   it('lists exactly the curated event count', () => {
