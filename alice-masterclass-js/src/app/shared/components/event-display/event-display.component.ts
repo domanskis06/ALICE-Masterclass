@@ -19,7 +19,7 @@ import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
   neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
-import { isCadHelperCubeName } from '../../three/cad-helper-cubes';
+import { detectorPartAccentColor } from '../../three/detector-part-accent';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -28,6 +28,8 @@ export interface DetectorPartToggleModel {
   labelParams?: Record<string, string>;
   visible: boolean;
   opacity: number;
+  /** CSS hex matching the part's GLB signature colour (opacity slider accent). */
+  accentColor: string;
 }
 
 export interface DetectorPaletteItem {
@@ -111,7 +113,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** Fluorescent orange — matches TOF layer tint. */
   static readonly LAYER_HIT_COLOR_TOF = 0xff8a1a;
   /** Radius of a TRD/TOF hit glow-dot (scene units; smaller than the old ×). */
-  static readonly LAYER_HIT_MARKER_RADIUS = 0.09;
+  static readonly LAYER_HIT_MARKER_RADIUS = 0.03;
   /** Arc-length step (cm) when sampling simulated TPC clusters along a track. */
   static readonly TPC_CLUSTER_SAMPLE_STEP_CM = 3;
   /** Min transverse radius (cm) for simulated TPC clusters (strictly outside). */
@@ -599,16 +601,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Shift barrel/FIT parts onto the beam axis (world Y) and hide leftover CAD helper cubes.
+   * Shift barrel/FIT parts onto the beam axis (world Y).
    * Calorimeter GLBs stay put — they are already coaxial with L3; readout bars
    * are rebuilt from those meshes in world space.
    */
   static alignDetectorPartToBeamAxis(scene: THREE.Object3D, assetPath: string): void {
-    scene.traverse((o: THREE.Object3D) => {
-      if (isCadHelperCubeName(o.name)) {
-        o.visible = false;
-      }
-    });
     if (EventDisplayComponent.needsBeamAxisYCorrection(assetPath)) {
       scene.position.y = EventDisplayComponent.DETECTOR_BEAM_AXIS_Y_OFFSET;
     }
@@ -618,9 +615,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private static readonly VERTEX_MARKER_RADIUS = (0.35 * 2 / 3) * EventDisplayComponent.objectScale;
   private static readonly MARKER_PROXIMITY_PX = 155;
-  private static readonly PAN_SPEED_FACTOR = 0.005;
-  private static readonly WHEEL_PAN_FACTOR = 0.03;
-  private static readonly MOUSE_DRAG_PAN_FACTOR = 0.0008;
+  private static readonly PAN_SPEED_FACTOR = 0.007;
+  private static readonly WHEEL_PAN_FACTOR = 0.05;
+  private static readonly MOUSE_DRAG_PAN_FACTOR = 0.001;
   private static readonly FADE_OPACITY = 0.25;
   private static readonly DETECTOR_FADE_OPACITY = 0.08;
   /** Slider default; materials load solid (opacity 1) then sync via setDetectorPartOpacity. */
@@ -744,6 +741,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.applyDarkModeStyling();
     this.requestRender();
   }
+  @HostBinding('class.event-display-dark')
+  get darkModeHostClass(): boolean { return this._darkMode; }
   @Output() darkModeChange: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   private _showControls: boolean = true;
@@ -825,7 +824,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   loading: boolean = false;
   sidebarOpened: boolean = true;
-  /** Left drawer: dataset/event meta + detector parts. */
+  /** Left overlay drawer: dataset/event meta + detector parts. */
   leftSidebarOpened: boolean = true;
   /** @deprecated Alias kept in sync for older call sites. */
   get detectorLayersPanelOpened(): boolean {
@@ -833,6 +832,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
   set detectorLayersPanelOpened(value: boolean) {
     this.leftSidebarOpened = value;
+  }
+
+  /** Overlay sidebars use transform only — canvas size stays fixed. */
+  toggleSidebar(): void {
+    this.sidebarOpened = !this.sidebarOpened;
+  }
+
+  toggleLeftSidebar(): void {
+    this.leftSidebarOpened = !this.leftSidebarOpened;
   }
   detectorPartsForUi: DetectorPartToggleModel[] = [];
   detectorPaletteItems: DetectorPaletteItem[] = [];
@@ -858,12 +866,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private cascadeHoverActive: boolean = false;
   vertexMarkerTooltip: { label: string; x: number; y: number } | null = null;
   trackTooltip: { label: string; x: number; y: number } | null = null;
-  vertexPanelOpen: { label: string } | null = null;
-  vertexPanelX: number = 0;
-  vertexPanelY: number = 0;
-  vertexPanelDragging = false;
-  vertexPanelDragOffsetX = 0;
-  vertexPanelDragOffsetY = 0;
   private cascadeMarkerEnhanced = false;
   private cascadeMarkerOrigColors: number[] = [];
   private cascadeMarkerOrigScales: number[] = [];
@@ -973,6 +975,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       multiPart && !this.isStoredDetectorAssemblyComplete(modelPaths);
     this.detectorMultipartAssemblyMode = useInteractiveMultipartAssembly;
     this._detectorInteractiveAssemblyDone = !useInteractiveMultipartAssembly;
+    // Left controls stay hidden through construction; open after assembly completes.
+    if (useInteractiveMultipartAssembly) {
+      this.leftSidebarOpened = false;
+    }
     // Session restore: hold final physics until staggered shell reveal finishes.
     this.deferPhysicsUntilDetectorReveal = !useInteractiveMultipartAssembly && multiPart;
 
@@ -1003,7 +1009,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           labelKey: pres.labelKey,
           labelParams: pres.labelParams,
           visible: true,
-          opacity: this.getDetectorPartOpacity(scene)
+          opacity: this.getDetectorPartOpacity(scene),
+          accentColor: detectorPartAccentColor(modelPath)
         });
       }
       this.detectorPartsForUi = nextUi;
@@ -1053,8 +1060,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           companionAssetPaths: companions
         });
       }
-      // Keep the left meta panel (dataset / event) open during assembly.
-      this.leftSidebarOpened = true;
+      // Left sidebar stays closed until construction finishes.
+      this.leftSidebarOpened = false;
+      // Assembly palette lives in the right overlay — keep it visible.
+      this.sidebarOpened = true;
       this.detectorPartsForUi = [];
       this.detectorScene = null;
       this.loading = false;
@@ -1253,7 +1262,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         labelKey: pres.labelKey,
         labelParams: pres.labelParams,
         visible: existing ? existing.visible : root ? root.visible : true,
-        opacity: existing ? existing.opacity : root ? this.getDetectorPartOpacity(root) : EventDisplayComponent.DETECTOR_OUTER_OPACITY
+        opacity: existing ? existing.opacity : root ? this.getDetectorPartOpacity(root) : EventDisplayComponent.DETECTOR_OUTER_OPACITY,
+        accentColor: existing?.accentColor ?? detectorPartAccentColor(p)
       });
     }
     return next;
@@ -2998,7 +3008,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.cascadeMarkerEnhanced = false;
     this.cascadeMarkerOrigColors = [];
-    this.closeVertexPanel();
     this.trackDrawAnimations = [];
     this.trackDrawAnimationStartMs = performance.now();
     this.loading = true;
@@ -3367,10 +3376,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (this.cameraMode === 'centered') {
       this.controls.enablePan = false;
       this.controls.enableRotate = true;
+      this.controls.enableZoom = true;
       this.controls.target.set(0, 0, 0);
     } else {
+      // Free look: custom WASD / drag / wheel fly. Disable OrbitControls
+      // dolly so it does not fight the wheel handler (opposing directions).
       this.controls.enablePan = true;
       this.controls.enableRotate = false;
+      this.controls.enableZoom = false;
     }
     this.isMousePanning = false;
   }
@@ -3389,11 +3402,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private onWheel = (e: WheelEvent) => {
     if (this.cameraMode !== 'free' || !this.controls || !this.camera3D) return;
     e.preventDefault();
+    // Fly along the look axis (same as WASD W/S): move camera and target
+    // together so distance stays constant. Scroll up = forward.
     const distance = this.controls.target.distanceTo(this.camera3D.position);
-    const step = (e.deltaY > 0 ? 1 : -1) * distance * EventDisplayComponent.WHEEL_PAN_FACTOR;
+    const step = (e.deltaY > 0 ? -1 : 1) * distance * EventDisplayComponent.WHEEL_PAN_FACTOR;
     this.panDir.subVectors(this.controls.target, this.camera3D.position).normalize();
     this.panVec.copy(this.panDir).multiplyScalar(step);
     this.camera3D.position.add(this.panVec);
+    this.controls.target.add(this.panVec);
     this.requestRender();
   };
 
@@ -3534,16 +3550,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     };
     const markerLabel = this.resolveMarkerLabel(obj.userData);
     if (markerLabel) {
-      const parent = this.canvas?.parentElement as HTMLElement;
-      if (parent) {
-        const rect = parent.getBoundingClientRect();
-        this.vertexPanelX = Math.max(0, event.clientX - rect.left - 20);
-        this.vertexPanelY = Math.max(0, event.clientY - rect.top - 20);
-      } else {
-        this.vertexPanelX = 16;
-        this.vertexPanelY = 16;
-      }
-      this.vertexPanelOpen = { label: markerLabel };
       return;
     }
     if (this.decays.visible) {
@@ -3649,45 +3655,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.trackTooltip = null;
     this.clearCascadeHover();
   }
-
-  closeVertexPanel() {
-    this.vertexPanelOpen = null;
-  }
-
-  onVertexPanelHeaderMouseDown(event: MouseEvent) {
-    if (!this.vertexPanelOpen) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const parent = this.canvas?.parentElement as HTMLElement;
-    if (!parent) return;
-    const rect = parent.getBoundingClientRect();
-    this.vertexPanelDragOffsetX = event.clientX - rect.left - this.vertexPanelX;
-    this.vertexPanelDragOffsetY = event.clientY - rect.top - this.vertexPanelY;
-    this.vertexPanelDragging = true;
-    window.addEventListener('mousemove', this.onVertexPanelDragMove);
-    window.addEventListener('mouseup', this.onVertexPanelDragEnd);
-  }
-
-  private onVertexPanelDragMove = (e: MouseEvent) => {
-    if (!this.vertexPanelDragging) return;
-    const parent = this.canvas?.parentElement as HTMLElement;
-    if (!parent) return;
-    const rect = parent.getBoundingClientRect();
-    let x = e.clientX - rect.left - this.vertexPanelDragOffsetX;
-    let y = e.clientY - rect.top - this.vertexPanelDragOffsetY;
-    x = Math.max(0, Math.min(rect.width - 280, x));
-    y = Math.max(0, Math.min(rect.height - 200, y));
-    this.vertexPanelX = x;
-    this.vertexPanelY = y;
-    this.cdr.detectChanges();
-  };
-
-  private onVertexPanelDragEnd = () => {
-    if (!this.vertexPanelDragging) return;
-    this.vertexPanelDragging = false;
-    window.removeEventListener('mousemove', this.onVertexPanelDragMove);
-    window.removeEventListener('mouseup', this.onVertexPanelDragEnd);
-  };
 
   private applyCascadeHover(decayGroup: THREE.Object3D) {
     this.decayGroupHovered = decayGroup;

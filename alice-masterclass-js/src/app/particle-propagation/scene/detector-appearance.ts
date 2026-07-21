@@ -148,31 +148,8 @@ export function detectorPartLabel(assetPath: string): string {
   return labels[file] ?? assetPath.replace(/^.*[/\\]/, '').replace(/\.glb$/i, '');
 }
 
-/**
- * Dominant UI accent colour per GLB (from each part's signature
- * `baseColorFactor` in `assets/models/alice components/*.glb`).
- * Grey structural materials are ignored in favour of the coloured shell.
- */
-const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
-  'its.glb': '#33FF71',
-  'tpc.glb': '#22C4FF',
-  'trd.glb': '#FFAA32',
-  'tof.glb': '#FF5E1C',
-  'emcal.glb': '#2B1FFF',
-  'dcal.glb': '#FF2FC0',
-  'phos.glb': '#D1C30C',
-  'l3.glb': '#FF0D12',
-  'mch.glb': '#814244',
-  'abso.glb': '#DE782B',
-  'shil.glb': '#BA92AB',
-  'dipo.glb': '#0068D0',
-};
-
-/** CSS hex accent for opacity sliders / part chips; falls back to orange. */
-export function detectorPartAccentColor(assetPath: string): string {
-  const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
-  return DETECTOR_PART_ACCENT_HEX[file] ?? '#ff6f00';
-}
+/** Re-export shared GLB accent colours used by opacity sliders / part chips. */
+export { detectorPartAccentColor } from '../../shared/three/detector-part-accent';
 
 function isCalorimeter(assetPath: string): boolean {
   return /(^|[/\\])(emcal|dcal|phos)\.glb($|\?)/i.test(assetPath);

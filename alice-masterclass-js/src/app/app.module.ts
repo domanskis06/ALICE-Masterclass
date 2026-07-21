@@ -20,7 +20,6 @@ import { AboutModule } from './about/about.module';
 
 import { AppComponent } from './app.component';
 import { AuthDialogComponent } from './auth-dialog/auth-dialog.component';
-import { SelectDatasetDialogComponent } from './select-dataset-dialog/select-dataset-dialog.component';
 import { InstructionsDialogComponent } from './instructions-dialog/instructions-dialog.component';
 
 // AoT requires an exported function for factories
@@ -29,7 +28,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 }
 
 @NgModule({
-  declarations: [AppComponent, AuthDialogComponent, SelectDatasetDialogComponent, InstructionsDialogComponent],
+  declarations: [AppComponent, AuthDialogComponent, InstructionsDialogComponent],
   imports: [
     BrowserModule,
     HttpClientModule,

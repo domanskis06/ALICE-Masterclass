@@ -81,6 +81,14 @@
         "B2": "Study pairs of jets (di-jets) produced in opposite directions.",
         "B3": "Investigate how jets lose energy while traveling through the quark–gluon plasma."
       },
+      "PHOS": {
+        "TITLE": "PHOS (Photon Spectrometer)",
+        "BODY": "The PHOS is a high-resolution electromagnetic calorimeter designed to measure the energy of photons and electrons with exceptional precision. Unlike other calorimeters, which cover a larger area, PHOS is optimized for the most accurate energy measurements. It is built from dense scintillating crystals that produce tiny flashes of light when particles pass through them, allowing their energy to be determined with very high precision.\n\nPHOS is especially important for studying particles that decay into photons, such as pions.",
+        "LETS_US": "PHOS lets us:",
+        "B1": "Measure the energy of photons and electrons with very high precision.",
+        "B2": "Study particles that decay into photons, such as pions.",
+        "B3": "Investigate the quark-gluon plasma using electromagnetic probes."
+      },
       "L3": {
         "TITLE": "L3 (Solenoid Magnet)",
         "BODY": "The L3 magnet is the large solenoid that surrounds the ALICE detectors and creates a strong magnetic field along the beam axis. When a charged particle travels through this field, the Lorentz force bends its path into a curve. The direction of the bend reveals the sign of the particle’s charge, while the radius of curvature is related to its momentum: faster, higher-momentum particles bend less than slower ones.\n\nWithout the magnetic field, reconstructed tracks appear as straight lines. Turning on L3 transforms them into the curved trajectories used to measure momentum - a key step in understanding the particles produced in high-energy collisions.",
@@ -162,7 +170,9 @@
     "DETECTOR_ASSEMBLY_HINT": "Drag each part from this panel onto the 3D view. When everything is placed, detector options (views, clusters, tracks) will appear here.",
     "TRD_READING": "TRD reading",
     "TOF_READING": "TOF reading",
-    "DETECTOR_CALORIMETERS": "Calorimeters"
+    "DETECTOR_CALORIMETERS": "Calorimeters",
+    "PREVIOUS_EVENT": "Previous event",
+    "NEXT_EVENT": "Next event"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Please select dataset:",

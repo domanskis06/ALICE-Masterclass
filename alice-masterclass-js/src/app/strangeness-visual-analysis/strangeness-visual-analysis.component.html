@@ -90,18 +90,7 @@
     </div>
   }
 
-  <div #visualAnalysisContainer class="container" [class.va-dark-mode]="visualDarkMode" fxFlex="grow" fxLayout="column">
-    <div class="histogram-flight-layer" aria-hidden="true">
-      @for (particle of flightParticles; track particle.id) {
-        <span
-          class="histogram-flight-particle"
-          [style.--flight-start-x]="particle.startX + 'px'"
-          [style.--flight-start-y]="particle.startY + 'px'"
-          [style.--flight-end-x]="particle.endX + 'px'"
-          [style.--flight-end-y]="particle.endY + 'px'"
-        ></span>
-      }
-    </div>
+  <div class="container" [class.va-dark-mode]="visualDarkMode" fxFlex="grow" fxLayout="column">
     <app-event-display
       #eventDisplayHost
       [decaysShown]="true"
@@ -172,6 +161,12 @@
       ></app-calculator>
       <app-particle-mass fxFlex="grow"></app-particle-mass>
     </div>
-    <app-mass-histograms class="va-histograms" [uploadDisabled]="uploadDisabledDatasets.includes(datasetID)" [results]="dataService.visualAnalysisResults" (binIncremented)="onHistogramBinIncremented($event)" (uploadResultsEvent)="onUploadResults()"></app-mass-histograms>
+    <app-mass-histograms
+      #massHistograms
+      class="va-histograms"
+      [uploadDisabled]="uploadDisabledDatasets.includes(datasetID)"
+      [results]="dataService.visualAnalysisResults"
+      (uploadResultsEvent)="onUploadResults()"
+    ></app-mass-histograms>
   </div>
 </div>

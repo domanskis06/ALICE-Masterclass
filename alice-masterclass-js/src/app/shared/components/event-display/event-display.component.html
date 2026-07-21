@@ -1,19 +1,98 @@
 <mat-card appearance="outlined" fxLayout="column">
   <mat-card-content>
-    <mat-drawer-container class="palette-drag-boundary">
-      <mat-drawer class="detector-parts-drawer" mode="side" position="start"
-        [(opened)]="leftSidebarOpened" (openedChange)="leftSidebarOpened = $event">
-        <div class="left-sidebar">
+    <div
+      class="event-display-host palette-drag-boundary"
+      [class.ed-sidebar-collapsed]="!sidebarOpened || !showControls"
+      [class.ed-left-sidebar-collapsed]="!leftSidebarOpened || !detectorInteractiveAssemblyDone">
+      <div class="scene-area">
+        @if (detectorInteractiveAssemblyDone) {
+          <button
+            mat-icon-button
+            type="button"
+            class="sidebar-toggle sidebar-toggle--left"
+            [attr.aria-label]="'EVENT_DISPLAY.DETECTOR_PARTS' | translate"
+            [attr.aria-expanded]="leftSidebarOpened"
+            (click)="toggleLeftSidebar()">
+            <mat-icon>{{ leftSidebarOpened ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+          </button>
+        }
+
+        @if (showControls) {
+          <button
+            mat-icon-button
+            type="button"
+            class="sidebar-toggle sidebar-toggle--right"
+            aria-label="Options for Event Display"
+            [attr.aria-expanded]="sidebarOpened"
+            (click)="toggleSidebar()">
+            <mat-icon>{{ sidebarOpened ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+          </button>
+        }
+
+        <aside class="event-display-corner-overlay">
+          @if (cornerOverlayTemplate) {
+            <ng-container *ngTemplateOutlet="cornerOverlayTemplate"></ng-container>
+          }
+        </aside>
+
+        <div id="content" [class.disabled]="loading" fxLayout="row" fxLayoutAlign="center stretch">
+          @if (showControls) {
+            <button
+              class="event-nav-btn event-nav-btn--prev"
+              type="button"
+              [disabled]="previousEventButtonDisabled"
+              fxFlexAlign="center"
+              (click)="onPreviousEventClick()"
+              mat-icon-button
+              aria-label="Previous Event button">
+              <mat-icon>skip_previous</mat-icon>
+            </button>
+          }
+          <div id="render-area" fxFlex="1 0.5 calc(100%-100px)" (pointerleave)="onPointerLeave()" tabindex="0">
+            <canvas #canvas (pointerdown)="onPointerDown($event); $event.currentTarget.parentElement?.focus()" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()"></canvas>
+            @if (vertexMarkerTooltip) {
+              <div class="vertex-tooltip" [style.left.px]="vertexMarkerTooltip.x" [style.top.px]="vertexMarkerTooltip.y">
+                {{ vertexMarkerTooltip.label }}
+              </div>
+            }
+            @if (trackTooltip) {
+              <div class="vertex-tooltip track-tooltip" [style.left.px]="trackTooltip.x" [style.top.px]="trackTooltip.y">
+                {{ trackTooltip.label }}
+              </div>
+            }
+            <div id="view0" [class.landscape]="landscape" [class.noside]="!effectiveSideViewsShown">{{ 'EVENT_DISPLAY.VIEW_3D' | translate }}</div>
+            @if (effectiveSideViewsShown) {
+              <div id="view1" [class.landscape]="landscape">{{ 'EVENT_DISPLAY.VIEW_1' | translate }}</div>
+              <div id="view2" [class.landscape]="landscape">{{ 'EVENT_DISPLAY.VIEW_2' | translate }}</div>
+              <div id="scales1" [class.landscape]="landscape"></div>
+            }
+          </div>
+          @if (showControls) {
+            <button
+              class="event-nav-btn event-nav-btn--next"
+              type="button"
+              [disabled]="nextEventButtonDisabled"
+              fxFlexAlign="center"
+              (click)="onNextEventClick()"
+              mat-icon-button
+              aria-label="Next Event button">
+              <mat-icon>skip_next</mat-icon>
+            </button>
+          }
+        </div>
+
+        @if (loading && (!detectorMultipartAssemblyMode || detectorInteractiveAssemblyDone)) {
+          <div id="spinner" fxLayout="column" fxLayoutAlign="center center"><mat-spinner></mat-spinner></div>
+        }
+      </div>
+
+      <aside
+        class="controls-sidebar controls-sidebar--left"
+        [attr.aria-label]="'EVENT_DISPLAY.DETECTOR_PARTS' | translate"
+        [attr.aria-hidden]="!leftSidebarOpened">
+        <div class="sidebar-body left-sidebar">
           <div class="event-meta-slot">
             <ng-content></ng-content>
-          </div>
-          <div class="left-sidebar-toggle-row">
-            <button mat-icon-button type="button" class="layers-toggle-button"
-              aria-label="{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}"
-              [attr.aria-expanded]="leftSidebarOpened"
-              (click)="leftSidebarOpened = false">
-              <mat-icon>filter_list</mat-icon>
-            </button>
           </div>
           @if (detectorInteractiveAssemblyDone && detectorPartsForUi.length > 0) {
             <div class="detector-parts-panel">
@@ -31,7 +110,11 @@
               }
               <div fxLayout="column" fxLayoutGap="8px">
                 @for (part of detectorPartsForUi; track part.assetPath) {
-                  <div class="detector-part-controls" fxLayout="column" fxLayoutGap="4px">
+                  <div
+                    class="detector-part-controls"
+                    fxLayout="column"
+                    fxLayoutGap="4px"
+                    [style.--part-accent]="part.accentColor">
                     <mat-slide-toggle [ngModel]="part.visible"
                       [ngModelOptions]="{ standalone: true }"
                       (ngModelChange)="setDetectorPartVisibility(part, $event)">
@@ -39,6 +122,7 @@
                     </mat-slide-toggle>
                     <input
                       type="range"
+                      class="part-opacity-slider"
                       min="0.05"
                       max="0.95"
                       step="0.01"
@@ -66,149 +150,78 @@
             </div>
           }
         </div>
-      </mat-drawer>
-      <mat-drawer *ngIf="showControls" #drawer class="sidenav detector-assembly-drawer" mode="side" position="end"
-          [(opened)]="sidebarOpened"
-          (openedChange)="sidebarOpened = $event">
-          <div class="right-sidebar-toggle-row">
-            <button mat-icon-button type="button"
-              aria-label="Options for Event Display"
-              (click)="sidebarOpened = !sidebarOpened">
-              <mat-icon>filter_list</mat-icon>
-            </button>
-          </div>
-          @if (detectorMultipartAssemblyMode && !detectorInteractiveAssemblyDone) {
-            <div class="assembly-palette">
-              <h4>{{ 'EVENT_DISPLAY.DETECTOR_ASSEMBLY_TITLE' | translate }}</h4>
-              <p class="assembly-hint">{{ 'EVENT_DISPLAY.DETECTOR_ASSEMBLY_HINT' | translate }}</p>
-              @if (loading) {
-                <div class="assembly-loading" fxLayout="row" fxLayoutAlign="center center">
-                  <mat-spinner diameter="36"></mat-spinner>
-                </div>
-              } @else {
-                <div class="assembly-palette-list" fxLayout="column" fxLayoutGap="10px">
-                  @for (item of detectorPaletteItems; track item.assetPath) {
-                    @if (!item.placed) {
-                      <div class="palette-part-card" cdkDrag
-                        [cdkDragDisabled]="!detectorInteractiveAssemblyDone && (!assemblyAllowedDragAssetPath || assemblyAllowedDragAssetPath !== item.assetPath)"
-                        [class.palette-part-coach-highlight]="assemblyCoachHighlightAssetPath === item.assetPath"
-                        [class.palette-part-drag-disabled]="!detectorInteractiveAssemblyDone && (!assemblyAllowedDragAssetPath || assemblyAllowedDragAssetPath !== item.assetPath)"
-                        (cdkDragEnded)="onDetectorPaletteDragEnded($event, item)">
-                        <mat-icon class="palette-part-icon" aria-hidden="true">view_in_ar</mat-icon>
-                        <span class="palette-part-label" [translate]="item.labelKey" [translateParams]="item.labelParams || {}"></span>
-                        <mat-icon class="palette-drag-hint" aria-hidden="true">open_with</mat-icon>
-                      </div>
-                    }
-                  }
-                </div>
-              }
-            </div>
-          }
-          @if (detectorInteractiveAssemblyDone) {
-            <div class="options">
-              <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
-              <div fxLayout="column" fxLayoutGap="8px">
-                <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
-                <mat-slide-toggle [(ngModel)]="detectorShown">{{ 'EVENT_DISPLAY.DETECTOR' | translate }}</mat-slide-toggle>
-                @if (hasClusters) {
-                  <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
-                }
-                <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
-                <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
-                <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
-              </div>
-              @if (hasClusters) {
-                <h4>{{ 'EVENT_DISPLAY.CLUSTER_SIZE' | translate }}</h4>
-                <mat-radio-group [(ngModel)]="clusterSize" fxLayout="row" fxLayoutAlign="space-around start">
-                  <mat-radio-button [value]="0.1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
-                  <mat-radio-button [value]="0.25">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
-                  <mat-radio-button [value]="0.5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
-                </mat-radio-group>
-              }
-              <h4>{{ 'EVENT_DISPLAY.TRACK_WIDTH' | translate }}</h4>
-              <mat-radio-group [(ngModel)]="trackWidth" fxLayout="row" fxLayoutAlign="space-around start">
-                <mat-radio-button [value]="1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
-                <mat-radio-button [value]="2">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
-                <mat-radio-button [value]="5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
-              </mat-radio-group>
-              <h4>Camera</h4>
-              <mat-radio-group [(ngModel)]="cameraMode" (change)="onCameraModeChange()" fxLayout="column" fxLayoutGap="4px">
-                <mat-radio-button value="centered">Centered</mat-radio-button>
-                <mat-radio-button value="free">Free</mat-radio-button>
-              </mat-radio-group>
-            </div>
-          }
-      </mat-drawer>
-      <mat-drawer-content>
-        @if (!leftSidebarOpened) {
-          <button mat-icon-button type="button" class="drawer-edge-toggle drawer-edge-toggle-start"
-            aria-label="{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}"
-            (click)="leftSidebarOpened = true">
-            <mat-icon>filter_list</mat-icon>
-          </button>
-        }
-        @if (showControls && !sidebarOpened) {
-          <button mat-icon-button type="button" class="drawer-edge-toggle drawer-edge-toggle-end"
-            aria-label="Options for Event Display"
-            (click)="sidebarOpened = true">
-            <mat-icon>filter_list</mat-icon>
-          </button>
-        }
-        <aside class="event-display-corner-overlay">
-          @if (cornerOverlayTemplate) {
-            <ng-container *ngTemplateOutlet="cornerOverlayTemplate"></ng-container>
-          }
-        </aside>
-        <div id="content" [class.disabled]="loading" fxLayout="row" fxLayoutAlign="center stretch">
-          @if (showControls) {
-            <button [disabled]="previousEventButtonDisabled" fxFlexAlign="center" (click)="onPreviousEventClick()" mat-icon-button aria-label="Previous Event button">
-              <mat-icon>chevron_left</mat-icon>
-            </button>
-          }
-          <div id="render-area" fxFlex="1 0.5 calc(100%-100px)" (pointerleave)="onPointerLeave()" tabindex="0">
-            <canvas #canvas (pointerdown)="onPointerDown($event); $event.currentTarget.parentElement?.focus()" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()"></canvas>
-            @if (vertexMarkerTooltip) {
-              <div class="vertex-tooltip" [style.left.px]="vertexMarkerTooltip.x" [style.top.px]="vertexMarkerTooltip.y">
-                {{ vertexMarkerTooltip.label }}
-              </div>
-            }
-            @if (trackTooltip) {
-              <div class="vertex-tooltip track-tooltip" [style.left.px]="trackTooltip.x" [style.top.px]="trackTooltip.y">
-                {{ trackTooltip.label }}
-              </div>
-            }
-            @if (vertexPanelOpen) {
-              <div class="vertex-panel" [style.left.px]="vertexPanelX" [style.top.px]="vertexPanelY">
-                <div class="vertex-panel-header" (mousedown)="onVertexPanelHeaderMouseDown($event)">
-                  <span class="vertex-panel-title">{{ vertexPanelOpen.label }}</span>
-                  <button mat-icon-button (click)="closeVertexPanel()" aria-label="Close">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                </div>
-                <div class="vertex-panel-body">
-                  <div class="vertex-paste-area">
-                    <span class="vertex-paste-hint">Placeholder</span>
+      </aside>
+
+      @if (showControls) {
+        <aside
+          class="controls-sidebar controls-sidebar--right"
+          aria-label="Options for Event Display"
+          [attr.aria-hidden]="!sidebarOpened">
+          <div class="sidebar-body">
+            @if (detectorMultipartAssemblyMode && !detectorInteractiveAssemblyDone) {
+              <div class="assembly-palette">
+                <h4>{{ 'EVENT_DISPLAY.DETECTOR_ASSEMBLY_TITLE' | translate }}</h4>
+                <p class="assembly-hint">{{ 'EVENT_DISPLAY.DETECTOR_ASSEMBLY_HINT' | translate }}</p>
+                @if (loading) {
+                  <div class="assembly-loading" fxLayout="row" fxLayoutAlign="center center">
+                    <mat-spinner diameter="36"></mat-spinner>
                   </div>
-                </div>
+                } @else {
+                  <div class="assembly-palette-list" fxLayout="column" fxLayoutGap="10px">
+                    @for (item of detectorPaletteItems; track item.assetPath) {
+                      @if (!item.placed) {
+                        <div class="palette-part-card" cdkDrag
+                          [cdkDragDisabled]="!detectorInteractiveAssemblyDone && (!assemblyAllowedDragAssetPath || assemblyAllowedDragAssetPath !== item.assetPath)"
+                          [class.palette-part-coach-highlight]="assemblyCoachHighlightAssetPath === item.assetPath"
+                          [class.palette-part-drag-disabled]="!detectorInteractiveAssemblyDone && (!assemblyAllowedDragAssetPath || assemblyAllowedDragAssetPath !== item.assetPath)"
+                          (cdkDragEnded)="onDetectorPaletteDragEnded($event, item)">
+                          <mat-icon class="palette-part-icon" aria-hidden="true">view_in_ar</mat-icon>
+                          <span class="palette-part-label" [translate]="item.labelKey" [translateParams]="item.labelParams || {}"></span>
+                          <mat-icon class="palette-drag-hint" aria-hidden="true">open_with</mat-icon>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
               </div>
             }
-            <div id="view0" [class.landscape]="landscape" [class.noside]="!effectiveSideViewsShown">{{ 'EVENT_DISPLAY.VIEW_3D' | translate }}</div>
-            @if (effectiveSideViewsShown) {
-              <div id="view1" [class.landscape]="landscape">{{ 'EVENT_DISPLAY.VIEW_1' | translate }}</div>
-              <div id="view2" [class.landscape]="landscape">{{ 'EVENT_DISPLAY.VIEW_2' | translate }}</div>
-              <div id="scales1" [class.landscape]="landscape"></div>
+            @if (detectorInteractiveAssemblyDone) {
+              <div class="options">
+                <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
+                <div fxLayout="column" fxLayoutGap="8px">
+                  <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
+                  <mat-slide-toggle [(ngModel)]="detectorShown">{{ 'EVENT_DISPLAY.DETECTOR' | translate }}</mat-slide-toggle>
+                  @if (hasClusters) {
+                    <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
+                  }
+                  <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
+                  <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
+                  <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
+                </div>
+                @if (hasClusters) {
+                  <h4>{{ 'EVENT_DISPLAY.CLUSTER_SIZE' | translate }}</h4>
+                  <mat-radio-group [(ngModel)]="clusterSize" fxLayout="row" fxLayoutAlign="space-around start">
+                    <mat-radio-button [value]="0.1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
+                    <mat-radio-button [value]="0.25">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
+                    <mat-radio-button [value]="0.5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
+                  </mat-radio-group>
+                }
+                <h4>{{ 'EVENT_DISPLAY.TRACK_WIDTH' | translate }}</h4>
+                <mat-radio-group [(ngModel)]="trackWidth" fxLayout="row" fxLayoutAlign="space-around start">
+                  <mat-radio-button [value]="1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
+                  <mat-radio-button [value]="2">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
+                  <mat-radio-button [value]="5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
+                </mat-radio-group>
+                <h4>Camera</h4>
+                <mat-radio-group [(ngModel)]="cameraMode" (change)="onCameraModeChange()" fxLayout="column" fxLayoutGap="4px">
+                  <mat-radio-button value="centered">Centered</mat-radio-button>
+                  <mat-radio-button value="free">Free</mat-radio-button>
+                </mat-radio-group>
+              </div>
             }
           </div>
-          @if (showControls) {
-            <button [disabled]="nextEventButtonDisabled" fxFlexAlign="center" (click)="onNextEventClick()" mat-icon-button aria-label="Next Event button">
-              <mat-icon>chevron_right</mat-icon>
-            </button>
-          }
-        </div>
-        @if (loading && (!detectorMultipartAssemblyMode || detectorInteractiveAssemblyDone)) {
-          <div id="spinner" fxLayout="column" fxLayoutAlign="center center"><mat-spinner></mat-spinner></div>
-        }
-      </mat-drawer-content>
-    </mat-drawer-container>
+        </aside>
+      }
+    </div>
   </mat-card-content>
 </mat-card>

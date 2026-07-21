@@ -76,6 +76,14 @@
         "B2": "Jet-Paare (Di-Jets) untersuchen, die in entgegengesetzte Richtungen entstehen.",
         "B3": "untersuchen, wie Jets beim Durchqueren des Quark-Gluon-Plasmas Energie verlieren."
       },
+      "PHOS": {
+        "TITLE": "PHOS (Photon Spectrometer)",
+        "BODY": "Der PHOS ist ein hochauflösendes elektromagnetisches Kalorimeter, das die Energie von Photonen und Elektronen mit außergewöhnlicher Präzision misst. Anders als andere Kalorimeter, die eine größere Fläche abdecken, ist PHOS auf möglichst genaue Energiemessungen optimiert. Er besteht aus dichten szintillierenden Kristallen, die winzige Lichtblitze erzeugen, wenn Teilchen sie durchqueren — daraus lässt sich ihre Energie sehr präzise bestimmen.\n\nPHOS ist besonders wichtig für die Untersuchung von Teilchen, die in Photonen zerfallen, etwa Pionen.",
+        "LETS_US": "Mit dem PHOS können wir:",
+        "B1": "die Energie von Photonen und Elektronen mit sehr hoher Präzision messen.",
+        "B2": "Teilchen untersuchen, die in Photonen zerfallen, etwa Pionen.",
+        "B3": "das Quark-Gluon-Plasma mit elektromagnetischen Sonden erforschen."
+      },
       "L3": {
         "TITLE": "L3 (Solenoid Magnet)",
         "BODY": "Der L3-Magnet ist der große Solenoid, der die ALICE-Detektoren umgibt und ein starkes Magnetfeld entlang der Strahlachse erzeugt. Wenn ein geladenes Teilchen durch dieses Feld fliegt, krümmt die Lorentzkraft seine Bahn. Die Richtung der Krümmung zeigt das Vorzeichen der Ladung, während der Krümmungsradius mit dem Impuls zusammenhängt: schnellere Teilchen mit höherem Impuls biegen sich weniger stark als langsamere.\n\nOhne Magnetfeld erscheinen rekonstruierte Spuren als Geraden. Mit dem L3 werden daraus die gekrümmten Trajektorien, aus denen der Impuls gemessen wird — ein zentraler Schritt zum Verständnis der Teilchen aus Hochenergiekollisionen.",
@@ -163,7 +171,9 @@
     "DETECTOR_ASSEMBLY_HINT": "Ziehen Sie jedes Teil aus diesem Panel in die 3D-Ansicht. Wenn alles platziert ist, erscheinen hier die Detektoroptionen (Ansichten, Cluster, Spuren).",
     "TRD_READING": "TRD-Auslesung",
     "TOF_READING": "TOF-Auslesung",
-    "DETECTOR_CALORIMETERS": "Kalorimeter"
+    "DETECTOR_CALORIMETERS": "Kalorimeter",
+    "PREVIOUS_EVENT": "Vorheriges",
+    "NEXT_EVENT": "Nächstes"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Bitte wählen Sie den Datensatz:",

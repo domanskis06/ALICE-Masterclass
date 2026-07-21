@@ -1,5 +1,6 @@
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from './shared/services/api.service';
@@ -12,7 +13,8 @@ describe('AppComponent', () => {
     declarations: [AppComponent],
     imports: [RouterTestingModule,
         TranslateModule.forRoot(),
-        NavModule],
+        NavModule,
+        NoopAnimationsModule],
     providers: [ApiService, provideHttpClient(withInterceptorsFromDi())]
 }).compileComponents();
   }));
@@ -21,5 +23,12 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
     expect(app).toBeTruthy();
+  }));
+
+  it('should render the global flying-ball overlay', waitForAsync(() => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const ball = fixture.nativeElement.querySelector('.flying-ball');
+    expect(ball).toBeTruthy();
   }));
 });

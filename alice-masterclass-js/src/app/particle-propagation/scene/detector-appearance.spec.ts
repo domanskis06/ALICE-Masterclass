@@ -70,6 +70,12 @@ describe('detectorPartAccentColor', () => {
     expect(detectorPartAccentColor('assets/models/alice components/ABSO.glb')).toBe('#DE782B');
     expect(detectorPartAccentColor('assets/models/alice components/SHIL.glb')).toBe('#BA92AB');
     expect(detectorPartAccentColor('assets/models/alice components/DIPO.glb')).toBe('#0068D0');
+    expect(detectorPartAccentColor('assets/models/alice components/FIT.glb')).toBe('#C0C4C8');
+    expect(detectorPartAccentColor('assets/models/alice components/trd.glb')).toBe('#FFAA32');
+    expect(detectorPartAccentColor('assets/models/alice components/tof.glb')).toBe('#FF5E1C');
+    expect(detectorPartAccentColor('assets/models/alice components/EMCAL.glb')).toBe('#2B1FFF');
+    expect(detectorPartAccentColor('assets/models/alice components/DCAL.glb')).toBe('#FF2FC0');
+    expect(detectorPartAccentColor('assets/models/alice components/PHOS.glb')).toBe('#D1C30C');
   });
 
   it('falls back to the default orange accent for unknown parts', () => {

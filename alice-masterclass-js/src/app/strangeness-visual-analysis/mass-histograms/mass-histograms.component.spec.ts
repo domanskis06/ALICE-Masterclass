@@ -33,10 +33,16 @@ describe('MassHistogramsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should default each histogram to 40 bins', () => {
-    expect(component.kaonBins).toBe(40);
-    expect(component.lambdaBins).toBe(40);
-    expect(component.antiLambdaBins).toBe(40);
-    expect(component.xiBins).toBe(40);
+  it('should default all histograms to 10 bins', () => {
+    expect(component.bins).toBe(10);
+  });
+
+  it('should clamp typed bin counts to 1–25', () => {
+    component.onBinsInput(0);
+    expect(component.bins).toBe(1);
+    component.onBinsInput(999);
+    expect(component.bins).toBe(25);
+    component.onBinsInput(12.6);
+    expect(component.bins).toBe(13);
   });
 });

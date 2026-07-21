@@ -100,17 +100,13 @@
   }
 
   mat-card-content,
-  app-event-display mat-drawer-container,
-  app-event-display mat-drawer-content,
+  app-event-display .event-display-host,
+  app-event-display .scene-area,
   app-event-display #render-area {
     background: var(--va-bg-panel-solid);
   }
 
-  app-event-display mat-drawer {
-    background: transparent;
-    color: var(--va-text);
-  }
-
+  app-event-display .controls-sidebar,
   app-event-display .detector-parts-panel,
   app-event-display .assembly-palette,
   app-event-display .event-meta-slot,
@@ -127,13 +123,12 @@
     border-bottom-color: var(--va-border);
   }
 
-  app-event-display .detector-parts-panel,
-  app-event-display .assembly-palette {
-    border-left: 1px solid var(--va-border);
+  app-event-display .controls-sidebar {
+    border-color: var(--va-border);
   }
 
-  app-event-display .drawer-edge-toggle {
-    background: var(--va-control-bg);
+  app-event-display .sidebar-toggle {
+    background: color-mix(in srgb, var(--va-control-bg) 82%, transparent);
     color: var(--va-text);
   }
 
@@ -247,8 +242,38 @@
     }
   }
 
-  app-mass-histograms .bin-control__label {
-    color: var(--va-muted);
+  app-mass-histograms .bin-control {
+    background: #000000;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  }
+
+  app-mass-histograms .bin-control__caption {
+    color: #ffffff;
+  }
+
+  app-mass-histograms .upload-data-button.mat-mdc-raised-button {
+    --mdc-protected-button-label-text-color: #ffffff;
+    --mdc-protected-button-disabled-label-text-color: #ffffff;
+    --mat-protected-button-label-text-color: #ffffff;
+    --mat-protected-button-disabled-label-text-color: #ffffff;
+    color: #ffffff;
+
+    .upload-data-button__text,
+    mat-icon {
+      color: #ffffff;
+    }
+  }
+
+  app-mass-histograms .bin-control__input {
+    border-color: rgba(255, 255, 255, 0.35);
+    background: #111111;
+    color: #ffffff;
+
+    &:focus {
+      border-color: #b71c1c;
+      box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.35);
+    }
   }
 
   /* Calculator Select / Add — same dark panel tone as other VA controls */
