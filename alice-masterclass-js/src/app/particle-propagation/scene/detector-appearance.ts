@@ -12,16 +12,18 @@
  * `opacity 0.35`, `depthWrite = false`), these materials keep `depthWrite =
  * true` and rely on per-mesh `polygonOffset` + `renderOrder`. Depth writes let
  * the GPU reject fragments hidden behind nearer shells instead of blending all
- * of them. The L3 magnet is built as {@link THREE.InstancedMesh} families (no
- * material merge) inside a distance {@link THREE.LOD}, with a default opacity of
- * {@link OUTER_MAGNET_DEFAULT_OPACITY}. TPC uses a distance LOD whose far level
- * thins fine detail and decimates the heavy sector panels (see
- * {@link simplifyTpcForLowLod}). MCH uses a distance LOD with Melax on the
- * heavier Mesh_* panels. ITS / ABSO / DIPO stay at full merged detail — Melax
- * shreds thin-shell / boxy CAD silhouettes at the default orbit distance. The
- * beam pipe (BP) is a gltfpack-simplified cut tube (~20k tris) with a Melax far
- * LOD; it keeps a higher render order and slightly stronger dark-mode emissive
- * so the thin grey tube stays readable inside the barrel.
+ * of them. The L3 magnet is the PP stand-in `L3_pp.glb` (octagon yoke + liner;
+ * CAD `L3.glb` stays on Visual Analysis) inside a distance {@link THREE.LOD},
+ * with default opacity {@link OUTER_MAGNET_DEFAULT_OPACITY}. Legacy helpers
+ * still collapse Mesh_1/2/3 sector families into {@link THREE.InstancedMesh}
+ * when present. TPC uses a distance LOD whose far level thins fine detail and
+ * decimates the heavy sector panels (see {@link simplifyTpcForLowLod}). MCH
+ * uses a distance LOD with Melax on the heavier Mesh_* panels. ITS / ABSO /
+ * DIPO stay at full merged detail — Melax shreds thin-shell / boxy CAD
+ * silhouettes at the default orbit distance. The beam pipe (BP) is a
+ * gltfpack-simplified cut tube (~20k tris) with a Melax far LOD; it keeps a
+ * higher render order and slightly stronger dark-mode emissive so the thin
+ * grey tube stays readable inside the barrel.
  */
 
 import * as THREE from 'three';
@@ -61,15 +63,13 @@ export const BEAM_PIPE_LOW_VERTEX_KEEP = 0.4;
 const BEAM_PIPE_RENDER_ORDER = 500_000;
 
 /**
- * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3_pp.glb).
- * The authored GLB repeats the same ~128-tri panel ~168× around the ring.
+ * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families).
+ * The historical CAD L3 repeated the same ~128-tri panel ~168× around the ring.
+ * Current `L3_pp.glb` is a single octagon mesh (no sector families).
  *
- * No longer used by the live L3 LOD in `detector-loader.ts` — thinning the
- * far level left real gaps between kept sectors that blend into the
- * near-black dark background but read as glaring white holes against the
- * pale light-mode background. Kept as a utility (and for
- * {@link thinOuterMagnetSectors} / `buildOuterMagnetInstanced` tests) for any
- * future LOD that can afford the visible gaps.
+ * No longer used by the live L3 LOD in `detector-loader.ts` — thinning left
+ * gaps that read as white holes in light mode. Kept for
+ * {@link thinOuterMagnetSectors} / `buildOuterMagnetInstanced` tests.
  */
 export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
 

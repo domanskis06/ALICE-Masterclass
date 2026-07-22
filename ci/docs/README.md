@@ -16,7 +16,7 @@ Entry point for the monorepo: [`../README.md`](../README.md).
 | Doc | Topic |
 | --- | --- |
 | [`event-display.md`](event-display.md) | Three.js EventDisplay (god component) and Services |
-| [`particle-propagation.md`](particle-propagation.md) | Particle Propagation module — origins, field/event data, architecture |
+| [`particle-propagation.md`](particle-propagation.md) | Particle Propagation module — origins, field/event data, architecture, L3_pp stand-in |
 
 ## Testing
 

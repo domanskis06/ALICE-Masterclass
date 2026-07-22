@@ -5,7 +5,7 @@
  * it stays a dumb rendering shell: no physics, no HTTP, no RxJS. Instantiated
  * once by `ParticlePropagationComponent` and driven from its `requestAnimationFrame`
  * loop. Camera/lighting setup mirrors `EventDisplayComponent.createScene()` —
- * see `docs/event-display.md` — but this class does **not** extend or import
+ * see `ci/docs/event-display.md` — but this class does **not** extend or import
  * that component (god-node isolation, per `.cursor/rules/architecture.mdc`).
  */
 
@@ -67,7 +67,7 @@ export class PropagationScene {
 
   /**
    * Light retune on dark/light toggle, mirroring
-   * `EventDisplayComponent.syncSceneLighting` (see `docs/event-display.md`).
+   * `EventDisplayComponent.syncSceneLighting` (see `ci/docs/event-display.md`).
    * Dark values match the previous static `setupLights` — no regression there.
    * Light values give a brighter, flatter fill so albedo-only (non-neon)
    * materials don't stay dim against the pale `LIGHT_BACKGROUND`.
@@ -276,7 +276,7 @@ export class PropagationScene {
   /**
    * Bright, flatter fill in light mode; keeps the darker neon contrast in dark
    * mode. Mirrors `EventDisplayComponent.syncSceneLighting` — see
-   * `docs/event-display.md`. Note: only the *scene* fill lights are retuned
+   * `ci/docs/event-display.md`. Note: only the *scene* fill lights are retuned
    * here. Boosting these does not fix low-opacity shells reading as black —
    * `Material.opacity` scales the *entire* blended fragment (diffuse +
    * emissive) toward the background colour, so no amount of scene light can
