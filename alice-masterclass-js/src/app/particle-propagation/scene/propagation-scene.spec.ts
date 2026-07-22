@@ -1,9 +1,5 @@
 import * as THREE from 'three';
-import {
-  OUTER_MAGNET_HIDE_NEAR_DISTANCE,
-  OUTER_MAGNET_LOD_NAME,
-  OUTER_MAGNET_SHOW_NEAR_DISTANCE,
-} from './detector-appearance';
+import { OUTER_MAGNET_LOD_NAME } from './detector-appearance';
 import { PropagationScene } from './propagation-scene';
 
 describe('PropagationScene', () => {
@@ -84,7 +80,14 @@ describe('PropagationScene', () => {
     expect(scene.controls.target.z).toBe(0);
   });
 
-  it('auto-hides L3 while orbiting and when the camera enters the TRD region', () => {
+  it('shows L3 regardless of orbiting/zooming — visibility follows only the sidebar toggle', () => {
+    // Regression test: L3 used to auto-hide completely while the pointer was
+    // down (orbit drag) and again when the camera zoomed past a near-TRD
+    // threshold — a fill-rate mitigation for the previous, heavier L3 model.
+    // The model has since been shrunk, and unconditionally popping the whole
+    // yoke in/out mid-gesture was itself a jarring, rotation-tied "jump", so
+    // both auto-hide paths were removed. Only the explicit sidebar toggle
+    // (setOuterMagnetUserVisible) may hide L3 now.
     const l3 = new THREE.Group();
     l3.name = OUTER_MAGNET_LOD_NAME;
     scene.detectorGroup.add(l3);
@@ -92,40 +95,34 @@ describe('PropagationScene', () => {
     scene.render();
     expect(l3.visible).toBe(true);
 
+    // Orbiting (pointer down) no longer hides L3.
     scene.controls.dispatchEvent({ type: 'start' });
     scene.render();
-    expect(l3.visible).toBe(false);
+    expect(l3.visible).toBe(true);
 
     scene.controls.dispatchEvent({ type: 'end' });
-    // Idle: L3 returns at the default orbit distance.
-    scene.camera.position.set(-2.8, 2.4, 11.5);
+    scene.render();
+    expect(l3.visible).toBe(true);
+
+    // Zooming close (previously the near-TRD hide threshold) no longer hides L3.
+    scene.camera.position.set(0, 0, 0.5);
     scene.controls.target.set(0, 0, 0);
     scene.render();
     expect(l3.visible).toBe(true);
 
-    // Zoom into the TRD region — L3 stays hidden past the hide threshold.
-    scene.camera.position.set(0, 0, OUTER_MAGNET_HIDE_NEAR_DISTANCE - 0.2);
-    scene.render();
-    expect(l3.visible).toBe(false);
-
-    // Still hidden in the hysteresis band.
-    scene.camera.position.set(
-      0,
-      0,
-      (OUTER_MAGNET_HIDE_NEAR_DISTANCE + OUTER_MAGNET_SHOW_NEAR_DISTANCE) / 2
-    );
-    scene.render();
-    expect(l3.visible).toBe(false);
-
-    // Pull back past the show threshold.
-    scene.camera.position.set(0, 0, OUTER_MAGNET_SHOW_NEAR_DISTANCE + 0.2);
+    // Zooming back out still leaves it visible.
+    scene.camera.position.set(-2.8, 2.4, 11.5);
     scene.render();
     expect(l3.visible).toBe(true);
 
-    // Sidebar off always wins.
+    // Sidebar off is still the only way to hide it.
     scene.setOuterMagnetUserVisible(false);
     scene.render();
     expect(l3.visible).toBe(false);
+
+    scene.setOuterMagnetUserVisible(true);
+    scene.render();
+    expect(l3.visible).toBe(true);
   });
 
   it('retunes ambient/hemisphere/directional lights (VA-style) and the background on dark/light toggle', () => {

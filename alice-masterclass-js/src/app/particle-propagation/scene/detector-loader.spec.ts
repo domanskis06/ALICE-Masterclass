@@ -14,6 +14,7 @@ import {
   MUON_AUX_LOD_FAR_DISTANCE,
   OUTER_MAGNET_DEFAULT_OPACITY,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
+  RENDER_ORDER_LAYER_STRIDE,
   TPC_LOD_FAR_DISTANCE,
   countDetectorDrawables,
 } from './detector-appearance';
@@ -84,6 +85,7 @@ describe('loadDetectorModel', () => {
 
       const isL3 = /l3\.glb$/i.test(part.assetPath);
       const isBp = /bp\.glb$/i.test(part.assetPath);
+      const layerIndex = DETECTOR_PART_PATHS.indexOf(part.assetPath);
       let sawMesh = false;
       part.root.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
@@ -93,7 +95,17 @@ describe('loadDetectorModel', () => {
         // Translucent defaults: BP disables depthWrite; other shells keep it (VA-style).
         expect(material.depthWrite).toBe(!isBp);
         expect(material.depthTest).toBe(true);
-        if (isBp) expect(mesh.renderOrder).toBeGreaterThan(0);
+        // Every layer must keep a stable, layer-scoped renderOrder — the
+        // regression this guards against is mergeStaticMeshesByMaterial
+        // resetting it to 0 for every merged part (TRD/TOF/EMCal/DCal/PHOS/
+        // ITS/ABSO/DIPO), which lets Three.js fall back to an unstable,
+        // camera-distance-based transparent sort and makes overlapping
+        // shells swap which one is drawn "on top" (and its colour) as the
+        // camera rotates. See applyDetectorPartOpacity.
+        expect(mesh.renderOrder).toBeGreaterThan(0);
+        if (!isBp) {
+          expect(mesh.renderOrder).toBeGreaterThanOrEqual(layerIndex * RENDER_ORDER_LAYER_STRIDE);
+        }
         expect(material.opacity).toBeGreaterThan(0);
         if (isL3) {
           expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
@@ -104,6 +116,34 @@ describe('loadDetectorModel', () => {
         }
       });
       expect(sawMesh).toBe(true);
+    }
+  });
+
+  it('keeps each layer\'s renderOrder band non-overlapping, inner->outer (BP excepted, always foreground)', () => {
+    // The reported "colour jump on rotation" was caused by every merged
+    // layer sharing the default renderOrder=0 and falling back to an
+    // unstable, per-frame camera-distance sort. This asserts the fix holds
+    // end-to-end: layer i's meshes never reach into layer i+1's band.
+    const bandFor = (assetPath: string): { min: number; max: number } => {
+      const part = model.parts.find((p) => p.assetPath === assetPath);
+      expect(part).toBeDefined();
+      let min = Infinity;
+      let max = -Infinity;
+      part!.root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        min = Math.min(min, mesh.renderOrder);
+        max = Math.max(max, mesh.renderOrder);
+      });
+      return { min, max };
+    };
+
+    // Skip BP (index 0): it intentionally jumps to BEAM_PIPE_RENDER_ORDER, far
+    // above every other layer, so it always wins ties at the bore.
+    for (let i = 1; i < DETECTOR_PART_PATHS.length - 1; i++) {
+      const current = bandFor(DETECTOR_PART_PATHS[i]);
+      const next = bandFor(DETECTOR_PART_PATHS[i + 1]);
+      expect(current.max).toBeLessThan(next.min);
     }
   });
 

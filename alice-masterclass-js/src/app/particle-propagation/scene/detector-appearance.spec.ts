@@ -33,8 +33,7 @@ import {
   MAX_PART_OPACITY,
   MIN_PART_OPACITY,
   OUTER_MAGNET_DEFAULT_OPACITY,
-  OUTER_MAGNET_HIDE_NEAR_DISTANCE,
-  OUTER_MAGNET_SHOW_NEAR_DISTANCE,
+  RENDER_ORDER_LAYER_STRIDE,
   setDetectorPartOpacity,
   setDetectorPartVisibility,
   fadeInDetectorPart,
@@ -117,11 +116,6 @@ describe('defaultLayerOpacity', () => {
     expect(defaultLayerOpacity('assets/models/alice components/L3.glb', 7, 8)).toBe(
       OUTER_MAGNET_DEFAULT_OPACITY
     );
-  });
-
-  it('exports near-hide distances inside the outer magnet with hysteresis', () => {
-    expect(OUTER_MAGNET_HIDE_NEAR_DISTANCE).toBeLessThan(OUTER_MAGNET_SHOW_NEAR_DISTANCE);
-    expect(OUTER_MAGNET_HIDE_NEAR_DISTANCE).toBeCloseTo(7.2, 5);
   });
 
   it('defaults the beam pipe to BEAM_PIPE_DEFAULT_OPACITY (30%)', () => {
@@ -495,6 +489,40 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(1);
     expect(mat.transparent).toBe(false);
     expect(mat.depthWrite).toBe(true);
+  });
+
+  it('re-stamps a layer-stable renderOrder even for non-beam-pipe parts (regression: merge resets to 0)', () => {
+    // Simulates mergeStaticMeshesByMaterial's output: a fresh Mesh with the
+    // default renderOrder=0, carrying only the layer index in userData (as
+    // finalizePartMeshes / buildTpcLod / buildMchLod do post-merge). Without
+    // the fix, TRD/TOF/EMCal/DCal/PHOS/ITS/ABSO/DIPO all stay at renderOrder 0
+    // and sort by camera-distance instead — the cause of colours swapping as
+    // the camera orbits.
+    const layerIndex = 4;
+    const part = makePart();
+    part.userData['detectorLayerIndex'] = layerIndex;
+    expect((part.children[0] as THREE.Mesh).renderOrder).toBe(0);
+
+    setDetectorPartOpacity(part, 0.75);
+
+    expect((part.children[0] as THREE.Mesh).renderOrder).toBeGreaterThanOrEqual(
+      layerIndex * RENDER_ORDER_LAYER_STRIDE
+    );
+  });
+
+  it('never regresses an already-correct (higher) renderOrder set before merge', () => {
+    // L3/TPC/MCH InstancedMesh families copy `renderOrder` from their
+    // pre-merge proto mesh; applyDetectorPartOpacity must not clobber that
+    // with a smaller layer-base value.
+    const layerIndex = 1;
+    const part = makePart();
+    part.userData['detectorLayerIndex'] = layerIndex;
+    const preExistingOrder = layerIndex * RENDER_ORDER_LAYER_STRIDE + 9999;
+    (part.children[0] as THREE.Mesh).renderOrder = preExistingOrder;
+
+    setDetectorPartOpacity(part, 0.75);
+
+    expect((part.children[0] as THREE.Mesh).renderOrder).toBe(preExistingOrder);
   });
 
   it('uses the same translucent shell path as other detector parts', () => {

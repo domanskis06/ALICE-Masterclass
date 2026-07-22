@@ -61,7 +61,7 @@ export const BEAM_PIPE_LOW_VERTEX_KEEP = 0.4;
 const BEAM_PIPE_RENDER_ORDER = 500_000;
 
 /**
- * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3.glb).
+ * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3_pp.glb).
  * The authored GLB repeats the same ~128-tri panel ~168× around the ring.
  *
  * No longer used by the live L3 LOD in `detector-loader.ts` — thinning the
@@ -78,19 +78,6 @@ export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
  * Default orbit (~12 wu) uses the simplified level; zooming into the bore uses full.
  */
 export const OUTER_MAGNET_LOD_FAR_DISTANCE = 7;
-
-/**
- * Hide L3 when the orbit distance drops to this (world units). ~10% closer
- * than the previous 8 wu threshold so the yoke stays visible a bit longer
- * while zooming into the barrel.
- */
-export const OUTER_MAGNET_HIDE_NEAR_DISTANCE = 7.2;
-
-/**
- * Re-show L3 once the camera pulls back past this distance (hysteresis so the
- * yoke does not flicker at the hide threshold).
- */
-export const OUTER_MAGNET_SHOW_NEAR_DISTANCE = 8.1;
 
 /** Scene-graph name of the L3 {@link THREE.LOD} root built by the detector loader. */
 export const OUTER_MAGNET_LOD_NAME = 'l3-magnet-lod';
@@ -194,7 +181,22 @@ export const MCH_INSTANCE_MIN_FAMILY_SIZE = 4;
  */
 export const MAX_LOW_TO_HIGH_DRAWABLE_RATIO = 3;
 
-const RENDER_ORDER_LAYER_STRIDE = 10000;
+/**
+ * Render-order "band" width per detector layer (inner->outer). Exported so
+ * tests can assert every layer's merged meshes land in their own band instead
+ * of collapsing to the default 0 (see {@link applyDetectorPartOpacity}).
+ */
+export const RENDER_ORDER_LAYER_STRIDE = 10000;
+
+/**
+ * Draw magnetic-field overlays (streamlines + arrows, see
+ * `field-line-visualizer.ts`) after every detector shell but before the beam
+ * pipe. Mirrors `EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE`. Sits above
+ * the highest detector layer band (`layerIndex * RENDER_ORDER_LAYER_STRIDE`,
+ * max ~11 * 10000 for the current 12-part detector set) and below
+ * {@link BEAM_PIPE_RENDER_ORDER}.
+ */
+export const FIELD_LINE_RENDER_ORDER = 200_000;
 
 /** Human-readable label for a detector GLB path (filename -> short name). */
 export function detectorPartLabel(assetPath: string): string {
@@ -1007,11 +1009,26 @@ export function applyDetectorPartOpacity(
   const o = Math.max(0, Math.min(1, opacity));
   const transparent = o < 0.995;
   const beamPipe = isBeamPipe(String(root.userData?.['detectorAssetPath'] ?? ''));
+  const layerIndex =
+    typeof root.userData?.['detectorLayerIndex'] === 'number'
+      ? (root.userData['detectorLayerIndex'] as number)
+      : 0;
+  const layerRenderOrderBase = layerIndex * RENDER_ORDER_LAYER_STRIDE;
+  let meshIndex = 0;
   root.traverse((obj) => {
     if (!(obj as THREE.Mesh).isMesh) return;
     const mesh = obj as THREE.Mesh;
-    // mergeStaticMeshesByMaterial creates new Mesh instances and resets their
-    // renderOrder to 0. Restore BP's foreground order on the final meshes.
+    // mergeStaticMeshesByMaterial (and the TPC/MCH "merged rest" leftovers)
+    // create new Mesh instances and reset their renderOrder to 0, which
+    // throws away the stable inner->outer paint order assigned in
+    // applyDetectorLayerMaterials and lets Three.js's per-frame,
+    // camera-distance-based transparent sort decide draw order instead — the
+    // root cause of shells swapping which one is "on top" (and therefore
+    // colour) as the camera rotates. Re-stamp a layer-stable order here on
+    // every call (idempotent); Math.max never regresses an already-correct
+    // value copied onto InstancedMesh families (L3/TPC/MCH) or BP below.
+    mesh.renderOrder = Math.max(mesh.renderOrder, layerRenderOrderBase + meshIndex);
+    meshIndex += 1;
     if (beamPipe) {
       mesh.renderOrder = Math.max(mesh.renderOrder, BEAM_PIPE_RENDER_ORDER);
     }
