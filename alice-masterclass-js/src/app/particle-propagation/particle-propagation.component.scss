@@ -13,7 +13,7 @@
   --pp-muted: rgba(0, 0, 0, 0.55);
   --pp-control-bg: #f5f5f5;
   --pp-accent: #ff6f00;
-  --pp-sidebar-width: 328px;
+  --pp-sidebar-width: 348px;
   --pp-left-sidebar-width: 348px;
   --pp-sidebar-duration: 0.28s;
 
@@ -103,8 +103,36 @@ canvas {
 
 .controls-sidebar--right {
   right: 0;
+  // Extra right padding so slider thumbs at max clear the scrollbar edge
+  // symmetrically with the left inset (same treatment as the left drawer).
+  padding-right: 32px;
   border-left: 1px solid var(--pp-border);
   transform: translateX(0);
+
+  // Keep labels / button groups visually centred in the padded content column.
+  .controls-section > h4,
+  .slider-label,
+  .time-readout {
+    text-align: center;
+  }
+
+  .playback-buttons {
+    justify-content: center;
+  }
+
+  .controls-section > mat-slide-toggle {
+    display: flex;
+    width: fit-content;
+    margin-inline: auto;
+  }
+
+  .field-toggles-grid {
+    justify-items: center;
+
+    mat-slide-toggle {
+      justify-self: stretch;
+    }
+  }
 }
 
 .controls-sidebar--left {
@@ -164,7 +192,7 @@ canvas {
 // LHC experiment |B| ticks above the field-strength slider (align with mat-slider track inset).
 .field-strength-markers {
   position: relative;
-  height: 34px;
+  height: 42px;
   margin: 0 12px;
 }
 
@@ -175,23 +203,28 @@ canvas {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   pointer-events: none;
-  max-width: 52px;
+  max-width: 64px;
+
+  // Nudge so the tick sits under the thumb at 3.8 T (track end inset asymmetry).
+  &--cms {
+    transform: translateX(calc(-50% + 7px));
+  }
 }
 
 .field-strength-marker-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--pp-text);
   white-space: nowrap;
 }
 
 .field-strength-marker-value {
-  font-size: 8px;
-  line-height: 1.1;
+  font-size: 10px;
+  line-height: 1.15;
   color: var(--pp-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
