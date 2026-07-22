@@ -43,6 +43,33 @@ describe('CollisionIntro', () => {
     expect(sepJustBeforeCollision).toBeGreaterThanOrEqual(0);
   });
 
+  it('starts the protons just inside the beam pipe end, not floating past it', () => {
+    // BP.glb is authored asymmetrically about the IP: after the detector's
+    // ITS-based recenter it spans z ~ [-12.95, +5.81] at the scene scale
+    // (1e-2). A symmetric start distance is bounded by the shorter (+z)
+    // side, so assert it sits comfortably inside that ~5.81 edge (with
+    // margin) rather than checking the exact constant, which is free to be
+    // retuned by a few percent.
+    expect(PROTON_HALF_SEPARATION_START).toBeGreaterThan(4);
+    expect(PROTON_HALF_SEPARATION_START).toBeLessThan(5.81);
+  });
+
+  it('applies a non-linear ease-in: separation shrinks slowly at first, then rapidly near the collision', () => {
+    intro.update(-INTRO_DURATION_MS);
+    const [minusZ, plusZ] = intro.group.children as THREE.Object3D[];
+    const sep = (): number => plusZ.position.z - minusZ.position.z;
+
+    const sepAtStart = sep();
+    intro.update(-INTRO_DURATION_MS * 0.9);
+    const sepAt10PctIn = sep();
+    intro.update(-INTRO_DURATION_MS * 0.1);
+    const sepAt90PctIn = sep();
+
+    const dropInFirst10Pct = sepAtStart - sepAt10PctIn;
+    const dropInLast10Pct = sepAt90PctIn - 0; // separation at t~=0 is ~0
+    expect(dropInLast10Pct).toBeGreaterThan(dropInFirst10Pct);
+  });
+
   it('update() hides both protons once t >= 0 (post-collision)', () => {
     intro.update(0);
     const [minusZ, plusZ] = intro.group.children as THREE.Object3D[];

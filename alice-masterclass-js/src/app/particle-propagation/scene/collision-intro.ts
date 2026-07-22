@@ -1,6 +1,10 @@
 /**
  * Pre-collision animation: two protons flying in from opposite ends of the
- * beam axis along `z`, meeting at the origin at `t = 0`.
+ * beam axis along `z` — starting just inside the beam pipe's end
+ * (`PROTON_HALF_SEPARATION_START`, see that constant's doc for why the pipe
+ * — `BP.glb`, part of the detector model loaded separately by
+ * `detector-loader.ts` — is asymmetric) — through the pipe, meeting at the
+ * origin at `t = 0`.
  *
  * `update(tIntroMs)` is a pure function of the *global* intro time (always in
  * `[-INTRO_DURATION_MS, 0]`), not an accumulated per-frame delta — this is what
@@ -9,14 +13,18 @@
  * this intentionally does not reuse (god-node isolation,
  * `.cursor/rules/architecture.mdc`).
  *
- * A stand-in beam-pipe mesh is intentionally **not** drawn here — a proper
- * beam-pipe GLB will be added once available; until then the protons alone
- * communicate the incoming-beam geometry.
+ * No beam-pipe mesh is drawn here — the real `BP.glb` already lives on the
+ * beam axis as part of the detector shell; the protons just travel through it.
  */
 
 import * as THREE from 'three';
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
-import { INTRO_DURATION_MS, PROTON_HALF_SEPARATION_START, PROTON_TARGET_DIAMETER_WORLD } from './timeline-constants';
+import {
+  INTRO_DURATION_MS,
+  INTRO_EASE_IN_POWER,
+  PROTON_HALF_SEPARATION_START,
+  PROTON_TARGET_DIAMETER_WORLD,
+} from './timeline-constants';
 
 function clamp01(x: number): number {
   return Math.min(1, Math.max(0, x));
@@ -24,6 +32,11 @@ function clamp01(x: number): number {
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
+}
+
+/** Ease-in: slow while far down the beam pipe, sharply accelerating into the collision. */
+function easeIn(t: number): number {
+  return Math.pow(t, INTRO_EASE_IN_POWER);
 }
 
 function setDepthWriteRecursive(root: THREE.Object3D): void {
@@ -95,7 +108,7 @@ export class CollisionIntro {
     this.protonMinusZ.visible = true;
 
     const progress = clamp01((tIntroMs + INTRO_DURATION_MS) / INTRO_DURATION_MS);
-    const halfSep = lerp(this.halfSeparationStart, 0, progress);
+    const halfSep = lerp(this.halfSeparationStart, 0, easeIn(progress));
     this.protonPlusZ.position.set(0, 0, halfSep);
     this.protonMinusZ.position.set(0, 0, -halfSep);
   }
