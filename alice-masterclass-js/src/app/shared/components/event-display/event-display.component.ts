@@ -68,7 +68,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private readonly SIDE_VIEW_RENDER_INTERVAL: number = 5;
   private readonly CLUSTERS_USE_POINTS: boolean = true;
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
-  private readonly TRACK_DRAW_ANIMATION_MS = 4000;
 
   @HostBinding("style.--primary-axis-ratio")
   readonly PRIMARY_AXIS_RATIO: number = 1 / 1.61803398875; // Golden ratio
@@ -789,8 +788,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** TRD/TOF layer-crossing hit markers during progressive assembly. */
   private layerHitMarkers: THREE.Object3D = new THREE.Object3D();
   private cascadeXiLine: Line2 | null = null;
-  private trackDrawAnimations: THREE.Object3D[] = [];
-  private trackDrawAnimationStartMs = 0;
   private sideViewFrameCounter = 0;
   private forceSideViewsRender = false;
   private renderDirty = true;
@@ -2258,39 +2255,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     mesh = new Line2(lineGeometry, material as LineMaterial);
     mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 500;
     (mesh as Line2).computeLineDistances();
-    const totalSegments = Math.max(1, vertices.length - 1);
-    (mesh as any).userData = { ...((mesh as any).userData || {}), drawMode: 'line2', drawTotal: totalSegments };
-    lineGeometry.setDrawRange(0, 1);
     return mesh;
-  }
-
-  private queueTrackDrawAnimation(line: THREE.Object3D): void {
-    const drawTotal = (line as any).userData?.drawTotal;
-    if (drawTotal == null) return;
-    this.trackDrawAnimations.push(line);
-  }
-
-  private updateTrackDrawAnimations(): void {
-    if (this.trackDrawAnimations.length === 0) return;
-    const now = performance.now();
-    const progress = Math.min(1, (now - this.trackDrawAnimationStartMs) / this.TRACK_DRAW_ANIMATION_MS);
-
-    for (const line of this.trackDrawAnimations) {
-      const userData = (line as any).userData || {};
-      const drawMode = userData.drawMode;
-      const drawTotal = userData.drawTotal as number;
-      const geometry = (line as any).geometry as THREE.BufferGeometry;
-      if (!geometry || !drawTotal) continue;
-      if (drawMode === 'line2') {
-        geometry.setDrawRange(0, Math.max(1, Math.floor(drawTotal * progress)));
-      } else {
-        geometry.setDrawRange(0, Math.max(2, Math.floor(drawTotal * progress)));
-      }
-    }
-
-    if (progress >= 1) {
-      this.trackDrawAnimations = [];
-    }
   }
 
   /** Applies parent's track/decay/cluster toggles. */
@@ -2400,8 +2365,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (!this._event) {
       return;
     }
-    this.trackDrawAnimations = [];
-    this.trackDrawAnimationStartMs = performance.now();
     this.rebuildTracksFromEvent();
     this.applyDesiredPhysicsVisibility();
     this.cdr.markForCheck();
@@ -2672,7 +2635,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         geometricStraight: resolved.geometricStraight
       });
       this.tracks.add(line);
-      this.queueTrackDrawAnimation(line);
     }
 
     const decays = this._event.decays || [];
@@ -2717,7 +2679,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           isDecayTrack: true
         };
         decayObject.add(line);
-        this.queueTrackDrawAnimation(line);
       }
       if (decayObject.children.length > 0) {
         this.decays.add(decayObject);
@@ -2911,8 +2872,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       (this.cascadeXiLine.material as THREE.Material).dispose();
       this.cascadeXiLine = null;
     }
-    this.trackDrawAnimations = [];
-    this.trackDrawAnimationStartMs = performance.now();
     this.loading = true;
     if (this._event !== null && !this.deferPhysicsUntilDetectorReveal) {
       this.rebuildTracksFromEvent();
@@ -3118,7 +3077,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /** True while input/animations still need continuous frames (OrbitControls damping uses 'change'). */
   private isRenderActivityPending(): boolean {
-    if (this.trackDrawAnimations.length > 0) return true;
     if (this.isMousePanning) return true;
     if (this.cameraMode === 'free' && this.hasPanKeysDown()) return true;
     return false;
@@ -3356,7 +3314,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private render(): void {
     if (!this.renderer || !this.camera3D || !this.controls) return;
-    this.updateTrackDrawAnimations();
     this.resize(false);
     if (this.cameraMode === 'centered') {
       this.controls.target.set(0, 0, 0);
