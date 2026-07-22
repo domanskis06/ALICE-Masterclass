@@ -43,6 +43,7 @@ import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { PropagationTimeline } from './scene/propagation-timeline';
 import {
   defaultDetectorPartVisible,
+  defaultOpacityForAsset,
   detectorPartAccentColor,
   isOuterMagnet,
   setDetectorPartOpacity,
@@ -51,6 +52,7 @@ import {
 import {
   buildFieldLines,
   DEFAULT_FIELD_LINEWIDTH,
+  DEFAULT_FIELD_OPACITY,
   setFieldLinesColorRange,
   setFieldLinesOpacity,
   setFieldLinesResolution,
@@ -144,7 +146,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   fieldVisible = true;
   /** Dipole-transition bend at the forward (negative-z) detector end. */
   fieldDipoleTransitionVisible = true;
-  fieldOpacity = 0.65;
+  fieldOpacity = DEFAULT_FIELD_OPACITY;
   /** Seed density: sparse ↔ dense (former medium). */
   fieldDensity: FieldLineDensity = 'sparse';
   /** Stored line-width preference (native WebGL lines ignore linewidth). */
@@ -688,7 +690,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.cameraMode = ui.cameraMode;
       this.fieldVisible = ui.fieldVisible;
       this.fieldDipoleTransitionVisible = ui.fieldDipoleTransitionVisible;
-      this.fieldOpacity = ui.fieldOpacity;
+      // Opacity always restarts at defaults — do not restore last-visit slider values.
+      this.fieldOpacity = DEFAULT_FIELD_OPACITY;
       this.fieldDensity = ui.fieldDensity;
       this.fieldLinewidth = ui.fieldLinewidth;
       this.fieldStrengthT = ui.fieldStrengthT;
@@ -706,7 +709,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     if (cache.detectorModel) {
       this.applyDetectorModel(cache.detectorModel);
       if (cache.detectorPartsForUi) {
-        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => ({ ...p }));
+        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => {
+          const opacity = defaultOpacityForAsset(p.assetPath);
+          return { ...p, opacity };
+        });
         for (const part of this.detectorPartsForUi) {
           const root = this.detectorPartRootByPath.get(part.assetPath);
           if (!root) continue;
@@ -726,6 +732,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.fieldLines = cache.fieldLines;
       this.fieldLinesBuiltAtStrengthT = cache.fieldLinesBuiltAtStrengthT;
       this.fieldLines.visible = this.fieldVisible;
+      setFieldLinesOpacity(this.fieldLines, this.fieldOpacity);
+      const builtAt = this.fieldLinesBuiltAtStrengthT;
+      const magnitudeScale = builtAt > 0 ? this.fieldStrengthT / builtAt : 1;
+      setFieldLinesColorRange(this.fieldLines, this.activeFieldColorRange(), magnitudeScale);
       scene.fieldGroup.add(this.fieldLines);
     }
 

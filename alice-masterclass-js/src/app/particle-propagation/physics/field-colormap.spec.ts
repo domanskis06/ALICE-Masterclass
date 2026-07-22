@@ -20,23 +20,25 @@ describe('field-colormap', () => {
       minT: 0.5 - FIELD_COLOR_LOW_OFFSET_T,
       maxT: 0.5 + FIELD_COLOR_HIGH_OFFSET_T,
     });
-    // Covers on-axis end-cap fall-off (~0.29 T) and mid-r end-cap peaks (~0.56 T).
+    // Symmetric ±0.20 T band: end-cap fall-off (~0.29 T) → blue, peaks (~0.56 T) still in-range.
     expect(FIELD_COLOR_MIN_T).toBeCloseTo(0.3, 6);
-    expect(FIELD_COLOR_MAX_T).toBeCloseTo(0.58, 6);
+    expect(FIELD_COLOR_MAX_T).toBeCloseTo(0.7, 6);
 
     // 2 T = 4× nominal → offsets ×4 so relative |B| keeps the same colours.
     const at2T = fieldColorRangeForStrength(2);
     expect(at2T.minT).toBeCloseTo(1.2, 6);
-    expect(at2T.maxT).toBeCloseTo(2.32, 6);
+    expect(at2T.maxT).toBeCloseTo(2.8, 6);
   });
 
-  it('places the 0.5 T plateau mid-high and end-cap fall-off toward blue', () => {
+  it('places the 0.5 T plateau at mid-scale green (matches dipole-view hue)', () => {
     const range = fieldColorRangeForStrength(0.5);
-    // Plateau should not sit at the red clamp (old ±0.03 T window did that for outer r).
-    expect(normalizeMagnitude(0.5, range)).toBeGreaterThan(0.55);
-    expect(normalizeMagnitude(0.5, range)).toBeLessThan(0.85);
+    const dipole = fieldColorRangeForDipoleView(0.5);
+    // Plateau sits on the green stop; close to the dipole-view mapping for 0.5 T.
+    expect(normalizeMagnitude(0.5, range)).toBeCloseTo(0.5, 6);
+    expect(normalizeMagnitude(0.5, range)).toBeCloseTo(normalizeMagnitude(0.5, dipole), 1);
     expect(normalizeMagnitude(0.32, range)).toBeLessThan(0.15);
-    expect(normalizeMagnitude(0.56, range)).toBeGreaterThan(0.85);
+    expect(normalizeMagnitude(0.56, range)).toBeGreaterThan(0.55);
+    expect(normalizeMagnitude(0.56, range)).toBeLessThan(0.75);
   });
 
   it('dipole view uses a wide window covering fringe and dipole peak', () => {
@@ -64,7 +66,7 @@ describe('field-colormap', () => {
 
     const range = fieldColorRangeForStrength(2);
     expect(normalizeMagnitude(1.2, range)).toBeCloseTo(0, 6);
-    expect(normalizeMagnitude(2.32, range)).toBeCloseTo(1, 6);
+    expect(normalizeMagnitude(2.8, range)).toBeCloseTo(1, 6);
   });
 
   it('maps weak |B| to deep blue and strong |B| to bright red', () => {

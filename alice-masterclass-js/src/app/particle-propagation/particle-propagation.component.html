@@ -250,17 +250,19 @@
           </p>
         }
 
-        @if (fieldVisible) {
-          <div class="field-colorbar" aria-label="Magnetic field strength colour scale">
-            <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
-            <div
-              class="field-colorbar-bar"
-              [style.background]="fieldColorbarGradient"
-              role="img"
-              [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
-            <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
-          </div>
-        }
+        <div
+          class="field-colorbar"
+          [class.field-colorbar--disabled]="!fieldVisible"
+          aria-label="Magnetic field strength colour scale"
+          [attr.aria-disabled]="!fieldVisible">
+          <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
+          <div
+            class="field-colorbar-bar"
+            [style.background]="fieldColorbarGradient"
+            role="img"
+            [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
+          <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
+        </div>
 
         <label class="slider-label">Field opacity</label>
         <mat-slider

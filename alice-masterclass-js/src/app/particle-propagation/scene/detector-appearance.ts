@@ -261,10 +261,16 @@ export function defaultDetectorPartVisible(_assetPath: string): boolean {
   return true;
 }
 
-/** Default opacity for a layer given its depth index (inner -> outer lerp). */
-export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
+/** Sidebar / scene default opacity for a detector asset (ignores layer depth). */
+export function defaultOpacityForAsset(assetPath: string): number {
   if (isOuterMagnet(assetPath)) return OUTER_MAGNET_DEFAULT_OPACITY;
   if (isBeamPipe(assetPath)) return BEAM_PIPE_DEFAULT_OPACITY;
+  return DETECTOR_DEFAULT_OPACITY;
+}
+
+/** Default opacity for a layer given its depth index (inner -> outer lerp). */
+export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
+  if (isOuterMagnet(assetPath) || isBeamPipe(assetPath)) return defaultOpacityForAsset(assetPath);
   const t = totalLayers > 1 ? layerIndex / (totalLayers - 1) : 0;
   const opacity = DETECTOR_INNER_OPACITY * (1 - t) + DETECTOR_OUTER_OPACITY * t;
   return isCalorimeter(assetPath) ? Math.max(opacity, CALORIMETER_MIN_OPACITY) : opacity;

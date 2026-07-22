@@ -3,9 +3,9 @@
  *
  * The component is destroyed when leaving the module. Detector GLBs and field
  * streamlines stay warm so the next visit can re-parent them into a fresh
- * WebGL scene without re-fetching. Tracks and playback are intentionally
- * NOT restored — each visit shows the welcome / Start dialog and runs RK4
- * from scratch.
+ * WebGL scene without re-fetching. Tracks, playback, and opacity sliders are
+ * intentionally NOT restored — each visit shows the welcome / Start dialog,
+ * runs RK4 from scratch, and resets part/field opacity to defaults.
  */
 
 import { Injectable } from '@angular/core';

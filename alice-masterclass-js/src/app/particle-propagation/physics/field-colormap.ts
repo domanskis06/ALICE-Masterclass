@@ -25,9 +25,11 @@ export const FIELD_COLOR_LOW_OFFSET_T = 0.2;
 
 /**
  * Colorbar upper offset at the nominal 0.5 T strength (Tesla).
- * 0.5 + 0.08 = 0.58 T — covers mid-radius end-cap |B| peaks in the LUT.
+ * 0.5 + 0.20 = 0.70 T — matches the lower offset so the 0.5 T solenoid
+ * plateau sits at mid-scale (light green), same hue students see with the
+ * wider dipole view window. Still covers mid-radius end-cap peaks (~0.56 T).
  */
-export const FIELD_COLOR_HIGH_OFFSET_T = 0.08;
+export const FIELD_COLOR_HIGH_OFFSET_T = 0.2;
 
 /** Inclusive Tesla window used when mapping `|B|` → RGB. */
 export interface FieldColorRange {
@@ -38,7 +40,7 @@ export interface FieldColorRange {
 /**
  * Colour-scale ends for a selected plateau strength `targetStrengthT`.
  * Offsets scale with `B / NOMINAL_SOLENOID_B_T`.
- * At 0.5 T: `[0.30, 0.58]`; at 2 T: `[1.20, 2.32]`.
+ * At 0.5 T: `[0.30, 0.70]`; at 2 T: `[1.20, 2.80]`.
  */
 export function fieldColorRangeForStrength(targetStrengthT: number): FieldColorRange {
   const strengthScale = targetStrengthT / NOMINAL_SOLENOID_B_T;

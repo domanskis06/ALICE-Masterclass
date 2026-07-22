@@ -51,6 +51,9 @@ export interface FieldLineOptions {
 /** Default stored linewidth (UI slider default; see {@link FieldLineOptions.linewidth}). */
 export const DEFAULT_FIELD_LINEWIDTH = 1.5;
 
+/** Default field-line material opacity (sidebar starting value). */
+export const DEFAULT_FIELD_OPACITY = 0.65;
+
 /** Place one arrowhead every this many cm of arc length along each line. */
 const ARROW_SPACING_CM = 300;
 
@@ -90,7 +93,7 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
   const {
     scale,
     density = 'dense',
-    opacity = 0.65,
+    opacity = DEFAULT_FIELD_OPACITY,
     linewidth = DEFAULT_FIELD_LINEWIDTH,
     colorRange = { minT: FIELD_COLOR_MIN_T, maxT: FIELD_COLOR_MAX_T },
     includeDipoleTransition = false,
