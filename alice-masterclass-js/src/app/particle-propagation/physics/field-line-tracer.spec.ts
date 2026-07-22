@@ -299,10 +299,13 @@ describe('traceFieldLines', () => {
     const xs = new Set(seeds.map((s) => s.x));
     expect(xs.has(0)).toBe(true);
     for (const seed of seeds) {
-      expect(seed.z).toBeLessThan(-560);
+      expect(seed.z).toBeLessThanOrEqual(__testing__.DIPOLE_TRANSVERSE_SEED_Z_START_CM);
       expect(seed.z).toBeGreaterThan(-1400);
       expect(Math.abs(seed.y)).toBeLessThan(120);
     }
+    expect(__testing__.DIPOLE_TRANSVERSE_BOUNDS.maxZPosCm).toBeGreaterThan(
+      __testing__.DIPOLE_TRANSVERSE_SEED_Z_START_CM
+    );
   });
 
   it('includeDipoleArcs adds forward arcs + transverse brush without densifying z=0', () => {

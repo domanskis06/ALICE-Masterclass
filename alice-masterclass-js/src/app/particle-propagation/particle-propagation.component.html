@@ -313,6 +313,11 @@
             Reverse L3
           </mat-slide-toggle>
         </div>
+        @if (solenoidPolarity < 0) {
+          <p class="slider-label field-recompute-hint">
+            Reversed L3: fewer lines bridge to the dipole — most solenoid flux returns at the exit.
+          </p>
+        }
       </section>
     </div>
   </aside>

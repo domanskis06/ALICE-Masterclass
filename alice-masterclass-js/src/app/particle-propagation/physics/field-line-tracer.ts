@@ -257,12 +257,14 @@ const DIPOLE_PAPER_N_PHI = 20;
  * Transverse dipole layer: seeds on mid-planes of constant x inside the dipole
  * LUT. With \(B \approx B_x\), streamlines run along \(\pm x\) — the paper’s
  * “vertical” field-line brush when the beam axis is horizontal on screen.
+ * {@link maxZPosCm} reaches just past the solenoid exit so the brush meets the
+ * barrel streamlines instead of leaving a dark gap at the hand-off.
  */
 const DIPOLE_TRANSVERSE_BOUNDS: WalkBounds = {
   maxRadiusCm: 320,
   dipoleHalfExtentCm: 320,
   forceDipoleBox: true,
-  maxZPosCm: -560,
+  maxZPosCm: -500,
   maxZNegCm: 1700,
   minFieldT: 0.001,
   minFieldDipoleT: 0.001,
@@ -277,6 +279,9 @@ const MIN_TRANSVERSE_POINTS = 10;
 
 /** Seed planes x = const (cm). Centre plane is densest; ±offsets thicken the brush. */
 const DIPOLE_TRANSVERSE_X_PLANES_CM = [0, 45, -45] as const;
+
+/** Closest transverse seed plane to the solenoid (cm); was −660 — left a visible gap. */
+const DIPOLE_TRANSVERSE_SEED_Z_START_CM = -600;
 
 function add(a: Vec3, b: Vec3, scaleFactor = 1): Vec3 {
   return { x: a.x + b.x * scaleFactor, y: a.y + b.y * scaleFactor, z: a.z + b.z * scaleFactor };
@@ -463,7 +468,7 @@ function buildDipoleTransverseSeeds(): Vec3[] {
   for (const x of DIPOLE_TRANSVERSE_X_PLANES_CM) {
     // Centre plane denser in z; offset planes slightly coarser.
     const zStep = x === 0 ? 40 : 55;
-    for (let z = -660; z >= -1280; z -= zStep) {
+    for (let z = DIPOLE_TRANSVERSE_SEED_Z_START_CM; z >= -1280; z -= zStep) {
       const halfY = Math.min(95, 30 + (-z - 550) * 0.09);
       const yStep = x === 0 ? 20 : 28;
       for (let y = -halfY; y <= halfY + 1e-6; y += yStep) {
@@ -688,6 +693,7 @@ export const __testing__ = {
   DIPOLE_PAPER_SEED_Z_CM,
   PAPER_CLIP_MAX_Z_CM,
   MIN_TRANSVERSE_X_SPAN_CM,
+  DIPOLE_TRANSVERSE_SEED_Z_START_CM,
   DIPOLE_PAPER_BOUNDS,
   DIPOLE_TRANSVERSE_BOUNDS,
   BARREL_BOUNDS,
