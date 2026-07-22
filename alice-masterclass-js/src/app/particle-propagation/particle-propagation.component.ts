@@ -699,10 +699,6 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.playbackSpeed = ui.playbackSpeed;
       this.magneticField.setFieldStrengthT(ui.fieldStrengthT);
       this.magneticField.setSolenoidPolarity(ui.solenoidPolarity);
-      if (ui.isDarkMode !== this.isDarkMode) {
-        this.isDarkMode = ui.isDarkMode;
-        scene.setDarkMode(ui.isDarkMode);
-      }
       scene.setCameraMode(ui.cameraMode);
     }
 
@@ -727,6 +723,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       scene.detectorGroup.add(cache.detectorModel.group);
       this.detectorModel = cache.detectorModel;
     }
+
+    // Theme always restarts in dark mode — after detector re-attach so materials update.
+    this.isDarkMode = true;
+    scene.setDarkMode(true);
 
     if (cache.fieldLines) {
       this.fieldLines = cache.fieldLines;
