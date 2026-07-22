@@ -76,7 +76,7 @@ export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/EMCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/PHOS.glb`,
-  `${DETECTOR_MODEL_BASE_PATH}/L3.glb`,
+  `${DETECTOR_MODEL_BASE_PATH}/L3_pp.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/ABSO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DIPO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/MCH.glb`,
@@ -92,7 +92,7 @@ export function isDetectorInnerPart(assetPath: string): boolean {
 
 /** @deprecated Prefer {@link isDetectorInnerPart}; kept for older call sites/tests. */
 export function isDetectorCorePart(assetPath: string): boolean {
-  return /(^|[/\\])(its|tpc|l3)\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])(its|tpc|l3_pp)\.glb($|\?)/i.test(assetPath);
 }
 
 /** Per-slider clamp for the layer radial inflate (reduces z-fighting between shells). */

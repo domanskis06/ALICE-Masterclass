@@ -209,7 +209,7 @@ export function detectorPartLabel(assetPath: string): string {
     'emcal.glb': 'EMCal',
     'dcal.glb': 'DCal',
     'phos.glb': 'PHOS',
-    'l3.glb': 'L3 magnet',
+    'l3_pp.glb': 'L3 magnet',
     'mch.glb': 'MCH',
     'abso.glb': 'ABSO',
     'dipo.glb': 'DIPO magnet',
@@ -226,7 +226,7 @@ function isCalorimeter(assetPath: string): boolean {
 
 /** Outer L3 magnet yoke — large screen coverage under the PP camera. */
 export function isOuterMagnet(assetPath: string): boolean {
-  return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])l3_pp\.glb($|\?)/i.test(assetPath);
 }
 
 /** TPC barrel — largest triangle budget in the ALICE detector GLB set. */
