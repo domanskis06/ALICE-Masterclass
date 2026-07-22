@@ -215,7 +215,10 @@
       "SIGNAL": "Signal",
       "BACKGROUND": "Untergrund",
       "TOTAL": "Gesamt",
-      "BINS": "Bins"
+      "BINS": "Bins",
+      "INFO_TITLE": "Was ist ein Histogramm?",
+      "INFO_BODY": "Ein Histogramm zeigt, wie oft Werte in bestimmte Intervalle fallen. Die horizontale Achse zeigt diese Intervalle (hier: invariante Masse), die vertikale Achse die Anzahl der Beobachtungen. Je höher der Balken, desto mehr Messungen liegen in diesem Intervall.",
+      "INFO_DISMISS": "Verstanden"
     },
     "HISTOGRAM_SELECTOR": {
       "TITLE": "Histogrammauswahl",

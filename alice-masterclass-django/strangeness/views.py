@@ -42,10 +42,17 @@ class SubmitVisualAnalysisResultsAPI(APIView):
                 # create the individual sample points and check if they are valid
                 samples = []
                 for eventID, entry in request.data['results'].items():
-                    vaResultEntry = VisualAnalysisResultsEntry(result=vaResult, eventid=int(eventID), particle=entry['particle'], mass=entry['mass'])
-                    vaResultEntry.full_clean()
-
-                    samples.append(vaResultEntry)
+                    # Accept a single sample or a list (multi-V0 events).
+                    entries = entry if isinstance(entry, list) else [entry]
+                    for sample in entries:
+                        vaResultEntry = VisualAnalysisResultsEntry(
+                            result=vaResult,
+                            eventid=int(eventID),
+                            particle=sample['particle'],
+                            mass=sample['mass'],
+                        )
+                        vaResultEntry.full_clean()
+                        samples.append(vaResultEntry)
 
                 # save them in bulk to the database
                 VisualAnalysisResultsEntry.objects.bulk_create(samples)

@@ -40,11 +40,7 @@ class VisualAnalysisResultsEntry(models.Model):
     eventid = models.PositiveIntegerField()
     particle = models.CharField(max_length=16, choices=Particle.choices)
     mass = models.FloatField()
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['result', 'eventid'], name='vare_u_fields')
-        ]
+    # Multiple mother particles per event are allowed (multi-V0 events).
 
 class LargeScaleAnalysisResult(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)

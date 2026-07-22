@@ -122,6 +122,74 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly TPC_CLUSTER_NOISE_SIGMA_CM = 0.2;
   /** Min segment length (trajectory data units) before falling back to momentum. */
   private static readonly STRAIGHT_TRACK_EPS = 1e-4;
+  /**
+   * V0/cascade daughters are re-propagated separately from the reconstructed
+   * `tracks` list (`particleId` is PDG there, usually 0 — not a unique id).
+   * Hide the overlapping background helix when momenta agree within these cuts.
+   */
+  private static readonly DECAY_BG_MOMENTUM_COS_MIN = 0.985;
+  private static readonly DECAY_BG_MOMENTUM_ABS_DP = 0.08;
+
+  /**
+   * True when a decay daughter and a background track are the same helix
+   * (direction + |p|). Background `sign` is often 0 in the JSON, so charge
+   * is not part of the test.
+   */
+  static momentaMatchDecayToBackground(decay: Track, background: Track): boolean {
+    const pa = Math.hypot(decay.px, decay.py, decay.pz);
+    const pb = Math.hypot(background.px, background.py, background.pz);
+    if (pa < 1e-9 || pb < 1e-9) {
+      return false;
+    }
+    const cos =
+      (decay.px * background.px + decay.py * background.py + decay.pz * background.pz) / (pa * pb);
+    return (
+      cos >= EventDisplayComponent.DECAY_BG_MOMENTUM_COS_MIN &&
+      Math.abs(pa - pb) <= EventDisplayComponent.DECAY_BG_MOMENTUM_ABS_DP
+    );
+  }
+
+  /**
+   * Indices into `event.tracks` that duplicate a decay daughter and should not
+   * be drawn in the generic (white/blue) track pass. One-to-one assignment.
+   */
+  static backgroundTrackIndicesHiddenByDecays(event: Event): Set<number> {
+    const hidden = new Set<number>();
+    const tracks = event.tracks || [];
+    for (const particleList of event.decays || []) {
+      for (const decayTrack of particleList) {
+        if (decayTrack == null) {
+          continue;
+        }
+        let bestIdx = -1;
+        let bestCos = -Infinity;
+        for (let i = 0; i < tracks.length; i++) {
+          if (hidden.has(i)) {
+            continue;
+          }
+          const background = tracks[i];
+          if (!EventDisplayComponent.momentaMatchDecayToBackground(decayTrack, background)) {
+            continue;
+          }
+          const pa = Math.hypot(decayTrack.px, decayTrack.py, decayTrack.pz);
+          const pb = Math.hypot(background.px, background.py, background.pz);
+          const cos =
+            (decayTrack.px * background.px +
+              decayTrack.py * background.py +
+              decayTrack.pz * background.pz) /
+            (pa * pb);
+          if (cos > bestCos) {
+            bestCos = cos;
+            bestIdx = i;
+          }
+        }
+        if (bestIdx >= 0) {
+          hidden.add(bestIdx);
+        }
+      }
+    }
+    return hidden;
+  }
 
   /** Keeps trajectory points with R = sqrt(x²+y²) < rMax; interpolates the exit point. */
   static clipTrajectoryToRadius(trajectory: number[][], rMax: number): number[][] {
@@ -353,169 +421,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     ];
   }
 
-  /**
-   * Rescales bend as R → R₀/k (solenoid B ∥ z): 0 → straight, 1 → data, 10 → 10× B₀.
-   * Rebuilds the transverse helix; z follows path length.
-   */
-  static applyMagneticFieldStrength(
-    bent: number[][],
-    straight: number[][],
-    strength: number,
-    sign = 0,
-    startOverride?: number[] | null
-  ): number[][] {
-    const eps = EventDisplayComponent.STRAIGHT_TRACK_EPS;
-    if (!(strength > 0) || straight.length < 2) {
-      return straight.length >= 2
-        ? [[...straight[0]], [...straight[straight.length - 1]]]
-        : (bent || []).map((p) => [...p]);
-    }
-
-    const ordered = EventDisplayComponent.orderTrajectoryFromIp(bent);
-    if (ordered.length < 2) {
-      return ordered.map((p) => [...p]);
-    }
-    if (Math.abs(strength - 1) < 1e-6) {
-      return ordered.map((p) => [...p]);
-    }
-
-    const helix = EventDisplayComponent.estimateTransverseHelix(ordered, sign);
-    if (!helix) {
-      // Nearly straight in data — keep chord morph as last resort.
-      return EventDisplayComponent.lerpTrajectoryTowardStraight(ordered, straight, strength);
-    }
-
-    const origin =
-      startOverride && startOverride.length >= 3
-        ? [startOverride[0], startOverride[1], startOverride[2]]
-        : [ordered[0][0], ordered[0][1], ordered[0][2]];
-
-    const { cx: cx0, cy: cy0, r: r0, sense } = helix;
-    const nx = (cx0 - ordered[0][0]) / r0;
-    const ny = (cy0 - ordered[0][1]) / r0;
-    const r = r0 / strength;
-    const cx = origin[0] + r * nx;
-    const cy = origin[1] + r * ny;
-
-    const sXY: number[] = [0];
-    for (let i = 1; i < ordered.length; i++) {
-      const d = Math.hypot(ordered[i][0] - ordered[i - 1][0], ordered[i][1] - ordered[i - 1][1]);
-      sXY.push(sXY[i - 1] + d);
-    }
-    const sTotal = sXY[sXY.length - 1];
-    if (sTotal < eps) {
-      return [[...origin], [...straight[straight.length - 1]]];
-    }
-
-    const theta0 = Math.atan2(origin[1] - cy, origin[0] - cx);
-    const z0 = origin[2];
-    const z1 = ordered[ordered.length - 1][2];
-    const dzds = (z1 - z0) / sTotal;
-
-    const out: number[][] = [];
-    for (let i = 0; i < ordered.length; i++) {
-      const theta = theta0 + sense * (sXY[i] / r);
-      out.push([
-        cx + r * Math.cos(theta),
-        cy + r * Math.sin(theta),
-        z0 + dzds * sXY[i],
-      ]);
-    }
-    return out;
-  }
-
-  /** Circumcircle through 3 xy points; null if nearly collinear. */
-  private static circumcenterXY(
-    a: number[],
-    b: number[],
-    c: number[]
-  ): { cx: number; cy: number; r: number } | null {
-    const ax = a[0];
-    const ay = a[1];
-    const bx = b[0];
-    const by = b[1];
-    const cx_ = c[0];
-    const cy_ = c[1];
-    const d = 2 * (ax * (by - cy_) + bx * (cy_ - ay) + cx_ * (ay - by));
-    if (Math.abs(d) < 1e-8) {
-      return null;
-    }
-    const a2 = ax * ax + ay * ay;
-    const b2 = bx * bx + by * by;
-    const c2 = cx_ * cx_ + cy_ * cy_;
-    const cx = (a2 * (by - cy_) + b2 * (cy_ - ay) + c2 * (ay - by)) / d;
-    const cy = (a2 * (cx_ - bx) + b2 * (ax - cx_) + c2 * (bx - ax)) / d;
-    const r = Math.hypot(ax - cx, ay - cy);
-    if (!(r > 1e-3) || !Number.isFinite(r)) {
-      return null;
-    }
-    return { cx, cy, r };
-  }
-
-  /** Fit R₀ / center / rotation sense from bent trajectory in xy (B ∥ z). */
-  private static estimateTransverseHelix(
-    ordered: number[][],
-    sign: number
-  ): { cx: number; cy: number; r: number; sense: number } | null {
-    const n = ordered.length;
-    if (n < 3) {
-      return null;
-    }
-    const i1 = Math.max(1, Math.floor((n - 1) / 3));
-    const i2 = Math.max(i1 + 1, Math.floor((2 * (n - 1)) / 3));
-    const circle =
-      EventDisplayComponent.circumcenterXY(ordered[0], ordered[i1], ordered[i2]) ||
-      EventDisplayComponent.circumcenterXY(ordered[0], ordered[i1], ordered[n - 1]) ||
-      EventDisplayComponent.circumcenterXY(ordered[0], ordered[Math.floor(n / 2)], ordered[n - 1]);
-    if (!circle) {
-      return null;
-    }
-
-    const { cx, cy, r } = circle;
-    let dAng = 0;
-    let prev = Math.atan2(ordered[0][1] - cy, ordered[0][0] - cx);
-    for (let i = 1; i < n; i++) {
-      let ang = Math.atan2(ordered[i][1] - cy, ordered[i][0] - cx);
-      let step = ang - prev;
-      while (step > Math.PI) step -= 2 * Math.PI;
-      while (step < -Math.PI) step += 2 * Math.PI;
-      dAng += step;
-      prev = ang;
-    }
-    let sense = Math.sign(dAng);
-    if (sense === 0) {
-      sense = sign >= 0 ? 1 : -1;
-    }
-    return { cx, cy, r, sense };
-  }
-
-  /** Fallback when the track is too straight to fit a circle. */
-  private static lerpTrajectoryTowardStraight(
-    ordered: number[][],
-    straight: number[][],
-    strength: number
-  ): number[][] {
-    const a = straight[0];
-    const b = straight[straight.length - 1];
-    const last = ordered.length - 1;
-    const out: number[][] = [];
-    // Only blend toward data (no chord exaggeration beyond k=1).
-    const k = Math.min(Math.max(strength, 0), 1);
-    for (let i = 0; i <= last; i++) {
-      const t = i / last;
-      const sx = a[0] + (b[0] - a[0]) * t;
-      const sy = a[1] + (b[1] - a[1]) * t;
-      const sz = a[2] + (b[2] - a[2]) * t;
-      const p = ordered[i];
-      out.push([
-        sx + k * (p[0] - sx),
-        sy + k * (p[1] - sy),
-        sz + k * (p[2] - sz),
-      ]);
-    }
-    return out;
-  }
-
   static isItsAssetPath(assetPath: string): boolean {
     return /(^|[/\\])its\.glb($|\?)/i.test(assetPath);
   }
@@ -619,7 +524,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private static readonly WHEEL_PAN_FACTOR = 0.05;
   private static readonly MOUSE_DRAG_PAN_FACTOR = 0.001;
   private static readonly FADE_OPACITY = 0.25;
-  private static readonly DETECTOR_FADE_OPACITY = 0.08;
+  private static readonly DETECTOR_FADE_OPACITY = 0.4;
   /** Slider default; materials load solid (opacity 1) then sync via setDetectorPartOpacity. */
   private static readonly DETECTOR_COMPONENT_OPACITY = 0.78;
   private static readonly DETECTOR_INNER_OPACITY = 0.80;
@@ -662,11 +567,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private static readonly LAMBDA_MASS_MIN = 1.07;
-  private static readonly LAMBDA_MASS_MAX = 1.16;
-  private static readonly XI_MASS_MIN = 1.25;
-  private static readonly XI_MASS_MAX = 1.40;
-
   static readonly trackColor: THREE.Color = new THREE.Color(trackColor);
   static readonly clusterColor: THREE.Color = new THREE.Color(clusterColor);
   static readonly positiveTrackColor: THREE.Color = new THREE.Color(positiveTrackColor);
@@ -702,8 +602,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private negativeTrackMaterial: THREE.Material = null;
   private bachelorTrackMaterial: THREE.Material = null;
   private highlightTrackMaterial: THREE.Material = null;
-  private cascadeHoverTrackMaterial: THREE.Material = null;
-  private cascadeProtonMaterial: THREE.Material = null;
   private pointsMaterial: THREE.Material = null;
   private layerHitTrdMaterial: THREE.MeshBasicMaterial = null;
   private layerHitTofMaterial: THREE.MeshBasicMaterial = null;
@@ -770,7 +668,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   @Input()
   get trackWidth(): number { return this._trackWidth; }
   /** Light mode boosts screen-space width so tracks stay readable on pale detectors. */
-  get trackHighlightWidth(): number { return 6 * this.effectiveTrackWidth; }
+  get trackHighlightWidth(): number { return 3 * this.effectiveTrackWidth; }
   get trackDecayWidth(): number { return 1.25 * this.effectiveTrackWidth; }
 
   set trackWidth(trackWidth: number) {
@@ -794,11 +692,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     (this.negativeTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     (this.bachelorTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     (this.highlightTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
-    // Cascade hover keeps decay track width — emphasis comes from fading the background, not thicker lines.
-    (this.cascadeHoverTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
-    if (this.cascadeProtonMaterial) {
-      (this.cascadeProtonMaterial as LineMaterial).linewidth = this.trackDecayWidth;
-    }
   }
 
   @Input()
@@ -844,11 +737,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
   detectorPartsForUi: DetectorPartToggleModel[] = [];
   detectorPaletteItems: DetectorPaletteItem[] = [];
-  /** 0 = magnet off (straight), 1 = trajectory data (B₀), 5 = 5× B₀. */
-  static readonly MAGNETIC_FIELD_STRENGTH_MAX = 5;
-  magneticFieldStrength = 1;
-  readonly isL3AssetPath = EventDisplayComponent.isL3AssetPath;
-  readonly magneticFieldStrengthMax = EventDisplayComponent.MAGNETIC_FIELD_STRENGTH_MAX;
   /** Multiple GLBs: user drags pieces from the palette before the normal options sidebar is shown. */
   detectorMultipartAssemblyMode = false;
   private _detectorInteractiveAssemblyDone = true;
@@ -862,13 +750,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private trackHoverObj: THREE.Object3D = null;
   private trackHoverOrigMaterial: THREE.Material = null;
   private decayGroupHovered: THREE.Object3D | null = null;
-  private decayHoverOrigMaterials: THREE.Material[] = [];
   private cascadeHoverActive: boolean = false;
   vertexMarkerTooltip: { label: string; x: number; y: number } | null = null;
-  trackTooltip: { label: string; x: number; y: number } | null = null;
-  private cascadeMarkerEnhanced = false;
-  private cascadeMarkerOrigColors: number[] = [];
-  private cascadeMarkerOrigScales: number[] = [];
 
   // 3D
   private scene: THREE.Scene = new THREE.Scene();
@@ -901,14 +784,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private clusters: THREE.Object3D = new THREE.Object3D();
   /** Radial energy-readout bars on EMCal / DCal surfaces. */
   private calorimeterReadouts: THREE.Group = new THREE.Group();
-  private cascadeVertexMarkers: THREE.Object3D = new THREE.Object3D();
   /** Primary vertex marker shown while ITS is unlocked but TPC is not yet placed. */
   private primaryVertexMarkers: THREE.Object3D = new THREE.Object3D();
   /** TRD/TOF layer-crossing hit markers during progressive assembly. */
   private layerHitMarkers: THREE.Object3D = new THREE.Object3D();
-  private cascadeConnectorLine: Line2 | null = null;
   private cascadeXiLine: Line2 | null = null;
-  private lambdaFlightLine2Track: Line2 | null = null;
   private trackDrawAnimations: THREE.Object3D[] = [];
   private trackDrawAnimationStartMs = 0;
   private sideViewFrameCounter = 0;
@@ -1076,9 +956,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const finishOne = () => {
       remaining -= 1;
       if (remaining === 0) {
-        if (useInteractiveMultipartAssembly) {
+        // Skip may persist completion while GLBs are still loading — attach as finished.
+        if (useInteractiveMultipartAssembly && !this.isStoredDetectorAssemblyComplete(modelPaths)) {
           finishMultipartPreload();
         } else {
+          this._detectorInteractiveAssemblyDone = true;
           finishImmediateAttached();
         }
       }
@@ -1290,6 +1172,44 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.requestRender();
   }
 
+  /**
+   * Force-complete interactive detector assembly (VA Skip button).
+   * Places any remaining preloaded parts, persists session completion, and frames the overview camera.
+   * Safe to call while GLBs are still loading — completion is persisted so attach runs as finished.
+   */
+  skipMultipartDetectorAssembly(fallbackPaths?: string[]): void {
+    const paths =
+      this.detectorMultipartModelPathsOrder.length > 0
+        ? this.detectorMultipartModelPathsOrder
+        : (fallbackPaths?.length
+          ? fallbackPaths
+          : (Array.isArray(this.detectorModel) ? this.detectorModel : [this.detectorModel]).filter(Boolean));
+
+    if (paths.length > 0) {
+      this.persistDetectorAssemblyCompleted(paths);
+    }
+
+    if (!this._detectorInteractiveAssemblyDone) {
+      for (const item of this.detectorPaletteItems) {
+        if (item.placed) continue;
+        const pathsToPlace = [item.assetPath, ...(item.companionAssetPaths ?? [])];
+        for (const path of pathsToPlace) {
+          this.attachPreloadedDetectorPart(path);
+        }
+        item.placed = true;
+      }
+      if (this.detectorMultipartModelPathsOrder.length > 0) {
+        this.completeMultipartDetectorAssembly();
+      } else {
+        this._detectorInteractiveAssemblyDone = true;
+        this.cdr.markForCheck();
+      }
+    }
+
+    this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_OVERVIEW);
+    this.requestRender();
+  }
+
   /** Hide FIT and L3 (e.g. after dismissing the assembly-complete coach). */
   hideOuterDetectorPartsAfterAssembly(): void {
     for (const part of this.detectorPartsForUi) {
@@ -1316,6 +1236,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     };
   }
 
+  /** Orbit distance from origin for the scripted assembly framing at progress t. */
+  static cameraDistanceForAssemblyProgress(t: number): number {
+    const pos = EventDisplayComponent.cameraPositionForAssemblyProgress(t);
+    return Math.hypot(pos.x, pos.y, pos.z);
+  }
+
   /** Frames the 3D orbit camera (no-op until WebGL scene exists). */
   private applyCamera3DPosition(pos: { x: number; y: number; z: number }): void {
     if (!this.camera3D || !this.controls) return;
@@ -1326,7 +1252,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /**
    * After each multipart piece snaps in, ease the orbit camera farther out so
-   * the growing detector stays framed (start → overview as placement progresses).
+   * the growing detector stays framed. Preserves the user's current orbit target
+   * and viewing angle — only increases distance (never snaps back to origin / scripted path).
    */
   private zoomOutCameraForAssemblyProgress(): void {
     if (!this.camera3D || !this.controls) return;
@@ -1334,13 +1261,47 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const total = this.detectorPaletteItems.length;
     if (total <= 0) return;
     const placed = this.detectorPaletteItems.filter((row) => row.placed).length;
-    const target = EventDisplayComponent.cameraPositionForAssemblyProgress(placed / total);
+    const desiredDistance = EventDisplayComponent.cameraDistanceForAssemblyProgress(placed / total);
 
+    const orbitTarget = {
+      x: this.controls.target.x,
+      y: this.controls.target.y,
+      z: this.controls.target.z,
+    };
     const from = {
       x: this.camera3D.position.x,
       y: this.camera3D.position.y,
       z: this.camera3D.position.z,
     };
+    const offsetX = from.x - orbitTarget.x;
+    const offsetY = from.y - orbitTarget.y;
+    const offsetZ = from.z - orbitTarget.z;
+    const currentDistance = Math.hypot(offsetX, offsetY, offsetZ);
+
+    // Already framed at least as far as the scripted progress — keep user framing.
+    if (currentDistance >= desiredDistance - 1e-6) return;
+
+    let dirX: number;
+    let dirY: number;
+    let dirZ: number;
+    if (currentDistance < 1e-6) {
+      const fallback = EventDisplayComponent.cameraPositionForAssemblyProgress(placed / total);
+      const fallbackLen = Math.hypot(fallback.x, fallback.y, fallback.z) || 1;
+      dirX = fallback.x / fallbackLen;
+      dirY = fallback.y / fallbackLen;
+      dirZ = fallback.z / fallbackLen;
+    } else {
+      dirX = offsetX / currentDistance;
+      dirY = offsetY / currentDistance;
+      dirZ = offsetZ / currentDistance;
+    }
+
+    const to = {
+      x: orbitTarget.x + dirX * desiredDistance,
+      y: orbitTarget.y + dirY * desiredDistance,
+      z: orbitTarget.z + dirZ * desiredDistance,
+    };
+
     const generation = ++this.assemblyCameraZoomGeneration;
     const durationMs = EventDisplayComponent.ASSEMBLY_CAMERA_ZOOM_MS;
     const start = performance.now();
@@ -1351,11 +1312,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const t = Math.min((performance.now() - start) / durationMs, 1);
       const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
       this.camera3D.position.set(
-        from.x + (target.x - from.x) * ease,
-        from.y + (target.y - from.y) * ease,
-        from.z + (target.z - from.z) * ease
+        from.x + (to.x - from.x) * ease,
+        from.y + (to.y - from.y) * ease,
+        from.z + (to.z - from.z) * ease
       );
-      this.controls.target.set(0, 0, 0);
+      // Keep the user's orbit target (do not reset to origin).
+      this.controls.target.set(orbitTarget.x, orbitTarget.y, orbitTarget.z);
       this.controls.update();
       this.requestRender();
       if (t < 1) {
@@ -1418,6 +1380,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private static readonly DETECTOR_RENDER_ORDER_LAYER_STRIDE = 10000;
   static readonly PHYSICS_RENDER_ORDER_BASE = 200000;
+  /**
+   * After tracks/clusters (+500): bars depth-test against track depth writes so a
+   * near-side calorimeter occludes tracks and a far-side one stays behind them.
+   * Tracks use opaque LineMaterials (depthTest/depthWrite on), same stack as
+   * particle-propagation — bars stay transparent so they can still depth-test
+   * in the later pass.
+   */
+  private static readonly CALO_BAR_RENDER_ORDER = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 600;
   /** Draw TRD/TOF hits after transparent detector shells (opaque queue always runs first). */
   private static readonly LAYER_HIT_RENDER_ORDER = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 50000;
 
@@ -1475,7 +1445,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this._darkMode ? EventDisplayComponent.neonTrackColor : EventDisplayComponent.trackColor
       );
     }
-    // LineMaterial fat-lines need transparent blending for edge AA — never force opaque.
     this.applyTrackMaterialWidths();
     if (this.detector) {
       this.applyDarkModeToObject(this.detector);
@@ -1560,17 +1529,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.caloBarMaterial.color.copy(EventDisplayComponent.caloBarColorDark);
       this.caloBarMaterial.emissive.copy(EventDisplayComponent.caloBarColorDark);
       this.caloBarMaterial.emissiveIntensity = EventDisplayComponent.CALO_BAR_DARK_EMISSIVE;
-      this.caloBarMaterial.transparent = true;
       this.caloBarMaterial.opacity = 0.92;
       this.caloBarMaterial.roughness = 0.35;
     } else {
       this.caloBarMaterial.color.copy(EventDisplayComponent.caloBarColorLight);
       this.caloBarMaterial.emissive.setRGB(0, 0, 0);
       this.caloBarMaterial.emissiveIntensity = 0;
-      this.caloBarMaterial.transparent = false;
       this.caloBarMaterial.opacity = 1;
       this.caloBarMaterial.roughness = 0.55;
     }
+    // Transparent so bars draw after opaque tracks and depth-test against them.
+    this.caloBarMaterial.transparent = true;
+    this.caloBarMaterial.depthTest = true;
+    this.caloBarMaterial.depthWrite = true;
     this.caloBarMaterial.needsUpdate = true;
   }
 
@@ -1613,7 +1584,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const energies = this.resolveCalorimeterEnergies(detector, cells);
       const mesh = this.createCalorimeterBarInstances(cells, energies, detector);
       mesh.userData = { ...(mesh.userData || {}), detectorAssetPath: assetPath, calorimeterDetector: detector };
-      mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 200;
+      mesh.renderOrder = EventDisplayComponent.CALO_BAR_RENDER_ORDER;
       this.calorimeterReadouts.add(mesh);
     }
 
@@ -2328,7 +2299,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.tracks.visible = this.desiredTracksShown && show;
     this.decays.visible = this.desiredDecaysShown && show;
     this.clusters.visible = this.desiredClustersShown && this.assemblyAllowsClusters() && show;
-    this.cascadeVertexMarkers.visible = this.desiredDecaysShown && show;
     this.primaryVertexMarkers.visible =
       this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0 && show;
     this.layerHitMarkers.visible =
@@ -2405,21 +2375,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private shouldRenderStraightTracks(): boolean {
-    return !this.isL3MagnetActive() || this.magneticFieldStrength <= 0;
-  }
-
-  onMagneticFieldStrengthChange(value: number | string): void {
-    const next = Number(value);
-    const max = EventDisplayComponent.MAGNETIC_FIELD_STRENGTH_MAX;
-    this.magneticFieldStrength = Number.isFinite(next)
-      ? Math.min(Math.max(next, 0), max)
-      : 0;
-    if (!this._event) {
-      return;
-    }
-    this.trackDrawAnimations = [];
-    this.trackDrawAnimationStartMs = performance.now();
-    this.rebuildTracksFromEvent();
+    return !this.isL3MagnetActive();
   }
 
   private getAssemblyUnlockState(): AssemblyUnlockState {
@@ -2493,8 +2449,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   private rebuildClustersFromEvent(
     straight: boolean,
-    showFull: boolean,
-    cascadeVertices: { pos: number[]; label: string }[]
+    showFull: boolean
   ): void {
     this.clearClusters();
     if (!this._event) {
@@ -2531,9 +2486,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         addForTrack(track);
       }
       if (showFull) {
-        const v0Start = cascadeVertices[0]?.pos ?? null;
-        const cascadeStart = cascadeVertices[1]?.pos ?? null;
         for (const particleList of this._event.decays || []) {
+          const { v0Start, cascadeStart } = this.getDecayVertexStarts(particleList);
           for (const track of particleList) {
             let startOverride: number[] | null = null;
             if (straight) {
@@ -2545,7 +2499,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             }
             addForTrack(track, startOverride);
           }
-          break;
         }
       }
       this.addClusterPointsToScene(points);
@@ -2644,27 +2597,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
     } else {
       points = track.trajectory.length >= 2 ? track.trajectory : null;
-      if (points) {
-        const strength = this.magneticFieldStrength;
-        if (strength !== 1) {
-          const straightPts = EventDisplayComponent.buildStraightTrajectory(
-            track.trajectory,
-            track.px,
-            track.py,
-            track.pz,
-            startOverride
-          );
-          if (straightPts) {
-            points = EventDisplayComponent.applyMagneticFieldStrength(
-              points,
-              straightPts,
-              strength,
-              track.sign,
-              startOverride
-            );
-          }
-        }
-      }
     }
 
     if (!points) {
@@ -2684,7 +2616,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Builds background + decay track meshes (and vertex markers) according to
+   * Builds background + decay track meshes according to
    * assembly unlock: ITS-only → stubs + PV; TPC → full length; L3 → bent vs straight.
    * TRD/TOF place layer-crossing hit markers (no further radial track unlock).
    */
@@ -2692,7 +2624,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.clearCascadeHover();
     this.tracks.clear();
     this.decays.clear();
-    this.cascadeVertexMarkers.clear();
     this.clearPrimaryVertexMarkers();
     this.clearLayerHitMarkers();
     this.clearClusters();
@@ -2717,21 +2648,22 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     const rMax = this.getUnlockedTrackRadiusMax();
     const straight = this.shouldRenderStraightTracks();
-    const cascadeVertices = showFull ? this.getCascadeVertices(this._event) : [];
-
-    if (showFull) {
-      for (const v of cascadeVertices) {
-        this.cascadeVertexMarkers.add(this.createVertexMarker(v.pos, v.label));
-      }
-      this.cascadeVertexMarkers.visible = this.desiredDecaysShown;
-    }
 
     if (showStubs) {
       const pv = this.estimatePrimaryVertexPosition(this._event.tracks);
       this.primaryVertexMarkers.add(this.createVertexMarker(pv, 'Primary Vertex'));
     }
 
-    for (const track of this._event.tracks) {
+    // Decay daughters are drawn charge-coloured under `this.decays`. The same
+    // physical helices also appear in `event.tracks` (particleId is PDG, not a
+    // unique id) — hide those background copies so red/green are not overdrawn.
+    const hiddenBackground = EventDisplayComponent.backgroundTrackIndicesHiddenByDecays(this._event);
+
+    for (let trackIndex = 0; trackIndex < this._event.tracks.length; trackIndex++) {
+      if (hiddenBackground.has(trackIndex)) {
+        continue;
+      }
+      const track = this._event.tracks[trackIndex];
       const resolved = this.trajectoryForAssemblyMode(track, rMax, straight);
       if (!resolved) {
         continue;
@@ -2743,11 +2675,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.queueTrackDrawAnimation(line);
     }
 
-    for (const particleList of this._event.decays) {
+    const decays = this._event.decays || [];
+    for (let decayIndex = 0; decayIndex < decays.length; decayIndex++) {
+      const particleList = decays[decayIndex];
+      const { v0Start, cascadeStart } = this.getDecayVertexStarts(particleList);
       const decayObject = new THREE.Object3D();
-      // Pin straight decay products to the same vertices used by mother dashed lines.
-      const v0Start = cascadeVertices[0]?.pos ?? null;
-      const cascadeStart = cascadeVertices[1]?.pos ?? null;
+      (decayObject as any).userData = {
+        decayIndex,
+        cascadePos: cascadeStart
+      };
       for (const track of particleList) {
         let startOverride: number[] | null = null;
         if (straight && showFull) {
@@ -2774,18 +2710,22 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         const line = this.createLine(resolved.points, material, {
           geometricStraight: resolved.geometricStraight
         });
-        (line as any).userData = { ...(line as any).userData, ...track, trackLabel: this.getTrackLabel(track) };
+        (line as any).userData = {
+          ...(line as any).userData,
+          ...track,
+          decayIndex,
+          isDecayTrack: true
+        };
         decayObject.add(line);
         this.queueTrackDrawAnimation(line);
       }
       if (decayObject.children.length > 0) {
         this.decays.add(decayObject);
       }
-      break;
     }
 
-    this.rebuildLayerHitMarkers(straight, showFull, cascadeVertices);
-    this.rebuildClustersFromEvent(straight, showFull, cascadeVertices);
+    this.rebuildLayerHitMarkers(straight, showFull);
+    this.rebuildClustersFromEvent(straight, showFull);
     this.applyDesiredPhysicsVisibility();
   }
 
@@ -2795,8 +2735,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   private rebuildLayerHitMarkers(
     straight: boolean,
-    showFull: boolean,
-    cascadeVertices: { pos: number[]; label: string }[]
+    showFull: boolean
   ): void {
     if (!this._event || !this.detectorModelHasTrackerUnlock() || this._detectorInteractiveAssemblyDone) {
       return;
@@ -2840,9 +2779,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
 
     if (showFull) {
-      const v0Start = cascadeVertices[0]?.pos ?? null;
-      const cascadeStart = cascadeVertices[1]?.pos ?? null;
       for (const particleList of this._event.decays || []) {
+        const { v0Start, cascadeStart } = this.getDecayVertexStarts(particleList);
         for (const track of particleList) {
           let startOverride: number[] | null = null;
           if (straight) {
@@ -2854,73 +2792,51 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           }
           addHitsForTrack(track, startOverride);
         }
-        break;
       }
     }
   }
 
 
-  private invariantMass(tracks: Track[]): number {
-    let E = 0, px = 0, py = 0, pz = 0;
-    for (const t of tracks) {
-      if (!t) return NaN;
-      E += t.E;
-      px += t.px;
-      py += t.py;
-      pz += t.pz;
+  /**
+   * Vertex starts for one decay entry (V0 = 2 tracks, cascade = 3).
+   * Positions are in event/physics coordinates (pre objectScale).
+   */
+  private getDecayVertexStarts(particleList: Track[]): {
+    v0Start: number[] | null;
+    cascadeStart: number[] | null;
+  } {
+    if (!particleList?.length) {
+      return { v0Start: null, cascadeStart: null };
     }
-    const m2 = E * E - px * px - py * py - pz * pz;
-    return m2 > 0 ? Math.sqrt(m2) : NaN;
-  }
 
-  private getCascadeVertices(event: Event): { pos: number[]; label: string }[] {
-    const vertices: { pos: number[]; label: string }[] = [];
-    const decays = event.decays || [];
-    if (decays.length === 0) return vertices;
-    const decay = decays[0];
-    if (decay.length === 3) {
-      const [t0, t1, bach] = decay;
-      if (!t0?.trajectory?.length || !t1?.trajectory?.length || !bach?.trajectory?.length) return vertices;
-      const lambdaMass = this.invariantMass([t0, t1]);
-      const xiMass = this.invariantMass([t0, t1, bach]);
-      const lambdaOk = !isNaN(lambdaMass) && lambdaMass >= EventDisplayComponent.LAMBDA_MASS_MIN && lambdaMass <= EventDisplayComponent.LAMBDA_MASS_MAX;
-      const xiOk = !isNaN(xiMass) && xiMass >= EventDisplayComponent.XI_MASS_MIN && xiMass <= EventDisplayComponent.XI_MASS_MAX;
-      const v0Label = lambdaOk
-        ? (t0.sign < 0 ? 'Λ decay vertex (p + π⁻)' : 'Λ̄ decay vertex (p̄ + π⁺)')
-        : 'V0';
-      const vertex1Label = xiOk
-        ? (bach.sign < 0 ? 'Ξ⁻ decay vertex (π⁻ + Λ)' : 'Ξ⁺ decay vertex (π⁺ + Λ̄)')
-        : 'Vertex1';
-      const v0Pos = [
+    if (particleList.length === 3) {
+      const [t0, t1, bach] = particleList;
+      if (!t0?.trajectory?.length || !t1?.trajectory?.length || !bach?.trajectory?.length) {
+        return { v0Start: null, cascadeStart: null };
+      }
+      const v0Start = [
         (t0.trajectory[0][0] + t1.trajectory[0][0]) / 2,
         (t0.trajectory[0][1] + t1.trajectory[0][1]) / 2,
         (t0.trajectory[0][2] + t1.trajectory[0][2]) / 2
       ];
-      const vertex1Pos = [bach.trajectory[0][0], bach.trajectory[0][1], bach.trajectory[0][2]];
-      vertices.push({ pos: v0Pos, label: v0Label }, { pos: vertex1Pos, label: vertex1Label });
-    } else if (decay.length === 2) {
-      const [t0, t1] = decay;
-      if (!t0?.trajectory?.length || !t1?.trajectory?.length) return vertices;
-      const lambdaMass = this.invariantMass([t0, t1]);
-      const lambdaOk = !isNaN(lambdaMass) && lambdaMass >= EventDisplayComponent.LAMBDA_MASS_MIN && lambdaMass <= EventDisplayComponent.LAMBDA_MASS_MAX;
-      const hasProtonAndPion = (t0.sign > 0 && t1.sign < 0) || (t0.sign < 0 && t1.sign > 0);
-      if (!lambdaOk || !hasProtonAndPion) return vertices;
-      const v0Pos = [
+      const cascadeStart = [bach.trajectory[0][0], bach.trajectory[0][1], bach.trajectory[0][2]];
+      return { v0Start, cascadeStart };
+    }
+
+    if (particleList.length === 2) {
+      const [t0, t1] = particleList;
+      if (!t0?.trajectory?.length || !t1?.trajectory?.length) {
+        return { v0Start: null, cascadeStart: null };
+      }
+      const v0Start = [
         (t0.trajectory[0][0] + t1.trajectory[0][0]) / 2,
         (t0.trajectory[0][1] + t1.trajectory[0][1]) / 2,
         (t0.trajectory[0][2] + t1.trajectory[0][2]) / 2
       ];
-      const v0Label = t0.sign < 0 ? 'Λ decay vertex (p + π⁻)' : 'Λ̄ decay vertex (p̄ + π⁺)';
-      vertices.push({ pos: v0Pos, label: v0Label });
+      return { v0Start, cascadeStart: null };
     }
-    return vertices;
-  }
 
-  private getTrackLabel(track: Track): string {
-    if (track.type === TrackType.CASCADE_BACHELOR) return 'π⁻ track';
-    if (track.sign > 0) return 'proton track';
-    if (track.sign < 0) return 'π⁻ track';
-    return 'track';
+    return { v0Start: null, cascadeStart: null };
   }
 
   private createVertexMarker(position: number[], label: string): THREE.Mesh {
@@ -2934,7 +2850,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(position[0] * scale, position[1] * scale, position[2] * scale);
     mesh.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9999;
-    (mesh as any).userData = { vertexLabel: label };
+    (mesh as any).userData = {
+      vertexLabel: label
+    };
     return mesh;
   }
 
@@ -2985,29 +2903,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.tracks.clear();
     this.decays.clear();
     this.clusters.clear();
-    this.cascadeVertexMarkers.clear();
     this.clearPrimaryVertexMarkers();
     this.clearLayerHitMarkers();
-    if (this.cascadeConnectorLine) {
-      this.scene.remove(this.cascadeConnectorLine);
-      this.cascadeConnectorLine.geometry.dispose();
-      (this.cascadeConnectorLine.material as THREE.Material).dispose();
-      this.cascadeConnectorLine = null;
-    }
     if (this.cascadeXiLine) {
       this.scene.remove(this.cascadeXiLine);
       this.cascadeXiLine.geometry.dispose();
       (this.cascadeXiLine.material as THREE.Material).dispose();
       this.cascadeXiLine = null;
     }
-    if (this.lambdaFlightLine2Track) {
-      this.scene.remove(this.lambdaFlightLine2Track);
-      this.lambdaFlightLine2Track.geometry.dispose();
-      (this.lambdaFlightLine2Track.material as THREE.Material).dispose();
-      this.lambdaFlightLine2Track = null;
-    }
-    this.cascadeMarkerEnhanced = false;
-    this.cascadeMarkerOrigColors = [];
     this.trackDrawAnimations = [];
     this.trackDrawAnimationStartMs = performance.now();
     this.loading = true;
@@ -3062,9 +2965,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const lineParams = {
       linewidth: this.effectiveTrackWidth,
       resolution: new THREE.Vector2(1, 1),
-      depthTest: false,
-      // Fat-line shader fades edges via alpha; opaque blending makes tracks disappear.
-      transparent: true,
+      // Same depth stack as particle-propagation track-renderer (opaque fat lines).
+      depthTest: true,
+      depthWrite: true,
+      transparent: false,
       opacity: 1,
     };
     this.trackMaterial = new LineMaterial({ color: EventDisplayComponent.trackColor, ...lineParams });
@@ -3087,16 +2991,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       color: EventDisplayComponent.highlightColor,
       ...lineParams,
       linewidth: this.trackHighlightWidth,
-    });
-    this.cascadeHoverTrackMaterial = new LineMaterial({
-      color: 0x000000,
-      ...lineParams,
-      linewidth: this.trackDecayWidth,
-    });
-    this.cascadeProtonMaterial = new LineMaterial({
-      color: EventDisplayComponent.positiveTrackColor,
-      ...lineParams,
-      linewidth: this.trackDecayWidth,
     });
     this.pointsMaterial = new THREE.PointsMaterial({
       color: EventDisplayComponent.clusterColor,
@@ -3129,6 +3023,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       color: EventDisplayComponent.caloBarColorLight,
       roughness: 0.45,
       metalness: 0.05,
+      transparent: true,
       depthTest: true,
       depthWrite: true,
     });
@@ -3501,10 +3396,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.cameraRphi.zoom = this.cameraRhoz.zoom = 10 / zoomz;
         this.cameraRphi.updateProjectionMatrix();
         this.cameraRhoz.updateProjectionMatrix();
-        const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial, this.cascadeHoverTrackMaterial, this.cascadeProtonMaterial];
-        if (this.cascadeConnectorLine?.material) materials.push(this.cascadeConnectorLine.material);
+        const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial];
         if (this.cascadeXiLine?.material) materials.push(this.cascadeXiLine.material);
-        if (this.lambdaFlightLine2Track?.material) materials.push(this.lambdaFlightLine2Track.material);
         this.renderer.setViewport(this.camRphiVP);
         this.renderer.setScissor(this.camRphiVP);
         materials.forEach((m: any) => m.resolution?.set(this.camRphiVP.z, this.camRphiVP.w));
@@ -3521,10 +3414,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     this.renderer.setViewport(this.cam3DVP);
     this.renderer.setScissor(this.cam3DVP);
-    const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial, this.cascadeHoverTrackMaterial, this.cascadeProtonMaterial];
-    if (this.cascadeConnectorLine?.material) materials.push(this.cascadeConnectorLine.material);
+    const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial];
     if (this.cascadeXiLine?.material) materials.push(this.cascadeXiLine.material);
-    if (this.lambdaFlightLine2Track?.material) materials.push(this.lambdaFlightLine2Track.material);
     materials.forEach((m: any) => m.resolution?.set(this.cam3DVP.z, this.cam3DVP.w));
     if (this.bloomPass?.enabled && this.composer && !this.effectiveSideViewsShown) {
       this.composer.render();
@@ -3584,21 +3475,23 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     const intersects = this.findIntersect(event);
     const first = intersects[0]?.object as THREE.Mesh & {
-      userData?: { vertexLabel?: string; vertexLabelKey?: string; trackLabel?: string };
+      userData?: { vertexLabel?: string; vertexLabelKey?: string; decayIndex?: number; isDecayTrack?: boolean };
     };
     const raycastLabel = this.resolveMarkerLabel(first?.userData);
     const isMarkerByRaycast = !!raycastLabel;
     const markerByProximity = !isMarkerByRaycast ? this.findMarkerByProximity(event) : null;
     const isMarker = isMarkerByRaycast || markerByProximity != null;
-    let trackLabel = first?.userData?.trackLabel;
-    if (!trackLabel && !isMarker) {
-      const connectorProximity = this.cascadeConnectorLine ? this.findConnectorLineByProximity(event) : null;
+    const isMotherLineRaycast = !!(first && first === this.cascadeXiLine);
+    let motherLineDecayIndex: number | undefined;
+    if (!isMarker && !isMotherLineRaycast) {
       const xiProximity = this.cascadeXiLine ? this.findXiLineByProximity(event) : null;
-      const lambdaFlightProximity = this.lambdaFlightLine2Track ? this.findLambdaFlightLineByProximity(event) : null;
-      if (connectorProximity) trackLabel = connectorProximity.label;
-      else if (xiProximity) trackLabel = xiProximity.label;
-      else if (lambdaFlightProximity) trackLabel = lambdaFlightProximity.label;
+      motherLineDecayIndex = xiProximity?.decayIndex;
     }
+    const isDecayTrackHit = !!(
+      first?.userData?.isDecayTrack
+      || isMotherLineRaycast
+      || motherLineDecayIndex !== undefined
+    );
 
     if (isMarker) {
       this.vertexMarkerTooltip = {
@@ -3606,32 +3499,32 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         x: event.clientX,
         y: event.clientY
       };
-      this.trackTooltip = null;
-      const decayGroup = this.decays.visible && this.decays.children.length > 0 ? this.decays.children[0] : null;
-      if (decayGroup != null && this.decayGroupHovered !== decayGroup) {
-        this.clearCascadeHover();
-        this.applyCascadeHover(decayGroup);
-      }
-    } else if (trackLabel) {
+      this.clearCascadeHover();
+    } else if (isDecayTrackHit) {
       this.vertexMarkerTooltip = null;
-      this.trackTooltip = { label: trackLabel, x: event.clientX, y: event.clientY };
       let decayGroup: THREE.Object3D | null = null;
       if (this.decays.visible && intersects.length > 0) {
-        const obj = intersects[0].object as THREE.Object3D;
+        const obj = intersects[0].object as THREE.Object3D & { userData?: { decayIndex?: number } };
         decayGroup = obj.parent?.parent === this.decays ? obj.parent : null;
-        if (!decayGroup && this.decays.children.length > 0 && (first === this.cascadeConnectorLine || first === this.cascadeXiLine || first === this.lambdaFlightLine2Track)) {
-          decayGroup = this.decays.children[0];
+        if (!decayGroup) {
+          const lineDecayIndex = (first as { userData?: { decayIndex?: number } } | undefined)?.userData?.decayIndex
+            ?? (obj as any)?.userData?.decayIndex
+            ?? motherLineDecayIndex;
+          if (lineDecayIndex !== undefined && (isMotherLineRaycast || motherLineDecayIndex !== undefined)) {
+            decayGroup = this.findDecayGroupByIndex(lineDecayIndex);
+          }
         }
+      } else if (motherLineDecayIndex !== undefined) {
+        decayGroup = this.findDecayGroupByIndex(motherLineDecayIndex);
       }
       if (decayGroup != null && this.decayGroupHovered !== decayGroup) {
         this.clearCascadeHover();
         this.applyCascadeHover(decayGroup);
-      } else if (decayGroup == null && !this.cascadeConnectorLine && !this.lambdaFlightLine2Track) {
+      } else if (decayGroup == null && !this.cascadeXiLine) {
         this.clearCascadeHover();
       }
     } else {
       this.vertexMarkerTooltip = null;
-      this.trackTooltip = null;
       if (this.decays.visible && intersects.length > 0) {
         const obj = intersects[0].object as THREE.Object3D;
         const decayGroup = obj.parent?.parent === this.decays ? obj.parent : null;
@@ -3652,21 +3545,30 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   onPointerLeave() {
     this.isMousePanning = false;
     this.vertexMarkerTooltip = null;
-    this.trackTooltip = null;
     this.clearCascadeHover();
+  }
+
+  private findDecayGroupByIndex(decayIndex: number | undefined | null): THREE.Object3D | null {
+    if (decayIndex === undefined || decayIndex === null || !this.decays.visible) {
+      return null;
+    }
+    for (const child of this.decays.children) {
+      if ((child as any).userData?.decayIndex === decayIndex) {
+        return child;
+      }
+    }
+    return null;
+  }
+
+  private physicsToScenePosition(pos: number[]): THREE.Vector3 {
+    const scale = EventDisplayComponent.objectScale;
+    return new THREE.Vector3(pos[0] * scale, pos[1] * scale, pos[2] * scale);
   }
 
   private applyCascadeHover(decayGroup: THREE.Object3D) {
     this.decayGroupHovered = decayGroup;
-    this.decayHoverOrigMaterials = [];
-    for (const child of decayGroup.children) {
-      const mesh = child as THREE.Mesh;
-      if (mesh.material) {
-        this.decayHoverOrigMaterials.push(Array.isArray(mesh.material) ? mesh.material[0] : mesh.material);
-        const track = (mesh as any).userData;
-        mesh.material = track?.sign > 0 ? this.cascadeProtonMaterial : this.cascadeHoverTrackMaterial;
-      }
-    }
+    // Keep original decay-track colors on hover (no black override).
+    // Emphasis comes from fading background tracks + detector.
     this.cascadeHoverActive = true;
     (this.trackMaterial as any).transparent = true;
     (this.trackMaterial as any).opacity = 0;
@@ -3677,39 +3579,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         for (const m of mats) { if (m) (m as any).opacity = EventDisplayComponent.DETECTOR_FADE_OPACITY; }
       }
     });
-    this.cascadeMarkerOrigColors = [];
-    this.cascadeVertexMarkers.children.forEach((obj, idx) => {
-      const mesh = obj as THREE.Mesh;
-      const mat = mesh.material as THREE.MeshBasicMaterial;
-      if (mat?.color) {
-        this.cascadeMarkerOrigColors[idx] = mat.color.getHex();
-        mat.color.set(0xFF3333);
-      }
-    });
-    this.cascadeMarkerEnhanced = true;
-    if (this.cascadeVertexMarkers.children.length >= 2) {
-      const v0 = new THREE.Vector3();
-      const v1 = new THREE.Vector3();
-      this.cascadeVertexMarkers.children[0].getWorldPosition(v0);
-      this.cascadeVertexMarkers.children[1].getWorldPosition(v1);
-      const lineGeometry = new LineGeometry();
-      lineGeometry.setPositions([v0.x, v0.y, v0.z, v1.x, v1.y, v1.z]);
-      const mat = new LineMaterial({
-        color: 0xff0000,
-        linewidth: this.trackHighlightWidth,
-        dashed: true,
-        dashSize: 1,
-        gapSize: 0.6,
-        dashScale: 4,
-        resolution: new THREE.Vector2(this.renderer.domElement.clientWidth, this.renderer.domElement.clientHeight)
-      });
-      const line = new Line2(lineGeometry, mat);
-      line.computeLineDistances();
-      line.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9998;
-      (line as any).userData = { trackLabel: 'Λ track' };
-      this.scene.add(line);
-      this.cascadeConnectorLine = line;
+    const decayIndex = (decayGroup as any).userData?.decayIndex as number | undefined;
+    const cascadePos = (decayGroup as any).userData?.cascadePos as number[] | null | undefined;
+    if (cascadePos) {
       const origin = new THREE.Vector3(0, 0, 0);
+      const v1 = this.physicsToScenePosition(cascadePos);
       const xiLineGeometry = new LineGeometry();
       xiLineGeometry.setPositions([origin.x, origin.y, origin.z, v1.x, v1.y, v1.z]);
       const xiMat = new LineMaterial({
@@ -3724,30 +3598,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const xiLine = new Line2(xiLineGeometry, xiMat);
       xiLine.computeLineDistances();
       xiLine.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9997;
-      (xiLine as any).userData = { trackLabel: 'Ξ⁻ track' };
+      (xiLine as any).userData = { isDecayTrack: true, decayIndex };
       this.scene.add(xiLine);
       this.cascadeXiLine = xiLine;
-    } else if (this.cascadeVertexMarkers.children.length === 1) {
-      const origin = new THREE.Vector3(0, 0, 0);
-      const v0 = new THREE.Vector3();
-      this.cascadeVertexMarkers.children[0].getWorldPosition(v0);
-      const lineGeometry = new LineGeometry();
-      lineGeometry.setPositions([origin.x, origin.y, origin.z, v0.x, v0.y, v0.z]);
-      const mat = new LineMaterial({
-        color: 0xff0000,
-        linewidth: this.trackHighlightWidth,
-        dashed: true,
-        dashSize: 1,
-        gapSize: 0.6,
-        dashScale: 4,
-        resolution: new THREE.Vector2(this.renderer.domElement.clientWidth, this.renderer.domElement.clientHeight)
-      });
-      const line = new Line2(lineGeometry, mat);
-      line.computeLineDistances();
-      line.renderOrder = EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE + 9997;
-      (line as any).userData = { trackLabel: 'Λ track' };
-      this.scene.add(line);
-      this.lambdaFlightLine2Track = line;
     }
     this.requestRender();
   }
@@ -3756,18 +3609,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const hadHover = !!(
       this.decayGroupHovered ||
       this.cascadeHoverActive ||
-      this.cascadeMarkerEnhanced ||
-      this.cascadeConnectorLine ||
-      this.cascadeXiLine ||
-      this.lambdaFlightLine2Track
+      this.cascadeXiLine
     );
     if (this.decayGroupHovered) {
-      const children = this.decayGroupHovered.children;
-      for (let i = 0; i < children.length && i < this.decayHoverOrigMaterials.length; i++) {
-        (children[i] as THREE.Mesh).material = this.decayHoverOrigMaterials[i];
-      }
       this.decayGroupHovered = null;
-      this.decayHoverOrigMaterials = [];
     }
     if (this.cascadeHoverActive) {
       this.cascadeHoverActive = false;
@@ -3785,49 +3630,26 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         }
       });
     }
-    if (this.cascadeMarkerEnhanced) {
-      this.cascadeVertexMarkers.children.forEach((obj, idx) => {
-        const mesh = obj as THREE.Mesh;
-        const mat = mesh.material as THREE.MeshBasicMaterial;
-        if (mat?.color && this.cascadeMarkerOrigColors[idx] !== undefined) {
-          mat.color.setHex(this.cascadeMarkerOrigColors[idx]);
-        }
-      });
-      this.cascadeMarkerEnhanced = false;
-      this.cascadeMarkerOrigColors = [];
-    }
-    if (this.cascadeConnectorLine) {
-      this.scene.remove(this.cascadeConnectorLine);
-      this.cascadeConnectorLine.geometry.dispose();
-      (this.cascadeConnectorLine.material as THREE.Material).dispose();
-      this.cascadeConnectorLine = null;
-    }
     if (this.cascadeXiLine) {
       this.scene.remove(this.cascadeXiLine);
       this.cascadeXiLine.geometry.dispose();
       (this.cascadeXiLine.material as THREE.Material).dispose();
       this.cascadeXiLine = null;
     }
-    if (this.lambdaFlightLine2Track) {
-      this.scene.remove(this.lambdaFlightLine2Track);
-      this.lambdaFlightLine2Track.geometry.dispose();
-      (this.lambdaFlightLine2Track.material as THREE.Material).dispose();
-      this.lambdaFlightLine2Track = null;
-    }
     if (hadHover) {
       this.requestRender();
     }
   }
 
-  private findLambdaFlightLineByProximity(event: MouseEvent): { label: string } | null {
-    if (!this.lambdaFlightLine2Track || this.cascadeVertexMarkers.children.length !== 1) return null;
+  private findXiLineByProximity(event: MouseEvent): { decayIndex?: number } | null {
+    const cascadePos = (this.decayGroupHovered as any)?.userData?.cascadePos as number[] | null | undefined;
+    if (!this.cascadeXiLine || !cascadePos) return null;
     const rect = this.renderer.domElement.getBoundingClientRect();
     const cursorX = event.clientX - rect.left;
     const cursorY = rect.height - (event.clientY - rect.top);
     const maxDist = EventDisplayComponent.MARKER_PROXIMITY_PX * EventDisplayComponent.MARKER_PROXIMITY_PX;
     const origin = new THREE.Vector3(0, 0, 0);
-    const v1 = new THREE.Vector3();
-    this.cascadeVertexMarkers.children[0].getWorldPosition(v1);
+    const v1 = this.physicsToScenePosition(cascadePos);
     const viewports = this.effectiveSideViewsShown
       ? [{ view: this.cam3DVP, cam: this.camera3D }, { view: this.camRphiVP, cam: this.cameraRphi }, { view: this.camRhozVP, cam: this.cameraRhoz }]
       : [{ view: this.cam3DVP, cam: this.camera3D }];
@@ -3848,83 +3670,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const px = sx0 + t * dx;
       const py = sy0 + t * dy;
       const d = (cursorX - px) * (cursorX - px) + (cursorY - py) * (cursorY - py);
-      if (d < maxDist) return { label: 'Λ track' };
-    }
-    return null;
-  }
-
-  private findXiLineByProximity(event: MouseEvent): { label: string } | null {
-    if (!this.cascadeXiLine || this.cascadeVertexMarkers.children.length < 2) return null;
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    const cursorX = event.clientX - rect.left;
-    const cursorY = rect.height - (event.clientY - rect.top);
-    const maxDist = EventDisplayComponent.MARKER_PROXIMITY_PX * EventDisplayComponent.MARKER_PROXIMITY_PX;
-    const origin = new THREE.Vector3(0, 0, 0);
-    const v1 = new THREE.Vector3();
-    this.cascadeVertexMarkers.children[1].getWorldPosition(v1);
-    const viewports = this.effectiveSideViewsShown
-      ? [{ view: this.cam3DVP, cam: this.camera3D }, { view: this.camRphiVP, cam: this.cameraRphi }, { view: this.camRhozVP, cam: this.cameraRhoz }]
-      : [{ view: this.cam3DVP, cam: this.camera3D }];
-    for (const { view, cam } of viewports) {
-      const ndcX = (cursorX - view.x) / view.z;
-      const ndcY = (cursorY - view.y) / view.w;
-      if (ndcX < 0 || ndcX > 1 || ndcY < 0 || ndcY > 1) continue;
-      const p0 = origin.clone().project(cam);
-      const p1 = v1.clone().project(cam);
-      const sx0 = (p0.x * 0.5 + 0.5) * view.z + view.x;
-      const sy0 = (p0.y * 0.5 + 0.5) * view.w + view.y;
-      const sx1 = (p1.x * 0.5 + 0.5) * view.z + view.x;
-      const sy1 = (p1.y * 0.5 + 0.5) * view.w + view.y;
-      const dx = sx1 - sx0;
-      const dy = sy1 - sy0;
-      const len2 = dx * dx + dy * dy;
-      const t = len2 < 1e-10 ? 0 : Math.max(0, Math.min(1, ((cursorX - sx0) * dx + (cursorY - sy0) * dy) / len2));
-      const px = sx0 + t * dx;
-      const py = sy0 + t * dy;
-      const d = (cursorX - px) * (cursorX - px) + (cursorY - py) * (cursorY - py);
-      if (d < maxDist) return { label: 'Ξ⁻ track' };
-    }
-    return null;
-  }
-
-  private findConnectorLineByProximity(event: MouseEvent): { label: string } | null {
-    if (!this.cascadeConnectorLine || this.cascadeVertexMarkers.children.length < 2) return null;
-    const rect = this.renderer.domElement.getBoundingClientRect();
-    const cursorX = event.clientX - rect.left;
-    const cursorY = rect.height - (event.clientY - rect.top);
-    const maxDist = EventDisplayComponent.MARKER_PROXIMITY_PX * EventDisplayComponent.MARKER_PROXIMITY_PX;
-    const v0 = new THREE.Vector3();
-    const v1 = new THREE.Vector3();
-    this.cascadeVertexMarkers.children[0].getWorldPosition(v0);
-    this.cascadeVertexMarkers.children[1].getWorldPosition(v1);
-    const viewports = this.effectiveSideViewsShown
-      ? [{ view: this.cam3DVP, cam: this.camera3D }, { view: this.camRphiVP, cam: this.cameraRphi }, { view: this.camRhozVP, cam: this.cameraRhoz }]
-      : [{ view: this.cam3DVP, cam: this.camera3D }];
-    for (const { view, cam } of viewports) {
-      const ndcX = (cursorX - view.x) / view.z;
-      const ndcY = (cursorY - view.y) / view.w;
-      if (ndcX < 0 || ndcX > 1 || ndcY < 0 || ndcY > 1) continue;
-      const p0 = v0.clone().project(cam);
-      const p1 = v1.clone().project(cam);
-      const sx0 = (p0.x * 0.5 + 0.5) * view.z + view.x;
-      const sy0 = (p0.y * 0.5 + 0.5) * view.w + view.y;
-      const sx1 = (p1.x * 0.5 + 0.5) * view.z + view.x;
-      const sy1 = (p1.y * 0.5 + 0.5) * view.w + view.y;
-      const dx = sx1 - sx0;
-      const dy = sy1 - sy0;
-      const len2 = dx * dx + dy * dy;
-      const t = len2 < 1e-10 ? 0 : Math.max(0, Math.min(1, ((cursorX - sx0) * dx + (cursorY - sy0) * dy) / len2));
-      const px = sx0 + t * dx;
-      const py = sy0 + t * dy;
-      const d = (cursorX - px) * (cursorX - px) + (cursorY - py) * (cursorY - py);
-      if (d < maxDist) return { label: 'Λ track' };
+      if (d < maxDist) {
+        return {
+          decayIndex: (this.decayGroupHovered as any)?.userData?.decayIndex
+        };
+      }
     }
     return null;
   }
 
   private findMarkerByProximity(event: MouseEvent): { label: string } | null {
     const markers = [
-      ...this.cascadeVertexMarkers.children,
+      ...this.primaryVertexMarkers.children,
       ...this.layerHitMarkers.children
     ];
     if (markers.length === 0) return null;
@@ -3951,7 +3708,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         const d = dx * dx + dy * dy;
         if (d < maxDist && (closest == null || d < closest.dist)) {
           const label = this.resolveMarkerLabel((marker as any).userData);
-          if (label) closest = { label, dist: d };
+          if (label) {
+            closest = {
+              label,
+              dist: d
+            };
+          }
         }
       }
     }
@@ -3996,20 +3758,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (this.decays.children.length > 0) {
         intersects.push(...raycaster.intersectObjects(this.decays.children, true));
       }
-      if (this.cascadeVertexMarkers.children.length > 0) {
-        intersects.push(...raycaster.intersectObjects(this.cascadeVertexMarkers.children, false));
+      if (this.primaryVertexMarkers.children.length > 0) {
+        intersects.push(...raycaster.intersectObjects(this.primaryVertexMarkers.children, false));
       }
       if (this.layerHitMarkers.children.length > 0) {
         intersects.push(...raycaster.intersectObjects(this.layerHitMarkers.children, true));
       }
-      if (this.cascadeConnectorLine) {
-        intersects.push(...raycaster.intersectObject(this.cascadeConnectorLine, false));
-      }
       if (this.cascadeXiLine) {
         intersects.push(...raycaster.intersectObject(this.cascadeXiLine, false));
-      }
-      if (this.lambdaFlightLine2Track) {
-        intersects.push(...raycaster.intersectObject(this.lambdaFlightLine2Track, false));
       }
     }
     intersects.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
@@ -4091,11 +3847,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.syncGridBackground();
     this.scene.add(this.detector);
     this.scene.add(this.tracks);
-    this.scene.add(this.cascadeVertexMarkers);
     this.scene.add(this.primaryVertexMarkers);
     this.layerHitMarkers.renderOrder = EventDisplayComponent.LAYER_HIT_RENDER_ORDER;
     this.scene.add(this.layerHitMarkers);
     this.scene.add(this.clusters);
+    this.calorimeterReadouts.renderOrder = EventDisplayComponent.CALO_BAR_RENDER_ORDER;
     this.scene.add(this.calorimeterReadouts);
     this.scene.add(this.decays);
     this.resize(true);

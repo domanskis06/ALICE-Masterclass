@@ -65,7 +65,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     H: this.SVG.H - this.MARGIN.TOP - this.MARGIN.BOTTOM - this.MARGIN.BOTTOM_XLABEL
   };
 
-  protected readonly ANIMATION_DURATION: number = 500;
+  protected readonly ANIMATION_DURATION: number = 250;
 
   @ViewChild('svg')
   private svgRef!: ElementRef;
@@ -363,8 +363,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     const barWidth = (bin: d3.Bin<number, number>) => {
       const x0 = bin.x0 ?? this.xDomain[0];
       const x1 = bin.x1 ?? x0;
-      // Tiny overlap so floating-point gaps between adjacent bars stay invisible.
-      return Math.max(0, this.xScale(x1) - this.xScale(x0)) + 0.5;
+      return Math.max(0, this.xScale(x1) - this.xScale(x0));
     };
 
     const barsSelection = this.barsSelector.selectAll<SVGRectElement, d3.Bin<number, number>>('rect').data(bins);
