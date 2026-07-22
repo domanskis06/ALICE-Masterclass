@@ -93,4 +93,46 @@ describe('CollisionIntro', () => {
   it('dispose() does not throw', () => {
     expect(() => intro.dispose()).not.toThrow();
   });
+
+  it('treats the translucent shell as glass (depthWrite off) so RGB quarks inside stay visible', () => {
+    const proton = intro.group.children[0] as THREE.Object3D;
+    const mats: THREE.Material[] = [];
+    const meshes: THREE.Mesh[] = [];
+    proton.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!(mesh as any).isMesh) return;
+      meshes.push(mesh);
+      const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const m of list) if (m) mats.push(m);
+    });
+    expect(mats.length).toBeGreaterThanOrEqual(2);
+
+    const shell =
+      mats.find((m) => /material\.002/i.test(m.name || '')) ??
+      mats.reduce((best, m) => {
+        const o = (m as THREE.Material & { opacity?: number }).opacity ?? 1;
+        const bo = (best as THREE.Material & { opacity?: number }).opacity ?? 1;
+        return o < bo ? m : best;
+      });
+    expect(shell.depthWrite).toBe(false);
+    expect(shell.transparent).toBe(true);
+
+    const quarks = mats.filter((m) => m !== shell);
+    expect(quarks.length).toBeGreaterThanOrEqual(1);
+    for (const q of quarks) {
+      expect(q.depthWrite).toBe(true);
+      expect(q.transparent).toBe(true);
+    }
+
+    const shellMeshes = meshes.filter((mesh) => {
+      const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      return list.some((m) => m === shell);
+    });
+    const quarkMeshes = meshes.filter((mesh) => !shellMeshes.includes(mesh));
+    expect(shellMeshes.length).toBeGreaterThanOrEqual(1);
+    expect(quarkMeshes.length).toBeGreaterThanOrEqual(1);
+    const maxQuarkOrder = Math.max(...quarkMeshes.map((m) => m.renderOrder));
+    const minShellOrder = Math.min(...shellMeshes.map((m) => m.renderOrder));
+    expect(minShellOrder).toBeGreaterThan(maxQuarkOrder);
+  });
 });
