@@ -687,28 +687,34 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
 
     if (ui) {
       this.selectedEventIndex = ui.selectedEventIndex;
-      this.cameraMode = ui.cameraMode;
-      this.fieldVisible = ui.fieldVisible;
+      // Camera / field toggles always restart at defaults (see below).
       this.fieldDipoleTransitionVisible = ui.fieldDipoleTransitionVisible;
       // Opacity always restarts at defaults — do not restore last-visit slider values.
       this.fieldOpacity = DEFAULT_FIELD_OPACITY;
-      this.fieldDensity = ui.fieldDensity;
       this.fieldLinewidth = ui.fieldLinewidth;
       this.fieldStrengthT = ui.fieldStrengthT;
-      this.solenoidPolarity = ui.solenoidPolarity;
       this.playbackSpeed = ui.playbackSpeed;
       this.magneticField.setFieldStrengthT(ui.fieldStrengthT);
-      this.magneticField.setSolenoidPolarity(ui.solenoidPolarity);
-      scene.setCameraMode(ui.cameraMode);
     }
+
+    // Visibility / camera / sparse field / nominal polarity — reset every visit.
+    const fieldNeedsRebuild =
+      ui?.fieldDensity === 'dense' || ui?.solenoidPolarity === -1;
+    this.cameraMode = 'centered';
+    this.fieldVisible = true;
+    this.fieldDensity = 'sparse';
+    this.solenoidPolarity = 1;
+    this.magneticField.setSolenoidPolarity(1);
+    scene.setCameraMode('centered');
 
     if (cache.detectorModel) {
       this.applyDetectorModel(cache.detectorModel);
       if (cache.detectorPartsForUi) {
-        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => {
-          const opacity = defaultOpacityForAsset(p.assetPath);
-          return { ...p, opacity };
-        });
+        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => ({
+          ...p,
+          opacity: defaultOpacityForAsset(p.assetPath),
+          visible: defaultDetectorPartVisible(p.assetPath),
+        }));
         for (const part of this.detectorPartsForUi) {
           const root = this.detectorPartRootByPath.get(part.assetPath);
           if (!root) continue;
@@ -731,12 +737,18 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     if (cache.fieldLines) {
       this.fieldLines = cache.fieldLines;
       this.fieldLinesBuiltAtStrengthT = cache.fieldLinesBuiltAtStrengthT;
-      this.fieldLines.visible = this.fieldVisible;
-      setFieldLinesOpacity(this.fieldLines, this.fieldOpacity);
-      const builtAt = this.fieldLinesBuiltAtStrengthT;
-      const magnitudeScale = builtAt > 0 ? this.fieldStrengthT / builtAt : 1;
-      setFieldLinesColorRange(this.fieldLines, this.activeFieldColorRange(), magnitudeScale);
-      scene.fieldGroup.add(this.fieldLines);
+      cache.fieldLines = null;
+      if (fieldNeedsRebuild) {
+        // Dense / reversed lines were baked into the cached group — rebuild sparse +z.
+        this.rebuildFieldVisualization();
+      } else {
+        this.fieldLines.visible = this.fieldVisible;
+        setFieldLinesOpacity(this.fieldLines, this.fieldOpacity);
+        const builtAt = this.fieldLinesBuiltAtStrengthT;
+        const magnitudeScale = builtAt > 0 ? this.fieldStrengthT / builtAt : 1;
+        setFieldLinesColorRange(this.fieldLines, this.activeFieldColorRange(), magnitudeScale);
+        scene.fieldGroup.add(this.fieldLines);
+      }
     }
 
     if (cache.collisionIntro) {
