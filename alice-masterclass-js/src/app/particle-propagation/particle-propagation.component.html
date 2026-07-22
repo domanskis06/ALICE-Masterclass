@@ -172,18 +172,20 @@
       <section class="controls-section">
         <h4>Time</h4>
         @if (controlsEnabled) {
-          <div class="time-readout">{{ currentTimeMs | number: '1.0-0' }} ms</div>
+          <div class="time-readout" title="Time of flight in the detector (slowed down for visualisation)">
+            {{ displayTimeNs | number: '1.1-1' }} ns
+          </div>
           <mat-slider
             class="full-width"
-            [min]="minTimeMs"
-            [max]="maxTimeMs"
-            [step]="1"
+            [min]="minTimeNs"
+            [max]="maxTimeNs"
+            [step]="0.1"
             [discrete]="true">
             <input
               matSliderThumb
-              [(ngModel)]="currentTimeMs"
+              [ngModel]="displayTimeNs"
               [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="onTimeChange($event)" />
+              (ngModelChange)="onTimeChangeNs($event)" />
           </mat-slider>
         } @else {
           <p class="slider-label">Start the animation to scrub time.</p>

@@ -5,6 +5,10 @@
  * pacing knobs (milliseconds of wall-clock animation), not physical
  * quantities, and are shared only between `scene/collision-intro.ts` and
  * `scene/propagation-timeline.ts` (Faza 10).
+ *
+ * The sidebar shows detector-frame ns via `scene/physical-timeline.ts`
+ * (intro option A + `nsPerMs` for propagation); these ms values stay the
+ * internal animation clock.
  */
 
 /** Duration, in ms, of the pre-collision proton approach (`t` in `[-INTRO_DURATION_MS, 0]`). */
