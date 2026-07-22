@@ -3094,7 +3094,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       linewidth: this.trackDecayWidth,
     });
     this.cascadeProtonMaterial = new LineMaterial({
-      color: 0x000080,
+      color: EventDisplayComponent.positiveTrackColor,
       ...lineParams,
       linewidth: this.trackDecayWidth,
     });

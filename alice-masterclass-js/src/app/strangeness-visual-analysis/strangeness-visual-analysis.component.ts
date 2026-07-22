@@ -114,6 +114,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     binIndex: number;
   }>();
   private nextPendingFlightId = 0;
+  /** Delay so students see the particle leave the detector before the page scrolls. */
+  private static readonly SCROLL_AFTER_FLIGHT_START_MS = 500;
+  private scrollAfterFlightTimeouts: number[] = [];
 
   get isCurrentEventDone(): boolean {
     return this.dataService.visualAnalysisResults.has(String(this.eventID));
@@ -149,6 +152,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   ngOnDestroy(): void {
     this.vaCoachScheduleSub?.unsubscribe();
     this.vaCoachScheduleSub = null;
+    this.scrollAfterFlightTimeouts.forEach((id) => window.clearTimeout(id));
+    this.scrollAfterFlightTimeouts = [];
     // Commit entries still in flight so a mid-animation destroy does not drop them.
     for (const pending of this.pendingFlightEntries.values()) {
       this.commitHistogramEntry(pending.entry);
@@ -488,8 +493,12 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
         }, 40);
       });
 
-    // Smooth scroll runs in parallel with the flight so the jump is not a hard teleport.
-    this.massHistograms?.scrollHistogramIntoView(event.type);
+    // Let the particle leave the detector centre first, then smooth-scroll to the histogram.
+    const scrollTimeoutId = window.setTimeout(() => {
+      this.scrollAfterFlightTimeouts = this.scrollAfterFlightTimeouts.filter((id) => id !== scrollTimeoutId);
+      this.massHistograms?.scrollHistogramIntoView(event.type);
+    }, StrangenessVisualAnalysisComponent.SCROLL_AFTER_FLIGHT_START_MS);
+    this.scrollAfterFlightTimeouts.push(scrollTimeoutId);
   }
 
   private commitHistogramEntry(value: VisualAnalysisResultsEntry): void {

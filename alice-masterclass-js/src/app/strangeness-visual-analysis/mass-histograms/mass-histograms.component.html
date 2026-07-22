@@ -53,8 +53,8 @@
     </div>
   </mat-card-title>
   <mat-card-content>
-    <div class="hist-grid" fxLayout="row wrap" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="24px grid">
-      <div class="hist-item" fxFlex="1 1 calc(50% - 12px)" fxLayout="column">
+    <div class="hist-grid" fxLayout="row wrap" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="12px grid">
+      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #kaonHistogram
           [data]="kaonMasses"
@@ -68,7 +68,7 @@
         </app-histogram>
       </div>
 
-      <div class="hist-item" fxFlex="1 1 calc(50% - 12px)" fxLayout="column">
+      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #lambdaHistogram
           [data]="lambdaMasses"
@@ -82,7 +82,7 @@
         </app-histogram>
       </div>
 
-      <div class="hist-item" fxFlex="1 1 calc(50% - 12px)" fxLayout="column">
+      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #antiLambdaHistogram
           [data]="antiLambdaMasses"
@@ -96,7 +96,7 @@
         </app-histogram>
       </div>
 
-      <div class="hist-item" fxFlex="1 1 calc(50% - 12px)" fxLayout="column">
+      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #xiHistogram
           [data]="xiMasses"

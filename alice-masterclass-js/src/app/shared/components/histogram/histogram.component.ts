@@ -44,7 +44,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   readonly SVG = {
     W: 400,
     // Tall enough for axis ticks + x-axis label without viewBox clipping.
-    H: 220
+    H: 178
   }
 
   readonly MARGIN = {
