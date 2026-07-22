@@ -18,6 +18,7 @@ import {
   defaultLayerOpacity,
   detectorPartAccentColor,
   detectorPartLabel,
+  DARK_EMISSIVE_INTENSITY,
   isAuxiliaryMuonPart,
   isBeamPipe,
   isDipo,
@@ -480,7 +481,7 @@ describe('setDetectorPartOpacity', () => {
     expect(applied).toBe(0.5);
     expect(mat.opacity).toBe(0.5);
     expect(mat.transparent).toBe(true);
-    expect(mat.depthWrite).toBe(true); // stays cheap to blend
+    expect(mat.depthWrite).toBe(true); // VA-style: thick shells keep depthWrite
   });
 
   it('keeps fully opaque parts on the non-transparent path', () => {
@@ -512,6 +513,18 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(1);
     expect(mat.depthWrite).toBe(true);
     expect(mat.depthTest).toBe(true);
+  });
+
+  it('boosts dark-mode emissive when opacity drops below the default', () => {
+    const part = makePart(0xcc3344);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/its.glb';
+    applyDetectorDarkMode(part, true);
+    setDetectorPartOpacity(part, DETECTOR_DEFAULT_OPACITY);
+    const mat = firstMaterial(part);
+    expect(mat.emissiveIntensity).toBeCloseTo(DARK_EMISSIVE_INTENSITY, 5);
+
+    setDetectorPartOpacity(part, MIN_PART_OPACITY);
+    expect(mat.emissiveIntensity).toBeGreaterThan(DARK_EMISSIVE_INTENSITY * 1.5);
   });
 });
 

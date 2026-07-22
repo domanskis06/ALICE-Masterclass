@@ -897,15 +897,64 @@ export function setDetectorPartVisibility(root: THREE.Object3D, visible: boolean
 }
 
 /** Dark-mode self-glow for most shells. */
-const DARK_EMISSIVE_INTENSITY = 0.12;
+export const DARK_EMISSIVE_INTENSITY = 0.12;
 /** Beam pipe is thin grey aluminium — needs extra punch without touching opacity. */
 export const BEAM_PIPE_DARK_EMISSIVE_INTENSITY = 0.28;
 
 /**
+ * Caps how hard {@link syncDetectorFadeAppearance} may amplify dark-mode
+ * emissive when opacity drops (keeps default 0.75 look unchanged: factor 1).
+ */
+export const FADE_EMISSIVE_MAX_FACTOR = 3.5;
+
+/**
+ * In dark mode, boosts emissive (and slightly lifts shell lightness) as opacity
+ * falls below {@link DETECTOR_DEFAULT_OPACITY}, so low-α shells with
+ * depthWrite=true still read as coloured glass instead of a black silhouette.
+ * Light mode is a no-op (emissive stays off).
+ */
+export function syncDetectorFadeAppearance(
+  mat: THREE.Material,
+  opacity: number,
+  isBeamPipePart: boolean
+): void {
+  const m = mat as THREE.MeshStandardMaterial & { userData: Record<string, unknown> };
+  if (!m || !('emissive' in m)) return;
+  const userData = (m.userData || (m.userData = {})) as {
+    detectorDarkMode?: boolean;
+    fadeBaseColor?: THREE.Color;
+  };
+  if (!userData.detectorDarkMode) return;
+
+  const o = Math.max(MIN_PART_OPACITY, Math.min(1, opacity));
+  const baseEmissive = isBeamPipePart
+    ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
+    : DARK_EMISSIVE_INTENSITY;
+  const factor = Math.min(
+    FADE_EMISSIVE_MAX_FACTOR,
+    Math.max(1, DETECTOR_DEFAULT_OPACITY / o)
+  );
+  m.emissiveIntensity = baseEmissive * factor;
+
+  // Lightness lift only for thick shells (BP already has a brighter dark palette).
+  if (!isBeamPipePart && userData.fadeBaseColor instanceof THREE.Color) {
+    const hsl = { h: 0, s: 0, l: 0 };
+    userData.fadeBaseColor.getHSL(hsl);
+    const lift = (factor - 1) / (FADE_EMISSIVE_MAX_FACTOR - 1); // 0 at default, 1 at cap
+    const litL = Math.min(0.65, hsl.l + lift * 0.12);
+    m.color.setHSL(hsl.h, hsl.s, litL);
+    m.emissive.copy(m.color);
+  } else if ('emissive' in m && m.emissive) {
+    m.emissive.copy(m.color);
+  }
+}
+
+/**
  * Sets a detector part's opacity (clamped to [MIN_PART_OPACITY,
- * MAX_PART_OPACITY]). Shells use real material alpha. The beam pipe stops
- * writing depth while translucent so it cannot punch a dark silhouette through
- * detector layers rendered behind it.
+ * MAX_PART_OPACITY]). Shells keep depthWrite on while translucent (same as
+ * EventDisplay / VA) so nested layers stay readable. The beam pipe alone stops
+ * writing depth when translucent — it is thin enough that true alpha fade
+ * works without muddying the stack.
  */
 export function setDetectorPartOpacity(root: THREE.Object3D, value: number): number {
   const opacity = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, value));
@@ -940,6 +989,8 @@ export function applyDetectorPartOpacity(
       const m = mat as THREE.Material & { userData: Record<string, unknown> };
       m.transparent = transparent;
       m.opacity = o;
+      // VA-style: thick shells keep depthWrite so nested barrels stay sorted.
+      // Beam pipe is the exception — disable depth writes while translucent.
       m.depthWrite = beamPipe ? !transparent : true;
       m.depthTest = true;
       if (updateBase) {
@@ -947,6 +998,8 @@ export function applyDetectorPartOpacity(
       } else {
         m.userData = { ...(m.userData || {}) };
       }
+      // Compensate against the *current* drawn alpha (including mid fade-in).
+      syncDetectorFadeAppearance(m, o, beamPipe);
       m.needsUpdate = true;
     }
   });
@@ -1028,16 +1081,19 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
   root.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) return;
     const mesh = o as THREE.Mesh;
-    const raw = mesh.material;
     const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial & { userData: Record<string, unknown> };
       if (!m || !('color' in m)) continue;
       const userData = (m.userData || (m.userData = {})) as {
         neonBaseColor?: THREE.Color | number | { r: number; g: number; b: number };
+        detectorDarkMode?: boolean;
+        fadeBaseColor?: THREE.Color;
+        baseOpacity?: number;
       };
       userData.neonBaseColor = reviveNeonBaseColor(userData.neonBaseColor, m.color);
       const baseColor = userData.neonBaseColor as THREE.Color;
+      userData.detectorDarkMode = darkMode;
       if (darkMode) {
         baseColor.getHSL(hsl);
         const litLightness = beamPipe
@@ -1049,14 +1105,21 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
           litLightness
         );
         m.color.copy(lit);
+        userData.fadeBaseColor = lit.clone();
         if ('emissive' in m) {
           m.emissive.copy(m.color);
           m.emissiveIntensity = beamPipe
             ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
             : DARK_EMISSIVE_INTENSITY;
         }
+        const fadeOpacity =
+          typeof userData.baseOpacity === 'number' && Number.isFinite(userData.baseOpacity)
+            ? userData.baseOpacity
+            : DETECTOR_DEFAULT_OPACITY;
+        syncDetectorFadeAppearance(m, fadeOpacity, beamPipe);
       } else {
         m.color.copy(baseColor);
+        delete userData.fadeBaseColor;
         if ('emissive' in m) {
           m.emissive.setRGB(0, 0, 0);
           m.emissiveIntensity = 0;

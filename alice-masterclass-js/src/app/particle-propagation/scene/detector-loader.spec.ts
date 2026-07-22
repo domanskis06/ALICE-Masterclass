@@ -90,6 +90,7 @@ describe('loadDetectorModel', () => {
         if (!mesh.isMesh) return;
         sawMesh = true;
         const material = mesh.material as THREE.Material;
+        // Translucent defaults: BP disables depthWrite; other shells keep it (VA-style).
         expect(material.depthWrite).toBe(!isBp);
         expect(material.depthTest).toBe(true);
         if (isBp) expect(mesh.renderOrder).toBeGreaterThan(0);
