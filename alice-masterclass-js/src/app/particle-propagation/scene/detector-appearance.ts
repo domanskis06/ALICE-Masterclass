@@ -61,9 +61,15 @@ export const BEAM_PIPE_LOW_VERTEX_KEEP = 0.4;
 const BEAM_PIPE_RENDER_ORDER = 500_000;
 
 /**
- * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3.glb) in
- * the low-detail LOD level. The authored GLB repeats the same ~128-tri panel
- * ~168× around the ring.
+ * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3.glb).
+ * The authored GLB repeats the same ~128-tri panel ~168× around the ring.
+ *
+ * No longer used by the live L3 LOD in `detector-loader.ts` — thinning the
+ * far level left real gaps between kept sectors that blend into the
+ * near-black dark background but read as glaring white holes against the
+ * pale light-mode background. Kept as a utility (and for
+ * {@link thinOuterMagnetSectors} / `buildOuterMagnetInstanced` tests) for any
+ * future LOD that can afford the visible gaps.
  */
 export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
 
@@ -896,6 +902,15 @@ export function setDetectorPartVisibility(root: THREE.Object3D, visible: boolean
   root.visible = visible;
 }
 
+/**
+ * Light-mode metalness ceiling (VA-style, see
+ * `EventDisplayComponent.applyDarkModeToObject`). GLB-authored metalness
+ * (~0.5) plus the two scene directional lights produces sharp specular
+ * glare/white glints on flat facets (most visible on L3's large panels)
+ * under the pale `LIGHT_BACKGROUND` — capping keeps albedo readable.
+ */
+export const LIGHT_MODE_MAX_METALNESS = 0.15;
+
 /** Dark-mode self-glow for most shells. */
 export const DARK_EMISSIVE_INTENSITY = 0.12;
 /** Beam pipe is thin grey aluminium — needs extra punch without touching opacity. */
@@ -904,8 +919,25 @@ export const BEAM_PIPE_DARK_EMISSIVE_INTENSITY = 0.28;
 /**
  * Caps how hard {@link syncDetectorFadeAppearance} may amplify dark-mode
  * emissive when opacity drops (keeps default 0.75 look unchanged: factor 1).
+ *
+ * Sized from measurement, not guesswork: `Material.opacity` scales the
+ * *entire* blended fragment (diffuse + emissive) toward the background colour
+ * before it reaches the screen, so boosting scene lights cannot compensate —
+ * only emissive, multiplied back up by roughly `DETECTOR_DEFAULT_OPACITY /
+ * MIN_PART_OPACITY` (0.75 / 0.05 = 15), survives that scaling. 18 gives a
+ * small margin above the measured 15x floor so ITS/TPC/L3 stay legible (not
+ * black) at the slider minimum instead of just barely visible.
  */
-export const FADE_EMISSIVE_MAX_FACTOR = 3.5;
+export const FADE_EMISSIVE_MAX_FACTOR = 18;
+
+/**
+ * Beam pipe already fades correctly on its own — it disables `depthWrite`
+ * while translucent (true alpha blend, no depth-buffer self-occlusion), so it
+ * does not suffer the "black silhouette" problem the other shells have.
+ * Keeps the original, gentler cap so its already-good low-opacity look is
+ * unchanged by the {@link FADE_EMISSIVE_MAX_FACTOR} increase above.
+ */
+export const BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR = 3.5;
 
 /**
  * In dark mode, boosts emissive (and slightly lifts shell lightness) as opacity
@@ -930,17 +962,17 @@ export function syncDetectorFadeAppearance(
   const baseEmissive = isBeamPipePart
     ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
     : DARK_EMISSIVE_INTENSITY;
-  const factor = Math.min(
-    FADE_EMISSIVE_MAX_FACTOR,
-    Math.max(1, DETECTOR_DEFAULT_OPACITY / o)
-  );
+  const maxFactor = isBeamPipePart
+    ? BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR
+    : FADE_EMISSIVE_MAX_FACTOR;
+  const factor = Math.min(maxFactor, Math.max(1, DETECTOR_DEFAULT_OPACITY / o));
   m.emissiveIntensity = baseEmissive * factor;
 
   // Lightness lift only for thick shells (BP already has a brighter dark palette).
   if (!isBeamPipePart && userData.fadeBaseColor instanceof THREE.Color) {
     const hsl = { h: 0, s: 0, l: 0 };
     userData.fadeBaseColor.getHSL(hsl);
-    const lift = (factor - 1) / (FADE_EMISSIVE_MAX_FACTOR - 1); // 0 at default, 1 at cap
+    const lift = (factor - 1) / (maxFactor - 1); // 0 at default, 1 at cap
     const litL = Math.min(0.65, hsl.l + lift * 0.12);
     m.color.setHSL(hsl.h, hsl.s, litL);
     m.emissive.copy(m.color);
@@ -1090,6 +1122,7 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
         detectorDarkMode?: boolean;
         fadeBaseColor?: THREE.Color;
         baseOpacity?: number;
+        baseMetalness?: number;
       };
       userData.neonBaseColor = reviveNeonBaseColor(userData.neonBaseColor, m.color);
       const baseColor = userData.neonBaseColor as THREE.Color;
@@ -1112,6 +1145,9 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
             ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
             : DARK_EMISSIVE_INTENSITY;
         }
+        if ('metalness' in m && typeof userData.baseMetalness === 'number') {
+          m.metalness = userData.baseMetalness;
+        }
         const fadeOpacity =
           typeof userData.baseOpacity === 'number' && Number.isFinite(userData.baseOpacity)
             ? userData.baseOpacity
@@ -1123,6 +1159,14 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
         if ('emissive' in m) {
           m.emissive.setRGB(0, 0, 0);
           m.emissiveIntensity = 0;
+        }
+        // Soften metallic specular: VA caps light-mode metalness so the two
+        // directional lights don't blow the shell surfaces out to glare/white.
+        if ('metalness' in m) {
+          if (typeof userData.baseMetalness !== 'number') {
+            userData.baseMetalness = typeof m.metalness === 'number' ? m.metalness : 0;
+          }
+          m.metalness = Math.min(userData.baseMetalness, LIGHT_MODE_MAX_METALNESS);
         }
       }
       m.needsUpdate = true;

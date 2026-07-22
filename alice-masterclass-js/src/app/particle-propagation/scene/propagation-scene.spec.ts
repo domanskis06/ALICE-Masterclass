@@ -128,6 +128,49 @@ describe('PropagationScene', () => {
     expect(l3.visible).toBe(false);
   });
 
+  it('retunes ambient/hemisphere/directional lights (VA-style) and the background on dark/light toggle', () => {
+    const findLights = (): {
+      ambient: THREE.AmbientLight;
+      hemisphere: THREE.HemisphereLight;
+      directionals: THREE.DirectionalLight[];
+    } => {
+      let ambient!: THREE.AmbientLight;
+      let hemisphere!: THREE.HemisphereLight;
+      const directionals: THREE.DirectionalLight[] = [];
+      scene.scene.traverse((obj) => {
+        if ((obj as THREE.AmbientLight).isAmbientLight) ambient = obj as THREE.AmbientLight;
+        else if ((obj as THREE.HemisphereLight).isHemisphereLight) {
+          hemisphere = obj as THREE.HemisphereLight;
+        } else if ((obj as THREE.DirectionalLight).isDirectionalLight) {
+          directionals.push(obj as THREE.DirectionalLight);
+        }
+      });
+      return { ambient, hemisphere, directionals };
+    };
+
+    // Dark (default): unchanged from the pre-retune static setup.
+    const dark = findLights();
+    expect(dark.ambient.intensity).toBeCloseTo(1, 5);
+    expect(dark.directionals[0].intensity).toBeCloseTo(0.45, 5);
+    expect((scene.scene.background as THREE.Color).getHex()).toBe(0x0a0f18);
+
+    scene.setDarkMode(false);
+    const light = findLights();
+    expect(light.ambient.color.getHex()).toBe(0xa2a2a2);
+    expect(light.ambient.intensity).toBeCloseTo(0.925, 5);
+    expect(light.hemisphere.color.getHex()).toBe(0xd5dff4);
+    expect(light.hemisphere.groundColor.getHex()).toBe(0x81838b);
+    expect(light.directionals[0].intensity).toBeCloseTo(0.5, 5);
+    expect((scene.scene.background as THREE.Color).getHex()).toBe(0xeef1f6);
+
+    scene.setDarkMode(true);
+    const backToDark = findLights();
+    expect(backToDark.ambient.color.getHex()).toBe(0x444444);
+    expect(backToDark.ambient.intensity).toBeCloseTo(1, 5);
+    expect(backToDark.directionals[0].intensity).toBeCloseTo(0.45, 5);
+    expect((scene.scene.background as THREE.Color).getHex()).toBe(0x0a0f18);
+  });
+
   it('free-cam wheel flies along the look axis without changing orbit distance', () => {
     scene.setCameraMode('free');
     const distBefore = scene.controls.target.distanceTo(scene.camera.position);

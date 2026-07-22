@@ -132,7 +132,11 @@ describe('loadDetectorModel', () => {
       return n;
     };
     expect(countInstanced(lod.levels[0].object)).toBeGreaterThanOrEqual(3);
-    expect(instanceCount(lod.levels[1].object)).toBeLessThan(instanceCount(lod.levels[0].object));
+    // Both levels keep the full sector ring (no every-Nth thinning): a thinned
+    // far level leaves real gaps between kept sectors that blend into the
+    // near-black dark background but read as glaring holes against the pale
+    // light-mode background (mistaken for a separate element covering L3).
+    expect(instanceCount(lod.levels[1].object)).toBe(instanceCount(lod.levels[0].object));
   });
 
   it('wraps TPC in a distance LOD with a lighter far level (thinned + decimated)', () => {

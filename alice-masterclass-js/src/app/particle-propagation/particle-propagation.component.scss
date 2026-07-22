@@ -30,7 +30,8 @@
 
   &.pp-dark {
     --pp-bg-panel-solid: #0a1832;
-    --pp-bg-scene: #05070d;
+    // Mirrors PropagationScene's DARK_BACKGROUND (propagation-scene.ts).
+    --pp-bg-scene: #0a0f18;
     --pp-border: rgba(148, 163, 184, 0.28);
     --pp-text: #e5edf7;
     --pp-muted: rgba(226, 232, 240, 0.7);

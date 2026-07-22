@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import {
   applyDetectorDarkMode,
   applyDetectorLayerMaterials,
+  BEAM_PIPE_DARK_EMISSIVE_INTENSITY,
   BEAM_PIPE_DEFAULT_OPACITY,
+  BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR,
   buildLowLodFromMergedHigh,
   buildMchInstanced,
   buildOuterMagnetInstanced,
@@ -19,6 +21,7 @@ import {
   detectorPartAccentColor,
   detectorPartLabel,
   DARK_EMISSIVE_INTENSITY,
+  FADE_EMISSIVE_MAX_FACTOR,
   isAuxiliaryMuonPart,
   isBeamPipe,
   isDipo,
@@ -26,6 +29,7 @@ import {
   isIts,
   isMch,
   isTpc,
+  LIGHT_MODE_MAX_METALNESS,
   MAX_PART_OPACITY,
   MIN_PART_OPACITY,
   OUTER_MAGNET_DEFAULT_OPACITY,
@@ -526,6 +530,43 @@ describe('setDetectorPartOpacity', () => {
     setDetectorPartOpacity(part, MIN_PART_OPACITY);
     expect(mat.emissiveIntensity).toBeGreaterThan(DARK_EMISSIVE_INTENSITY * 1.5);
   });
+
+  it('boosts emissive hard enough at MIN_PART_OPACITY to survive the opacity multiply', () => {
+    // Material.opacity scales the *entire* blended fragment (diffuse +
+    // emissive) toward the background colour before it reaches the screen —
+    // scene lights cannot compensate for that (see propagation-scene.ts
+    // syncSceneLighting docs). FADE_EMISSIVE_MAX_FACTOR must claw back at
+    // least DETECTOR_DEFAULT_OPACITY / MIN_PART_OPACITY of brightness so a
+    // shell at the slider minimum still reads as coloured glass, not black.
+    const part = makePart(0xcc3344);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/its.glb';
+    applyDetectorDarkMode(part, true);
+    setDetectorPartOpacity(part, MIN_PART_OPACITY);
+    const mat = firstMaterial(part);
+
+    expect(FADE_EMISSIVE_MAX_FACTOR).toBeGreaterThanOrEqual(
+      DETECTOR_DEFAULT_OPACITY / MIN_PART_OPACITY
+    );
+    const expectedFactor = Math.min(FADE_EMISSIVE_MAX_FACTOR, DETECTOR_DEFAULT_OPACITY / MIN_PART_OPACITY);
+    expect(mat.emissiveIntensity).toBeCloseTo(DARK_EMISSIVE_INTENSITY * expectedFactor, 5);
+  });
+
+  it('caps the beam pipe emissive boost lower — it already fades correctly via depthWrite=false', () => {
+    // Beam pipe uses true alpha blending (depthWrite off while translucent),
+    // so it never had the "black silhouette" problem the other shells do.
+    // Its cap must stay independent of the FADE_EMISSIVE_MAX_FACTOR increase.
+    expect(BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR).toBeLessThan(FADE_EMISSIVE_MAX_FACTOR);
+
+    const part = makePart(0x9eb0c4);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/BP.glb';
+    applyDetectorDarkMode(part, true);
+    setDetectorPartOpacity(part, MIN_PART_OPACITY);
+    const mat = firstMaterial(part);
+    expect(mat.emissiveIntensity).toBeCloseTo(
+      BEAM_PIPE_DARK_EMISSIVE_INTENSITY * BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR,
+      5
+    );
+  });
 });
 
 describe('fadeInDetectorPart', () => {
@@ -570,5 +611,32 @@ describe('applyDetectorDarkMode', () => {
     applyDetectorDarkMode(part, false);
     expect(mat.color.getHexString()).toBe(base.getHexString());
     expect(mat.emissive.getHexString()).toBe('000000');
+  });
+
+  it('caps light-mode metalness (VA-style) so directional lights do not glare, and restores it in dark', () => {
+    // Authored GLB metalness (~0.5) plus the two scene directional lights
+    // produces sharp specular glare/white glints on flat facets — most
+    // visible on L3's large panels — against the pale light-mode background.
+    const part = makePart(0xff414a);
+    const mat = firstMaterial(part);
+    mat.metalness = 0.5;
+
+    applyDetectorDarkMode(part, false);
+    expect(mat.metalness).toBeCloseTo(LIGHT_MODE_MAX_METALNESS, 5);
+
+    applyDetectorDarkMode(part, true);
+    expect(mat.metalness).toBeCloseTo(0.5, 5);
+
+    applyDetectorDarkMode(part, false);
+    expect(mat.metalness).toBeCloseTo(LIGHT_MODE_MAX_METALNESS, 5);
+  });
+
+  it('never raises metalness above its authored value in light mode', () => {
+    const part = makePart(0x33ff71);
+    const mat = firstMaterial(part);
+    mat.metalness = 0.05; // already below the cap
+
+    applyDetectorDarkMode(part, false);
+    expect(mat.metalness).toBeCloseTo(0.05, 5);
   });
 });

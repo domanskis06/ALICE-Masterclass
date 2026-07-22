@@ -28,8 +28,14 @@ import {
 const INITIAL_CAMERA_POSITION = new THREE.Vector3(-2.8, 2.4, 11.5);
 const INITIAL_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
-/** Near-black (matches the reference screenshot) vs. a soft light background. */
-const DARK_BACKGROUND = new THREE.Color(0x05070d);
+/**
+ * Near-black (matches the reference screenshot) vs. a soft light background.
+ * Dark is lifted slightly off pure black (`0x05070d` -> `0x0a0f18`) so very
+ * low-opacity shells keep a faint, dark-blue "glass" tint against the
+ * background instead of reading as a flat void — still near-black, not a
+ * visible navy tint at a glance.
+ */
+const DARK_BACKGROUND = new THREE.Color(0x0a0f18);
 const LIGHT_BACKGROUND = new THREE.Color(0xeef1f6);
 
 /** Matches `EventDisplayComponent` camera radio: orbit-about-origin vs free-look pan. */
@@ -64,6 +70,20 @@ export class PropagationScene {
   private static readonly WHEEL_PAN_FACTOR = 0.05;
   private static readonly MOUSE_DRAG_PAN_FACTOR = 0.001;
 
+  /**
+   * Light retune on dark/light toggle, mirroring
+   * `EventDisplayComponent.syncSceneLighting` (see `docs/event-display.md`).
+   * Dark values match the previous static `setupLights` — no regression there.
+   * Light values give a brighter, flatter fill so albedo-only (non-neon)
+   * materials don't stay dim against the pale `LIGHT_BACKGROUND`.
+   */
+  private static readonly DARK_MODE_AMBIENT = { color: 0x444444, intensity: 1 };
+  private static readonly DARK_MODE_HEMISPHERE = { sky: 0xb8c8e8, ground: 0x2a2a30, intensity: 0.5 };
+  private static readonly DARK_MODE_DIRECTIONAL_INTENSITY = 0.45;
+  private static readonly LIGHT_MODE_AMBIENT = { color: 0xa2a2a2, intensity: 0.925 };
+  private static readonly LIGHT_MODE_HEMISPHERE = { sky: 0xd5dff4, ground: 0x81838b, intensity: 0.7 };
+  private static readonly LIGHT_MODE_DIRECTIONAL_INTENSITY = 0.5;
+
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   readonly renderer: THREE.WebGLRenderer;
@@ -79,6 +99,10 @@ export class PropagationScene {
   readonly introGroup = new THREE.Group();
 
   private readonly lights = new THREE.Group();
+  private ambientLight?: THREE.AmbientLight;
+  private hemisphereLight?: THREE.HemisphereLight;
+  private directionalLightA?: THREE.DirectionalLight;
+  private directionalLightB?: THREE.DirectionalLight;
   private _darkMode = true;
   private _cameraMode: PropagationCameraMode = 'centered';
   private readonly keysDown: Record<string, boolean> = {};
@@ -228,10 +252,11 @@ export class PropagationScene {
     return this.isMousePanning || this.hasPanKeysDown();
   }
 
-  /** Toggles background + detector material treatment between dark and light. */
+  /** Toggles background + lights + detector material treatment between dark and light. */
   setDarkMode(darkMode: boolean): void {
     this._darkMode = darkMode;
     this.scene.background = darkMode ? DARK_BACKGROUND : LIGHT_BACKGROUND;
+    this.syncSceneLighting();
     applyDetectorDarkMode(this.detectorGroup, darkMode);
     this.needsRender = true;
   }
@@ -254,6 +279,53 @@ export class PropagationScene {
     const directionalLightB = new THREE.DirectionalLight(0xffffff, 0.45);
     directionalLightB.position.set(-1, 1, -1);
     this.lights.add(ambientLight, hemisphereLight, directionalLightA, directionalLightB);
+    this.ambientLight = ambientLight;
+    this.hemisphereLight = hemisphereLight;
+    this.directionalLightA = directionalLightA;
+    this.directionalLightB = directionalLightB;
+    this.syncSceneLighting();
+  }
+
+  /**
+   * Bright, flatter fill in light mode; keeps the darker neon contrast in dark
+   * mode. Mirrors `EventDisplayComponent.syncSceneLighting` — see
+   * `docs/event-display.md`. Note: only the *scene* fill lights are retuned
+   * here. Boosting these does not fix low-opacity shells reading as black —
+   * `Material.opacity` scales the *entire* blended fragment (diffuse +
+   * emissive) toward the background colour, so no amount of scene light can
+   * compensate at very low alpha. That is handled by
+   * `syncDetectorFadeAppearance`'s emissive boost in `detector-appearance.ts`.
+   */
+  private syncSceneLighting(): void {
+    if (
+      !this.ambientLight ||
+      !this.hemisphereLight ||
+      !this.directionalLightA ||
+      !this.directionalLightB
+    ) {
+      return;
+    }
+    if (this._darkMode) {
+      const a = PropagationScene.DARK_MODE_AMBIENT;
+      const h = PropagationScene.DARK_MODE_HEMISPHERE;
+      this.ambientLight.color.setHex(a.color);
+      this.ambientLight.intensity = a.intensity;
+      this.hemisphereLight.color.setHex(h.sky);
+      this.hemisphereLight.groundColor.setHex(h.ground);
+      this.hemisphereLight.intensity = h.intensity;
+      this.directionalLightA.intensity = PropagationScene.DARK_MODE_DIRECTIONAL_INTENSITY;
+      this.directionalLightB.intensity = PropagationScene.DARK_MODE_DIRECTIONAL_INTENSITY;
+    } else {
+      const a = PropagationScene.LIGHT_MODE_AMBIENT;
+      const h = PropagationScene.LIGHT_MODE_HEMISPHERE;
+      this.ambientLight.color.setHex(a.color);
+      this.ambientLight.intensity = a.intensity;
+      this.hemisphereLight.color.setHex(h.sky);
+      this.hemisphereLight.groundColor.setHex(h.ground);
+      this.hemisphereLight.intensity = h.intensity;
+      this.directionalLightA.intensity = PropagationScene.LIGHT_MODE_DIRECTIONAL_INTENSITY;
+      this.directionalLightB.intensity = PropagationScene.LIGHT_MODE_DIRECTIONAL_INTENSITY;
+    }
   }
 
   private attachCameraInputListeners(): void {

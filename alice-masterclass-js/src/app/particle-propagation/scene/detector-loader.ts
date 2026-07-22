@@ -56,7 +56,6 @@ import {
   MUON_DECIMATE_MIN_VERTICES,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
   OUTER_MAGNET_LOD_NAME,
-  OUTER_MAGNET_SECTOR_KEEP_EVERY,
   setDetectorPartOpacity,
   TPC_FINE_DETAIL_KEEP_EVERY,
   TPC_HEAVY_PANEL_VERTEX_KEEP,
@@ -171,8 +170,17 @@ function finalizePartMeshes(
 }
 
 /**
- * Builds a distance LOD for L3: full InstancedMesh yoke up close, every-Nth
- * sector far away. Sector thinning is cheap (no Melax) — both levels stay sync.
+ * Builds a distance LOD for L3: full InstancedMesh yoke at both levels.
+ *
+ * Both levels used to keep every Nth sector (`OUTER_MAGNET_SECTOR_KEEP_EVERY`
+ * in `detector-appearance.ts`) at the far level to save triangles, but that
+ * leaves real gaps
+ * between kept sectors. Those gaps blend into the near-black
+ * `DARK_BACKGROUND` and are easy to miss, but against the pale
+ * `LIGHT_BACKGROUND` (light mode) they read as glaring white patches "inside"
+ * the yoke — mistaken for a different element covering L3. Keeping the full
+ * ring at both levels costs more triangles at the default (far) orbit
+ * distance but removes that background-dependent artifact.
  */
 function buildOuterMagnetLod(
   root: THREE.Object3D,
@@ -184,7 +192,7 @@ function buildOuterMagnetLod(
 
   const high = buildOuterMagnetInstanced(root, 1);
   high.userData = { ...userData, lodLevel: 'high' };
-  const low = buildOuterMagnetInstanced(root, OUTER_MAGNET_SECTOR_KEEP_EVERY);
+  const low = buildOuterMagnetInstanced(root, 1);
   low.userData = { ...userData, lodLevel: 'low' };
 
   const lod = new THREE.LOD();
