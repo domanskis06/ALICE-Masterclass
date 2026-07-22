@@ -59,6 +59,23 @@ describe('EventDisplayComponent assembly camera', () => {
       EventDisplayComponent.CAMERA_3D_OVERVIEW
     );
   });
+
+  it('reports orbit distance for scripted assembly framing', () => {
+    const a = EventDisplayComponent.CAMERA_3D_ASSEMBLY_START;
+    const b = EventDisplayComponent.CAMERA_3D_OVERVIEW;
+    expect(EventDisplayComponent.cameraDistanceForAssemblyProgress(0)).toBeCloseTo(
+      Math.hypot(a.x, a.y, a.z)
+    );
+    expect(EventDisplayComponent.cameraDistanceForAssemblyProgress(1)).toBeCloseTo(
+      Math.hypot(b.x, b.y, b.z)
+    );
+    expect(EventDisplayComponent.cameraDistanceForAssemblyProgress(0.5)).toBeGreaterThan(
+      EventDisplayComponent.cameraDistanceForAssemblyProgress(0)
+    );
+    expect(EventDisplayComponent.cameraDistanceForAssemblyProgress(0.5)).toBeLessThan(
+      EventDisplayComponent.cameraDistanceForAssemblyProgress(1)
+    );
+  });
 });
 
 describe('EventDisplayComponent cluster sampling', () => {
@@ -106,5 +123,50 @@ describe('EventDisplayComponent cluster sampling', () => {
     expect(clusters.length).toBeGreaterThan(0);
     const offTrack = clusters.some((c) => Math.abs(c[1]) > 0.01 || Math.abs(c[2]) > 0.01);
     expect(offTrack).toBe(true);
+  });
+});
+
+describe('EventDisplayComponent decay/background track dedupe', () => {
+  const track = (partial: Partial<{ px: number; py: number; pz: number; sign: number; particleId: number }>) => ({
+    E: 1,
+    mass: 0.14,
+    particleId: partial.particleId ?? 0,
+    comboId: 0,
+    sign: partial.sign ?? 0,
+    type: 0,
+    px: partial.px ?? 0,
+    py: partial.py ?? 0,
+    pz: partial.pz ?? 0,
+    trajectory: [[0, 0, 0], [1, 0, 0]],
+  });
+
+  it('matches a V0 daughter to its reconstructed helix by momentum, ignoring PDG/sign', () => {
+    const decay = track({ px: 0.31, py: -0.219, pz: -0.03, sign: -1, particleId: -211 });
+    const background = track({ px: 0.311, py: -0.217, pz: -0.03, sign: 0, particleId: 0 });
+    expect(EventDisplayComponent.momentaMatchDecayToBackground(decay as any, background as any)).toBe(true);
+  });
+
+  it('does not match unrelated momenta', () => {
+    const decay = track({ px: 0.31, py: -0.219, pz: -0.03, sign: -1 });
+    const other = track({ px: -0.5, py: 0.1, pz: 0.2, sign: 0 });
+    expect(EventDisplayComponent.momentaMatchDecayToBackground(decay as any, other as any)).toBe(false);
+  });
+
+  it('returns background indices that duplicate decay daughters (one-to-one)', () => {
+    const event = {
+      tracks: [
+        track({ px: 0.311, py: -0.217, pz: -0.03 }),
+        track({ px: 1, py: 0, pz: 0 }),
+        track({ px: -0.018, py: -0.346, pz: 0.176 }),
+      ],
+      clusters: [],
+      decays: [[
+        track({ px: 0.31, py: -0.219, pz: -0.03, sign: -1, particleId: -211 }),
+        track({ px: -0.015, py: -0.346, pz: 0.176, sign: 1, particleId: 211 }),
+      ]],
+    };
+    expect(EventDisplayComponent.backgroundTrackIndicesHiddenByDecays(event as any)).toEqual(
+      new Set([0, 2])
+    );
   });
 });

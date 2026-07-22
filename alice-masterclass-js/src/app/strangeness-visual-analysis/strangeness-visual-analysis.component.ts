@@ -1,4 +1,5 @@
 import { AfterViewInit, ApplicationRef, Component, ElementRef, OnDestroy, OnInit, Type, ViewChild, inject } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InstructionsProvider } from '../shared/interfaces';
 import { BreakpointObserver } from '@angular/cdk/layout';
@@ -26,6 +27,7 @@ import {
   lambdaHistogramColor,
   xiHistogramColor,
 } from '../shared/globals';
+import { HistogramInfoDialogComponent } from './histogram-info-dialog/histogram-info-dialog.component';
 
 export interface SubmitHistogramEntry {
   type: ParticleType,
@@ -107,16 +109,67 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   isLandscape$: Observable<boolean>;
 
   private readonly flightService = inject(FlightService);
+  private readonly dialog = inject(MatDialog);
   /** Entries waiting for the global flying-ball animation to finish before commit. */
   private pendingFlightEntries = new Map<number, {
     entry: VisualAnalysisResultsEntry;
+    trackIds: number[];
     particle: ParticleType;
     binIndex: number;
   }>();
   private nextPendingFlightId = 0;
+  /** Delay so students see the particle leave the detector before the page scrolls. */
+  private static readonly SCROLL_AFTER_FLIGHT_START_MS = 500;
+  private scrollAfterFlightTimeouts: number[] = [];
+  /** Shown once after the first mass-to-histogram flight finishes. */
+  private static readonly HISTOGRAM_INFO_STORAGE_KEY = 'va-histogram-info-seen';
+  /** Brief pause after the bin pulse so the landing is visible before the dialog. */
+  private static readonly HISTOGRAM_INFO_DIALOG_DELAY_MS = 480;
+  private histogramInfoDialogTimeout: number | null = null;
 
+  /**
+   * Event is complete once every decay-track particleId has been used in a histogram add.
+   * Counts unique tracks across all V0/cascade groups — not the number of decay groups.
+   */
   get isCurrentEventDone(): boolean {
-    return this.dataService.visualAnalysisResults.has(String(this.eventID));
+    const required = this.collectDecayTrackIds();
+    if (required.size === 0) {
+      return false;
+    }
+    return this.dataService.areAllDecayTracksAnalyzed(String(this.eventID), required);
+  }
+
+  /** Unique particleIds of all daughter tracks in this event's decays. */
+  private collectDecayTrackIds(): Set<number> {
+    const ids = new Set<number>();
+    for (const decay of this.event?.decays ?? []) {
+      for (const track of decay) {
+        if (track != null) {
+          ids.add(track.particleId);
+        }
+      }
+    }
+    return ids;
+  }
+
+  /**
+   * particleIds used for the current calculator mass — same selection rules as the calculator
+   * (V0 → pos+neg; cascade → pos+neg+bachelor).
+   */
+  private collectSelectedTrackIdsForHistogram(): number[] {
+    const particles = [this.particlePos, this.particleNeg, this.particleBac];
+    const ids: number[] = [];
+    for (let i = 0; i < particles.length; i++) {
+      const particle = particles[i];
+      if (particle === null) {
+        break;
+      }
+      ids.push(particle.particleId);
+      if (i === 1 && particle.type === TrackType.V0) {
+        break;
+      }
+    }
+    return ids;
   }
 
   constructor(
@@ -149,9 +202,15 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   ngOnDestroy(): void {
     this.vaCoachScheduleSub?.unsubscribe();
     this.vaCoachScheduleSub = null;
+    this.scrollAfterFlightTimeouts.forEach((id) => window.clearTimeout(id));
+    this.scrollAfterFlightTimeouts = [];
+    if (this.histogramInfoDialogTimeout != null) {
+      window.clearTimeout(this.histogramInfoDialogTimeout);
+      this.histogramInfoDialogTimeout = null;
+    }
     // Commit entries still in flight so a mid-animation destroy does not drop them.
     for (const pending of this.pendingFlightEntries.values()) {
-      this.commitHistogramEntry(pending.entry);
+      this.commitHistogramEntry(pending.entry, pending.trackIds);
     }
     this.pendingFlightEntries.clear();
   }
@@ -289,6 +348,22 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
   }
 
+  /** Skip collision intro + detector assembly coach and unlock the analysis UI. */
+  onSkipDetectorAssembly(): void {
+    if (!this.isDetectorAssemblyInProgress) return;
+    const video = this.collisionVideoRef?.nativeElement;
+    if (video) {
+      video.pause();
+    }
+    this.protonCollisionIntroFinished = true;
+    this.vaCoachOverlayVisible = false;
+    this.vaCoachWelcomePhase = false;
+    this.vaCoachVictoryPhase = false;
+    this.vaCoachOpenScheduled = true;
+    this.eventDisplay?.skipMultipartDetectorAssembly(this.ALICE_DETECTOR_MODEL);
+    this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
+  }
+
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
     if (!this.vaCoachOverlayVisible || this.vaCoachVictoryPhase || this.vaCoachWelcomePhase) return;
     const steps = this.assemblyCoachSteps;
@@ -369,6 +444,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.isDetectorAssemblyInProgress) {
       return;
     }
+    // Drop in-flight histogram commits so they cannot land on the new dataset.
+    this.scrollAfterFlightTimeouts.forEach((id) => window.clearTimeout(id));
+    this.scrollAfterFlightTimeouts = [];
+    this.pendingFlightEntries.clear();
     this.dataService.clearVisualAnalysisResults();
     this.datasetID = newDatasetID;
 
@@ -442,16 +521,18 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   onAddToHistogram(event: SubmitHistogramEntry) {
     const value: VisualAnalysisResultsEntry = {particle: event.type, mass: event.mass};
+    // Snapshot before flight / clear — tracks may change while the animation runs.
+    const trackIds = this.collectSelectedTrackIdsForHistogram();
 
     // Background has no dedicated mass histogram — commit immediately.
     if (event.type === ParticleType.BACKGROUND) {
-      this.commitHistogramEntry(value);
+      this.commitHistogramEntry(value, trackIds);
       return;
     }
 
     const renderArea = this.eventDisplayHostRef?.nativeElement.querySelector('#render-area') as HTMLElement | null;
     if (!renderArea) {
-      this.commitHistogramEntry(value);
+      this.commitHistogramEntry(value, trackIds);
       return;
     }
 
@@ -459,13 +540,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     const target = this.massHistograms?.previewBinTarget(event.type, event.mass) ?? null;
     const renderRect = renderArea.getBoundingClientRect();
     if (!target || renderRect.width <= 0 || renderRect.height <= 0) {
-      this.commitHistogramEntry(value);
+      this.commitHistogramEntry(value, trackIds);
       return;
     }
 
     const pendingId = ++this.nextPendingFlightId;
     this.pendingFlightEntries.set(pendingId, {
       entry: value,
+      trackIds,
       particle: event.type,
       binIndex: target.binIndex,
     });
@@ -482,18 +564,57 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
         if (!pending) {
           return;
         }
-        this.commitHistogramEntry(pending.entry);
+        this.commitHistogramEntry(pending.entry, pending.trackIds);
         window.setTimeout(() => {
           this.massHistograms?.pulseBin(pending.particle, pending.binIndex);
+          this.maybeShowHistogramInfoDialog();
         }, 40);
       });
 
-    // Smooth scroll runs in parallel with the flight so the jump is not a hard teleport.
-    this.massHistograms?.scrollHistogramIntoView(event.type);
+    // Let the particle leave the detector centre first, then smooth-scroll to the histogram.
+    const scrollTimeoutId = window.setTimeout(() => {
+      this.scrollAfterFlightTimeouts = this.scrollAfterFlightTimeouts.filter((id) => id !== scrollTimeoutId);
+      this.massHistograms?.scrollHistogramIntoView(event.type);
+    }, StrangenessVisualAnalysisComponent.SCROLL_AFTER_FLIGHT_START_MS);
+    this.scrollAfterFlightTimeouts.push(scrollTimeoutId);
   }
 
-  private commitHistogramEntry(value: VisualAnalysisResultsEntry): void {
-    this.dataService.addVisualAnalysisResult(String(this.eventID), value);
+  private commitHistogramEntry(value: VisualAnalysisResultsEntry, trackIds: number[]): void {
+    this.dataService.addVisualAnalysisResult(String(this.eventID), value, trackIds);
+    // Clear selection so the next V0 / cascade in a multi-decay event can be picked cleanly.
+    this.particlePos = null;
+    this.particleNeg = null;
+    this.particleBac = null;
+  }
+
+  /** One-shot tip after the first animated add lands in a histogram bar. */
+  private maybeShowHistogramInfoDialog(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      if (sessionStorage.getItem(StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_STORAGE_KEY) === '1') {
+        return;
+      }
+      sessionStorage.setItem(StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_STORAGE_KEY, '1');
+    } catch {
+      // Private mode / blocked storage — still show once this session via timeout guard.
+      if (this.histogramInfoDialogTimeout != null) {
+        return;
+      }
+    }
+
+    if (this.histogramInfoDialogTimeout != null) {
+      return;
+    }
+
+    this.histogramInfoDialogTimeout = window.setTimeout(() => {
+      this.histogramInfoDialogTimeout = null;
+      this.dialog.open(HistogramInfoDialogComponent, {
+        width: '520px',
+        autoFocus: true,
+      });
+    }, StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_DIALOG_DELAY_MS);
   }
 
   onUploadResults() {

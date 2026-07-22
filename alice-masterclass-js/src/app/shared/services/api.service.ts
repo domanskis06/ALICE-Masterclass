@@ -115,22 +115,24 @@ export class ApiService {
     return this.http.put<T>(`${this.API_URL}${endpoint}/`, body);
   }
 
-  submitVisualAnalysisResults(results: Map<string, VisualAnalysisResultsEntry>, datasetID: number): Observable<any> {
+  submitVisualAnalysisResults(results: Map<string, VisualAnalysisResultsEntry[]>, datasetID: number): Observable<any> {
     const body = {
       password: this.password,
-      results: {}
+      results: {} as Record<string, { particle: ParticleType; mass: number } | Array<{ particle: ParticleType; mass: number }>>
     };
 
-    for (let entry of Array.from(results.entries())) {
-      const key: string = entry[0];
-      const value: VisualAnalysisResultsEntry = entry[1];
+    for (const [key, entries] of Array.from(results.entries())) {
+      // Skip entries classified as background
+      const samples = entries
+        .filter((value) => value.particle !== ParticleType.BACKGROUND)
+        .map((value) => ({ particle: value.particle, mass: value.mass }));
 
-      //Skip entries classified as background
-      if (value.particle === ParticleType.BACKGROUND) {
+      if (samples.length === 0) {
         continue;
       }
 
-      body.results[key] = { particle: value.particle, mass: value.mass};
+      // Single-object form stays backward-compatible; arrays cover multi-V0 events.
+      body.results[key] = samples.length === 1 ? samples[0] : samples;
     }
 
     return this.put(`strangeness_visual_analysis/${this.studentID}/${datasetID}`, body);

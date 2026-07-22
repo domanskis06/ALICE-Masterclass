@@ -77,16 +77,47 @@ export class StrangenessDataService {
 
   // Note: objects are re-created each time to properly trigger updates when data is used as @Input
 
-  get visualAnalysisResults(): Map<string, VisualAnalysisResultsEntry> { return this._vaResults; }
-  private _vaResults: Map<string, VisualAnalysisResultsEntry> = new Map<string, VisualAnalysisResultsEntry>();
+  /** Per-event histogram entries (multi-V0 events may have several). */
+  get visualAnalysisResults(): Map<string, VisualAnalysisResultsEntry[]> { return this._vaResults; }
+  private _vaResults: Map<string, VisualAnalysisResultsEntry[]> = new Map<string, VisualAnalysisResultsEntry[]>();
 
-  addVisualAnalysisResult(key: string, value: VisualAnalysisResultsEntry): void {
-    this._vaResults = new Map<string, VisualAnalysisResultsEntry>(this._vaResults);
-    this._vaResults.set(key, value);
+  /** Decay-track particleIds already contributed to a histogram entry, keyed by event id. */
+  private _analyzedDecayTrackIds: Map<string, Set<number>> = new Map<string, Set<number>>();
+
+  addVisualAnalysisResult(key: string, value: VisualAnalysisResultsEntry, trackIds: number[] = []): void {
+    this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>(this._vaResults);
+    const existing = this._vaResults.get(key) ?? [];
+    this._vaResults.set(key, [...existing, value]);
+
+    if (trackIds.length > 0) {
+      const analyzed = new Map(this._analyzedDecayTrackIds);
+      const set = new Set(analyzed.get(key) ?? []);
+      for (const id of trackIds) {
+        set.add(id);
+      }
+      analyzed.set(key, set);
+      this._analyzedDecayTrackIds = analyzed;
+    }
+  }
+
+  /** True once every required decay-track particleId has been used in a histogram add. */
+  areAllDecayTracksAnalyzed(key: string, requiredTrackIds: Iterable<number>): boolean {
+    const done = this._analyzedDecayTrackIds.get(key);
+    if (!done || done.size === 0) {
+      return false;
+    }
+    for (const id of requiredTrackIds) {
+      if (!done.has(id)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   clearVisualAnalysisResults(): void {
-    this._vaResults.clear();
+    // New Map instance so Angular @Input change detection updates histograms immediately.
+    this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>();
+    this._analyzedDecayTrackIds = new Map<string, Set<number>>();
   }
 
   submitVisualAnalysisResults(datasetID: number): Observable<any> {
@@ -102,7 +133,7 @@ export class StrangenessDataService {
   }
 
   clearLargeScaleAnalysisResults(): void {
-    this._lsaResults.clear();
+    this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>();
   }
 
   submitLargeScaleAnalysisResults(): Observable<any> {

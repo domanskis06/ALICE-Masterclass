@@ -99,6 +99,8 @@ mat-card-content {
   max-width: var(--ed-left-sidebar-width);
   border-right: 1px solid var(--ed-border);
   transform: translateX(0);
+  // Keep detector parts fixed — no vertical rubber-band / drag scroll.
+  overflow-y: hidden;
 }
 
 .event-display-host.ed-sidebar-collapsed .controls-sidebar--right {
@@ -217,72 +219,6 @@ mat-card-content {
         cursor: grabbing;
       }
     }
-  }
-}
-
-/* Magnetic field intensity slider: same bar as opacity, magnet icon as thumb. */
-$magnetic-thumb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='0' y='0' width='24' height='24' rx='12' fill='white'/%3E%3Cpath fill='none' stroke='%23e53935' stroke-width='4.5' stroke-linecap='butt' stroke-linejoin='round' d='M7.5 4v9.5a4.5 4.5 0 0 0 4.5 4.5'/%3E%3Cpath fill='none' stroke='%231e88e5' stroke-width='4.5' stroke-linecap='butt' stroke-linejoin='round' d='M12 18a4.5 4.5 0 0 0 4.5-4.5V4'/%3E%3Crect x='5.25' y='2.5' width='4.5' height='2.8' rx='0.4' fill='%23c62828'/%3E%3Crect x='14.25' y='2.5' width='4.5' height='2.8' rx='0.4' fill='%231565c0'/%3E%3C/svg%3E");
-
-.magnetic-field-slider {
-  width: 100%;
-  margin: 4px 0 0;
-  height: 22px;
-  background: transparent;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  &::-webkit-slider-runnable-track {
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(0, 0, 0, 0.22);
-  }
-
-  &::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 22px;
-    height: 22px;
-    margin-top: -9px;
-    border: none;
-    border-radius: 50%;
-    background: $magnetic-thumb center / 22px 22px no-repeat;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
-    cursor: grab;
-  }
-
-  &:active::-webkit-slider-thumb {
-    cursor: grabbing;
-  }
-
-  &::-moz-range-track {
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(0, 0, 0, 0.22);
-    border: none;
-  }
-
-  &::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
-    border: none;
-    border-radius: 50%;
-    background: $magnetic-thumb center / 22px 22px no-repeat;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
-    cursor: grab;
-  }
-
-  &:active::-moz-range-thumb {
-    cursor: grabbing;
   }
 }
 

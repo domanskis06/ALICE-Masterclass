@@ -1,0 +1,17 @@
+<h2
+  mat-dialog-title
+  class="info-title"
+  cdkDrag
+  cdkDragRootElement=".cdk-overlay-pane"
+  cdkDragHandle
+>
+  {{ 'STRANGENESS.HISTOGRAMS.INFO_TITLE' | translate }}
+</h2>
+<mat-dialog-content class="info-body">
+  <p>{{ 'STRANGENESS.HISTOGRAMS.INFO_BODY' | translate }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" type="button" (click)="dismiss()">
+    {{ 'STRANGENESS.HISTOGRAMS.INFO_DISMISS' | translate }}
+  </button>
+</mat-dialog-actions>

@@ -52,8 +52,8 @@ export class MassHistogramsComponent implements OnInit {
   uploadDisabled: boolean = false;
 
   @Input()
-  get results(): Map<string, VisualAnalysisResultsEntry> { return this._results; }
-  set results(results: Map<string, VisualAnalysisResultsEntry>) {
+  get results(): Map<string, VisualAnalysisResultsEntry[]> { return this._results; }
+  set results(results: Map<string, VisualAnalysisResultsEntry[]>) {
     this._results = results;
 
     const newKaonMasses: Array<number> = [];
@@ -61,24 +61,23 @@ export class MassHistogramsComponent implements OnInit {
     const newAntiLambdaMasses: Array<number> = [];
     const newXiMasses: Array<number> = [];
 
-    for (let entry of Array.from(this._results.entries())) {
-      const value: VisualAnalysisResultsEntry = entry[1];
-
-      switch (value.particle) {
-        case ParticleType.KAON:
-          newKaonMasses.push(value.mass);
-          break;
-        case ParticleType.LAMBDA:
-          newLambdaMasses.push(value.mass);
-          break;
-        case ParticleType.ANTI_LAMBDA:
-          newAntiLambdaMasses.push(value.mass);
-          break;
-        case ParticleType.XI:
-          newXiMasses.push(value.mass);
-          break;
+    for (const entries of Array.from(this._results.values())) {
+      for (const value of entries) {
+        switch (value.particle) {
+          case ParticleType.KAON:
+            newKaonMasses.push(value.mass);
+            break;
+          case ParticleType.LAMBDA:
+            newLambdaMasses.push(value.mass);
+            break;
+          case ParticleType.ANTI_LAMBDA:
+            newAntiLambdaMasses.push(value.mass);
+            break;
+          case ParticleType.XI:
+            newXiMasses.push(value.mass);
+            break;
+        }
       }
-
     }
 
     this.kaonMasses = newKaonMasses;
@@ -86,7 +85,7 @@ export class MassHistogramsComponent implements OnInit {
     this.antiLambdaMasses = newAntiLambdaMasses;
     this.xiMasses = newXiMasses;
   }
-  private _results: Map<string, VisualAnalysisResultsEntry> = new Map<string, VisualAnalysisResultsEntry>();
+  private _results: Map<string, VisualAnalysisResultsEntry[]> = new Map<string, VisualAnalysisResultsEntry[]>();
 
   @Output()
   uploadResultsEvent: EventEmitter<any> = new EventEmitter();

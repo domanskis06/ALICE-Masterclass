@@ -221,7 +221,10 @@
       "SIGNAL": "Signal",
       "BACKGROUND": "Background",
       "TOTAL": "Total",
-      "BINS": "Bins"
+      "BINS": "Bins",
+      "INFO_TITLE": "What is a histogram?",
+      "INFO_BODY": "A histogram shows how often values fall into chosen ranges. The horizontal axis shows those ranges (here: invariant mass), and the vertical axis shows how many observations fall in each one. The taller the bar, the more measurements landed in that range.",
+      "INFO_DISMISS": "Got it"
     },
     "LARGE_SCALE_ANALYSIS_MENU": "Large Scale Analysis",
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
