@@ -7,10 +7,12 @@ import {
   FIELD_COLOR_LOW_OFFSET_T,
   FIELD_COLOR_MAX_T,
   FIELD_COLOR_MIN_T,
+  boostRgbForLightBackground,
   fieldColorbarCssGradient,
   fieldColorRangeForDipoleView,
   fieldColorRangeForStrength,
   magnitudeToRgb,
+  magnitudeToRgbForTheme,
   normalizeMagnitude,
 } from './field-colormap';
 
@@ -88,5 +90,24 @@ describe('field-colormap', () => {
     const css = fieldColorbarCssGradient();
     expect(css.startsWith('linear-gradient(')).toBeTrue();
     expect(css).toContain('rgb(');
+  });
+
+  it('darkens and saturates Jet midtones for pale light-mode backgrounds', () => {
+    const yellow: [number, number, number] = [0.95, 0.95, 0.1];
+    const boosted = boostRgbForLightBackground(yellow);
+    const luma = (c: [number, number, number]) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    expect(luma(boosted)).toBeLessThan(luma(yellow));
+    // Still yellow-ish (R≈G, B low).
+    expect(boosted[0]).toBeGreaterThan(boosted[2]);
+    expect(boosted[1]).toBeGreaterThan(boosted[2]);
+  });
+
+  it('magnitudeToRgbForTheme leaves dark-mode colours unchanged and boosts light mode', () => {
+    const dark = magnitudeToRgbForTheme(0.5, undefined, true);
+    const light = magnitudeToRgbForTheme(0.5, undefined, false);
+    expect(dark).toEqual(magnitudeToRgb(0.5));
+    expect(light).not.toEqual(dark);
+    const luma = (c: [number, number, number]) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+    expect(luma(light)).toBeLessThan(luma(dark));
   });
 });

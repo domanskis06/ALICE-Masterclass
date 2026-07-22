@@ -120,13 +120,44 @@ export function magnitudeToRgb(bTesla: number, range?: FieldColorRange): Rgb {
   return [lerp(c0[0], c1[0], local), lerp(c0[1], c1[1], local), lerp(c0[2], c1[2], local)];
 }
 
+/**
+ * Darkens and saturates Jet RGB so cyan/green/yellow midtones stay vivid on
+ * pale light-mode backgrounds (they wash out at default opacity on white).
+ */
+export function boostRgbForLightBackground([r, g, b]: Rgb): Rgb {
+  const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+  const sat = 1.35;
+  const darken = 0.78;
+  return [
+    clamp01(grey + (r - grey) * sat) * darken,
+    clamp01(grey + (g - grey) * sat) * darken,
+    clamp01(grey + (b - grey) * sat) * darken,
+  ];
+}
+
+/**
+ * Maps `|B|` → RGB, optionally boosted for a light scene background.
+ * Pass `darkMode: false` for the pale PP canvas.
+ */
+export function magnitudeToRgbForTheme(
+  bTesla: number,
+  range?: FieldColorRange,
+  darkMode = true
+): Rgb {
+  const rgb = magnitudeToRgb(bTesla, range);
+  return darkMode ? rgb : boostRgbForLightBackground(rgb);
+}
+
 /** CSS `linear-gradient` string matching {@link COLOR_STOPS} (left=weak → right=strong). */
-export function fieldColorbarCssGradient(): string {
+export function fieldColorbarCssGradient(darkMode = true): string {
   const stops = COLOR_STOPS.map((c, i) => {
     const pct = (i / (COLOR_STOPS.length - 1)) * 100;
-    const r = Math.round(c[0] * 255);
-    const g = Math.round(c[1] * 255);
-    const b = Math.round(c[2] * 255);
+    const [r0, g0, b0] = darkMode
+      ? (c as Rgb)
+      : boostRgbForLightBackground(c as Rgb);
+    const r = Math.round(r0 * 255);
+    const g = Math.round(g0 * 255);
+    const b = Math.round(b0 * 255);
     return `rgb(${r}, ${g}, ${b}) ${pct.toFixed(1)}%`;
   });
   return `linear-gradient(to right, ${stops.join(', ')})`;
