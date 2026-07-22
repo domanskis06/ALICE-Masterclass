@@ -121,8 +121,8 @@ describe('buildFieldLines', () => {
   });
 
   it('maps weak and strong |B| to different vertex colours', () => {
-    const weak = (): Vec3 => ({ x: 0, y: 0, z: 0.47 });
-    const strong = (): Vec3 => ({ x: 0, y: 0, z: 0.51 });
+    const weak = (): Vec3 => ({ x: 0, y: 0, z: 0.3 });
+    const strong = (): Vec3 => ({ x: 0, y: 0, z: 0.58 });
     const weakSeg = fieldLineSegments(buildFieldLines(weak, { scale: 1e-2, density: 'sparse' }))!;
     const strongSeg = fieldLineSegments(buildFieldLines(strong, { scale: 1e-2, density: 'sparse' }))!;
     const weakColor = weakSeg.geometry.attributes['color'];

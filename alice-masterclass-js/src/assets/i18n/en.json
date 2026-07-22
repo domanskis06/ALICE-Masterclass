@@ -292,7 +292,8 @@
       "LOADING_EVENT": "Loading collision event…",
       "PRECOMPUTING": "Pre-computing particle trajectories…",
       "ERROR": "Something went wrong while preparing the animation.",
-      "RETRY": "Retry"
+      "RETRY": "Retry",
+      "LOADING_DETECTOR": "Loading detector model…"
     }
   }
 }

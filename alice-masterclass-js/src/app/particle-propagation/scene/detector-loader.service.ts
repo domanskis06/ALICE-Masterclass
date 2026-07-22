@@ -22,7 +22,7 @@ export class DetectorLoaderService {
   }
 
   /**
-   * Progressive core→secondary load with deferred Melax low-LOD (see
+   * Progressive inside→out load with fade-in and deferred Melax low-LOD (see
    * {@link loadDetectorModelProgressive}).
    */
   loadProgressive(

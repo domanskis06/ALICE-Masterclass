@@ -14,8 +14,8 @@ const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
   'l3.glb': '#FF0D12',
   'mch.glb': '#814244',
   'abso.glb': '#DE782B',
-  'shil.glb': '#BA92AB',
   'dipo.glb': '#0068D0',
+  'bp.glb': '#9EB0C4',
   /** FIT is mostly silver metal in the GLB — keep the slider matching that look. */
   'fit.glb': '#C0C4C8',
 };

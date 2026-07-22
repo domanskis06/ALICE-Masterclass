@@ -103,4 +103,35 @@ describe('MagneticFieldService', () => {
     expect(mag).toBeGreaterThan(0.4);
     expect(Math.abs(b.x) / mag).toBeGreaterThan(0.85);
   });
+
+  it('solenoid map: |B| falls on axis at end-caps but can peak at mid-r near z ≈ ±560', async () => {
+    await service.load();
+    const mag = (p: { x: number; y: number; z: number }) => {
+      const b = service.field(p);
+      return Math.hypot(b.x, b.y, b.z);
+    };
+    const onAxisCentre = mag({ x: 0, y: 0, z: 0 });
+    const onAxisEnd = mag({ x: 0, y: 0, z: 560 });
+    const midREnd = mag({ x: 200, y: 0, z: 560 });
+    const gapMidplane = mag({ x: 400, y: 0, z: 0 });
+    const gapEnd = mag({ x: 400, y: 0, z: 560 });
+
+    expect(onAxisCentre).toBeGreaterThan(0.48);
+    expect(onAxisCentre).toBeLessThan(0.52);
+    // Classic solenoid fall-off on axis.
+    expect(onAxisEnd).toBeLessThan(onAxisCentre - 0.1);
+    // Real ALICE LUT: mid-radius end-cap |B| can exceed the IP plateau (iron / Br).
+    expect(midREnd).toBeGreaterThan(onAxisCentre);
+    // Outer free-bore is more axial: weaker end-cap Br than at r ≈ 200.
+    const brRatio = (p: { x: number; y: number; z: number }) => {
+      const b = service.field(p);
+      const m = Math.hypot(b.x, b.y, b.z);
+      const r = Math.hypot(p.x, p.y);
+      const br = r > 0 ? (b.x * p.x + b.y * p.y) / r : 0;
+      return Math.abs(br) / m;
+    };
+    expect(brRatio({ x: 200, y: 0, z: 560 })).toBeGreaterThan(0.1);
+    expect(brRatio({ x: 400, y: 0, z: 560 })).toBeLessThan(0.08);
+    expect(gapEnd).toBeLessThan(gapMidplane);
+  });
 });

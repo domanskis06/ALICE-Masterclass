@@ -50,7 +50,7 @@ unit_tests_js:
       set -e
       MODEL_DIR="src/assets/models/alice components"
       ls -la "$MODEL_DIR"
-      for f in MCH.glb ABSO.glb SHIL.glb DIPO.glb; do
+      for f in MCH.glb ABSO.glb DIPO.glb BP.glb; do
         test -f "$MODEL_DIR/$f" || { echo "MISSING detector GLB: $MODEL_DIR/$f"; exit 1; }
       done
     - npm ci

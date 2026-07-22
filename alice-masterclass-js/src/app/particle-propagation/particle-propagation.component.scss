@@ -350,6 +350,19 @@ canvas {
   box-sizing: border-box;
 }
 
+/** Lets the inside→out detector fade-in show through while assets load. */
+.loading-overlay--reveal {
+  justify-content: flex-end;
+  padding-bottom: 2.5rem;
+  background: linear-gradient(
+    to top,
+    rgba(5, 7, 13, 0.72) 0%,
+    rgba(5, 7, 13, 0.28) 42%,
+    rgba(5, 7, 13, 0.08) 100%
+  );
+  pointer-events: none;
+}
+
 .loading-label {
   margin: 0.5rem 0 0;
 }
