@@ -63,8 +63,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       return;
     }
     this.collisionVideoPlaybackStarted = false;
-    // Ensure muted autoplay is allowed; playback starts from (canplay).
-    ref.nativeElement.muted = true;
+    const video = ref.nativeElement;
+    video.muted = true;
+    // @if + <source> children: browsers often need an explicit load() after mount.
+    video.load();
   }
   private collisionVideoRef?: ElementRef<HTMLVideoElement>;
 
@@ -86,12 +88,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private protonCollisionIntroFinished = false;
 
   /**
-   * Proton–proton collision intro before the assembly coach.
-   * Prefer WebM (VP9) — works on Linux Chromium without proprietary H.264; MP4 is fallback.
-   * Absolute `/assets/...` avoids relative-URL resolution issues under nested routes.
+   * Proton–proton collision intro: template lists WebM then MP4 sources for codec coverage.
    */
-  readonly collisionVideoWebmUrl = '/assets/videos/proton_collision_animation.webm';
-  readonly collisionVideoMp4Url = '/assets/videos/proton_collision_animation.mp4';
   /** Ignore spurious `ended`/`error` before the video has actually progressed. */
   private static readonly COLLISION_INTRO_MIN_PLAYED_S = 0.4;
   private collisionVideoErrorRetries = 0;
@@ -465,14 +463,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   /**
-   * Media error: fall back to MP4 once, then keep poster + Skip (do not auto-dismiss).
+   * Media error after both source elements failed (or transient decode). Retry load once;
+   * keep the green frame + Skip — do not auto-dismiss.
    */
   onCollisionVideoError(): void {
     if (this.protonCollisionIntroFinished) return;
     const video = this.collisionVideoRef?.nativeElement;
     if (video && this.collisionVideoErrorRetries < 1) {
       this.collisionVideoErrorRetries += 1;
-      video.src = this.collisionVideoMp4Url;
       video.load();
       window.setTimeout(() => this.tryPlayCollisionVideo(), 0);
     }

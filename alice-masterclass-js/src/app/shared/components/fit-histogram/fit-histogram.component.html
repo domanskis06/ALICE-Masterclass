@@ -2,7 +2,11 @@
   <figure fxFlex="grow" fxLayout="column">
     <div id="title" class="no-interaction"><ng-content select="[title]"></ng-content></div>
     <svg #svg attr.viewBox="0 0 {{SVG.W}} {{SVG.H}}" preserveAspectRatio="xMidYMid meet">
-      <g id="yAxisLabel" attr.transform="translate({{MARGIN.LEFT_YLABEL}}, {{MARGIN.TOP}}) rotate(-90)" text-anchor="end">
+      <g
+        id="yAxisLabel"
+        attr.transform="translate({{MARGIN.LEFT_YLABEL}}, {{CONTENT_AREA.Y + CONTENT_AREA.H / 2}}) rotate(-90)"
+        text-anchor="middle"
+      >
         <ng-content select="[yAxisLabel]"></ng-content>
       </g>
       <g id="contentArea" attr.transform="translate({{CONTENT_AREA.X}}, {{CONTENT_AREA.Y}})">
@@ -20,7 +24,7 @@
           <g id="brush" #brush></g>
         </g>
       </g>
-      <g id="xAxisLabel" attr.transform="translate({{CONTENT_AREA.X + CONTENT_AREA.W}}, {{SVG.H - MARGIN.BOTTOM_TEXT}})" text-anchor="end">
+      <g id="xAxisLabel" attr.transform="translate({{CONTENT_AREA.X + CONTENT_AREA.W / 2}}, {{SVG.H - MARGIN.BOTTOM_TEXT}})" text-anchor="middle">
         <ng-content select="[xAxisLabel]"></ng-content>
       </g>
     </svg>

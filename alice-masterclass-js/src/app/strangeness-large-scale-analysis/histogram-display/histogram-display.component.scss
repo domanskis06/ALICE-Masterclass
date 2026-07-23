@@ -3,7 +3,8 @@
 }
 
 app-fit-histogram {
-  height: 40vh;
+  height: 50vh;
+  min-height: 320px;
   width: 100%;
 }
 
@@ -11,6 +12,15 @@ app-fit-histogram {
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: visible;
+}
+
+#content {
+  overflow: visible;
+}
+
+:host ::ng-deep mat-card-content {
+  overflow: visible;
 }
 
 #info {

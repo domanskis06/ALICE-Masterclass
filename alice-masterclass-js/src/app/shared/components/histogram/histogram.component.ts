@@ -43,19 +43,23 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   readonly SVG = {
     W: 400,
-    // Tall enough for axis ticks + x-axis label without viewBox clipping.
-    H: 178
+    // Tall enough for rotated tick labels + x-axis title without viewBox clipping.
+    H: 218
   }
 
   readonly MARGIN = {
-    TOP: 5,
+    TOP: 3,
     RIGHT: 10,
-    BOTTOM: 24,
-    BOTTOM_XLABEL: 26,
-    // Baseline inset from the viewBox bottom (descenders / ² need clear space).
-    BOTTOM_TEXT: 12,
-    LEFT: 25,
-    LEFT_YLABEL: 10
+    // Room for -45° tick labels under the plot.
+    BOTTOM: 36,
+    // Separate band for the axis title below the tick labels (keeps title off the card edge).
+    BOTTOM_XLABEL: 28,
+    // Baseline inset from the viewBox bottom — large enough that descenders / ² are not clipped.
+    BOTTOM_TEXT: 14,
+    // Room for y-axis tick numbers.
+    LEFT: 32,
+    // Room for the vertical axis title ("Counts").
+    LEFT_YLABEL: 12
   };
 
   readonly CONTENT_AREA = {
@@ -359,11 +363,27 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
     const bins = this.binGenerator(this.data);
 
-    const barX = (bin: d3.Bin<number, number>) => this.xScale(bin.x0 ?? this.xDomain[0]);
-    const barWidth = (bin: d3.Bin<number, number>) => {
+    const fullBarWidth = (bin: d3.Bin<number, number>) => {
       const x0 = bin.x0 ?? this.xDomain[0];
       const x1 = bin.x1 ?? x0;
       return Math.max(0, this.xScale(x1) - this.xScale(x0));
+    };
+
+    // Sample width in SVG units: when bars are ~1px on screen, light greys wash out
+    // against white (anti-aliasing). Use a darker fill until the user zooms in.
+    const sampleW = bins.length > 0 ? fullBarWidth(bins[0]) : 10;
+    const dense = sampleW < 2.5;
+    const fillColor = dense ? '#6E6E6E' : this.barColor;
+
+    const barX = (bin: d3.Bin<number, number>) => {
+      const w = fullBarWidth(bin);
+      const gap = w >= 3 ? 1 : 0;
+      return this.xScale(bin.x0 ?? this.xDomain[0]) + gap / 2;
+    };
+    const barWidth = (bin: d3.Bin<number, number>) => {
+      const w = fullBarWidth(bin);
+      const gap = w >= 3 ? 1 : 0;
+      return Math.max(0, w - gap);
     };
 
     const barsSelection = this.barsSelector.selectAll<SVGRectElement, d3.Bin<number, number>>('rect').data(bins);
@@ -389,6 +409,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
         }
       )
       .attr('data-bin-index', (_d, i) => i)
+      .style('fill', fillColor)
       .transition().duration(this.ANIMATION_DURATION)
       .attr('width', barWidth)
       .attr('transform', (d) => {

@@ -11,6 +11,7 @@ import { HistogramDisplayComponent } from './histogram-display/histogram-display
 import { ResultsComponent } from './results/results.component'
 import { FitService } from '../shared/services/fit.service';
 import { LsaTutorialService } from './lsa-tutorial/lsa-tutorial.service';
+import { LsaTutorialWelcomeDialogComponent } from './lsa-tutorial/lsa-tutorial-welcome-dialog.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { LsaTutorialService } from './lsa-tutorial/lsa-tutorial.service';
   imports: [
     CommonModule,
     SharedModule,
-    AngularModule
+    AngularModule,
+    LsaTutorialWelcomeDialogComponent,
   ],
   providers: [
     FitService,

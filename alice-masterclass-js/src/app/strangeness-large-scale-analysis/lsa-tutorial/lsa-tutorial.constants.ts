@@ -1,5 +1,5 @@
 /** Persisted when the user skips the welcome dialog, closes the tour, or finishes the last step. */
-export const LSA_TUTORIAL_STORAGE_KEY = 'alice-lsa-tutorial-dismissed-v3';
+export const LSA_TUTORIAL_STORAGE_KEY = 'alice-lsa-tutorial-dismissed-v4';
 
 /** 0-based index of the "Open histogram" step in `LsaTutorialService.buildSteps()`. */
 export const LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM = 2;

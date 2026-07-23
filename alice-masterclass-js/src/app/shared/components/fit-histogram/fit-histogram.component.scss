@@ -1,14 +1,27 @@
 figure {
   position: relative;
   margin: 0;
+  // Extra CSS padding so the x-axis title is not clipped by the card edge.
+  padding-bottom: 18px;
+  padding-left: 4px;
+}
+
+:host.histogram-x-ticks-rotated figure {
+  padding-bottom: 22px;
 }
 
 :host ::ng-deep svg {
+  display: block;
+  overflow: visible;
+
+  #xAxis text {
+    font-size: 0.75em;
+  }
+
   #bars rect {
     fill: var(--bar-color);
-    stroke: #fff;
-    stroke-width: 1;
-    vector-effect: non-scaling-stroke;
+    stroke: none;
+    shape-rendering: crispEdges;
   }
 
   #yAxisLabel, #xAxisLabel {
@@ -48,13 +61,4 @@ figure {
   left: 0;
   width: 100%;
   text-align: center;
-}
-
-#yAxisLabel {
-  writing-mode: vertical-lr;
-  transform: rotate(-180deg);
-}
-
-#xAxisLabel, #yAxisLabel {
-  text-align: end;
 }

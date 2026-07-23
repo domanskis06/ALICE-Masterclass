@@ -3,12 +3,13 @@ figure {
   margin: 0;
   // Reserve space above the plot for the particle title.
   padding-top: 32px;
-  // Extra CSS padding so the scaled SVG is not flush with the next row / slider.
-  padding-bottom: 4px;
+  // Extra CSS padding so the x-axis title is not clipped by the card edge.
+  padding-bottom: 18px;
+  padding-left: 4px;
 }
 
 :host.histogram-x-ticks-rotated figure {
-  padding-bottom: 20px;
+  padding-bottom: 22px;
 }
 
 :host ::ng-deep svg {
@@ -21,9 +22,9 @@ figure {
 
   #bars rect {
     fill: var(--bar-color);
-    stroke: #fff;
-    stroke-width: 1;
-    vector-effect: non-scaling-stroke;
+    // Gaps between wide bars come from barWidth; white stroke washed out dense plots.
+    stroke: none;
+    shape-rendering: crispEdges;
   }
 
   #bars rect.bin-landing-pulse {

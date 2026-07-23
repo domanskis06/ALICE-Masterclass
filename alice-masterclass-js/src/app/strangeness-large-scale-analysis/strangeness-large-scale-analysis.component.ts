@@ -3,7 +3,6 @@ import {
   Component,
   DestroyRef,
   inject,
-  NgZone,
   OnDestroy,
   OnInit,
   Type,
@@ -49,10 +48,10 @@ export interface AddToHistogramEntry {
 })
 export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterViewInit, OnDestroy, InstructionsProvider {
   private readonly destroyRef = inject(DestroyRef);
-  private readonly zone = inject(NgZone);
 
-  /** Ensures we only attach one welcome dialog per component instance (incl. debounced retries). */
-  private welcomeDialogScheduled = false;
+  /** Ensures we only attach one welcome dialog per component instance. */
+  private welcomeDialogOpened = false;
+  private destroyed = false;
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
@@ -79,27 +78,28 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
   }
 
   ngAfterViewInit(): void {
-    // Defer past the first CD/layout pass so MatDialog + overlay reliably attach (first load and F5).
-    this.zone.runOutsideAngular(() => {
-      const run = () => this.zone.run(() => this.tryOpenTutorialWelcome());
-      setTimeout(run, 0);
-      setTimeout(run, 120);
+    // Defer past the current CD cycle so MatDialog overlay attaches (first load / F5 / route enter).
+    queueMicrotask(() => {
+      if (!this.destroyed) {
+        this.tryOpenTutorialWelcome();
+      }
     });
   }
 
   private tryOpenTutorialWelcome(): void {
-    if (this.welcomeDialogScheduled) {
+    if (this.destroyed || this.welcomeDialogOpened) {
       return;
     }
     if (!this.lsaTutorial.shouldShow()) {
       return;
     }
-    this.welcomeDialogScheduled = true;
+    this.welcomeDialogOpened = true;
     this.dialog
       .open(LsaTutorialWelcomeDialogComponent, {
         width: '560px',
         autoFocus: true,
         disableClose: true,
+        hasBackdrop: true,
       })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -115,6 +115,7 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.lsaTutorial.destroyDriver(true);
   }
 
