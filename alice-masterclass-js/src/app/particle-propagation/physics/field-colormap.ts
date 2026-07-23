@@ -25,9 +25,11 @@ export const FIELD_COLOR_LOW_OFFSET_T = 0.2;
 
 /**
  * Colorbar upper offset at the nominal 0.5 T strength (Tesla).
- * 0.5 + 0.08 = 0.58 T — covers mid-radius end-cap |B| peaks in the LUT.
+ * 0.5 + 0.20 = 0.70 T — matches the lower offset so the 0.5 T solenoid
+ * plateau sits at mid-scale (light green), same hue students see with the
+ * wider dipole view window. Still covers mid-radius end-cap peaks (~0.56 T).
  */
-export const FIELD_COLOR_HIGH_OFFSET_T = 0.08;
+export const FIELD_COLOR_HIGH_OFFSET_T = 0.2;
 
 /** Inclusive Tesla window used when mapping `|B|` → RGB. */
 export interface FieldColorRange {
@@ -38,7 +40,7 @@ export interface FieldColorRange {
 /**
  * Colour-scale ends for a selected plateau strength `targetStrengthT`.
  * Offsets scale with `B / NOMINAL_SOLENOID_B_T`.
- * At 0.5 T: `[0.30, 0.58]`; at 2 T: `[1.20, 2.32]`.
+ * At 0.5 T: `[0.30, 0.70]`; at 2 T: `[1.20, 2.80]`.
  */
 export function fieldColorRangeForStrength(targetStrengthT: number): FieldColorRange {
   const strengthScale = targetStrengthT / NOMINAL_SOLENOID_B_T;
@@ -118,13 +120,44 @@ export function magnitudeToRgb(bTesla: number, range?: FieldColorRange): Rgb {
   return [lerp(c0[0], c1[0], local), lerp(c0[1], c1[1], local), lerp(c0[2], c1[2], local)];
 }
 
+/**
+ * Darkens and saturates Jet RGB so cyan/green/yellow midtones stay vivid on
+ * pale light-mode backgrounds (they wash out at default opacity on white).
+ */
+export function boostRgbForLightBackground([r, g, b]: Rgb): Rgb {
+  const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+  const sat = 1.35;
+  const darken = 0.78;
+  return [
+    clamp01(grey + (r - grey) * sat) * darken,
+    clamp01(grey + (g - grey) * sat) * darken,
+    clamp01(grey + (b - grey) * sat) * darken,
+  ];
+}
+
+/**
+ * Maps `|B|` → RGB, optionally boosted for a light scene background.
+ * Pass `darkMode: false` for the pale PP canvas.
+ */
+export function magnitudeToRgbForTheme(
+  bTesla: number,
+  range?: FieldColorRange,
+  darkMode = true
+): Rgb {
+  const rgb = magnitudeToRgb(bTesla, range);
+  return darkMode ? rgb : boostRgbForLightBackground(rgb);
+}
+
 /** CSS `linear-gradient` string matching {@link COLOR_STOPS} (left=weak → right=strong). */
-export function fieldColorbarCssGradient(): string {
+export function fieldColorbarCssGradient(darkMode = true): string {
   const stops = COLOR_STOPS.map((c, i) => {
     const pct = (i / (COLOR_STOPS.length - 1)) * 100;
-    const r = Math.round(c[0] * 255);
-    const g = Math.round(c[1] * 255);
-    const b = Math.round(c[2] * 255);
+    const [r0, g0, b0] = darkMode
+      ? (c as Rgb)
+      : boostRgbForLightBackground(c as Rgb);
+    const r = Math.round(r0 * 255);
+    const g = Math.round(g0 * 255);
+    const b = Math.round(b0 * 255);
     return `rgb(${r}, ${g}, ${b}) ${pct.toFixed(1)}%`;
   });
   return `linear-gradient(to right, ${stops.join(', ')})`;

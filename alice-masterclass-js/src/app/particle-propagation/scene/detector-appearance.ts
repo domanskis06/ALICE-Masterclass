@@ -12,15 +12,17 @@
  * `opacity 0.35`, `depthWrite = false`), these materials keep `depthWrite =
  * true` and rely on per-mesh `polygonOffset` + `renderOrder`. Depth writes let
  * the GPU reject fragments hidden behind nearer shells instead of blending all
- * of them. The L3 magnet is built as {@link THREE.InstancedMesh} families (no
- * material merge) inside a distance {@link THREE.LOD}, with a default opacity of
- * {@link OUTER_MAGNET_DEFAULT_OPACITY}. TPC uses a distance LOD whose far level
- * thins fine detail and decimates the heavy sector panels (see
- * {@link simplifyTpcForLowLod}). MCH uses a distance LOD with Melax on the
- * heavier Mesh_* panels. ITS / ABSO / DIPO stay at full merged detail — Melax
- * shreds thin-shell / boxy CAD silhouettes at the default orbit distance. The
- * beam pipe (BP) is a gltfpack-simplified cut tube (~20k tris) with a Melax far
- * LOD; it keeps a higher render order and slightly stronger dark-mode emissive
+ * of them. The L3 magnet is the PP stand-in `L3_pp.glb` (octagon yoke + liner;
+ * CAD `L3.glb` stays on Visual Analysis) inside a distance {@link THREE.LOD},
+ * with default opacity {@link OUTER_MAGNET_DEFAULT_OPACITY}. Legacy helpers
+ * still collapse Mesh_1/2/3 sector families into {@link THREE.InstancedMesh}
+ * when present. TPC uses a distance LOD whose far level thins fine detail and
+ * decimates the heavy sector panels (see {@link simplifyTpcForLowLod}). MCH
+ * uses a distance LOD with Melax on the heavier Mesh_* panels. ITS / BP / ABSO /
+ * DIPO stay at full merged detail — Melax shreds thin-shell / support / boxy CAD
+ * silhouettes at the default orbit distance. The beam pipe (BP) is a
+ * gltfpack-simplified cut tube (~55k tris; -si 0.35 -slb so BeamPipeSupport
+ * survives) with a higher render order and slightly stronger dark-mode emissive
  * so the thin grey tube stays readable inside the barrel.
  */
 
@@ -61,9 +63,13 @@ export const BEAM_PIPE_LOW_VERTEX_KEEP = 0.4;
 const BEAM_PIPE_RENDER_ORDER = 500_000;
 
 /**
- * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families in L3.glb) in
- * the low-detail LOD level. The authored GLB repeats the same ~128-tri panel
- * ~168× around the ring.
+ * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families).
+ * The historical CAD L3 repeated the same ~128-tri panel ~168× around the ring.
+ * Current `L3_pp.glb` is a single octagon mesh (no sector families).
+ *
+ * No longer used by the live L3 LOD in `detector-loader.ts` — thinning left
+ * gaps that read as white holes in light mode. Kept for
+ * {@link thinOuterMagnetSectors} / `buildOuterMagnetInstanced` tests.
  */
 export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
 
@@ -72,19 +78,6 @@ export const OUTER_MAGNET_SECTOR_KEEP_EVERY = 2;
  * Default orbit (~12 wu) uses the simplified level; zooming into the bore uses full.
  */
 export const OUTER_MAGNET_LOD_FAR_DISTANCE = 7;
-
-/**
- * Hide L3 when the orbit distance drops to this (world units). ~10% closer
- * than the previous 8 wu threshold so the yoke stays visible a bit longer
- * while zooming into the barrel.
- */
-export const OUTER_MAGNET_HIDE_NEAR_DISTANCE = 7.2;
-
-/**
- * Re-show L3 once the camera pulls back past this distance (hysteresis so the
- * yoke does not flicker at the hide threshold).
- */
-export const OUTER_MAGNET_SHOW_NEAR_DISTANCE = 8.1;
 
 /** Scene-graph name of the L3 {@link THREE.LOD} root built by the detector loader. */
 export const OUTER_MAGNET_LOD_NAME = 'l3-magnet-lod';
@@ -188,11 +181,29 @@ export const MCH_INSTANCE_MIN_FAMILY_SIZE = 4;
  */
 export const MAX_LOW_TO_HIGH_DRAWABLE_RATIO = 3;
 
-const RENDER_ORDER_LAYER_STRIDE = 10000;
+/**
+ * Render-order "band" width per detector layer (inner->outer). Exported so
+ * tests can assert every layer's merged meshes land in their own band instead
+ * of collapsing to the default 0 (see {@link applyDetectorPartOpacity}).
+ */
+export const RENDER_ORDER_LAYER_STRIDE = 10000;
+
+/**
+ * Draw magnetic-field overlays (streamlines + arrows, see
+ * `field-line-visualizer.ts`) after every detector shell but before the beam
+ * pipe. Mirrors `EventDisplayComponent.PHYSICS_RENDER_ORDER_BASE`. Sits above
+ * the highest detector layer band (`layerIndex * RENDER_ORDER_LAYER_STRIDE`,
+ * max ~11 * 10000 for the current 12-part detector set) and below
+ * {@link BEAM_PIPE_RENDER_ORDER}.
+ */
+export const FIELD_LINE_RENDER_ORDER = 200_000;
 
 /** Human-readable label for a detector GLB path (filename -> short name). */
 export function detectorPartLabel(assetPath: string): string {
-  const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
+  const file = assetPath
+    .replace(/^.*[/\\]/, '')
+    .replace(/\?.*$/, '')
+    .toLowerCase();
   const labels: Record<string, string> = {
     'its.glb': 'ITS',
     'tpc.glb': 'TPC',
@@ -201,13 +212,13 @@ export function detectorPartLabel(assetPath: string): string {
     'emcal.glb': 'EMCal',
     'dcal.glb': 'DCal',
     'phos.glb': 'PHOS',
-    'l3.glb': 'L3 magnet',
+    'l3_pp.glb': 'L3-Magnet',
     'mch.glb': 'MCH',
     'abso.glb': 'ABSO',
-    'dipo.glb': 'DIPO magnet',
-    'bp.glb': 'Beam pipe',
+    'dipo.glb': 'DIPO-Magnet',
+    'bp.glb': 'Beam Pipe',
   };
-  return labels[file] ?? assetPath.replace(/^.*[/\\]/, '').replace(/\.glb$/i, '');
+  return labels[file] ?? file.replace(/\.glb$/i, '');
 }
 
 /** Re-export shared GLB accent colours used by opacity sliders / part chips. */
@@ -218,7 +229,7 @@ function isCalorimeter(assetPath: string): boolean {
 
 /** Outer L3 magnet yoke — large screen coverage under the PP camera. */
 export function isOuterMagnet(assetPath: string): boolean {
-  return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])l3_pp\.glb($|\?)/i.test(assetPath);
 }
 
 /** TPC barrel — largest triangle budget in the ALICE detector GLB set. */
@@ -261,10 +272,16 @@ export function defaultDetectorPartVisible(_assetPath: string): boolean {
   return true;
 }
 
-/** Default opacity for a layer given its depth index (inner -> outer lerp). */
-export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
+/** Sidebar / scene default opacity for a detector asset (ignores layer depth). */
+export function defaultOpacityForAsset(assetPath: string): number {
   if (isOuterMagnet(assetPath)) return OUTER_MAGNET_DEFAULT_OPACITY;
   if (isBeamPipe(assetPath)) return BEAM_PIPE_DEFAULT_OPACITY;
+  return DETECTOR_DEFAULT_OPACITY;
+}
+
+/** Default opacity for a layer given its depth index (inner -> outer lerp). */
+export function defaultLayerOpacity(assetPath: string, layerIndex: number, totalLayers: number): number {
+  if (isOuterMagnet(assetPath) || isBeamPipe(assetPath)) return defaultOpacityForAsset(assetPath);
   const t = totalLayers > 1 ? layerIndex / (totalLayers - 1) : 0;
   const opacity = DETECTOR_INNER_OPACITY * (1 - t) + DETECTOR_OUTER_OPACITY * t;
   return isCalorimeter(assetPath) ? Math.max(opacity, CALORIMETER_MIN_OPACITY) : opacity;
@@ -890,16 +907,91 @@ export function setDetectorPartVisibility(root: THREE.Object3D, visible: boolean
   root.visible = visible;
 }
 
+/**
+ * Light-mode metalness ceiling (VA-style, see
+ * `EventDisplayComponent.applyDarkModeToObject`). GLB-authored metalness
+ * (~0.5) plus the two scene directional lights produces sharp specular
+ * glare/white glints on flat facets (most visible on L3's large panels)
+ * under the pale `LIGHT_BACKGROUND` — capping keeps albedo readable.
+ */
+export const LIGHT_MODE_MAX_METALNESS = 0.15;
+
 /** Dark-mode self-glow for most shells. */
-const DARK_EMISSIVE_INTENSITY = 0.12;
+export const DARK_EMISSIVE_INTENSITY = 0.12;
 /** Beam pipe is thin grey aluminium — needs extra punch without touching opacity. */
 export const BEAM_PIPE_DARK_EMISSIVE_INTENSITY = 0.28;
 
 /**
+ * Caps how hard {@link syncDetectorFadeAppearance} may amplify dark-mode
+ * emissive when opacity drops (keeps default 0.75 look unchanged: factor 1).
+ *
+ * Sized from measurement, not guesswork: `Material.opacity` scales the
+ * *entire* blended fragment (diffuse + emissive) toward the background colour
+ * before it reaches the screen, so boosting scene lights cannot compensate —
+ * only emissive, multiplied back up by roughly `DETECTOR_DEFAULT_OPACITY /
+ * MIN_PART_OPACITY` (0.75 / 0.05 = 15), survives that scaling. 18 gives a
+ * small margin above the measured 15x floor so ITS/TPC/L3 stay legible (not
+ * black) at the slider minimum instead of just barely visible.
+ */
+export const FADE_EMISSIVE_MAX_FACTOR = 18;
+
+/**
+ * Beam pipe already fades correctly on its own — it disables `depthWrite`
+ * while translucent (true alpha blend, no depth-buffer self-occlusion), so it
+ * does not suffer the "black silhouette" problem the other shells have.
+ * Keeps the original, gentler cap so its already-good low-opacity look is
+ * unchanged by the {@link FADE_EMISSIVE_MAX_FACTOR} increase above.
+ */
+export const BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR = 3.5;
+
+/**
+ * In dark mode, boosts emissive (and slightly lifts shell lightness) as opacity
+ * falls below {@link DETECTOR_DEFAULT_OPACITY}, so low-α shells with
+ * depthWrite=true still read as coloured glass instead of a black silhouette.
+ * Light mode is a no-op (emissive stays off).
+ */
+export function syncDetectorFadeAppearance(
+  mat: THREE.Material,
+  opacity: number,
+  isBeamPipePart: boolean
+): void {
+  const m = mat as THREE.MeshStandardMaterial & { userData: Record<string, unknown> };
+  if (!m || !('emissive' in m)) return;
+  const userData = (m.userData || (m.userData = {})) as {
+    detectorDarkMode?: boolean;
+    fadeBaseColor?: THREE.Color;
+  };
+  if (!userData.detectorDarkMode) return;
+
+  const o = Math.max(MIN_PART_OPACITY, Math.min(1, opacity));
+  const baseEmissive = isBeamPipePart
+    ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
+    : DARK_EMISSIVE_INTENSITY;
+  const maxFactor = isBeamPipePart
+    ? BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR
+    : FADE_EMISSIVE_MAX_FACTOR;
+  const factor = Math.min(maxFactor, Math.max(1, DETECTOR_DEFAULT_OPACITY / o));
+  m.emissiveIntensity = baseEmissive * factor;
+
+  // Lightness lift only for thick shells (BP already has a brighter dark palette).
+  if (!isBeamPipePart && userData.fadeBaseColor instanceof THREE.Color) {
+    const hsl = { h: 0, s: 0, l: 0 };
+    userData.fadeBaseColor.getHSL(hsl);
+    const lift = (factor - 1) / (maxFactor - 1); // 0 at default, 1 at cap
+    const litL = Math.min(0.65, hsl.l + lift * 0.12);
+    m.color.setHSL(hsl.h, hsl.s, litL);
+    m.emissive.copy(m.color);
+  } else if ('emissive' in m && m.emissive) {
+    m.emissive.copy(m.color);
+  }
+}
+
+/**
  * Sets a detector part's opacity (clamped to [MIN_PART_OPACITY,
- * MAX_PART_OPACITY]). Shells use real material alpha. The beam pipe stops
- * writing depth while translucent so it cannot punch a dark silhouette through
- * detector layers rendered behind it.
+ * MAX_PART_OPACITY]). Shells keep depthWrite on while translucent (same as
+ * EventDisplay / VA) so nested layers stay readable. The beam pipe alone stops
+ * writing depth when translucent — it is thin enough that true alpha fade
+ * works without muddying the stack.
  */
 export function setDetectorPartOpacity(root: THREE.Object3D, value: number): number {
   const opacity = Math.max(MIN_PART_OPACITY, Math.min(MAX_PART_OPACITY, value));
@@ -920,11 +1012,26 @@ export function applyDetectorPartOpacity(
   const o = Math.max(0, Math.min(1, opacity));
   const transparent = o < 0.995;
   const beamPipe = isBeamPipe(String(root.userData?.['detectorAssetPath'] ?? ''));
+  const layerIndex =
+    typeof root.userData?.['detectorLayerIndex'] === 'number'
+      ? (root.userData['detectorLayerIndex'] as number)
+      : 0;
+  const layerRenderOrderBase = layerIndex * RENDER_ORDER_LAYER_STRIDE;
+  let meshIndex = 0;
   root.traverse((obj) => {
     if (!(obj as THREE.Mesh).isMesh) return;
     const mesh = obj as THREE.Mesh;
-    // mergeStaticMeshesByMaterial creates new Mesh instances and resets their
-    // renderOrder to 0. Restore BP's foreground order on the final meshes.
+    // mergeStaticMeshesByMaterial (and the TPC/MCH "merged rest" leftovers)
+    // create new Mesh instances and reset their renderOrder to 0, which
+    // throws away the stable inner->outer paint order assigned in
+    // applyDetectorLayerMaterials and lets Three.js's per-frame,
+    // camera-distance-based transparent sort decide draw order instead — the
+    // root cause of shells swapping which one is "on top" (and therefore
+    // colour) as the camera rotates. Re-stamp a layer-stable order here on
+    // every call (idempotent); Math.max never regresses an already-correct
+    // value copied onto InstancedMesh families (L3/TPC/MCH) or BP below.
+    mesh.renderOrder = Math.max(mesh.renderOrder, layerRenderOrderBase + meshIndex);
+    meshIndex += 1;
     if (beamPipe) {
       mesh.renderOrder = Math.max(mesh.renderOrder, BEAM_PIPE_RENDER_ORDER);
     }
@@ -934,6 +1041,8 @@ export function applyDetectorPartOpacity(
       const m = mat as THREE.Material & { userData: Record<string, unknown> };
       m.transparent = transparent;
       m.opacity = o;
+      // VA-style: thick shells keep depthWrite so nested barrels stay sorted.
+      // Beam pipe is the exception — disable depth writes while translucent.
       m.depthWrite = beamPipe ? !transparent : true;
       m.depthTest = true;
       if (updateBase) {
@@ -941,6 +1050,8 @@ export function applyDetectorPartOpacity(
       } else {
         m.userData = { ...(m.userData || {}) };
       }
+      // Compensate against the *current* drawn alpha (including mid fade-in).
+      syncDetectorFadeAppearance(m, o, beamPipe);
       m.needsUpdate = true;
     }
   });
@@ -1022,16 +1133,20 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
   root.traverse((o) => {
     if (!(o as THREE.Mesh).isMesh) return;
     const mesh = o as THREE.Mesh;
-    const raw = mesh.material;
     const mats = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
     for (const mat of mats) {
       const m = mat as THREE.MeshStandardMaterial & { userData: Record<string, unknown> };
       if (!m || !('color' in m)) continue;
       const userData = (m.userData || (m.userData = {})) as {
         neonBaseColor?: THREE.Color | number | { r: number; g: number; b: number };
+        detectorDarkMode?: boolean;
+        fadeBaseColor?: THREE.Color;
+        baseOpacity?: number;
+        baseMetalness?: number;
       };
       userData.neonBaseColor = reviveNeonBaseColor(userData.neonBaseColor, m.color);
       const baseColor = userData.neonBaseColor as THREE.Color;
+      userData.detectorDarkMode = darkMode;
       if (darkMode) {
         baseColor.getHSL(hsl);
         const litLightness = beamPipe
@@ -1043,17 +1158,35 @@ export function applyDetectorDarkMode(root: THREE.Object3D, darkMode: boolean): 
           litLightness
         );
         m.color.copy(lit);
+        userData.fadeBaseColor = lit.clone();
         if ('emissive' in m) {
           m.emissive.copy(m.color);
           m.emissiveIntensity = beamPipe
             ? BEAM_PIPE_DARK_EMISSIVE_INTENSITY
             : DARK_EMISSIVE_INTENSITY;
         }
+        if ('metalness' in m && typeof userData.baseMetalness === 'number') {
+          m.metalness = userData.baseMetalness;
+        }
+        const fadeOpacity =
+          typeof userData.baseOpacity === 'number' && Number.isFinite(userData.baseOpacity)
+            ? userData.baseOpacity
+            : DETECTOR_DEFAULT_OPACITY;
+        syncDetectorFadeAppearance(m, fadeOpacity, beamPipe);
       } else {
         m.color.copy(baseColor);
+        delete userData.fadeBaseColor;
         if ('emissive' in m) {
           m.emissive.setRGB(0, 0, 0);
           m.emissiveIntensity = 0;
+        }
+        // Soften metallic specular: VA caps light-mode metalness so the two
+        // directional lights don't blow the shell surfaces out to glare/white.
+        if ('metalness' in m) {
+          if (typeof userData.baseMetalness !== 'number') {
+            userData.baseMetalness = typeof m.metalness === 'number' ? m.metalness : 0;
+          }
+          m.metalness = Math.min(userData.baseMetalness, LIGHT_MODE_MAX_METALNESS);
         }
       }
       m.needsUpdate = true;

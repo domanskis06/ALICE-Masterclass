@@ -16,14 +16,15 @@
  *    (Melax-from-merged / InstancedMesh thinning) attach after the first painted
  *    frame (`scheduleDeferredLowLods`).
  *
- * L3 is special-cased: sector families become {@link THREE.InstancedMesh} (no
- * material merge — that creates one giant transparent blob and hurts fill-rate)
- * wrapped in a distance {@link THREE.LOD}. TPC / MCH use InstancedMesh families
- * for repeated panels. BP uses a distance LOD (gltfpack ~20k high + Melax far).
- * ITS / ABSO / DIPO stay on the full merged mesh (ITS is mild-gltfpacked ~50k
- * tris of thin concentric shells; ABSO ~6k; DIPO ~750 — Melax far-LOD shreds
- * those silhouettes at the default orbit distance). TRD / TOF / calorimeters
- * still merge by material.
+ * L3 uses `L3_pp.glb` — a lightweight octagon yoke + liner stand-in (CAD
+ * `L3.glb` is reserved for Visual Analysis). The loader wraps it in a distance
+ * {@link THREE.LOD}; `buildOuterMagnetInstanced` keeps non-sector meshes as
+ * ordinary meshes when the authored file has no Mesh_1/2/3 sector families.
+ * TPC / MCH use InstancedMesh families for repeated panels. BP skips
+ * merge-by-material (shared mesh instances stay shared — merge would bake
+ * ~10× tris) and skips Melax. ITS / ABSO / DIPO stay on the full merged mesh
+ * (ITS ~50k thin shells; ABSO ~6k; DIPO ~750 — Melax shreds those silhouettes).
+ * TRD / TOF / calorimeters still merge by material.
  * It does NOT import `EventDisplayComponent` (god-node isolation, per
  * `.cursor/rules/architecture.mdc`).
  */
@@ -35,8 +36,6 @@ import { mergeStaticMeshesByMaterial } from '../../shared/three/merge-static-mes
 import {
   applyDetectorLayerMaterials,
   applyDetectorDarkMode,
-  BEAM_PIPE_LOD_FAR_DISTANCE,
-  BEAM_PIPE_LOW_VERTEX_KEEP,
   buildLowLodFromMergedHigh,
   buildMchInstanced,
   buildOuterMagnetInstanced,
@@ -56,7 +55,6 @@ import {
   MUON_DECIMATE_MIN_VERTICES,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
   OUTER_MAGNET_LOD_NAME,
-  OUTER_MAGNET_SECTOR_KEEP_EVERY,
   setDetectorPartOpacity,
   TPC_FINE_DETAIL_KEEP_EVERY,
   TPC_HEAVY_PANEL_VERTEX_KEEP,
@@ -77,7 +75,7 @@ export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/EMCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/PHOS.glb`,
-  `${DETECTOR_MODEL_BASE_PATH}/L3.glb`,
+  `${DETECTOR_MODEL_BASE_PATH}/L3_pp.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/ABSO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DIPO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/MCH.glb`,
@@ -93,7 +91,7 @@ export function isDetectorInnerPart(assetPath: string): boolean {
 
 /** @deprecated Prefer {@link isDetectorInnerPart}; kept for older call sites/tests. */
 export function isDetectorCorePart(assetPath: string): boolean {
-  return /(^|[/\\])(its|tpc|l3)\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])(its|tpc|l3_pp)\.glb($|\?)/i.test(assetPath);
 }
 
 /** Per-slider clamp for the layer radial inflate (reduces z-fighting between shells). */
@@ -171,8 +169,34 @@ function finalizePartMeshes(
 }
 
 /**
- * Builds a distance LOD for L3: full InstancedMesh yoke up close, every-Nth
- * sector far away. Sector thinning is cheap (no Melax) — both levels stay sync.
+ * Beam pipe: materials only — do **not** merge-by-material.
+ *
+ * BP's cut GLB reuses ~27 mesh defs across ~180 nodes (repeated flanges /
+ * bellows). `mergeStaticMeshesByMaterial` bakes every instance into unique
+ * vertices (~10× triangle blow-up). Skipping the merge keeps shared
+ * BufferGeometry (~55k unique tris after mild gltfpack) and ~180 draw calls,
+ * which is cheaper than a half-million-tri merged buffer. Melax far-LOD is
+ * also skipped (same thin-CAD reason as ITS).
+ */
+function finalizeBeamPipeMeshes(
+  root: THREE.Object3D,
+  opacity: number,
+  layerIndex: number,
+  userData: Record<string, unknown>
+): THREE.Object3D {
+  applyDetectorLayerMaterials(root, opacity, layerIndex);
+  root.userData = { ...userData };
+  setDetectorPartOpacity(root, opacity);
+  return root;
+}
+
+/**
+ * Builds a distance LOD for L3_pp: full yoke at both levels.
+ *
+ * For the octagon stand-in both levels are identical (no sector thinning).
+ * Historically the CAD L3 far level kept every Nth sector
+ * (`OUTER_MAGNET_SECTOR_KEEP_EVERY`), which left gaps that read as white holes
+ * against the pale light-mode background — so thinning stays off.
  */
 function buildOuterMagnetLod(
   root: THREE.Object3D,
@@ -184,7 +208,7 @@ function buildOuterMagnetLod(
 
   const high = buildOuterMagnetInstanced(root, 1);
   high.userData = { ...userData, lodLevel: 'high' };
-  const low = buildOuterMagnetInstanced(root, OUTER_MAGNET_SECTOR_KEEP_EVERY);
+  const low = buildOuterMagnetInstanced(root, 1);
   low.userData = { ...userData, lodLevel: 'low' };
 
   const lod = new THREE.LOD();
@@ -280,48 +304,6 @@ function buildMchLod(
   return lod;
 }
 
-/**
- * Beam pipe: merged gltfpack ~20k high level + deferred Melax far level.
- * The authored cut length is preserved in the asset; we only drop tessellation.
- */
-function buildBpLod(
-  root: THREE.Object3D,
-  opacity: number,
-  layerIndex: number,
-  userData: Record<string, unknown>,
-  deferLowLod: boolean,
-  darkMode: boolean
-): THREE.LOD {
-  applyDetectorLayerMaterials(root, opacity, layerIndex);
-  const high = mergeStaticMeshesByMaterial(root);
-  high.userData = { ...userData, lodLevel: 'high' };
-
-  const lod = new THREE.LOD();
-  lod.name = 'bp-lod';
-  lod.userData = { ...userData };
-  lod.addLevel(high, 0);
-  setDetectorPartOpacity(high, opacity);
-
-  const buildLow = (): THREE.Object3D => {
-    const low = buildLowLodFromMergedHigh(high, BEAM_PIPE_LOW_VERTEX_KEEP, 64);
-    setDetectorPartOpacity(low, opacity);
-    return low;
-  };
-
-  if (!deferLowLod) {
-    lod.addLevel(buildLow(), BEAM_PIPE_LOD_FAR_DISTANCE);
-  } else {
-    lod.userData[PENDING_LOW_LOD_KEY] = {
-      farDistance: BEAM_PIPE_LOD_FAR_DISTANCE,
-      darkMode,
-      build: buildLow,
-    } satisfies PendingLowLod;
-  }
-
-  setDetectorPartOpacity(lod, opacity);
-  return lod;
-}
-
 function loadOnePart(
   loader: GLTFLoader,
   path: string,
@@ -367,12 +349,12 @@ function loadOnePart(
           return;
         }
         if (isBeamPipe(path)) {
-          resolve(buildBpLod(root, opacity, layerIndex, userData, deferLowLod, darkMode));
+          resolve(finalizeBeamPipeMeshes(root, opacity, layerIndex, userData));
           return;
         }
         // ITS / ABSO / DIPO: no Melax LOD. ITS is mild-gltfpacked thin-shell CAD
-        // (~50k tris); ABSO ~6k; DIPO ~750 box/tube. Melax at the default orbit
-        // distance shreds those silhouettes — MCH / BP keep their own LODs.
+        // (~50k tris); ABSO ~6k; DIPO ~750. Melax at the default orbit shreds
+        // those silhouettes — MCH keeps its own LOD.
         resolve(finalizePartMeshes(root, opacity, layerIndex, userData));
       },
       undefined,
@@ -396,7 +378,7 @@ function loadOnePart(
  * reveal) would shift the whole detector along Z relative to tracks / field lines.
  */
 function beamAxisReference(parts: DetectorPart[]): THREE.Object3D | null {
-  const prefer = [/\/its\.glb$/i, /\/tpc\.glb$/i, /\/l3\.glb$/i];
+  const prefer = [/\/its\.glb$/i, /\/tpc\.glb$/i, /\/l3_pp\.glb$/i];
   for (const re of prefer) {
     const hit = parts.find((p) => re.test(p.assetPath));
     if (hit) return hit.root;

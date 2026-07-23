@@ -10,7 +10,11 @@
       mat-icon-button
       type="button"
       class="sidebar-toggle sidebar-toggle--left"
-      [attr.aria-label]="leftSidebarOpened ? 'Hide detector parts sidebar' : 'Show detector parts sidebar'"
+      [attr.aria-label]="
+        leftSidebarOpened
+          ? ('STRANGENESS.PARTICLE_PROPAGATION.ARIA_HIDE_DETECTOR_SIDEBAR' | translate)
+          : ('STRANGENESS.PARTICLE_PROPAGATION.ARIA_SHOW_DETECTOR_SIDEBAR' | translate)
+      "
       [attr.aria-expanded]="leftSidebarOpened"
       (click)="toggleLeftSidebar()">
       <mat-icon>{{ leftSidebarOpened ? 'chevron_left' : 'chevron_right' }}</mat-icon>
@@ -20,7 +24,11 @@
       mat-icon-button
       type="button"
       class="sidebar-toggle sidebar-toggle--right"
-      [attr.aria-label]="sidebarOpened ? 'Hide controls sidebar' : 'Show controls sidebar'"
+      [attr.aria-label]="
+        sidebarOpened
+          ? ('STRANGENESS.PARTICLE_PROPAGATION.ARIA_HIDE_CONTROLS_SIDEBAR' | translate)
+          : ('STRANGENESS.PARTICLE_PROPAGATION.ARIA_SHOW_CONTROLS_SIDEBAR' | translate)
+      "
       [attr.aria-expanded]="sidebarOpened"
       (click)="toggleSidebar()">
       <mat-icon>{{ sidebarOpened ? 'chevron_right' : 'chevron_left' }}</mat-icon>
@@ -66,17 +74,17 @@
 
   <aside
     class="controls-sidebar controls-sidebar--left"
-    aria-label="Detector parts"
+    [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_DETECTOR_PARTS' | translate"
     [attr.aria-hidden]="!leftSidebarOpened">
     <div class="sidebar-body">
       <section class="controls-section detector-parts-section">
         <div class="section-heading-row">
-          <h4>Detector parts</h4>
+          <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_DETECTOR_PARTS' | translate }}</h4>
           <mat-slide-toggle
             [ngModel]="isDarkMode"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onDarkModeChange($event)"
-            aria-label="Toggle dark visual theme">
+            [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_DARK_MODE' | translate">
             <mat-icon aria-hidden="true">dark_mode</mat-icon>
           </mat-slide-toggle>
         </div>
@@ -97,7 +105,9 @@
                   [step]="0.01"
                   [discrete]="true"
                   [disabled]="!part.visible"
-                  [attr.aria-label]="part.label + ' opacity'">
+                  [attr.aria-label]="
+                    'STRANGENESS.PARTICLE_PROPAGATION.ARIA_PART_OPACITY' | translate: { label: part.label }
+                  ">
                   <input
                     matSliderThumb
                     [ngModel]="part.opacity"
@@ -114,11 +124,11 @@
 
   <aside
     class="controls-sidebar controls-sidebar--right"
-    aria-label="Particle propagation controls"
+    [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_CONTROLS' | translate"
     [attr.aria-hidden]="!sidebarOpened">
     <div class="sidebar-body">
       <section class="controls-section">
-        <h4>Event</h4>
+        <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_EVENT' | translate }}</h4>
         <mat-form-field appearance="outline" class="full-width event-select-field" floatLabel="never">
           <mat-select
             [(ngModel)]="selectedEventIndex"
@@ -126,7 +136,7 @@
             (ngModelChange)="onEventChange($event)"
             [panelClass]="eventSelectPanelClass"
             [disabled]="isBusy"
-            aria-label="Event">
+            [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_EVENT' | translate">
             @for (opt of eventOptions; track opt.id) {
               <mat-option [value]="opt.id">{{ opt.label }}</mat-option>
             }
@@ -134,18 +144,18 @@
         </mat-form-field>
         @if (!hasStarted) {
           <button mat-raised-button color="primary" type="button" class="full-width" (click)="onStartAnimation()">
-            Start animation
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.START_BUTTON' | translate }}
           </button>
         }
       </section>
 
       <section class="controls-section">
-        <h4>Playback</h4>
+        <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_PLAYBACK' | translate }}</h4>
         <div class="playback-buttons">
           <button
             mat-icon-button
             type="button"
-            aria-label="Play"
+            [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_PLAY' | translate"
             [disabled]="!controlsEnabled || isPlaying"
             (click)="onPlay()">
             <mat-icon>play_arrow</mat-icon>
@@ -153,7 +163,7 @@
           <button
             mat-icon-button
             type="button"
-            aria-label="Pause"
+            [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_PAUSE' | translate"
             [disabled]="!controlsEnabled || !isPlaying"
             (click)="onPause()">
             <mat-icon>pause</mat-icon>
@@ -161,7 +171,7 @@
           <button
             mat-icon-button
             type="button"
-            aria-label="Replay"
+            [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_REPLAY' | translate"
             [disabled]="!replayEnabled"
             (click)="onReplay()">
             <mat-icon>replay</mat-icon>
@@ -170,28 +180,32 @@
       </section>
 
       <section class="controls-section">
-        <h4>Time</h4>
+        <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_TIME' | translate }}</h4>
         @if (controlsEnabled) {
-          <div class="time-readout">{{ currentTimeMs | number: '1.0-0' }} ms</div>
+          <div
+            class="time-readout"
+            [attr.title]="'STRANGENESS.PARTICLE_PROPAGATION.TIME_READOUT_TITLE' | translate">
+            {{ displayTimeNs | number: '1.1-1' }} ns
+          </div>
           <mat-slider
             class="full-width"
-            [min]="minTimeMs"
-            [max]="maxTimeMs"
-            [step]="1"
+            [min]="minTimeNs"
+            [max]="maxTimeNs"
+            [step]="0.1"
             [discrete]="true">
             <input
               matSliderThumb
-              [(ngModel)]="currentTimeMs"
+              [ngModel]="displayTimeNs"
               [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="onTimeChange($event)" />
+              (ngModelChange)="onTimeChangeNs($event)" />
           </mat-slider>
         } @else {
-          <p class="slider-label">Start the animation to scrub time.</p>
+          <p class="slider-label">{{ 'STRANGENESS.PARTICLE_PROPAGATION.TIME_SCRUB_HINT' | translate }}</p>
         }
       </section>
 
       <section class="controls-section">
-        <h4>Playback speed</h4>
+        <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_PLAYBACK_SPEED' | translate }}</h4>
         <mat-slider
           class="full-width"
           [min]="0.2"
@@ -204,25 +218,28 @@
             matSliderThumb
             [(ngModel)]="playbackSpeed"
             [ngModelOptions]="{ standalone: true }"
-            aria-label="Playback speed" />
+            [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_PLAYBACK_SPEED' | translate" />
         </mat-slider>
       </section>
 
       <section class="controls-section">
-        <h4>Camera</h4>
+        <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_CAMERA' | translate }}</h4>
         <mat-slide-toggle
           [ngModel]="cameraMode === 'free'"
           [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="onFreeCameraChange($event)">
-          Free camera
+          {{ 'STRANGENESS.PARTICLE_PROPAGATION.FREE_CAMERA' | translate }}
         </mat-slide-toggle>
       </section>
 
       <section class="controls-section">
-        <h4>Magnetic field</h4>
+        <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_MAGNETIC_FIELD' | translate }}</h4>
         <div class="field-strength-markers" aria-hidden="true">
           @for (marker of fieldStrengthMarkers; track marker.label) {
-            <span class="field-strength-marker" [style.left.%]="marker.positionPct">
+            <span
+              class="field-strength-marker"
+              [class.field-strength-marker--cms]="marker.label === 'CMS'"
+              [style.left.%]="marker.positionPct">
               <span class="field-strength-marker-label">{{ marker.label }}</span>
               <span class="field-strength-marker-value">{{ marker.tesla }} T</span>
               <span class="field-strength-marker-tick"></span>
@@ -242,27 +259,34 @@
             [ngModel]="fieldStrengthT"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onFieldStrengthChange($event)"
-            [attr.aria-label]="'Field strength: ' + fieldStrengthT + ' T'" />
+            [attr.aria-label]="
+              'STRANGENESS.PARTICLE_PROPAGATION.ARIA_FIELD_STRENGTH' | translate: { value: fieldStrengthT }
+            " />
         </mat-slider>
         @if (tracksNeedRecompute) {
           <p class="slider-label field-recompute-hint">
-            Press Replay to recompute tracks with the new field.
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.RECOMPUTE_HINT' | translate }}
           </p>
         }
 
-        @if (fieldVisible) {
-          <div class="field-colorbar" aria-label="Magnetic field strength colour scale">
-            <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
-            <div
-              class="field-colorbar-bar"
-              [style.background]="fieldColorbarGradient"
-              role="img"
-              [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
-            <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
-          </div>
-        }
+        <div
+          class="field-colorbar"
+          [class.field-colorbar--disabled]="!fieldVisible"
+          [attr.aria-label]="'STRANGENESS.PARTICLE_PROPAGATION.ARIA_FIELD_COLORBAR' | translate"
+          [attr.aria-disabled]="!fieldVisible">
+          <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
+          <div
+            class="field-colorbar-bar"
+            [style.background]="fieldColorbarGradient"
+            role="img"
+            [attr.aria-label]="
+              'STRANGENESS.PARTICLE_PROPAGATION.ARIA_FIELD_COLORBAR_RANGE'
+                | translate: { min: fieldColorMinT, max: fieldColorMaxT }
+            "></div>
+          <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
+        </div>
 
-        <label class="slider-label">Field opacity</label>
+        <label class="slider-label">{{ 'STRANGENESS.PARTICLE_PROPAGATION.FIELD_OPACITY' | translate }}</label>
         <mat-slider
           class="full-width"
           [min]="0.05"
@@ -282,21 +306,21 @@
             [(ngModel)]="fieldVisible"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onFieldShowChange($event)">
-            Show field
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.SHOW_FIELD' | translate }}
           </mat-slide-toggle>
           <mat-slide-toggle
             [(ngModel)]="fieldDipoleTransitionVisible"
             [ngModelOptions]="{ standalone: true }"
             [disabled]="!fieldVisible"
             (ngModelChange)="onFieldDipoleTransitionChange($event)">
-            Dipole field
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.DIPOLE_FIELD' | translate }}
           </mat-slide-toggle>
           <mat-slide-toggle
             [ngModel]="fieldDensity === 'dense'"
             [ngModelOptions]="{ standalone: true }"
             [disabled]="!fieldVisible"
             (ngModelChange)="onFieldDensityChange($event)">
-            Dense field
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.DENSE_FIELD' | translate }}
           </mat-slide-toggle>
           <mat-slide-toggle
             [ngModel]="solenoidPolarity < 0"
@@ -305,12 +329,17 @@
             (ngModelChange)="onSolenoidReversedChange($event)"
             [attr.aria-label]="
               solenoidPolarity > 0
-                ? 'Reverse L3 solenoid field direction (currently +z)'
-                : 'Restore L3 solenoid field direction (currently −z)'
+                ? ('STRANGENESS.PARTICLE_PROPAGATION.ARIA_REVERSE_L3_ON' | translate)
+                : ('STRANGENESS.PARTICLE_PROPAGATION.ARIA_REVERSE_L3_OFF' | translate)
             ">
-            Reverse L3
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.REVERSE_L3' | translate }}
           </mat-slide-toggle>
         </div>
+        @if (solenoidPolarity < 0) {
+          <p class="slider-label field-recompute-hint">
+            {{ 'STRANGENESS.PARTICLE_PROPAGATION.REVERSED_L3_HINT' | translate }}
+          </p>
+        }
       </section>
     </div>
   </aside>

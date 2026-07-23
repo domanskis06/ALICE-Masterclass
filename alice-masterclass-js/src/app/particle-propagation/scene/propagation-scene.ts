@@ -5,19 +5,14 @@
  * it stays a dumb rendering shell: no physics, no HTTP, no RxJS. Instantiated
  * once by `ParticlePropagationComponent` and driven from its `requestAnimationFrame`
  * loop. Camera/lighting setup mirrors `EventDisplayComponent.createScene()` —
- * see `docs/event-display.md` — but this class does **not** extend or import
+ * see `ci/docs/event-display.md` — but this class does **not** extend or import
  * that component (god-node isolation, per `.cursor/rules/architecture.mdc`).
  */
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-import {
-  applyDetectorDarkMode,
-  OUTER_MAGNET_HIDE_NEAR_DISTANCE,
-  OUTER_MAGNET_LOD_NAME,
-  OUTER_MAGNET_SHOW_NEAR_DISTANCE,
-} from './detector-appearance';
+import { applyDetectorDarkMode, OUTER_MAGNET_LOD_NAME } from './detector-appearance';
 
 /**
  * Default camera pose: a 3/4 "down the barrel" view (looking into the L3 magnet
@@ -28,8 +23,14 @@ import {
 const INITIAL_CAMERA_POSITION = new THREE.Vector3(-2.8, 2.4, 11.5);
 const INITIAL_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
-/** Near-black (matches the reference screenshot) vs. a soft light background. */
-const DARK_BACKGROUND = new THREE.Color(0x05070d);
+/**
+ * Near-black (matches the reference screenshot) vs. a soft light background.
+ * Dark is lifted slightly off pure black (`0x05070d` -> `0x0a0f18`) so very
+ * low-opacity shells keep a faint, dark-blue "glass" tint against the
+ * background instead of reading as a flat void — still near-black, not a
+ * visible navy tint at a glance.
+ */
+const DARK_BACKGROUND = new THREE.Color(0x0a0f18);
 const LIGHT_BACKGROUND = new THREE.Color(0xeef1f6);
 
 /** Matches `EventDisplayComponent` camera radio: orbit-about-origin vs free-look pan. */
@@ -64,6 +65,20 @@ export class PropagationScene {
   private static readonly WHEEL_PAN_FACTOR = 0.05;
   private static readonly MOUSE_DRAG_PAN_FACTOR = 0.001;
 
+  /**
+   * Light retune on dark/light toggle, mirroring
+   * `EventDisplayComponent.syncSceneLighting` (see `ci/docs/event-display.md`).
+   * Dark values match the previous static `setupLights` — no regression there.
+   * Light values give a brighter, flatter fill so albedo-only (non-neon)
+   * materials don't stay dim against the pale `LIGHT_BACKGROUND`.
+   */
+  private static readonly DARK_MODE_AMBIENT = { color: 0x444444, intensity: 1 };
+  private static readonly DARK_MODE_HEMISPHERE = { sky: 0xb8c8e8, ground: 0x2a2a30, intensity: 0.5 };
+  private static readonly DARK_MODE_DIRECTIONAL_INTENSITY = 0.45;
+  private static readonly LIGHT_MODE_AMBIENT = { color: 0xa2a2a2, intensity: 0.925 };
+  private static readonly LIGHT_MODE_HEMISPHERE = { sky: 0xd5dff4, ground: 0x81838b, intensity: 0.7 };
+  private static readonly LIGHT_MODE_DIRECTIONAL_INTENSITY = 0.5;
+
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   readonly renderer: THREE.WebGLRenderer;
@@ -79,6 +94,10 @@ export class PropagationScene {
   readonly introGroup = new THREE.Group();
 
   private readonly lights = new THREE.Group();
+  private ambientLight?: THREE.AmbientLight;
+  private hemisphereLight?: THREE.HemisphereLight;
+  private directionalLightA?: THREE.DirectionalLight;
+  private directionalLightB?: THREE.DirectionalLight;
   private _darkMode = true;
   private _cameraMode: PropagationCameraMode = 'centered';
   private readonly keysDown: Record<string, boolean> = {};
@@ -94,10 +113,8 @@ export class PropagationScene {
   private viewHeight = 1;
   /** Pointer/touch actively driving OrbitControls (rotate / zoom / pan). */
   private controlsInteracting = false;
-  /** Sidebar preference for L3 — auto-hide never overrides an explicit off. */
+  /** Sidebar preference for L3 (no auto-hide anymore — see applyOuterMagnetVisibility). */
   private outerMagnetUserVisible = true;
-  /** Hysteresis latch for the near-TRD auto-hide. */
-  private outerMagnetNearHidden = false;
 
   /**
    * Set when the scene graph / camera changed and a frame must be drawn.
@@ -111,8 +128,6 @@ export class PropagationScene {
       canvas,
       antialias: true,
       // Needed to stop ITS/TPC/ABSO z-fighting once shells overlap in depth.
-      // L3 fill-rate cost is mitigated by auto-hiding the yoke while orbiting /
-      // when zoomed in (see applyOuterMagnetVisibility).
       logarithmicDepthBuffer: true,
       powerPreference: 'high-performance',
     });
@@ -159,13 +174,11 @@ export class PropagationScene {
       // Drop to 1× DPR while dragging — fill-rate dominated when zoomed in.
       this.controlsInteracting = true;
       this.applyPixelRatio(1);
-      this.applyOuterMagnetVisibility(true);
       this.needsRender = true;
     });
     this.controls.addEventListener('end', () => {
       this.controlsInteracting = false;
       this.applyPixelRatio(this.maxPixelRatio);
-      // L3 visibility re-applied in render(); keep RAF alive for damping settle.
       this.needsRender = true;
     });
 
@@ -190,13 +203,12 @@ export class PropagationScene {
   }
 
   /**
-   * Sidebar preference for the L3 magnet. Auto-hide (orbit / near-TRD zoom)
-   * only suppresses drawing when this is `true`. Safe to call before the L3
-   * root is attached — the preference is applied on the next visibility pass.
+   * Sidebar preference for the L3 magnet. Safe to call before the L3 root is
+   * attached — the preference is applied on the next visibility pass.
    */
   setOuterMagnetUserVisible(visible: boolean): void {
     this.outerMagnetUserVisible = visible;
-    this.applyOuterMagnetVisibility(this.controlsInteracting);
+    this.applyOuterMagnetVisibility();
     this.needsRender = true;
   }
 
@@ -228,10 +240,11 @@ export class PropagationScene {
     return this.isMousePanning || this.hasPanKeysDown();
   }
 
-  /** Toggles background + detector material treatment between dark and light. */
+  /** Toggles background + lights + detector material treatment between dark and light. */
   setDarkMode(darkMode: boolean): void {
     this._darkMode = darkMode;
     this.scene.background = darkMode ? DARK_BACKGROUND : LIGHT_BACKGROUND;
+    this.syncSceneLighting();
     applyDetectorDarkMode(this.detectorGroup, darkMode);
     this.needsRender = true;
   }
@@ -241,8 +254,7 @@ export class PropagationScene {
     this.camera.position.copy(INITIAL_CAMERA_POSITION);
     this.controls.target.copy(INITIAL_CAMERA_TARGET);
     this.controls.update();
-    this.outerMagnetNearHidden = false;
-    this.applyOuterMagnetVisibility(this.controlsInteracting);
+    this.applyOuterMagnetVisibility();
     this.needsRender = true;
   }
 
@@ -254,6 +266,53 @@ export class PropagationScene {
     const directionalLightB = new THREE.DirectionalLight(0xffffff, 0.45);
     directionalLightB.position.set(-1, 1, -1);
     this.lights.add(ambientLight, hemisphereLight, directionalLightA, directionalLightB);
+    this.ambientLight = ambientLight;
+    this.hemisphereLight = hemisphereLight;
+    this.directionalLightA = directionalLightA;
+    this.directionalLightB = directionalLightB;
+    this.syncSceneLighting();
+  }
+
+  /**
+   * Bright, flatter fill in light mode; keeps the darker neon contrast in dark
+   * mode. Mirrors `EventDisplayComponent.syncSceneLighting` — see
+   * `ci/docs/event-display.md`. Note: only the *scene* fill lights are retuned
+   * here. Boosting these does not fix low-opacity shells reading as black —
+   * `Material.opacity` scales the *entire* blended fragment (diffuse +
+   * emissive) toward the background colour, so no amount of scene light can
+   * compensate at very low alpha. That is handled by
+   * `syncDetectorFadeAppearance`'s emissive boost in `detector-appearance.ts`.
+   */
+  private syncSceneLighting(): void {
+    if (
+      !this.ambientLight ||
+      !this.hemisphereLight ||
+      !this.directionalLightA ||
+      !this.directionalLightB
+    ) {
+      return;
+    }
+    if (this._darkMode) {
+      const a = PropagationScene.DARK_MODE_AMBIENT;
+      const h = PropagationScene.DARK_MODE_HEMISPHERE;
+      this.ambientLight.color.setHex(a.color);
+      this.ambientLight.intensity = a.intensity;
+      this.hemisphereLight.color.setHex(h.sky);
+      this.hemisphereLight.groundColor.setHex(h.ground);
+      this.hemisphereLight.intensity = h.intensity;
+      this.directionalLightA.intensity = PropagationScene.DARK_MODE_DIRECTIONAL_INTENSITY;
+      this.directionalLightB.intensity = PropagationScene.DARK_MODE_DIRECTIONAL_INTENSITY;
+    } else {
+      const a = PropagationScene.LIGHT_MODE_AMBIENT;
+      const h = PropagationScene.LIGHT_MODE_HEMISPHERE;
+      this.ambientLight.color.setHex(a.color);
+      this.ambientLight.intensity = a.intensity;
+      this.hemisphereLight.color.setHex(h.sky);
+      this.hemisphereLight.groundColor.setHex(h.ground);
+      this.hemisphereLight.intensity = h.intensity;
+      this.directionalLightA.intensity = PropagationScene.LIGHT_MODE_DIRECTIONAL_INTENSITY;
+      this.directionalLightB.intensity = PropagationScene.LIGHT_MODE_DIRECTIONAL_INTENSITY;
+    }
   }
 
   private attachCameraInputListeners(): void {
@@ -404,23 +463,18 @@ export class PropagationScene {
   }
 
   /**
-   * L3 is fill-rate heavy. Hide it while the user orbits/zooms (pointer down)
-   * and when the camera has entered the TRD region. Respects the sidebar
-   * toggle via {@link setOuterMagnetUserVisible}.
+   * L3 visibility now follows only the sidebar toggle
+   * ({@link setOuterMagnetUserVisible}) — no more auto-hide while orbiting or
+   * when the camera zooms into the TRD region. Both auto-hide paths were a
+   * fill-rate mitigation for the previous, heavier L3 model; the model has
+   * since been shrunk, so unconditionally hiding/showing the yoke mid-drag
+   * (or mid-zoom) is no longer needed and was itself a visible "jump" tied to
+   * every rotation/zoom gesture.
    */
-  private applyOuterMagnetVisibility(orbitBusy: boolean): void {
+  private applyOuterMagnetVisibility(): void {
     const root = this.findOuterMagnet();
     if (!root) return;
-
-    const dist = this.camera.position.distanceTo(this.controls.target);
-    if (this.outerMagnetNearHidden) {
-      if (dist >= OUTER_MAGNET_SHOW_NEAR_DISTANCE) this.outerMagnetNearHidden = false;
-    } else if (dist <= OUTER_MAGNET_HIDE_NEAR_DISTANCE) {
-      this.outerMagnetNearHidden = true;
-    }
-
-    const autoHide = orbitBusy || this.outerMagnetNearHidden;
-    root.visible = this.outerMagnetUserVisible && !autoHide;
+    root.visible = this.outerMagnetUserVisible;
   }
 
   /**
@@ -437,9 +491,7 @@ export class PropagationScene {
       this.applyKeyboardPan();
     }
     const dampingActive = this.controls.update();
-    // Orbit-hide only while the pointer is down — not during damping settle,
-    // so L3 returns as soon as the user releases (near-zoom hide is separate).
-    this.applyOuterMagnetVisibility(this.controlsInteracting);
+    this.applyOuterMagnetVisibility();
     this.renderer.render(this.scene, this.camera);
     this.needsRender = false;
     // OrbitControls.update() returns true while damping still moves the camera.

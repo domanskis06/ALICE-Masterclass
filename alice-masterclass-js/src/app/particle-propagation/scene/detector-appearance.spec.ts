@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import {
   applyDetectorDarkMode,
   applyDetectorLayerMaterials,
+  BEAM_PIPE_DARK_EMISSIVE_INTENSITY,
   BEAM_PIPE_DEFAULT_OPACITY,
+  BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR,
   buildLowLodFromMergedHigh,
   buildMchInstanced,
   buildOuterMagnetInstanced,
@@ -18,6 +20,8 @@ import {
   defaultLayerOpacity,
   detectorPartAccentColor,
   detectorPartLabel,
+  DARK_EMISSIVE_INTENSITY,
+  FADE_EMISSIVE_MAX_FACTOR,
   isAuxiliaryMuonPart,
   isBeamPipe,
   isDipo,
@@ -25,11 +29,11 @@ import {
   isIts,
   isMch,
   isTpc,
+  LIGHT_MODE_MAX_METALNESS,
   MAX_PART_OPACITY,
   MIN_PART_OPACITY,
   OUTER_MAGNET_DEFAULT_OPACITY,
-  OUTER_MAGNET_HIDE_NEAR_DISTANCE,
-  OUTER_MAGNET_SHOW_NEAR_DISTANCE,
+  RENDER_ORDER_LAYER_STRIDE,
   setDetectorPartOpacity,
   setDetectorPartVisibility,
   fadeInDetectorPart,
@@ -60,12 +64,13 @@ function firstMaterial(root: THREE.Object3D): THREE.MeshStandardMaterial & THREE
 describe('detectorPartLabel', () => {
   it('maps known GLB filenames to short human labels', () => {
     expect(detectorPartLabel('assets/models/alice components/its.glb')).toBe('ITS');
-    expect(detectorPartLabel('assets/models/alice components/L3.glb')).toBe('L3 magnet');
+    expect(detectorPartLabel('assets/models/alice components/L3_pp.glb')).toBe('L3-Magnet');
     expect(detectorPartLabel('assets/models/alice components/EMCAL.glb')).toBe('EMCal');
     expect(detectorPartLabel('assets/models/alice components/MCH.glb')).toBe('MCH');
     expect(detectorPartLabel('assets/models/alice components/ABSO.glb')).toBe('ABSO');
-    expect(detectorPartLabel('assets/models/alice components/DIPO.glb')).toBe('DIPO magnet');
-    expect(detectorPartLabel('assets/models/alice components/BP.glb')).toBe('Beam pipe');
+    expect(detectorPartLabel('assets/models/alice components/DIPO.glb')).toBe('DIPO-Magnet');
+    expect(detectorPartLabel('assets/models/alice components/BP.glb')).toBe('Beam Pipe');
+    expect(detectorPartLabel('assets/models/alice components/BP.glb?v=cache')).toBe('Beam Pipe');
   });
 
   it('falls back to the bare filename (minus extension) for unknown parts', () => {
@@ -76,7 +81,7 @@ describe('detectorPartLabel', () => {
 describe('detectorPartAccentColor', () => {
   it('maps known GLB filenames to signature accent hex colours', () => {
     expect(detectorPartAccentColor('assets/models/alice components/its.glb')).toBe('#33FF71');
-    expect(detectorPartAccentColor('assets/models/alice components/L3.glb')).toBe('#FF0D12');
+    expect(detectorPartAccentColor('assets/models/alice components/L3_pp.glb')).toBe('#FF0D12');
     expect(detectorPartAccentColor('assets/models/alice components/tpc.glb')).toBe('#22C4FF');
     expect(detectorPartAccentColor('assets/models/alice components/MCH.glb')).toBe('#814244');
     expect(detectorPartAccentColor('assets/models/alice components/ABSO.glb')).toBe('#DE782B');
@@ -109,14 +114,9 @@ describe('defaultLayerOpacity', () => {
   });
 
   it('defaults the L3 magnet to OUTER_MAGNET_DEFAULT_OPACITY', () => {
-    expect(defaultLayerOpacity('assets/models/alice components/L3.glb', 7, 8)).toBe(
+    expect(defaultLayerOpacity('assets/models/alice components/L3_pp.glb', 7, 8)).toBe(
       OUTER_MAGNET_DEFAULT_OPACITY
     );
-  });
-
-  it('exports near-hide distances inside the outer magnet with hysteresis', () => {
-    expect(OUTER_MAGNET_HIDE_NEAR_DISTANCE).toBeLessThan(OUTER_MAGNET_SHOW_NEAR_DISTANCE);
-    expect(OUTER_MAGNET_HIDE_NEAR_DISTANCE).toBeCloseTo(7.2, 5);
   });
 
   it('defaults the beam pipe to BEAM_PIPE_DEFAULT_OPACITY (30%)', () => {
@@ -181,7 +181,7 @@ describe('defaultDetectorPartVisible', () => {
     expect(defaultDetectorPartVisible('assets/models/alice components/DIPO.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/BP.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/its.glb')).toBe(true);
-    expect(defaultDetectorPartVisible('assets/models/alice components/L3.glb')).toBe(true);
+    expect(defaultDetectorPartVisible('assets/models/alice components/L3_pp.glb')).toBe(true);
   });
 });
 
@@ -480,7 +480,7 @@ describe('setDetectorPartOpacity', () => {
     expect(applied).toBe(0.5);
     expect(mat.opacity).toBe(0.5);
     expect(mat.transparent).toBe(true);
-    expect(mat.depthWrite).toBe(true); // stays cheap to blend
+    expect(mat.depthWrite).toBe(true); // VA-style: thick shells keep depthWrite
   });
 
   it('keeps fully opaque parts on the non-transparent path', () => {
@@ -490,6 +490,40 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(1);
     expect(mat.transparent).toBe(false);
     expect(mat.depthWrite).toBe(true);
+  });
+
+  it('re-stamps a layer-stable renderOrder even for non-beam-pipe parts (regression: merge resets to 0)', () => {
+    // Simulates mergeStaticMeshesByMaterial's output: a fresh Mesh with the
+    // default renderOrder=0, carrying only the layer index in userData (as
+    // finalizePartMeshes / buildTpcLod / buildMchLod do post-merge). Without
+    // the fix, TRD/TOF/EMCal/DCal/PHOS/ITS/ABSO/DIPO all stay at renderOrder 0
+    // and sort by camera-distance instead — the cause of colours swapping as
+    // the camera orbits.
+    const layerIndex = 4;
+    const part = makePart();
+    part.userData['detectorLayerIndex'] = layerIndex;
+    expect((part.children[0] as THREE.Mesh).renderOrder).toBe(0);
+
+    setDetectorPartOpacity(part, 0.75);
+
+    expect((part.children[0] as THREE.Mesh).renderOrder).toBeGreaterThanOrEqual(
+      layerIndex * RENDER_ORDER_LAYER_STRIDE
+    );
+  });
+
+  it('never regresses an already-correct (higher) renderOrder set before merge', () => {
+    // L3/TPC/MCH InstancedMesh families copy `renderOrder` from their
+    // pre-merge proto mesh; applyDetectorPartOpacity must not clobber that
+    // with a smaller layer-base value.
+    const layerIndex = 1;
+    const part = makePart();
+    part.userData['detectorLayerIndex'] = layerIndex;
+    const preExistingOrder = layerIndex * RENDER_ORDER_LAYER_STRIDE + 9999;
+    (part.children[0] as THREE.Mesh).renderOrder = preExistingOrder;
+
+    setDetectorPartOpacity(part, 0.75);
+
+    expect((part.children[0] as THREE.Mesh).renderOrder).toBe(preExistingOrder);
   });
 
   it('uses the same translucent shell path as other detector parts', () => {
@@ -512,6 +546,55 @@ describe('setDetectorPartOpacity', () => {
     expect(mat.opacity).toBe(1);
     expect(mat.depthWrite).toBe(true);
     expect(mat.depthTest).toBe(true);
+  });
+
+  it('boosts dark-mode emissive when opacity drops below the default', () => {
+    const part = makePart(0xcc3344);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/its.glb';
+    applyDetectorDarkMode(part, true);
+    setDetectorPartOpacity(part, DETECTOR_DEFAULT_OPACITY);
+    const mat = firstMaterial(part);
+    expect(mat.emissiveIntensity).toBeCloseTo(DARK_EMISSIVE_INTENSITY, 5);
+
+    setDetectorPartOpacity(part, MIN_PART_OPACITY);
+    expect(mat.emissiveIntensity).toBeGreaterThan(DARK_EMISSIVE_INTENSITY * 1.5);
+  });
+
+  it('boosts emissive hard enough at MIN_PART_OPACITY to survive the opacity multiply', () => {
+    // Material.opacity scales the *entire* blended fragment (diffuse +
+    // emissive) toward the background colour before it reaches the screen —
+    // scene lights cannot compensate for that (see propagation-scene.ts
+    // syncSceneLighting docs). FADE_EMISSIVE_MAX_FACTOR must claw back at
+    // least DETECTOR_DEFAULT_OPACITY / MIN_PART_OPACITY of brightness so a
+    // shell at the slider minimum still reads as coloured glass, not black.
+    const part = makePart(0xcc3344);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/its.glb';
+    applyDetectorDarkMode(part, true);
+    setDetectorPartOpacity(part, MIN_PART_OPACITY);
+    const mat = firstMaterial(part);
+
+    expect(FADE_EMISSIVE_MAX_FACTOR).toBeGreaterThanOrEqual(
+      DETECTOR_DEFAULT_OPACITY / MIN_PART_OPACITY
+    );
+    const expectedFactor = Math.min(FADE_EMISSIVE_MAX_FACTOR, DETECTOR_DEFAULT_OPACITY / MIN_PART_OPACITY);
+    expect(mat.emissiveIntensity).toBeCloseTo(DARK_EMISSIVE_INTENSITY * expectedFactor, 5);
+  });
+
+  it('caps the beam pipe emissive boost lower — it already fades correctly via depthWrite=false', () => {
+    // Beam pipe uses true alpha blending (depthWrite off while translucent),
+    // so it never had the "black silhouette" problem the other shells do.
+    // Its cap must stay independent of the FADE_EMISSIVE_MAX_FACTOR increase.
+    expect(BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR).toBeLessThan(FADE_EMISSIVE_MAX_FACTOR);
+
+    const part = makePart(0x9eb0c4);
+    part.userData['detectorAssetPath'] = 'assets/models/alice components/BP.glb';
+    applyDetectorDarkMode(part, true);
+    setDetectorPartOpacity(part, MIN_PART_OPACITY);
+    const mat = firstMaterial(part);
+    expect(mat.emissiveIntensity).toBeCloseTo(
+      BEAM_PIPE_DARK_EMISSIVE_INTENSITY * BEAM_PIPE_FADE_EMISSIVE_MAX_FACTOR,
+      5
+    );
   });
 });
 
@@ -557,5 +640,32 @@ describe('applyDetectorDarkMode', () => {
     applyDetectorDarkMode(part, false);
     expect(mat.color.getHexString()).toBe(base.getHexString());
     expect(mat.emissive.getHexString()).toBe('000000');
+  });
+
+  it('caps light-mode metalness (VA-style) so directional lights do not glare, and restores it in dark', () => {
+    // Authored GLB metalness (~0.5) plus the two scene directional lights
+    // produces sharp specular glare/white glints on flat facets — most
+    // visible on L3's large panels — against the pale light-mode background.
+    const part = makePart(0xff414a);
+    const mat = firstMaterial(part);
+    mat.metalness = 0.5;
+
+    applyDetectorDarkMode(part, false);
+    expect(mat.metalness).toBeCloseTo(LIGHT_MODE_MAX_METALNESS, 5);
+
+    applyDetectorDarkMode(part, true);
+    expect(mat.metalness).toBeCloseTo(0.5, 5);
+
+    applyDetectorDarkMode(part, false);
+    expect(mat.metalness).toBeCloseTo(LIGHT_MODE_MAX_METALNESS, 5);
+  });
+
+  it('never raises metalness above its authored value in light mode', () => {
+    const part = makePart(0x33ff71);
+    const mat = firstMaterial(part);
+    mat.metalness = 0.05; // already below the cap
+
+    applyDetectorDarkMode(part, false);
+    expect(mat.metalness).toBeCloseTo(0.05, 5);
   });
 });

@@ -5,13 +5,47 @@
  * pacing knobs (milliseconds of wall-clock animation), not physical
  * quantities, and are shared only between `scene/collision-intro.ts` and
  * `scene/propagation-timeline.ts` (Faza 10).
+ *
+ * The sidebar shows detector-frame ns via `scene/physical-timeline.ts`
+ * (intro option A + `nsPerMs` for propagation); these ms values stay the
+ * internal animation clock.
  */
 
 /** Duration, in ms, of the pre-collision proton approach (`t` in `[-INTRO_DURATION_MS, 0]`). */
-export const INTRO_DURATION_MS = 2500;
+export const INTRO_DURATION_MS = 900;
 
-/** Half-distance (world units) between the two protons at `t = -INTRO_DURATION_MS`. */
-export const PROTON_HALF_SEPARATION_START = 0.42;
+/**
+ * Half-distance (world units) between the two protons at `t = -INTRO_DURATION_MS`
+ * — i.e. how far out on the beam axis they start their approach.
+ *
+ * Set so the protons visually originate from *inside* the beam pipe
+ * (`BP.glb`), just shy of its end, rather than floating in empty space
+ * beyond it. `BP.glb` is authored asymmetrically about the interaction
+ * point — after the same ITS-based recenter `detector-loader.ts` applies to
+ * the whole detector group, it spans `z ≈ [-12.95, +5.81]` at
+ * `PropagationScene.objectScale = 1e-2` (measured via
+ * `Box3.setFromObject(bpRoot)` post-recenter; see
+ * `recenterOnBeamAxis()`/`beamAxisReference()` in `detector-loader.ts`,
+ * which deliberately ignores BP itself as the recenter reference for this
+ * exact reason). Using a *symmetric* start distance means only the shorter
+ * (`+z`, ≈5.81) side bounds the value — a larger distance would start the
+ * `+z` proton past the pipe's cut end again. `5.7` leaves a small margin
+ * inside that shorter end on both sides. Kept as a static constant rather
+ * than measured at runtime — `CollisionIntro` loads independently of (in
+ * parallel with) the detector model, so there is no guaranteed-ready `BP`
+ * root to measure from at intro-creation time. Re-measure and update this
+ * constant if `BP.glb` or `objectScale` ever change.
+ */
+export const PROTON_HALF_SEPARATION_START = 5.7;
+
+/**
+ * Exponent for the ease-in curve applied to intro progress (see
+ * `collision-intro.ts`): `easedProgress = progress ** INTRO_EASE_IN_POWER`.
+ * `1` = linear. Values `> 1` keep the protons slow while still far down the
+ * beam pipe and let them accelerate sharply into the collision, which reads
+ * as "fast" despite the much longer travel distance from L3.
+ */
+export const INTRO_EASE_IN_POWER = 2.4;
 
 /** Target on-screen diameter (world units) each proton model is rescaled to. */
 export const PROTON_TARGET_DIAMETER_WORLD = 0.1;

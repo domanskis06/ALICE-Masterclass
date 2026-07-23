@@ -426,7 +426,8 @@
   border: 2px solid rgba(183, 28, 28, 0.85);
   border-radius: 10px;
   overflow: hidden;
-  background: #000;
+  /* Match the animation backdrop so preload shows green, not a frozen first frame. */
+  background: #5e9874;
   box-shadow:
     0 8px 28px rgba(15, 23, 42, 0.35),
     0 0 0 1px rgba(183, 28, 28, 0.28);
@@ -438,7 +439,11 @@
   height: auto;
   aspect-ratio: 16 / 9;
   object-fit: contain;
-  background: #000;
+  background: #5e9874;
+
+  &--pending {
+    opacity: 0;
+  }
 }
 
 /* Fixed overlay so it is not swallowed by THREE canvas/stacking; palette on the right stays usable.
