@@ -18,12 +18,12 @@
  * still collapse Mesh_1/2/3 sector families into {@link THREE.InstancedMesh}
  * when present. TPC uses a distance LOD whose far level thins fine detail and
  * decimates the heavy sector panels (see {@link simplifyTpcForLowLod}). MCH
- * uses a distance LOD with Melax on the heavier Mesh_* panels. ITS / ABSO /
- * DIPO stay at full merged detail — Melax shreds thin-shell / boxy CAD
+ * uses a distance LOD with Melax on the heavier Mesh_* panels. ITS / BP / ABSO /
+ * DIPO stay at full merged detail — Melax shreds thin-shell / support / boxy CAD
  * silhouettes at the default orbit distance. The beam pipe (BP) is a
- * gltfpack-simplified cut tube (~20k tris) with a Melax far LOD; it keeps a
- * higher render order and slightly stronger dark-mode emissive so the thin
- * grey tube stays readable inside the barrel.
+ * gltfpack-simplified cut tube (~55k tris; -si 0.35 -slb so BeamPipeSupport
+ * survives) with a higher render order and slightly stronger dark-mode emissive
+ * so the thin grey tube stays readable inside the barrel.
  */
 
 import * as THREE from 'three';
@@ -200,7 +200,10 @@ export const FIELD_LINE_RENDER_ORDER = 200_000;
 
 /** Human-readable label for a detector GLB path (filename -> short name). */
 export function detectorPartLabel(assetPath: string): string {
-  const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
+  const file = assetPath
+    .replace(/^.*[/\\]/, '')
+    .replace(/\?.*$/, '')
+    .toLowerCase();
   const labels: Record<string, string> = {
     'its.glb': 'ITS',
     'tpc.glb': 'TPC',
@@ -209,13 +212,13 @@ export function detectorPartLabel(assetPath: string): string {
     'emcal.glb': 'EMCal',
     'dcal.glb': 'DCal',
     'phos.glb': 'PHOS',
-    'l3_pp.glb': 'L3 magnet',
+    'l3_pp.glb': 'L3-Magnet',
     'mch.glb': 'MCH',
     'abso.glb': 'ABSO',
-    'dipo.glb': 'DIPO magnet',
-    'bp.glb': 'Beam pipe',
+    'dipo.glb': 'DIPO-Magnet',
+    'bp.glb': 'Beam Pipe',
   };
-  return labels[file] ?? assetPath.replace(/^.*[/\\]/, '').replace(/\.glb$/i, '');
+  return labels[file] ?? file.replace(/\.glb$/i, '');
 }
 
 /** Re-export shared GLB accent colours used by opacity sliders / part chips. */

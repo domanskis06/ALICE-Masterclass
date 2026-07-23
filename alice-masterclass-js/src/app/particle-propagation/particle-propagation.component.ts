@@ -17,6 +17,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import * as THREE from 'three';
 import { Subscription } from 'rxjs';
 
@@ -45,6 +46,7 @@ import {
   defaultDetectorPartVisible,
   defaultOpacityForAsset,
   detectorPartAccentColor,
+  detectorPartLabel,
   isOuterMagnet,
   setDetectorPartOpacity,
   setDetectorPartVisibility,
@@ -226,6 +228,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private welcomeDialogOpened = false;
   /** Owned detector assembly (also stored in {@link PropagationSessionCacheService}). */
   private detectorModel: DetectorModel | null = null;
+  private langChangeSub: Subscription | null = null;
 
   constructor(
     private readonly magneticField: MagneticFieldService,
@@ -236,13 +239,12 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     private readonly sessionCache: PropagationSessionCacheService,
     private readonly dialog: MatDialog,
     private readonly cdr: ChangeDetectorRef,
-    private readonly ngZone: NgZone
+    private readonly ngZone: NgZone,
+    private readonly translate: TranslateService
   ) {
     this.eventRefs = this.particleData.listAvailableEvents();
-    this.eventOptions = this.eventRefs.map((ref, index) => ({
-      id: index,
-      label: `Event ${ref.event + 1}`,
-    }));
+    this.refreshLocalizedLabels();
+    this.langChangeSub = this.translate.onLangChange.subscribe(() => this.refreshLocalizedLabels());
     this.selectedEventIndex = this.eventOptions[0]?.id ?? 0;
     this.magneticField.setFieldStrengthT(this.fieldStrengthT);
     // Warm cache → no boot splash; set before the first CD to avoid NG0100.
@@ -294,6 +296,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.detectorLoadAbort = null;
     this.stopRenderLoop();
     this.precomputeSub?.unsubscribe();
+    this.langChangeSub?.unsubscribe();
+    this.langChangeSub = null;
     this.resizeObserver?.disconnect();
     this.persistSessionToCache();
     // Renderer only — detector / field / intro geometries stay alive in the session cache.
@@ -566,7 +570,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       }
       return {
         assetPath: part.assetPath,
-        label: part.label,
+        label: this.localizeDetectorPartLabel(part.assetPath),
         visible,
         opacity: this.getPartOpacity(part.root),
         accentColor: detectorPartAccentColor(part.assetPath),
@@ -574,6 +578,36 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     });
     this.requestRender();
     this.cdr.markForCheck();
+  }
+
+  /** Rebuild event/part labels after language switch. */
+  private refreshLocalizedLabels(): void {
+    this.eventOptions = this.eventRefs.map((ref, index) => ({
+      id: index,
+      label: this.localizeEventLabel(ref.event + 1),
+    }));
+    if (this.detectorPartsForUi.length > 0) {
+      this.detectorPartsForUi = this.detectorPartsForUi.map((part) => ({
+        ...part,
+        label: this.localizeDetectorPartLabel(part.assetPath),
+      }));
+    }
+    this.cdr.markForCheck();
+  }
+
+  private localizeEventLabel(n: number): string {
+    const key = 'STRANGENESS.PARTICLE_PROPAGATION.EVENT_N';
+    const translated = this.translate.instant(key, { n });
+    return translated === key ? `Event ${n}` : translated;
+  }
+
+  private localizeDetectorPartLabel(assetPath: string): string {
+    const key = detectorPartI18nKey(assetPath);
+    if (key) {
+      const translated = this.translate.instant(key);
+      if (translated !== key) return translated;
+    }
+    return detectorPartLabel(assetPath);
   }
 
   private async loadFieldVisualizationFully(): Promise<void> {
@@ -738,6 +772,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       if (cache.detectorPartsForUi) {
         this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => ({
           ...p,
+          label: this.localizeDetectorPartLabel(p.assetPath),
           opacity: defaultOpacityForAsset(p.assetPath),
           visible: defaultDetectorPartVisible(p.assetPath),
         }));
@@ -1047,4 +1082,24 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       setTrackLinesResolution(this.lines, host.clientWidth, host.clientHeight);
     }
   }
+}
+
+/** i18n key for a detector GLB label, or `null` when the English acronym is language-neutral. */
+function detectorPartI18nKey(assetPath: string): string | null {
+  const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
+  const keys: Record<string, string> = {
+    'its.glb': 'EVENT_DISPLAY.DETECTOR_ITS',
+    'tpc.glb': 'EVENT_DISPLAY.DETECTOR_TPC',
+    'trd.glb': 'EVENT_DISPLAY.DETECTOR_TRD',
+    'tof.glb': 'EVENT_DISPLAY.DETECTOR_TOF',
+    'emcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
+    'dcal.glb': 'EVENT_DISPLAY.DETECTOR_DCAL',
+    'phos.glb': 'EVENT_DISPLAY.DETECTOR_PHOS',
+    'l3_pp.glb': 'STRANGENESS.PARTICLE_PROPAGATION.PART_L3_MAGNET',
+    'mch.glb': 'STRANGENESS.PARTICLE_PROPAGATION.PART_MCH',
+    'abso.glb': 'STRANGENESS.PARTICLE_PROPAGATION.PART_ABSO',
+    'dipo.glb': 'STRANGENESS.PARTICLE_PROPAGATION.PART_DIPO_MAGNET',
+    'bp.glb': 'STRANGENESS.PARTICLE_PROPAGATION.PART_BEAM_PIPE',
+  };
+  return keys[file] ?? null;
 }

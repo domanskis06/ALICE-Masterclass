@@ -64,12 +64,13 @@ function firstMaterial(root: THREE.Object3D): THREE.MeshStandardMaterial & THREE
 describe('detectorPartLabel', () => {
   it('maps known GLB filenames to short human labels', () => {
     expect(detectorPartLabel('assets/models/alice components/its.glb')).toBe('ITS');
-    expect(detectorPartLabel('assets/models/alice components/L3_pp.glb')).toBe('L3 magnet');
+    expect(detectorPartLabel('assets/models/alice components/L3_pp.glb')).toBe('L3-Magnet');
     expect(detectorPartLabel('assets/models/alice components/EMCAL.glb')).toBe('EMCal');
     expect(detectorPartLabel('assets/models/alice components/MCH.glb')).toBe('MCH');
     expect(detectorPartLabel('assets/models/alice components/ABSO.glb')).toBe('ABSO');
-    expect(detectorPartLabel('assets/models/alice components/DIPO.glb')).toBe('DIPO magnet');
-    expect(detectorPartLabel('assets/models/alice components/BP.glb')).toBe('Beam pipe');
+    expect(detectorPartLabel('assets/models/alice components/DIPO.glb')).toBe('DIPO-Magnet');
+    expect(detectorPartLabel('assets/models/alice components/BP.glb')).toBe('Beam Pipe');
+    expect(detectorPartLabel('assets/models/alice components/BP.glb?v=cache')).toBe('Beam Pipe');
   });
 
   it('falls back to the bare filename (minus extension) for unknown parts', () => {

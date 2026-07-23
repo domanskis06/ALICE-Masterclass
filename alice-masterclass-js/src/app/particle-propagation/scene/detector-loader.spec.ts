@@ -9,7 +9,6 @@ import {
   loadDetectorModelProgressive,
 } from './detector-loader';
 import {
-  BEAM_PIPE_LOD_FAR_DISTANCE,
   MAX_LOW_TO_HIGH_DRAWABLE_RATIO,
   MUON_AUX_LOD_FAR_DISTANCE,
   OUTER_MAGNET_DEFAULT_OPACITY,
@@ -192,31 +191,29 @@ describe('loadDetectorModel', () => {
     expect(triCount(lod.levels[1].object)).toBeLessThan(triCount(lod.levels[0].object));
   });
 
-  it('wraps BP in a distance LOD with a Melax far level (cut length kept in asset)', () => {
+  it('keeps BP unmerged with BeamPipeSupport intact (no Melax far LOD)', () => {
     const bp = model.parts.find((p) => /bp\.glb$/i.test(p.assetPath));
     expect(bp).toBeDefined();
-    expect(bp!.root).toBeInstanceOf(THREE.LOD);
-    const lod = bp!.root as THREE.LOD;
-    expect(lod.levels.length).toBe(2);
-    expect(lod.levels[0].distance).toBe(0);
-    expect(lod.levels[1].distance).toBe(BEAM_PIPE_LOD_FAR_DISTANCE);
+    expect(bp!.root).not.toBeInstanceOf(THREE.LOD);
 
-    const triCount = (root: THREE.Object3D): number => {
-      let tris = 0;
-      root.traverse((obj) => {
-        const mesh = obj as THREE.Mesh;
-        if (!mesh.isMesh) return;
-        const g = mesh.geometry as THREE.BufferGeometry;
-        tris += g.index ? g.index.count / 3 : (g.attributes.position?.count ?? 0) / 3;
-      });
-      return tris;
-    };
-    const highTris = triCount(lod.levels[0].object);
-    const lowTris = triCount(lod.levels[1].object);
-    // gltfpack ~20k high; Melax far must be lighter and stay in the 10–30k band for high.
-    expect(highTris).toBeGreaterThan(5_000);
-    expect(highTris).toBeLessThan(35_000);
-    expect(lowTris).toBeLessThan(highTris);
+    const names: string[] = [];
+    let meshCount = 0;
+    const geometries = new Set<THREE.BufferGeometry>();
+    bp!.root.traverse((obj) => {
+      if (obj.name) names.push(obj.name);
+      const mesh = obj as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      meshCount += 1;
+      geometries.add(mesh.geometry as THREE.BufferGeometry);
+    });
+    // Support bars/foam must survive — aggressive gltfpack -si deleted these.
+    expect(names.some((n) => /supportBarCarbon/i.test(n))).toBe(true);
+    expect(names.some((n) => /supportBarFoam/i.test(n))).toBe(true);
+    expect(names.some((n) => /bracket/i.test(n))).toBe(true);
+    // Shared mesh defs (~27) across ~180 nodes; do not merge (would bake ~10×).
+    expect(meshCount).toBeGreaterThan(20);
+    expect(meshCount).toBeLessThan(250);
+    expect(geometries.size).toBeLessThan(80);
   });
 
   it('keeps low-LOD drawable counts within MAX_LOW_TO_HIGH_DRAWABLE_RATIO of high', () => {
@@ -301,7 +298,7 @@ describe('loadDetectorModel', () => {
     model.group.updateMatrixWorld(true);
     const part = model.parts.find((p) => /\/bp\.glb$/i.test(p.assetPath));
     expect(part).toBeDefined();
-    expect(part!.label).toBe('Beam pipe');
+    expect(part!.label).toBe('Beam Pipe');
     // Main tube meshes are authored at Y≈30 (ITS frame); after ITS recenter the
     // pipe AABB centre drifts a bit from flanges, but X stays on axis.
     const center = new THREE.Box3().setFromObject(part!.root).getCenter(new THREE.Vector3());
@@ -434,17 +431,17 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
   it('defers Melax low-LOD until attachDeferredLowLods', async () => {
     const deferred = await loadDetectorModel(DETECTOR_PART_PATHS, 1e-2, true, true);
 
-    // ITS / ABSO / DIPO no longer use Melax far LOD — stay full merged meshes.
+    // ITS / BP / ABSO / DIPO no longer use Melax far LOD.
     const its = deferred.parts.find((p) => /its\.glb$/i.test(p.assetPath));
     expect(its).toBeDefined();
     expect(its!.root).not.toBeInstanceOf(THREE.LOD);
 
+    const bp = deferred.parts.find((p) => /bp\.glb$/i.test(p.assetPath));
+    expect(bp).toBeDefined();
+    expect(bp!.root).not.toBeInstanceOf(THREE.LOD);
+
     const tpc = deferred.parts.find((p) => /tpc\.glb$/i.test(p.assetPath));
     expect((tpc!.root as THREE.LOD).levels.length).toBe(1);
-
-    const bp = deferred.parts.find((p) => /bp\.glb$/i.test(p.assetPath));
-    expect(bp!.root).toBeInstanceOf(THREE.LOD);
-    expect((bp!.root as THREE.LOD).levels.length).toBe(1);
 
     // L3 thinning is sync (no Melax) — both levels present immediately.
     const l3 = deferred.parts.find((p) => /l3_pp\.glb$/i.test(p.assetPath));
@@ -453,7 +450,6 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
     const attached = attachDeferredLowLods(deferred.group);
     expect(attached).toBeGreaterThan(0);
     expect((tpc!.root as THREE.LOD).levels.length).toBe(2);
-    expect((bp!.root as THREE.LOD).levels.length).toBe(2);
     expect(attachDeferredLowLods(deferred.group)).toBe(0);
 
     deferred.group.traverse((obj) => {

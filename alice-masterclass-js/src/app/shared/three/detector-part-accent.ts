@@ -25,6 +25,9 @@ const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
 
 /** CSS hex accent for opacity sliders / part chips; falls back to orange. */
 export function detectorPartAccentColor(assetPath: string): string {
-  const file = assetPath.replace(/^.*[/\\]/, '').toLowerCase();
+  const file = assetPath
+    .replace(/^.*[/\\]/, '')
+    .replace(/\?.*$/, '')
+    .toLowerCase();
   return DETECTOR_PART_ACCENT_HEX[file] ?? '#ff6f00';
 }

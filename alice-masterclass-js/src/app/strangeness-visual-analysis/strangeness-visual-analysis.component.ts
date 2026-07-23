@@ -57,6 +57,15 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private eventDisplayHostRef!: ElementRef<HTMLElement>;
 
   @ViewChild('collisionVideo')
+  set collisionVideo(ref: ElementRef<HTMLVideoElement> | undefined) {
+    this.collisionVideoRef = ref;
+    if (!ref || this.protonCollisionIntroFinished) {
+      return;
+    }
+    this.collisionVideoPlaybackStarted = false;
+    // Ensure muted autoplay is allowed; playback starts from (canplay).
+    ref.nativeElement.muted = true;
+  }
   private collisionVideoRef?: ElementRef<HTMLVideoElement>;
 
   @ViewChild('massHistograms')
@@ -76,8 +85,18 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   /** Collision intro finished (or skipped because assembly was already done). */
   private protonCollisionIntroFinished = false;
 
-  /** MP4 proton–proton collision intro shown before the assembly coach. */
-  readonly collisionVideoUrl = 'assets/videos/proton_collision_animation.mp4';
+  /**
+   * Proton–proton collision intro before the assembly coach.
+   * Prefer WebM (VP9) — works on Linux Chromium without proprietary H.264; MP4 is fallback.
+   * Absolute `/assets/...` avoids relative-URL resolution issues under nested routes.
+   */
+  readonly collisionVideoWebmUrl = '/assets/videos/proton_collision_animation.webm';
+  readonly collisionVideoMp4Url = '/assets/videos/proton_collision_animation.mp4';
+  /** Ignore spurious `ended`/`error` before the video has actually progressed. */
+  private static readonly COLLISION_INTRO_MIN_PLAYED_S = 0.4;
+  private collisionVideoErrorRetries = 0;
+  /** Hide the frozen first frame until playback actually starts. */
+  collisionVideoPlaybackStarted = false;
 
   readonly ALICE_DETECTOR_MODEL = [
     'assets/models/alice components/its.glb',
@@ -383,14 +402,62 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.tryScheduleVaCoach();
   }
 
+  /** Real end of playback — ignore early/spurious `ended` (incl. NaN currentTime after load()). */
+  onCollisionVideoEnded(): void {
+    const video = this.collisionVideoRef?.nativeElement;
+    const played = video?.currentTime;
+    const duration = video?.duration;
+    if (
+      !Number.isFinite(played) ||
+      !Number.isFinite(duration) ||
+      duration < 1 ||
+      (played as number) < StrangenessVisualAnalysisComponent.COLLISION_INTRO_MIN_PLAYED_S
+    ) {
+      return;
+    }
+    this.onProtonCollisionIntroFinished();
+  }
+
+  /**
+   * Media error: fall back to MP4 once, then keep poster + Skip (do not auto-dismiss).
+   */
+  onCollisionVideoError(): void {
+    if (this.protonCollisionIntroFinished) return;
+    const video = this.collisionVideoRef?.nativeElement;
+    if (video && this.collisionVideoErrorRetries < 1) {
+      this.collisionVideoErrorRetries += 1;
+      video.src = this.collisionVideoMp4Url;
+      video.load();
+      window.setTimeout(() => this.tryPlayCollisionVideo(), 0);
+    }
+  }
+
   onCollisionVideoReady(): void {
     this.tryPlayCollisionVideo();
   }
 
+  onCollisionVideoPlaying(): void {
+    this.collisionVideoPlaybackStarted = true;
+  }
+
+  /**
+   * Start intro only once the video element has current data. An early play() (right after
+   * the event loads, before canplay) rejects with AbortError and used to close the overlay —
+   * black framed box flashes then vanishes on fast machines / cached events.
+   */
   private tryPlayCollisionVideo(): void {
     const video = this.collisionVideoRef?.nativeElement;
     if (!video || this.protonCollisionIntroFinished) return;
-    void video.play().catch(() => this.onProtonCollisionIntroFinished());
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+    video.muted = true;
+    void video.play().then(() => {
+      this.collisionVideoPlaybackStarted = true;
+    }).catch((err: unknown) => {
+      // A newer load/play aborts the previous play() promise — do not end the intro.
+      const name = err && typeof err === 'object' && 'name' in err ? String((err as {name: unknown}).name) : '';
+      if (name === 'AbortError') return;
+      // Autoplay blocked: leave the green frame up; student can use Skip.
+    });
   }
 
   private tryScheduleVaCoach(): void {
@@ -416,7 +483,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
         this.eventChanged();
         this.eventReadyForProtonIntro = true;
         this.event = data;
-        setTimeout(() => this.tryPlayCollisionVideo(), 0);
+        // Playback starts from (canplay) / onCollisionVideoReady — not here.
+        // Early play() races the video mount and closes the intro on AbortError.
       },
       (error: HttpErrorResponse) => {
         // Do not block the assembly coach if the first event fails to load.

@@ -5,14 +5,16 @@
         <video
           #collisionVideo
           class="collision-video"
-          [src]="collisionVideoUrl"
+          [class.collision-video--pending]="!collisionVideoPlaybackStarted"
+          [src]="collisionVideoWebmUrl"
           autoplay
           muted
           playsinline
           preload="auto"
-          (loadeddata)="onCollisionVideoReady()"
-          (ended)="onProtonCollisionIntroFinished()"
-          (error)="onProtonCollisionIntroFinished()"
+          (canplay)="onCollisionVideoReady()"
+          (playing)="onCollisionVideoPlaying()"
+          (ended)="onCollisionVideoEnded()"
+          (error)="onCollisionVideoError()"
         ></video>
       </div>
       <button
