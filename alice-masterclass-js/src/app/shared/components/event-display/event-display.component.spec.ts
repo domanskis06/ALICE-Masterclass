@@ -1,4 +1,27 @@
 import { EventDisplayComponent } from './event-display.component';
+import * as THREE from 'three';
+
+describe('EventDisplayComponent detector part UI persistence', () => {
+  const paths = [
+    'assets/models/alice components/ITS.glb',
+    'assets/models/alice components/FIT.glb',
+    'assets/models/alice components/L3.glb',
+  ];
+
+  afterEach(() => {
+    sessionStorage.removeItem(EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY);
+  });
+
+  it('exposes a dedicated sessionStorage key for layer toggles', () => {
+    expect(EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY).toContain('detectorPartUi');
+  });
+
+  it('treats FIT and L3 as hidden by default after a restored assembly', () => {
+    expect(EventDisplayComponent.isFitAssetPath(paths[1])).toBe(true);
+    expect(EventDisplayComponent.isL3AssetPath(paths[2])).toBe(true);
+    expect(EventDisplayComponent.isFitAssetPath(paths[0])).toBe(false);
+  });
+});
 
 describe('EventDisplayComponent calorimeter assembly grouping', () => {
   it('labels EMCal as Calorimeters in the assembly palette', () => {
@@ -168,5 +191,25 @@ describe('EventDisplayComponent decay/background track dedupe', () => {
     expect(EventDisplayComponent.backgroundTrackIndicesHiddenByDecays(event as any)).toEqual(
       new Set([0, 2])
     );
+  });
+});
+
+describe('EventDisplayComponent side-view layers', () => {
+  it('assigns main-only layer recursively so side cameras skip the subtree', () => {
+    const root = new THREE.Group();
+    const child = new THREE.Mesh();
+    root.add(child);
+    EventDisplayComponent.assignMainOnlyLayer(root);
+
+    const sideCam = new THREE.Layers();
+    sideCam.set(EventDisplayComponent.LAYER_SHARED);
+    const mainCam = new THREE.Layers();
+    mainCam.enable(EventDisplayComponent.LAYER_SHARED);
+    mainCam.enable(EventDisplayComponent.LAYER_MAIN_ONLY);
+
+    expect(root.layers.test(sideCam)).toBe(false);
+    expect(child.layers.test(sideCam)).toBe(false);
+    expect(root.layers.test(mainCam)).toBe(true);
+    expect(child.layers.test(mainCam)).toBe(true);
   });
 });

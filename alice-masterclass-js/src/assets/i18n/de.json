@@ -7,8 +7,8 @@
   "VA_COACH": {
     "WELCOME_TITLE": "Willkommen, angehender Physiker!",
     "WELCOME_P1": "Sie erkunden Teilchenkollisionen am ALICE-Detektor.",
-    "WELCOME_P2": "Die Strahlen laufen im Strahlrohr — einem ultrahochvakuum — bis zum Wechselwirkungspunkt im Zentrum von ALICE.",
-    "WELCOME_P3": "Sie bauen den Detektor Teil für Teil zusammen — wir zeigen immer das nächste Fragment. Tipps auf »Weiter«, wenn Sie starten möchten.",
+    "WELCOME_P2": "Die Strahlen laufen durch das Strahlrohr, ein Ultrahochvakuum-Rohr, bis sie sich am Wechselwirkungspunkt im Inneren von ALICE treffen.",
+    "WELCOME_P3": "Sie bauen den Detektor Stück für Stück und lernen dabei die Rolle und Bedeutung jedes Detektorteils kennen. Bereit?",
     "WELCOME_CONTINUE": "Weiter",
     "DRAG_TITLE": "Nächstes Teil platzieren",
     "DONE_TITLE": "Detector fertig montiert",
@@ -26,7 +26,7 @@
       },
       "FIT": {
         "TITLE": "FIT (Fast Interaction Trigger)",
-        "BODY": "Der FIT ist einer der ersten Detektoren, die nach einer Teilchenkollision im ALICE-Experiment reagieren. Er erkennt Kollisionen praktisch sofort und liefert ein präzises Zeitsignal, das dem Datenerfassungssystem mitteilt, wann ein interessantes Ereignis stattgefunden hat. So kann ALICE nur die relevanten Kollisionen aufzeichnen und Hintergrundereignisse verwerfen, die für die Physikanalyse nicht nützlich sind.\n\nNeben seiner Trigger-Rolle misst der FIT den genauen Zeitpunkt der Kollision und hilft, wichtige Eigenschaften wie die Kollisionszeit und die Zentralität in Schwerionenkollisionen zu bestimmen. Diese Messungen sind für den korrekten Betrieb anderer ALICE-Detektoren wesentlich — besonders für solche, die auf präzise Zeitmessung angewiesen sind, etwa den TOF-Detektor.",
+        "BODY": "Der FIT ist einer der ersten Detektoren, die nach einer Teilchenkollision im ALICE-Experiment reagieren. Er erkennt Kollisionen nahezu sofort und liefert ein präzises Zeitsignal, das dem restlichen Experiment mitteilt, wann eine Wechselwirkung stattgefunden hat. Diese frühe Zeitinformation ist entscheidend für das Auslösen der Datenerfassung und für die Synchronisation anderer Detektoren.",
         "LETS_US": "Mit dem FIT können wir:",
         "B1": "Kollisionen in Echtzeit erkennen und die Datenaufzeichnung auslösen.",
         "B2": "die Kollisionszeit mit sehr hoher Präzision messen.",
@@ -35,7 +35,7 @@
       },
       "TPC": {
         "TITLE": "TPC (Time Projection Chamber)",
-        "BODY": "Die TPC ist der größte Spurdetektor im ALICE-Experiment und einer der größten Gasdetektoren, die je für die Teilchenphysik gebaut wurden. Sie ist mit einer sorgfältig gewählten Gasmischung gefüllt, durch die geladene Teilchen nach einer Kollision fliegen. Dabei ionisieren sie das Gas und hinterlassen Spuren freier Elektronen. Diese Elektronen driften in einem homogenen elektrischen Feld zu den Auslesekammern, so dass Physiker die dreidimensionalen Trajektorien der Teilchen mit hoher Präzision rekonstruieren können. Eine einzelne Schwerionenkollision kann Zehntausende geladener Teilchen erzeugen — die TPC kann ihre Spuren gleichzeitig aufzeichnen. Neben den Bahnen hilft sie auch bei der Teilchenidentifikation, indem sie misst, wie viel Energie die Teilchen beim Durchqueren des Gases verlieren.",
+        "BODY": "Die TPC ist der größte Spurendetektor in ALICE und einer der größten Gasdetektoren, die je für die Teilchenphysik gebaut wurden. Geladene Teilchen ionisieren das Gas auf ihrem Weg und hinterlassen Spuren freier Elektronen, die in einem elektrischen Feld zu den Auslesekammern driften. Aus diesen Signalen rekonstruieren Physiker dreidimensionale Spuren mit hoher Präzision, auch wenn eine einzelne Schwerionenkollision Zehntausende von Teilchen erzeugt. Die TPC hilft außerdem bei der Teilchenidentifikation, indem sie misst, wie viel Energie die Teilchen im Gas verlieren.",
         "LETS_US": "Mit der TPC können wir:",
         "B1": "Teilchenspuren rekonstruieren und die Bahnen Tausender Teilchen aus einer einzigen Kollision sichtbar machen",
         "B2": "verschiedene Teilchenarten identifizieren, indem wir ihren Energieverlust im Gas messen",
@@ -44,7 +44,7 @@
       },
       "TRD": {
         "TITLE": "TRD (Transition Radiation Detector)",
-        "BODY": "Der TRD ist ein Detektor, der vor allem Elektronen unter den vielen verschiedenen Teilchen aus Hochenergiekollisionen identifizieren soll. Er nutzt die sogenannte Übergangsstrahlung: Wenn ein sehr schnelles geladenes Teilchen die Grenze zwischen zwei verschiedenen Materialien durchquert, sendet es Röntgenstrahlung aus. Elektronen erzeugen diese Strahlung deutlich effizienter als schwerere Teilchen — so kann der TRD sie von Teilchen wie Pionen unterscheiden. Der TRD spielt eine wichtige Rolle bei der Untersuchung von Prozessen mit Elektronen, auch beim Quark-Gluon-Plasma in Schwerionenkollisionen. Mit präzisen Informationen über Elektronenproduktion und -verhalten hilft er Physikern, die Bedingungen der Materie bei extremen Temperaturen und Dichten kurz nach einer Kollision zu verstehen.",
+        "BODY": "Der TRD ist ein Detektor, der vor allem Elektronen unter den vielen verschiedenen Teilchen identifizieren soll, die in hochenergetischen Kollisionen erzeugt werden. Er nutzt den sogenannten Übergangsstrahlungseffekt: Wenn ein sehr schnelles geladenes Teilchen die Grenze zwischen zwei unterschiedlichen Materialien durchquert, kann es Röntgenstrahlung aussenden. Elektronen erzeugen diese Strahlung deutlich effizienter als schwerere Teilchen, sodass der TRD sie von Teilchen wie Pionen trennen kann. Deshalb ist er wichtig für Studien mit Elektronen, einschließlich Untersuchungen des Quark-Gluon-Plasmas in Schwerionenkollisionen.",
         "LETS_US": "Mit dem TRD können wir:",
         "B1": "Elektronen identifizieren und von anderen Teilchenarten trennen.",
         "B2": "die Elektronenproduktion in hochenergetischen Proton- und Schwerionenkollisionen untersuchen.",
@@ -53,32 +53,16 @@
       },
       "TOF": {
         "TITLE": "TOF (Time Of Flight)",
-        "BODY": "Der TOF-Detektor misst mit extrem hoher Präzision die Flugzeit von Teilchen vom Kollisionspunkt bis zum Detektor. Die Genauigkeit liegt bei etwa 50 Pikosekunden — nur 50 Billionstel einer Sekunde. Aus gemessener Flugzeit, zurückgelegter Strecke und Impuls berechnen Physiker die Geschwindigkeit und daraus die Teilchenart. So kann der TOF verschiedene Teilchen — etwa Pionen, Kaonen und Protonen — unterscheiden, auch wenn sie sich mit Geschwindigkeiten nahe der Lichtgeschwindigkeit bewegen. Das ist besonders wichtig, weil viele in Kollisionen erzeugte Teilchen ähnliche Eigenschaften haben und präzise Zeitmessungen einen zusätzlichen Weg zur Identifikation bieten.",
+        "BODY": "Der TOF-Detektor misst, wie lange Teilchen vom Kollisionspunkt bis zum Detektor brauchen, mit einer Genauigkeit von etwa 50 Pikosekunden (50 × 10<sup>−12</sup> s). Zusammen mit der zurückgelegten Strecke und dem Impuls des Teilchens ergibt diese Flugzeit seine Geschwindigkeit und damit seine Identität. So kann der TOF Pionen, Kaonen und Protonen unterscheiden, auch wenn sie sich nahezu mit Lichtgeschwindigkeit bewegen. Präzise Zeitmessung ist besonders nützlich, weil viele in Kollisionen erzeugte Teilchen ähnliche Eigenschaften haben und diese zusätzliche Information zur Identifikation brauchen.",
         "LETS_US": "Mit dem TOF können wir:",
         "B1": "Teilchengeschwindigkeiten mit extrem hoher Präzision messen.",
         "B2": "verschiedene Teilchenarten durch Vergleich von Flugzeit und Impuls identifizieren.",
         "B3": "Pionen, Kaonen und Protonen aus Kollisionen unterscheiden.",
         "B4": "das Verständnis von Teilchenwechselwirkungen in Hochenergiekollisionen verbessern."
       },
-      "EMCAL": {
-        "TITLE": "EMCAL (Electromagnetic Calorimeter)",
-        "BODY": "Der EMCAL misst die Energie von Elektronen und Photonen aus Teilchenkollisionen. Wenn ein solches Teilchen in den Detektor eintritt, entsteht ein elektromagnetischer Schauer — eine Kaskade sekundärer Teilchen, die ihre gesamte Energie im Kalorimeter deponieren. Aus diesem Schauer bestimmen Physiker die Energie des ursprünglichen Teilchens mit hoher Präzision.\n\nDer EMCAL spielt auch eine zentrale Rolle bei der Untersuchung von Jets — gebündelten Teilchenstrahlen, die entstehen, wenn hochenergetische Quarks und Gluonen in Kollisionen erzeugt werden. Die Messung der Energie von Elektronen, Photonen und Jets hilft zu verstehen, wie sich Materie unter den extremen Bedingungen im ALICE-Experiment verhält.",
-        "LETS_US": "Mit dem EMCAL können wir:",
-        "B1": "die Energie von Elektronen und Photonen mit hoher Präzision messen.",
-        "B2": "Jets aus Hochenergiekollisionen untersuchen.",
-        "B3": "untersuchen, wie Teilchen beim Durchqueren des Quark-Gluon-Plasmas Energie verlieren."
-      },
-      "DCAL": {
-        "TITLE": "DCAL (Di-jet Calorimeter)",
-        "BODY": "Der DCAL ist eine Erweiterung des EMCAL und arbeitet nach demselben Prinzip: Er misst die Energie von Elektronen und Photonen. Sein Hauptzweck ist eine größere Abdeckung, sodass ALICE mehr Jets erfassen kann — besonders Jet-Paare, die in Hochenergiekollisionen in entgegengesetzte Richtungen entstehen.\n\nMit seiner größeren Akzeptanz verbessert der DCAL die Untersuchung von Di-Jet-Ereignissen: Der Vergleich der Energien zweier gegenüberliegender Jets zeigt, wie sie mit dem Quark-Gluon-Plasma wechselwirken. Dieser extrem heiße und dichte Zustand der Materie erfüllte das Universum für einen winzigen Bruchteil einer Sekunde nach dem Urknall — solche Messungen sind daher ein wichtiges Werkzeug, um die frühesten Momente unseres Universums zu verstehen.",
-        "LETS_US": "Mit dem DCAL können wir:",
-        "B1": "den Jet-Nachweisbereich des ALICE-Experiments erweitern.",
-        "B2": "Jet-Paare (Di-Jets) untersuchen, die in entgegengesetzte Richtungen entstehen.",
-        "B3": "untersuchen, wie Jets beim Durchqueren des Quark-Gluon-Plasmas Energie verlieren."
-      },
       "PHOS": {
         "TITLE": "PHOS (Photon Spectrometer)",
-        "BODY": "Der PHOS ist ein hochauflösendes elektromagnetisches Kalorimeter, das die Energie von Photonen und Elektronen mit außergewöhnlicher Präzision misst. Anders als andere Kalorimeter, die eine größere Fläche abdecken, ist PHOS auf möglichst genaue Energiemessungen optimiert. Er besteht aus dichten szintillierenden Kristallen, die winzige Lichtblitze erzeugen, wenn Teilchen sie durchqueren — daraus lässt sich ihre Energie sehr präzise bestimmen.\n\nPHOS ist besonders wichtig für die Untersuchung von Teilchen, die in Photonen zerfallen, etwa Pionen.",
+        "BODY": "Der PHOS ist ein hochauflösendes elektromagnetisches Kalorimeter, das die Energie von Photonen und Elektronen möglichst genau messen soll. Im Gegensatz zu den größeren Kalorimetern liegt der Schwerpunkt eher auf Präzision als auf Abdeckung. Dichte szintillierende Kristalle erzeugen winzige Lichtblitze, wenn Teilchen sie durchqueren, und aus diesen Blitzen lässt sich die Teilchenenergie sehr präzise bestimmen. PHOS ist besonders nützlich für die Untersuchung von Teilchen, die in Photonen zerfallen, etwa Pionen.",
         "LETS_US": "Mit dem PHOS können wir:",
         "B1": "die Energie von Photonen und Elektronen mit sehr hoher Präzision messen.",
         "B2": "Teilchen untersuchen, die in Photonen zerfallen, etwa Pionen.",
@@ -86,7 +70,7 @@
       },
       "L3": {
         "TITLE": "L3 (Solenoid Magnet)",
-        "BODY": "Der L3-Magnet ist der große Solenoid, der die ALICE-Detektoren umgibt und ein starkes Magnetfeld entlang der Strahlachse erzeugt. Wenn ein geladenes Teilchen durch dieses Feld fliegt, krümmt die Lorentzkraft seine Bahn. Die Richtung der Krümmung zeigt das Vorzeichen der Ladung, während der Krümmungsradius mit dem Impuls zusammenhängt: schnellere Teilchen mit höherem Impuls biegen sich weniger stark als langsamere.\n\nOhne Magnetfeld erscheinen rekonstruierte Spuren als Geraden. Mit dem L3 werden daraus die gekrümmten Trajektorien, aus denen der Impuls gemessen wird — ein zentraler Schritt zum Verständnis der Teilchen aus Hochenergiekollisionen.",
+        "BODY": "Der L3-Magnet ist die monumentale Solenoidspule um die ALICE-Detektoren. Er erzeugt ein starkes Magnetfeld entlang der Strahlachse. Geladene Teilchen, die dieses Feld durchqueren, werden durch die Lorentzkraft auf gekrümmte Bahnen abgelenkt. Die Richtung der Krümmung zeigt das Vorzeichen der Ladung, und der Krümmungsradius hängt vom Impuls ab: Teilchen mit höherem Impuls werden weniger abgelenkt. Ohne den Magneten würden geladene Teilchen geradeaus fliegen. Mit eingeschaltetem L3 werden aus ihren Bahnen die gekrümmten Trajektorien, die zur Impulsmessung dienen.",
         "LETS_US": "Mit dem L3 können wir:",
         "B1": "Bahnen geladener Teilchen im Magnetfeld krümmen.",
         "B2": "aus der Richtung der Spurkrümmung auf die Teilchenladung schließen.",

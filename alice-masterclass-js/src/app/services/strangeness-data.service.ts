@@ -81,33 +81,60 @@ export class StrangenessDataService {
   get visualAnalysisResults(): Map<string, VisualAnalysisResultsEntry[]> { return this._vaResults; }
   private _vaResults: Map<string, VisualAnalysisResultsEntry[]> = new Map<string, VisualAnalysisResultsEntry[]>();
 
-  /** Decay-track particleIds already contributed to a histogram entry, keyed by event id. */
-  private _analyzedDecayTrackIds: Map<string, Set<number>> = new Map<string, Set<number>>();
+  /**
+   * Individual decay-daughter track keys already used in a histogram add, keyed by event id.
+   * Keys are opaque strings built by the VA layer (e.g. `0:+`, `1:-`, `0:b`).
+   * Mixing daughters across V0s is allowed; each physical track may be used only once.
+   */
+  private _analyzedTrackKeys: Map<string, Set<string>> = new Map<string, Set<string>>();
 
-  addVisualAnalysisResult(key: string, value: VisualAnalysisResultsEntry, trackIds: number[] = []): void {
+  /** True if this track key was already used (or claimed) for the event. */
+  isTrackAnalyzed(key: string, trackKey: string): boolean {
+    return this._analyzedTrackKeys.get(key)?.has(trackKey) ?? false;
+  }
+
+  /**
+   * Reserve tracks so they cannot be submitted again (e.g. while the flight animation runs).
+   * Atomic: claims all keys or none. Returns false if any key was already claimed.
+   */
+  claimTracksForHistogram(key: string, trackKeys: string[]): boolean {
+    if (trackKeys.length === 0) {
+      return false;
+    }
+    const unique = [...new Set(trackKeys)];
+    for (const trackKey of unique) {
+      if (this.isTrackAnalyzed(key, trackKey)) {
+        return false;
+      }
+    }
+    const analyzed = new Map(this._analyzedTrackKeys);
+    const set = new Set(analyzed.get(key) ?? []);
+    for (const trackKey of unique) {
+      set.add(trackKey);
+    }
+    analyzed.set(key, set);
+    this._analyzedTrackKeys = analyzed;
+    return true;
+  }
+
+  addVisualAnalysisResult(key: string, value: VisualAnalysisResultsEntry, trackKeys: string[] = []): void {
     this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>(this._vaResults);
     const existing = this._vaResults.get(key) ?? [];
     this._vaResults.set(key, [...existing, value]);
 
-    if (trackIds.length > 0) {
-      const analyzed = new Map(this._analyzedDecayTrackIds);
-      const set = new Set(analyzed.get(key) ?? []);
-      for (const id of trackIds) {
-        set.add(id);
-      }
-      analyzed.set(key, set);
-      this._analyzedDecayTrackIds = analyzed;
+    if (trackKeys.length > 0) {
+      this.claimTracksForHistogram(key, trackKeys);
     }
   }
 
-  /** True once every required decay-track particleId has been used in a histogram add. */
-  areAllDecayTracksAnalyzed(key: string, requiredTrackIds: Iterable<number>): boolean {
-    const done = this._analyzedDecayTrackIds.get(key);
+  /** True once every required decay-daughter track key has been used in a histogram add. */
+  areAllTracksAnalyzed(key: string, requiredTrackKeys: Iterable<string>): boolean {
+    const done = this._analyzedTrackKeys.get(key);
     if (!done || done.size === 0) {
       return false;
     }
-    for (const id of requiredTrackIds) {
-      if (!done.has(id)) {
+    for (const trackKey of requiredTrackKeys) {
+      if (!done.has(trackKey)) {
         return false;
       }
     }
@@ -117,7 +144,7 @@ export class StrangenessDataService {
   clearVisualAnalysisResults(): void {
     // New Map instance so Angular @Input change detection updates histograms immediately.
     this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>();
-    this._analyzedDecayTrackIds = new Map<string, Set<number>>();
+    this._analyzedTrackKeys = new Map<string, Set<string>>();
   }
 
   submitVisualAnalysisResults(datasetID: number): Observable<any> {

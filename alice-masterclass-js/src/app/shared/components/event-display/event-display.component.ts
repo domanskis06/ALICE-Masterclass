@@ -61,11 +61,19 @@ export interface AssemblyUnlockState {
   standalone: false
 })
 export class EventDisplayComponent implements AfterViewInit, OnDestroy {
-  /** Side views: lower backing store (allows sub-1× DPR). Antialias is also disabled via renderer recreate. */
-  private readonly SIDE_VIEW_PIXEL_RATIO_FACTOR: number = 0.4;
-  private readonly SIDE_VIEW_MIN_PIXEL_RATIO: number = 0.5;
-  /** Main 3D view renders every demand-frame; side views every Nth frame (scissor preserves prior pixels). */
-  private readonly SIDE_VIEW_RENDER_INTERVAL: number = 5;
+  /**
+   * Side views: full-res WebGLRenderTargets updated only when dirty (and not mid
+   * camera gesture). Blit the cached textures while the main camera moves (or
+   * right after a cache refresh); idle frames skip blit and keep the frozen
+   * frame via scissor. Main 3D keeps full devicePixelRatio + AA + bloom (composer
+   * sized to the main viewport so side regions are untouched).
+   *
+   * Layer 0 — shared by main + Rφ/ρz: detector parts (respecting root.visible), tracks,
+   * decays, clusters, markers, calorimeter readouts, lights, axes.
+   * Layer 1 — main 3D only: helper grids (skip in side passes).
+   */
+  static readonly LAYER_SHARED = 0;
+  static readonly LAYER_MAIN_ONLY = 1;
   private readonly CLUSTERS_USE_POINTS: boolean = true;
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
 
@@ -79,13 +87,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly farClippingPlane: number = 1500;
   static readonly objectScale: number = 1.0e-2;
   static readonly detectorModelScale: number = 1.0e-2;
-  /** Default overview framing of the full ALICE detector. */
-  static readonly CAMERA_3D_OVERVIEW = { x: -7.5, y: 7.5, z: 2.5 } as const;
+  /**
+   * Default overview framing: look along +Z (azimuth 0°) into the barrel so the
+   * transverse cross-section (concentric shells) faces the screen.
+   */
+  static readonly CAMERA_3D_OVERVIEW = { x: 0, y: 0, z: 11 } as const;
   /**
    * Closer start framing for guided multipart assembly (ITS-scale).
-   * ~3.5× nearer than overview so the beam pipe / first layers dominate the view.
+   * Same +Z ray as overview (~3.7× nearer) so zoom-out stays end-on.
    */
-  static readonly CAMERA_3D_ASSEMBLY_START = { x: -2.0, y: 2.0, z: 0.7 } as const;
+  static readonly CAMERA_3D_ASSEMBLY_START = { x: 0, y: 0, z: 3 } as const;
   /** Duration of the auto zoom-out after each assembly piece is snapped. */
   static readonly ASSEMBLY_CAMERA_ZOOM_MS = 700;
   /**
@@ -533,6 +544,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /** sessionStorage: multipart assembly completed for this tab session. */
   static readonly DETECTOR_ASSEMBLY_DONE_STORAGE_KEY = 'alice_mc_visualAnalysis_detectorAssembledPaths_v1';
+  /** sessionStorage: per-part visibility/opacity after assembly (survives refresh). */
+  static readonly DETECTOR_PART_UI_STORAGE_KEY = 'alice_mc_visualAnalysis_detectorPartUi_v1';
 
   private static detectorAssemblyPathsSignature(paths: string[]): string {
     return paths.join('\u0000');
@@ -564,6 +577,83 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     } catch {
       /* private browsing / quota */
     }
+  }
+
+  /** Persist left-sidebar detector layer toggles for the current multipart set. */
+  private persistDetectorPartUiState(): void {
+    if (this.detectorMultipartModelPathsOrder.length === 0 && this.detectorPartsForUi.length === 0) {
+      return;
+    }
+    const paths =
+      this.detectorMultipartModelPathsOrder.length > 0
+        ? this.detectorMultipartModelPathsOrder
+        : this.detectorPartsForUi.map((p) => p.assetPath);
+    const parts: Record<string, { visible: boolean; opacity: number }> = {};
+    for (const part of this.detectorPartsForUi) {
+      parts[part.assetPath] = { visible: !!part.visible, opacity: part.opacity };
+    }
+    try {
+      sessionStorage.setItem(
+        EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY,
+        JSON.stringify({
+          signature: EventDisplayComponent.detectorAssemblyPathsSignature(paths),
+          parts
+        })
+      );
+    } catch {
+      /* private browsing / quota */
+    }
+  }
+
+  /**
+   * Load persisted layer toggles when the path set matches.
+   * Returns null when nothing usable is stored for this assembly.
+   */
+  private readStoredDetectorPartUi(
+    paths: string[]
+  ): Map<string, { visible: boolean; opacity: number }> | null {
+    if (!paths?.length) return null;
+    try {
+      const raw =
+        typeof sessionStorage !== 'undefined'
+          ? sessionStorage.getItem(EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY)
+          : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as {
+        signature?: string;
+        parts?: Record<string, { visible?: boolean; opacity?: number }>;
+      };
+      if (
+        !parsed ||
+        parsed.signature !== EventDisplayComponent.detectorAssemblyPathsSignature(paths) ||
+        !parsed.parts ||
+        typeof parsed.parts !== 'object'
+      ) {
+        return null;
+      }
+      const map = new Map<string, { visible: boolean; opacity: number }>();
+      for (const [assetPath, state] of Object.entries(parsed.parts)) {
+        if (!state || typeof state !== 'object') continue;
+        map.set(assetPath, {
+          visible: state.visible !== false,
+          opacity:
+            typeof state.opacity === 'number' && Number.isFinite(state.opacity)
+              ? state.opacity
+              : EventDisplayComponent.DETECTOR_OUTER_OPACITY
+        });
+      }
+      return map.size > 0 ? map : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Post-assembly analysis default when no saved toggles exist: hide FIT and L3. */
+  private defaultRestoredPartVisible(assetPath: string): boolean {
+    return !(
+      EventDisplayComponent.isFitAssetPath(assetPath) ||
+      EventDisplayComponent.isL3AssetPath(assetPath)
+    );
   }
 
   static readonly trackColor: THREE.Color = new THREE.Color(trackColor);
@@ -614,7 +704,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set backgroundColor(backgroundColor: number) {
     this._backgroundColor = backgroundColor;
     this.syncSceneBackground();
-    this.requestRender();
+    this.requestRender(true);
   }
 
   /** Keeps WebGL clear color and scene.background in lockstep with the UI panel tone. */
@@ -636,7 +726,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set darkMode(darkMode: boolean) {
     this._darkMode = darkMode;
     this.applyDarkModeStyling();
-    this.requestRender();
+    this.requestRender(true);
   }
   @HostBinding('class.event-display-dark')
   get darkModeHostClass(): boolean { return this._darkMode; }
@@ -673,7 +763,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set trackWidth(trackWidth: number) {
     this._trackWidth = trackWidth;
     this.applyTrackMaterialWidths();
-    this.requestRender();
+    this.requestRender(true);
   }
   private _trackWidth: number = 2;
 
@@ -702,7 +792,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     } else {
       this.setSizeRecursive(this.clusters, this.clusterSize);
     }
-    this.requestRender();
+    this.requestRender(true);
   }
   private _clusterSize: number = 0.1;
 
@@ -788,14 +878,27 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** TRD/TOF layer-crossing hit markers during progressive assembly. */
   private layerHitMarkers: THREE.Object3D = new THREE.Object3D();
   private cascadeXiLine: Line2 | null = null;
-  private sideViewFrameCounter = 0;
-  private forceSideViewsRender = false;
+  /** When true, Rφ/ρz scene is re-rendered into the full-res side-view caches. */
+  private sideViewsDirty = true;
+  private sideViewsInteracting = false;
+  /** True after at least one successful side-view cache render (safe to blit). */
+  private sideViewCacheValid = false;
+  /** Orbit distance last used for side-view zoom; refresh when it changes after a gesture. */
+  private lastSideViewZoom = -1;
+  private sideViewRphiRT: THREE.WebGLRenderTarget | null = null;
+  private sideViewRhozRT: THREE.WebGLRenderTarget | null = null;
+  private sideViewBlitScene: THREE.Scene | null = null;
+  private sideViewBlitCamera: THREE.OrthographicCamera | null = null;
+  private sideViewBlitMaterial: THREE.MeshBasicMaterial | null = null;
+  private sideViewBlitMesh: THREE.Mesh | null = null;
+  /** Last EffectComposer CSS size used for the main viewport (avoid realloc each frame). */
+  private composerMainCssW = 0;
+  private composerMainCssH = 0;
   private renderDirty = true;
   private rafPending = false;
   private rafId: number | null = null;
   private viewDestroyed = false;
   private resizeObserver: ResizeObserver | null = null;
-  private rendererAntialias = true;
   private keysDown: { [key: string]: boolean } = {};
   private panVec = new THREE.Vector3();
   private panRight = new THREE.Vector3();
@@ -872,12 +975,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
     const finishImmediateAttached = () => {
       this.detectorPartRootByPath.clear();
+      this.detectorMultipartModelPathsOrder = [...modelPaths];
+      const savedUi = this.readStoredDetectorPartUi(modelPaths);
       const nextUi: DetectorPartToggleModel[] = [];
       for (const modelPath of modelPaths) {
         const scene = loadedByPath.get(modelPath);
         if (!scene) continue;
         const pres = EventDisplayComponent.detectorPartPresentation(modelPath);
-        scene.visible = true;
+        const saved = savedUi?.get(modelPath);
+        const visible = saved
+          ? saved.visible
+          : this.defaultRestoredPartVisible(modelPath);
+        const opacity = saved?.opacity ?? this.getDetectorPartOpacity(scene);
+        scene.visible = visible;
         this.zeroDetectorSceneOpacity(scene);
         this.detector.add(scene);
         this.detectorPartRootByPath.set(modelPath, scene);
@@ -885,12 +995,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           assetPath: modelPath,
           labelKey: pres.labelKey,
           labelParams: pres.labelParams,
-          visible: true,
-          opacity: this.getDetectorPartOpacity(scene),
+          visible,
+          opacity,
           accentColor: detectorPartAccentColor(modelPath)
         });
       }
       this.detectorPartsForUi = nextUi;
+      this.persistDetectorPartUiState();
       this.detectorScene = this.detector;
       this.loading = false;
       if (nextUi.length > 0) {
@@ -899,7 +1010,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.cdr.markForCheck();
       this.resize(true);
       this.rebuildCalorimeterReadouts();
-      this.requestRender();
+      this.syncCalorimeterReadoutVisibility();
+      this.requestRender(true);
       // Final physics (assembly already done) — reveal shells first, then tracks/clusters.
       this.staggeredRevealDetectorParts(modelPaths, 350, 500, () => {
         this.deferPhysicsUntilDetectorReveal = false;
@@ -947,7 +1059,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_ASSEMBLY_START);
       this.cdr.markForCheck();
       this.resize(true);
-      this.requestRender();
+      this.requestRender(true);
     };
 
     const finishOne = () => {
@@ -1113,7 +1225,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
     this.refreshPhysicsForAssemblyUnlock();
     this.zoomOutCameraForAssemblyProgress();
-    this.requestRender();
+    this.requestRender(true);
 
     const allPlaced = this.detectorPaletteItems.every((row) => row.placed);
     if (allPlaced) {
@@ -1155,8 +1267,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.detectorPartsForUi = this.rebuildDetectorPartTogglesSorted();
     // Assembly never exposes toggles mid-build; ensure every placed part starts on.
     for (const part of this.detectorPartsForUi) {
-      this.setDetectorPartVisibility(part, true);
+      part.visible = true;
+      const root = this.detectorPartRootByPath.get(part.assetPath);
+      if (root) {
+        root.visible = true;
+      }
     }
+    this.syncCalorimeterReadoutVisibility();
+    this.persistDetectorPartUiState();
     if (this.detectorPartsForUi.length > 0) {
       this.detectorLayersPanelOpened = true;
     }
@@ -1165,7 +1283,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.rebuildCalorimeterReadouts();
     this.refreshPhysicsForAssemblyUnlock();
     this.cdr.markForCheck();
-    this.syncRendererSideViewQuality();
+    this.syncSideViewResources();
     this.requestRender();
   }
 
@@ -1204,7 +1322,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
 
     this.applyCamera3DPosition(EventDisplayComponent.CAMERA_3D_OVERVIEW);
-    this.requestRender();
+    this.requestRender(true);
   }
 
   /** Hide FIT and L3 (e.g. after dismissing the assembly-complete coach). */
@@ -1214,9 +1332,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         EventDisplayComponent.isFitAssetPath(part.assetPath) ||
         EventDisplayComponent.isL3AssetPath(part.assetPath)
       ) {
-        this.setDetectorPartVisibility(part, false);
+        part.visible = false;
+        const root = this.detectorPartRootByPath.get(part.assetPath);
+        if (root) {
+          root.visible = false;
+        }
       }
     }
+    this.syncCalorimeterReadoutVisibility();
+    this.persistDetectorPartUiState();
+    this.requestRender(true);
   }
 
   /**
@@ -1331,7 +1456,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       root.visible = visible;
     }
     this.syncCalorimeterReadoutVisibility();
-    this.requestRender();
+    this.persistDetectorPartUiState();
+    this.requestRender(true);
   }
 
   setDetectorPartOpacity(part: DetectorPartToggleModel, value: number | string): void {
@@ -1351,7 +1477,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         (m as any).needsUpdate = true;
       }
     });
-    this.requestRender();
+    this.persistDetectorPartUiState();
+    this.requestRender(true);
   }
 
   /** Push each part's UI opacity through setDetectorPartOpacity (identical to moving the slider). */
@@ -1540,6 +1667,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.caloBarMaterial.depthTest = true;
     this.caloBarMaterial.depthWrite = true;
     this.caloBarMaterial.needsUpdate = true;
+  }
+
+  /** Put an object (and all descendants) on the main-view-only layer. */
+  static assignMainOnlyLayer(root: THREE.Object3D): void {
+    root.traverse((o) => {
+      o.layers.set(EventDisplayComponent.LAYER_MAIN_ONLY);
+    });
   }
 
   private clearCalorimeterReadouts(): void {
@@ -2110,7 +2244,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           });
         }
       });
-      this.requestRender();
+      this.requestRender(true);
       if (t < 1) {
         requestAnimationFrame(step);
       } else {
@@ -2135,7 +2269,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       }
       const path = modelPaths[index++];
       const scene = this.detectorPartRootByPath.get(path);
-      if (scene) {
+      const ui = this.detectorPartsForUi.find((p) => p.assetPath === path);
+      // Respect restored toggle state — do not force-fade hidden layers back on.
+      if (scene && ui?.visible !== false) {
         this.fadeInDetectorScene(scene, fadeDurationMs);
       }
       if (index < modelPaths.length) {
@@ -2154,9 +2290,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get sideViewsShown(): boolean { return this._sideViewsShown; }
   set sideViewsShown(sideViewsShown: boolean) {
     this._sideViewsShown = sideViewsShown;
-    this.forceSideViewsRender = !!sideViewsShown;
-    this.sideViewFrameCounter = 0;
-    this.syncRendererSideViewQuality();
+    this.syncSideViewResources();
     this.requestRender();
   }
   private _sideViewsShown: boolean = false;
@@ -2165,7 +2299,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get axesShown(): boolean { return this.axes.visible; }
   set axesShown(axesShown: boolean) {
     this.axes.visible = axesShown;
-    this.requestRender();
+    this.requestRender(true);
   }
 
   @Input()
@@ -2176,7 +2310,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (detectorShown) {
       this.syncCalorimeterReadoutVisibility();
     }
-    this.requestRender();
+    this.requestRender(true);
   }
 
   private desiredTracksShown = true;
@@ -2188,7 +2322,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set tracksShown(tracksShown: boolean) {
     this.desiredTracksShown = tracksShown;
     this.applyDesiredPhysicsVisibility();
-    this.requestRender();
+    this.requestRender(true);
   }
 
   @Input()
@@ -2199,7 +2333,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set clustersShown(clustersShown: boolean) {
     this.desiredClustersShown = clustersShown;
     this.applyDesiredPhysicsVisibility();
-    this.requestRender();
+    this.requestRender(true);
   }
 
   @Input()
@@ -2207,7 +2341,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   set decaysShown(decaysShown: boolean) {
     this.desiredDecaysShown = decaysShown;
     this.applyDesiredPhysicsVisibility();
-    this.requestRender();
+    this.requestRender(true);
   }
 
   private createLine(
@@ -2879,7 +3013,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.rebuildCalorimeterReadouts();
     this.applyDesiredPhysicsVisibility();
     this.loading = false;
-    this.requestRender();
+    this.requestRender(true);
   }
   private _event: Event;
 
@@ -3018,20 +3152,17 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const displayWidth = parent.clientWidth;
       const displayHeight = parent.clientHeight;
       const basePixelRatio = window.devicePixelRatio || 1;
-      const targetPixelRatio = this.effectiveSideViewsShown
-        ? Math.max(this.SIDE_VIEW_MIN_PIXEL_RATIO, basePixelRatio * this.SIDE_VIEW_PIXEL_RATIO_FACTOR)
-        : basePixelRatio;
-      if (Math.abs(this.renderer.getPixelRatio() - targetPixelRatio) > 0.01) {
-        this.renderer.setPixelRatio(targetPixelRatio);
-        this.composer?.setPixelRatio(targetPixelRatio);
+      // Always full DPR — side views are cost-controlled by dirty-only full-res passes.
+      if (Math.abs(this.renderer.getPixelRatio() - basePixelRatio) > 0.01) {
+        this.renderer.setPixelRatio(basePixelRatio);
+        this.composer?.setPixelRatio(basePixelRatio);
         force = true;
       }
       if (force || this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
         this.renderer.setSize(displayWidth, displayHeight);
         this.composer?.setSize(displayWidth, displayHeight);
         if (this.effectiveSideViewsShown) {
-          this.forceSideViewsRender = true;
-          this.sideViewFrameCounter = 0;
+          this.invalidateSideViews();
           if (this.landscape) {
             const width3D = Math.ceil(this.canvas.clientWidth * this.PRIMARY_AXIS_RATIO);
             const width = this.canvas.clientWidth - width3D;
@@ -3057,8 +3188,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   /** Schedules a frame; no-ops while a RAF is already queued or the GL renderer is not ready. */
-  private requestRender = (): void => {
+  private requestRender = (invalidateSideViews = false): void => {
     if (this.viewDestroyed) return;
+    if (invalidateSideViews) {
+      this.invalidateSideViews();
+    }
     this.renderDirty = true;
     if (!this.renderer || this.rafPending) return;
     this.rafPending = true;
@@ -3093,39 +3227,112 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.requestRender();
   };
 
-  /**
-   * Side views: disable MSAA (recreate GL context) and use a lower pixel ratio.
-   * Antialias is a context-creation flag, so it cannot be toggled in place.
-   */
-  private syncRendererSideViewQuality(): void {
-    if (!this.renderer || !this.canvas || !this.camera3D) return;
-    const wantAntialias = !this.effectiveSideViewsShown;
-    if (this.rendererAntialias !== wantAntialias) {
-      this.rendererAntialias = wantAntialias;
-      this.composer?.dispose();
-      this.composer = null;
-      this.bloomPass = null;
-      this.renderer.dispose();
-      this.renderer = new THREE.WebGLRenderer({
-        canvas: this.canvas,
-        logarithmicDepthBuffer: true,
-        antialias: wantAntialias
+  private onControlsStart = (): void => {
+    this.sideViewsInteracting = true;
+    this.requestRender();
+  };
+
+  private onControlsEnd = (): void => {
+    this.sideViewsInteracting = false;
+    this.requestRender();
+  };
+
+  /** Mark Rφ/ρz caches stale (content / layout / zoom after gesture). */
+  private invalidateSideViews(): void {
+    this.sideViewsDirty = true;
+  }
+
+  /** Full-res caches matching the side viewport in drawing-buffer pixels. */
+  private ensureSideViewTargets(viewW: number, viewH: number): void {
+    const tw = Math.max(1, Math.floor(viewW));
+    const th = Math.max(1, Math.floor(viewH));
+    const needsNew =
+      !this.sideViewRphiRT ||
+      !this.sideViewRhozRT ||
+      this.sideViewRphiRT.width !== tw ||
+      this.sideViewRphiRT.height !== th;
+    if (needsNew) {
+      this.disposeSideViewTargets();
+      this.sideViewRphiRT = new THREE.WebGLRenderTarget(tw, th, {
+        depthBuffer: true,
+        stencilBuffer: false
       });
-      this.renderer.shadowMap.enabled = false;
-      this.renderer.sortObjects = true;
-      this.renderer.setClearColor(this._backgroundColor, 1);
-      this.composer = new EffectComposer(this.renderer);
-      this.composer.addPass(new RenderPass(this.scene, this.camera3D));
-      this.bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(1, 1),
-        EventDisplayComponent.BLOOM_STRENGTH,
-        EventDisplayComponent.BLOOM_RADIUS,
-        EventDisplayComponent.BLOOM_THRESHOLD
+      this.sideViewRhozRT = new THREE.WebGLRenderTarget(tw, th, {
+        depthBuffer: true,
+        stencilBuffer: false
+      });
+      this.sideViewCacheValid = false;
+      this.invalidateSideViews();
+    }
+    if (!this.sideViewBlitScene) {
+      this.sideViewBlitCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      this.sideViewBlitMaterial = new THREE.MeshBasicMaterial({
+        depthTest: false,
+        depthWrite: false,
+        toneMapped: false
+      });
+      this.sideViewBlitMesh = new THREE.Mesh(
+        new THREE.PlaneGeometry(2, 2),
+        this.sideViewBlitMaterial
       );
-      this.bloomPass.enabled = this._darkMode;
-      this.composer.addPass(this.bloomPass);
-      this.forceSideViewsRender = this.effectiveSideViewsShown;
-      this.sideViewFrameCounter = 0;
+      this.sideViewBlitScene = new THREE.Scene();
+      this.sideViewBlitScene.add(this.sideViewBlitMesh);
+    }
+  }
+
+  private disposeSideViewTargets(): void {
+    this.sideViewRphiRT?.dispose();
+    this.sideViewRhozRT?.dispose();
+    this.sideViewRphiRT = null;
+    this.sideViewRhozRT = null;
+    this.sideViewCacheValid = false;
+  }
+
+  private disposeSideViewBlit(): void {
+    if (this.sideViewBlitMesh) {
+      this.sideViewBlitMesh.geometry.dispose();
+      this.sideViewBlitMesh = null;
+    }
+    this.sideViewBlitMaterial?.dispose();
+    this.sideViewBlitMaterial = null;
+    this.sideViewBlitScene = null;
+    this.sideViewBlitCamera = null;
+  }
+
+  private blitSideViewRT(rt: THREE.WebGLRenderTarget, vp: THREE.Vector4): void {
+    if (!this.sideViewBlitScene || !this.sideViewBlitCamera || !this.sideViewBlitMaterial) return;
+    this.sideViewBlitMaterial.map = rt.texture;
+    this.sideViewBlitMaterial.needsUpdate = true;
+    this.renderer.setViewport(vp);
+    this.renderer.setScissor(vp);
+    const prevAutoClear = this.renderer.autoClear;
+    this.renderer.autoClear = false;
+    this.renderer.render(this.sideViewBlitScene, this.sideViewBlitCamera);
+    this.renderer.autoClear = prevAutoClear;
+  }
+
+  private renderSideViewToRT(
+    camera: THREE.PerspectiveCamera,
+    rt: THREE.WebGLRenderTarget,
+    materials: any[]
+  ): void {
+    materials.forEach((m: any) => m.resolution?.set(rt.width, rt.height));
+    this.renderer.setRenderTarget(rt);
+    this.renderer.setClearColor(this._backgroundColor, 1);
+    this.renderer.clear();
+    this.renderer.render(this.scene, camera);
+    this.renderer.setRenderTarget(null);
+  }
+
+  /** Side views on/off: invalidate caches and fix layout. Main keeps full DPR + AA. */
+  private syncSideViewResources(): void {
+    if (!this.renderer || !this.canvas || !this.camera3D) return;
+    if (!this.effectiveSideViewsShown) {
+      this.sideViewsInteracting = false;
+      this.disposeSideViewTargets();
+      this.lastSideViewZoom = -1;
+    } else {
+      this.invalidateSideViews();
     }
     this.resize(true);
   }
@@ -3134,7 +3341,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.createScene();
     if (this.controls) {
       this.controls.addEventListener('change', this.onControlsChange);
-      this.controls.addEventListener('start', this.onControlsChange);
+      this.controls.addEventListener('start', this.onControlsStart);
+      this.controls.addEventListener('end', this.onControlsEnd);
     }
     const parent = this.canvas?.parentElement;
     if (parent && typeof ResizeObserver !== 'undefined') {
@@ -3145,7 +3353,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     window.addEventListener('resize', this.onWindowResize);
     // Inputs may already enable side views before the canvas exists.
-    this.syncRendererSideViewQuality();
+    this.syncSideViewResources();
     this.requestRender();
   }
 
@@ -3165,13 +3373,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.resizeObserver = null;
     window.removeEventListener('resize', this.onWindowResize);
     this.controls?.removeEventListener('change', this.onControlsChange);
-    this.controls?.removeEventListener('start', this.onControlsChange);
+    this.controls?.removeEventListener('start', this.onControlsStart);
+    this.controls?.removeEventListener('end', this.onControlsEnd);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('pointerup', this.onPointerUp);
     this.canvas?.removeEventListener('wheel', this.onWheel);
     this.clearGridBackground();
     this.clearCalorimeterReadouts();
+    this.disposeSideViewTargets();
+    this.disposeSideViewBlit();
     this.caloBarGeometry?.dispose();
     this.caloBarMaterial?.dispose();
   }
@@ -3216,7 +3427,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     gridYZ.position.set(0, 0, 0);
 
     this.gridHelpers = [gridXZ, gridXY, gridYZ];
-    this.gridHelpers.forEach((g) => this.scene.add(g));
+    this.gridHelpers.forEach((g) => {
+      EventDisplayComponent.assignMainOnlyLayer(g);
+      this.scene.add(g);
+    });
   }
 
   onCameraModeChange(): void {
@@ -3341,46 +3555,88 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.camRphiVP.set(oldVP.x, oldVP.y, width, height);
         this.camRhozVP.set(oldVP.x + width, oldVP.y, width, height);
       }
-      // Viewport layout stays fresh for picking every frame; GPU work for side
-      // views runs only every SIDE_VIEW_RENDER_INTERVAL frames (scissor autoClear
-      // leaves the previous side-view pixels intact between refreshes).
-      this.sideViewFrameCounter++;
-      const shouldRenderSideViews =
-        this.forceSideViewsRender || this.sideViewFrameCounter >= this.SIDE_VIEW_RENDER_INTERVAL;
-      if (shouldRenderSideViews) {
-        this.sideViewFrameCounter = 0;
-        this.forceSideViewsRender = false;
+      // Cache Rφ/ρz at full res when dirty. Blit only while the main camera is
+      // moving (or right after a cache refresh) — idle frames skip blit and rely
+      // on scissor so the frozen side frame stays on screen.
+      this.ensureSideViewTargets(this.camRphiVP.z, this.camRphiVP.w);
+      if (!this.sideViewsInteracting && Math.abs(zoomz - this.lastSideViewZoom) > 1e-3) {
+        this.sideViewsDirty = true;
+      }
+      const mustFillCache = this.sideViewsDirty && (!this.sideViewsInteracting || !this.sideViewCacheValid);
+      let cacheFilledThisFrame = false;
+      if (mustFillCache && this.sideViewRphiRT && this.sideViewRhozRT) {
+        this.sideViewsDirty = false;
+        this.lastSideViewZoom = zoomz;
         this.cameraRphi.zoom = this.cameraRhoz.zoom = 10 / zoomz;
         this.cameraRphi.updateProjectionMatrix();
         this.cameraRhoz.updateProjectionMatrix();
-        const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial];
-        if (this.cascadeXiLine?.material) materials.push(this.cascadeXiLine.material);
-        this.renderer.setViewport(this.camRphiVP);
-        this.renderer.setScissor(this.camRphiVP);
-        materials.forEach((m: any) => m.resolution?.set(this.camRphiVP.z, this.camRphiVP.w));
-        this.renderer.render(this.scene, this.cameraRphi);
-        this.renderer.setViewport(this.camRhozVP);
-        this.renderer.setScissor(this.camRhozVP);
-        materials.forEach((m: any) => m.resolution?.set(this.camRhozVP.z, this.camRhozVP.w));
-        this.renderer.render(this.scene, this.cameraRhoz);
+        const sideMaterials = [
+          this.trackMaterial,
+          this.postiveTrackMaterial,
+          this.negativeTrackMaterial,
+          this.bachelorTrackMaterial,
+          this.highlightTrackMaterial
+        ];
+        if (this.cascadeXiLine?.material) sideMaterials.push(this.cascadeXiLine.material as any);
+        this.renderSideViewToRT(this.cameraRphi, this.sideViewRphiRT, sideMaterials);
+        this.renderSideViewToRT(this.cameraRhoz, this.sideViewRhozRT, sideMaterials);
+        this.sideViewCacheValid = true;
+        cacheFilledThisFrame = true;
+      }
+      this.renderMainView();
+      const mainMoving =
+        this.sideViewsInteracting ||
+        this.isMousePanning ||
+        (this.cameraMode === 'free' && this.hasPanKeysDown());
+      if (
+        this.sideViewCacheValid &&
+        this.sideViewRphiRT &&
+        this.sideViewRhozRT &&
+        (mainMoving || cacheFilledThisFrame)
+      ) {
+        this.blitSideViewRT(this.sideViewRphiRT, this.camRphiVP);
+        this.blitSideViewRT(this.sideViewRhozRT, this.camRhozVP);
       }
     } else {
-      this.sideViewFrameCounter = 0;
-      this.forceSideViewsRender = false;
       this.cam3DVP.set(oldVP.x, oldVP.y, oldVP.z, oldVP.w);
+      this.renderMainView();
     }
+    this.renderer.setViewport(oldVP);
+    this.renderer.setScissor(oldVP);
+  }
+
+  /**
+   * Main 3D pass (optionally with bloom). Viewport/scissor must already match cam3DVP
+   * when side views are on so the side regions are not cleared.
+   */
+  private renderMainView(): void {
     this.renderer.setViewport(this.cam3DVP);
     this.renderer.setScissor(this.cam3DVP);
-    const materials = [this.trackMaterial, this.postiveTrackMaterial, this.negativeTrackMaterial, this.bachelorTrackMaterial, this.highlightTrackMaterial];
+    const materials = [
+      this.trackMaterial,
+      this.postiveTrackMaterial,
+      this.negativeTrackMaterial,
+      this.bachelorTrackMaterial,
+      this.highlightTrackMaterial
+    ];
     if (this.cascadeXiLine?.material) materials.push(this.cascadeXiLine.material);
     materials.forEach((m: any) => m.resolution?.set(this.cam3DVP.z, this.cam3DVP.w));
-    if (this.bloomPass?.enabled && this.composer && !this.effectiveSideViewsShown) {
+    if (this.bloomPass?.enabled && this.composer) {
+      const pr = this.renderer.getPixelRatio() || 1;
+      const cssW = Math.max(1, this.cam3DVP.z / pr);
+      const cssH = Math.max(1, this.cam3DVP.w / pr);
+      if (
+        Math.abs(this.composerMainCssW - cssW) > 0.5 ||
+        Math.abs(this.composerMainCssH - cssH) > 0.5
+      ) {
+        this.composer.setSize(cssW, cssH);
+        this.composerMainCssW = cssW;
+        this.composerMainCssH = cssH;
+      }
       this.composer.render();
     } else {
       this.renderer.render(this.scene, this.camera3D);
     }
-    this.renderer.setViewport(oldVP);
-    this.renderer.setScissor(oldVP);
   }
 
   onPointerDown(event: PointerEvent) {
@@ -3412,10 +3668,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           }
           this.trackHoverObj = null;
           this.trackHoverOrigMaterial = null;
-          this.requestRender();
+          this.requestRender(true);
         };
         setTimeout(highlightStop, this.CLICK_HIGHLIGHT_DURATION);
-        this.requestRender();
+        this.requestRender(true);
       }
       this.trackClickedEvent.emit((obj as any).userData);
     }
@@ -3559,7 +3815,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.scene.add(xiLine);
       this.cascadeXiLine = xiLine;
     }
-    this.requestRender();
+    this.requestRender(true);
   }
 
   private clearCascadeHover() {
@@ -3594,7 +3850,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.cascadeXiLine = null;
     }
     if (hadHover) {
-      this.requestRender();
+      this.requestRender(true);
     }
   }
 
@@ -3730,7 +3986,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private createScene(): void {
-    this.rendererAntialias = true;
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, logarithmicDepthBuffer: true, antialias: true });
     this.renderer.shadowMap.enabled = false;
     this.renderer.sortObjects = true;
@@ -3747,6 +4002,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       : EventDisplayComponent.CAMERA_3D_OVERVIEW;
     this.camera3D.position.set(startCam.x, startCam.y, startCam.z);
     this.camera3D.up.set(0.0, 1.0, 0.0);
+    // Main sees shared + main-only; Rφ/ρz stay on LAYER_SHARED (default layer 0).
+    this.camera3D.layers.enable(EventDisplayComponent.LAYER_MAIN_ONLY);
     this.cameraRphi = new THREE.PerspectiveCamera(
       EventDisplayComponent.fieldOfView,
       this.aspectRatio,
@@ -3756,6 +4013,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cameraRphi.position.set(0.0, 0.0, 10.0);
     this.cameraRphi.up.set(0.0, 1.0, 0.0);
     this.cameraRphi.lookAt(new THREE.Vector3(0, 0, 0));
+    this.cameraRphi.layers.set(EventDisplayComponent.LAYER_SHARED);
     this.cameraRhoz = new THREE.PerspectiveCamera(
       EventDisplayComponent.fieldOfView,
       this.aspectRatio,
@@ -3765,6 +4023,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cameraRhoz.position.set(-10.0, 0.0, 0.0);
     this.cameraRhoz.up.set(0.0, 1.0, 0.0);
     this.cameraRhoz.lookAt(new THREE.Vector3(0, 0, 0));
+    this.cameraRhoz.layers.set(EventDisplayComponent.LAYER_SHARED);
     this.controls = new OrbitControls(this.camera3D, this.renderer.domElement);
     this.controls.target.set(0.0, 0.0, 0.0);
     this.controls.minPolarAngle = 0;

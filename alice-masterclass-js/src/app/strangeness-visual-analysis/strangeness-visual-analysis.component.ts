@@ -113,7 +113,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   /** Entries waiting for the global flying-ball animation to finish before commit. */
   private pendingFlightEntries = new Map<number, {
     entry: VisualAnalysisResultsEntry;
-    trackIds: number[];
+    trackKeys: string[];
     particle: ParticleType;
     binIndex: number;
   }>();
@@ -128,48 +128,94 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private histogramInfoDialogTimeout: number | null = null;
 
   /**
-   * Event is complete once every decay-track particleId has been used in a histogram add.
-   * Counts unique tracks across all V0/cascade groups — not the number of decay groups.
+   * Event is complete once every decay-daughter track has been used in a histogram add.
+   * Cross-decay mixes are allowed (wrong V0 association); each physical track only once.
    */
   get isCurrentEventDone(): boolean {
-    const required = this.collectDecayTrackIds();
+    const required = this.collectRequiredTrackKeys();
     if (required.size === 0) {
       return false;
     }
-    return this.dataService.areAllDecayTracksAnalyzed(String(this.eventID), required);
+    return this.dataService.areAllTracksAnalyzed(String(this.eventID), required);
   }
 
-  /** Unique particleIds of all daughter tracks in this event's decays. */
-  private collectDecayTrackIds(): Set<number> {
-    const ids = new Set<number>();
-    for (const decay of this.event?.decays ?? []) {
-      for (const track of decay) {
-        if (track != null) {
-          ids.add(track.particleId);
+  /** Stable id for a decay daughter: `{decayIndex}:+` / `:-` / `:b`. */
+  private trackKeyFor(track: Track, decayIndex: number): string | null {
+    if (track.type === TrackType.CASCADE_BACHELOR) {
+      return `${decayIndex}:b`;
+    }
+    if (track.sign > 0) {
+      return `${decayIndex}:+`;
+    }
+    if (track.sign < 0) {
+      return `${decayIndex}:-`;
+    }
+    return null;
+  }
+
+  /** Decay-group index attached by the event display when a daughter track is clicked. */
+  private getDecayIndex(track: Track | null): number | null {
+    if (track == null) {
+      return null;
+    }
+    const index = (track as Track & { decayIndex?: number }).decayIndex;
+    return typeof index === 'number' && Number.isFinite(index) ? index : null;
+  }
+
+  private trackKeyFromClicked(track: Track): string | null {
+    const decayIndex = this.getDecayIndex(track);
+    if (decayIndex === null) {
+      return null;
+    }
+    return this.trackKeyFor(track, decayIndex);
+  }
+
+  /** All daughter track keys present in this event's decays. */
+  private collectRequiredTrackKeys(): Set<string> {
+    const keys = new Set<string>();
+    const decays = this.event?.decays ?? [];
+    for (let decayIndex = 0; decayIndex < decays.length; decayIndex++) {
+      for (const track of decays[decayIndex] ?? []) {
+        if (track == null) {
+          continue;
+        }
+        const key = this.trackKeyFor(track, decayIndex);
+        if (key != null) {
+          keys.add(key);
         }
       }
     }
-    return ids;
+    return keys;
   }
 
   /**
-   * particleIds used for the current calculator mass — same selection rules as the calculator
-   * (V0 → pos+neg; cascade → pos+neg+bachelor).
+   * Track keys for the current calculator selection — same daughter rules as the mass calc
+   * (V0 → pos+neg; cascade → pos+neg+bachelor). Cross-decay mixes are allowed.
    */
-  private collectSelectedTrackIdsForHistogram(): number[] {
+  private collectSelectedTrackKeysForHistogram(): string[] | null {
     const particles = [this.particlePos, this.particleNeg, this.particleBac];
-    const ids: number[] = [];
+    const keys: string[] = [];
     for (let i = 0; i < particles.length; i++) {
       const particle = particles[i];
       if (particle === null) {
         break;
       }
-      ids.push(particle.particleId);
+      const key = this.trackKeyFromClicked(particle);
+      if (key == null) {
+        return null;
+      }
+      keys.push(key);
       if (i === 1 && particle.type === TrackType.V0) {
         break;
       }
     }
-    return ids;
+    return keys.length > 0 ? keys : null;
+  }
+
+  private clearCalculatorSelection(): void {
+    this.particlePos = null;
+    this.particleNeg = null;
+    this.particleBac = null;
   }
 
   constructor(
@@ -210,7 +256,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     }
     // Commit entries still in flight so a mid-animation destroy does not drop them.
     for (const pending of this.pendingFlightEntries.values()) {
-      this.commitHistogramEntry(pending.entry, pending.trackIds);
+      this.commitHistogramEntry(pending.entry, pending.trackKeys);
     }
     this.pendingFlightEntries.clear();
   }
@@ -504,12 +550,19 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   private eventChanged(): void {
     this.event = null;
-    this.particlePos = null;
-    this.particleNeg = null;
-    this.particleBac = null;
+    this.clearCalculatorSelection();
   }
 
   onTrackClicked(event: Track): void {
+    const trackKey = this.trackKeyFromClicked(event);
+    // Each physical daughter may enter the calculator / histogram only once.
+    if (
+      trackKey != null &&
+      this.dataService.isTrackAnalyzed(String(this.eventID), trackKey)
+    ) {
+      return;
+    }
+
     if (event.type == TrackType.CASCADE_BACHELOR) {
       this.particleBac = event;
     } else if (event.sign > 0) {
@@ -521,18 +574,29 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   onAddToHistogram(event: SubmitHistogramEntry) {
     const value: VisualAnalysisResultsEntry = {particle: event.type, mass: event.mass};
-    // Snapshot before flight / clear — tracks may change while the animation runs.
-    const trackIds = this.collectSelectedTrackIdsForHistogram();
+    // Snapshot before flight / clear — selection may change while the animation runs.
+    const trackKeys = this.collectSelectedTrackKeysForHistogram();
+    if (trackKeys == null) {
+      return;
+    }
+
+    // Claim immediately so a second submit (or re-select during flight) cannot duplicate.
+    // Cross-decay mixes are fine — we claim the concrete daughters, not whole V0 groups.
+    if (!this.dataService.claimTracksForHistogram(String(this.eventID), trackKeys)) {
+      this.clearCalculatorSelection();
+      return;
+    }
+    this.clearCalculatorSelection();
 
     // Background has no dedicated mass histogram — commit immediately.
     if (event.type === ParticleType.BACKGROUND) {
-      this.commitHistogramEntry(value, trackIds);
+      this.commitHistogramEntry(value, trackKeys);
       return;
     }
 
     const renderArea = this.eventDisplayHostRef?.nativeElement.querySelector('#render-area') as HTMLElement | null;
     if (!renderArea) {
-      this.commitHistogramEntry(value, trackIds);
+      this.commitHistogramEntry(value, trackKeys);
       return;
     }
 
@@ -540,14 +604,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     const target = this.massHistograms?.previewBinTarget(event.type, event.mass) ?? null;
     const renderRect = renderArea.getBoundingClientRect();
     if (!target || renderRect.width <= 0 || renderRect.height <= 0) {
-      this.commitHistogramEntry(value, trackIds);
+      this.commitHistogramEntry(value, trackKeys);
       return;
     }
 
     const pendingId = ++this.nextPendingFlightId;
     this.pendingFlightEntries.set(pendingId, {
       entry: value,
-      trackIds,
+      trackKeys,
       particle: event.type,
       binIndex: target.binIndex,
     });
@@ -564,7 +628,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
         if (!pending) {
           return;
         }
-        this.commitHistogramEntry(pending.entry, pending.trackIds);
+        this.commitHistogramEntry(pending.entry, pending.trackKeys);
         window.setTimeout(() => {
           this.massHistograms?.pulseBin(pending.particle, pending.binIndex);
           this.maybeShowHistogramInfoDialog();
@@ -579,12 +643,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.scrollAfterFlightTimeouts.push(scrollTimeoutId);
   }
 
-  private commitHistogramEntry(value: VisualAnalysisResultsEntry, trackIds: number[]): void {
-    this.dataService.addVisualAnalysisResult(String(this.eventID), value, trackIds);
-    // Clear selection so the next V0 / cascade in a multi-decay event can be picked cleanly.
-    this.particlePos = null;
-    this.particleNeg = null;
-    this.particleBac = null;
+  private commitHistogramEntry(value: VisualAnalysisResultsEntry, trackKeys: string[]): void {
+    // Tracks were already claimed in onAddToHistogram; this only appends the histogram entry.
+    this.dataService.addVisualAnalysisResult(String(this.eventID), value, trackKeys);
   }
 
   /** One-shot tip after the first animated add lands in a histogram bar. */
