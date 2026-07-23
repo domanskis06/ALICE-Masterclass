@@ -11,7 +11,10 @@ const DETECTOR_PART_ACCENT_HEX: Record<string, string> = {
   'emcal.glb': '#2B1FFF',
   'dcal.glb': '#FF2FC0',
   'phos.glb': '#D1C30C',
+  /** CAD magnet (Visual Analysis / EventDisplay). */
   'l3.glb': '#FF0D12',
+  /** Lightweight octagon stand-in (Particle Propagation). */
+  'l3_pp.glb': '#FF0D12',
   'mch.glb': '#814244',
   'abso.glb': '#DE782B',
   'dipo.glb': '#0068D0',

@@ -2,10 +2,14 @@ import * as THREE from 'three';
 
 import {
   buildFieldLines,
+  effectiveFieldOpacity,
+  LIGHT_MODE_FIELD_OPACITY_BOOST,
   setFieldLinesColorRange,
+  setFieldLinesDarkMode,
   setFieldLinesOpacity,
   setFieldLinesWidth,
 } from './field-line-visualizer';
+import { FIELD_LINE_RENDER_ORDER, RENDER_ORDER_LAYER_STRIDE } from './detector-appearance';
 import { Vec3 } from '../physics/propagation-types';
 import { fieldColorRangeForStrength } from '../physics/field-colormap';
 
@@ -96,6 +100,37 @@ describe('buildFieldLines', () => {
     expect((arrowMesh(group)!.material as THREE.Material).opacity).toBeCloseTo(0.3, 6);
   });
 
+  it('boosts drawn opacity and darkens vertex colours in light mode', () => {
+    const dark = buildFieldLines(uniformZField, {
+      scale: 1e-2,
+      density: 'sparse',
+      opacity: 0.65,
+      darkMode: true,
+    });
+    const light = buildFieldLines(uniformZField, {
+      scale: 1e-2,
+      density: 'sparse',
+      opacity: 0.65,
+      darkMode: false,
+    });
+    const darkMat = fieldLineSegments(dark)!.material as THREE.Material;
+    const lightMat = fieldLineSegments(light)!.material as THREE.Material;
+    expect(darkMat.opacity).toBeCloseTo(0.65, 6);
+    expect(lightMat.opacity).toBeCloseTo(effectiveFieldOpacity(0.65, false), 6);
+    expect(lightMat.opacity).toBeGreaterThan(darkMat.opacity);
+    expect(lightMat.opacity).toBeCloseTo(0.65 * LIGHT_MODE_FIELD_OPACITY_BOOST, 6);
+
+    const darkColor = fieldLineSegments(dark)!.geometry.attributes['color'];
+    const lightColor = fieldLineSegments(light)!.geometry.attributes['color'];
+    const darkLuma = 0.299 * darkColor.getX(0) + 0.587 * darkColor.getY(0) + 0.114 * darkColor.getZ(0);
+    const lightLuma =
+      0.299 * lightColor.getX(0) + 0.587 * lightColor.getY(0) + 0.114 * lightColor.getZ(0);
+    expect(lightLuma).toBeLessThan(darkLuma);
+
+    setFieldLinesDarkMode(light, true);
+    expect((fieldLineSegments(light)!.material as THREE.Material).opacity).toBeCloseTo(0.65, 6);
+  });
+
   it('setFieldLinesWidth stores linewidth for UI without requiring fat LineMaterial', () => {
     const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse', linewidth: 2 });
     setFieldLinesWidth(group, 4.5);
@@ -107,9 +142,21 @@ describe('buildFieldLines', () => {
     const mat = fieldLineSegments(group)!.material as THREE.Material;
     expect(mat.depthTest).toBeTrue();
     expect(mat.depthWrite).toBeTrue();
-    expect(fieldLineSegments(group)!.renderOrder).toBe(0);
     expect((arrowMesh(group)!.material as THREE.Material).depthTest).toBeTrue();
     expect((arrowMesh(group)!.material as THREE.Material).depthWrite).toBeTrue();
+  });
+
+  it('draws above every detector layer at a fixed renderOrder (regression: used to default to 0)', () => {
+    // A renderOrder of 0 puts the whole field-line mesh in the same unstable,
+    // camera-distance-sorted transparent queue as the detector shells, so it
+    // can flip from "in front of" to "behind" a shell as the camera orbits.
+    // FIELD_LINE_RENDER_ORDER gives it a fixed, layer-independent slot.
+    const group = buildFieldLines(uniformZField, { scale: 1e-2, density: 'sparse' });
+    expect(fieldLineSegments(group)!.renderOrder).toBe(FIELD_LINE_RENDER_ORDER);
+    expect(arrowMesh(group)!.renderOrder).toBeGreaterThan(FIELD_LINE_RENDER_ORDER);
+    // Sits above every detector layer band (max ~11 * RENDER_ORDER_LAYER_STRIDE
+    // for the current 12-part detector set), never inside one.
+    expect(FIELD_LINE_RENDER_ORDER).toBeGreaterThan(11 * RENDER_ORDER_LAYER_STRIDE);
   });
 
   it('enables vertex colours mapped from |B|', () => {

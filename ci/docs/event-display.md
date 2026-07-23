@@ -8,6 +8,8 @@ Three.js canvas that visualizes ALICE MasterClass events: detector GLB assembly,
 
 This is **custom Three.js** — not JSROOT / Phoenix.
 
+Detector L3: Visual Analysis loads the CAD magnet `assets/models/alice components/L3.glb`. Particle Propagation uses a separate lightweight stand-in `L3_pp.glb` — see [`particle-propagation.md`](particle-propagation.md) § “L3 magnet: CAD vs PP stand-in”.
+
 ## Stack
 
 - `three` + `OrbitControls`, `Line2` / `LineGeometry` / `LineMaterial`
@@ -31,7 +33,7 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 | Zone | Key symbols | Notes |
 | --- | --- | --- |
 | Scene / camera / render | `createScene`, `render`, `resize`, `updateCameraMode` | Core WebGL loop |
-| Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop | GLB layers (ITS, TPC, …) |
+| Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop | GLB layers (ITS, TPC, CAD `L3.glb`, …) — not `L3_pp.glb` |
 | Physics visibility / intro | `applyDesiredPhysicsVisibility`, proton collision intro helpers | Show/hide tracks around intro |
 | Interaction | `onPointer*`, vertex panel, cascade hover / proximity helpers | Picking UI |
 | Legacy math in component | `invariantMass` | **Do not grow** — new math → Service |

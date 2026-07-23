@@ -19,9 +19,10 @@ import {
   FIELD_COLOR_MAX_T,
   FIELD_COLOR_MIN_T,
   FieldColorRange,
-  magnitudeToRgb,
+  magnitudeToRgbForTheme,
 } from '../physics/field-colormap';
 import { FieldLineDensity, FieldSampler, FieldLinePolyline, traceFieldLines } from '../physics/field-line-tracer';
+import { FIELD_LINE_RENDER_ORDER } from './detector-appearance';
 
 export interface FieldLineOptions {
   /** cm -> world units (PropagationScene.objectScale). */
@@ -46,10 +47,24 @@ export interface FieldLineOptions {
    * {@link includeDipoleTransition}; does not densify the solenoid barrel.
    */
   includeDipoleArcs?: boolean;
+  /**
+   * Scene theme. Light mode darkens/saturates Jet midtones and slightly lifts
+   * drawn opacity so streamlines stay readable on the pale background.
+   */
+  darkMode?: boolean;
 }
 
 /** Default stored linewidth (UI slider default; see {@link FieldLineOptions.linewidth}). */
 export const DEFAULT_FIELD_LINEWIDTH = 1.5;
+
+/** Default field-line material opacity (sidebar starting value). */
+export const DEFAULT_FIELD_OPACITY = 0.65;
+
+/**
+ * Multiplier applied to the user opacity slider in light mode (capped at 1).
+ * Jet midtones are still translucent over white without this nudge.
+ */
+export const LIGHT_MODE_FIELD_OPACITY_BOOST = 1.22;
 
 /** Place one arrowhead every this many cm of arc length along each line. */
 const ARROW_SPACING_CM = 300;
@@ -72,12 +87,20 @@ function writeRgb(
   out: Float32Array,
   offset: number,
   bTesla: number,
-  colorRange: FieldColorRange
+  colorRange: FieldColorRange,
+  darkMode: boolean
 ): void {
-  const [r, g, b] = magnitudeToRgb(bTesla, colorRange);
+  const [r, g, b] = magnitudeToRgbForTheme(bTesla, colorRange, darkMode);
   out[offset] = r;
   out[offset + 1] = g;
   out[offset + 2] = b;
+}
+
+/** Effective GPU opacity for the current theme (slider value may be lower). */
+export function effectiveFieldOpacity(userOpacity: number, darkMode: boolean): number {
+  const o = Math.max(0, Math.min(1, userOpacity));
+  if (darkMode) return o;
+  return Math.min(1, o * LIGHT_MODE_FIELD_OPACITY_BOOST);
 }
 
 /**
@@ -90,12 +113,14 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
   const {
     scale,
     density = 'dense',
-    opacity = 0.65,
+    opacity = DEFAULT_FIELD_OPACITY,
     linewidth = DEFAULT_FIELD_LINEWIDTH,
     colorRange = { minT: FIELD_COLOR_MIN_T, maxT: FIELD_COLOR_MAX_T },
     includeDipoleTransition = false,
     includeDipoleArcs,
+    darkMode = true,
   } = options;
+  const drawnOpacity = effectiveFieldOpacity(opacity, darkMode);
   const group = new THREE.Group();
   group.name = 'magnetic-field-lines';
 
@@ -131,9 +156,9 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
       const magB = line.magnitudes[i + 1];
       magnitudes[magCursor++] = magA;
       magnitudes[magCursor++] = magB;
-      writeRgb(colors, colorCursor, magA, colorRange);
+      writeRgb(colors, colorCursor, magA, colorRange, darkMode);
       colorCursor += 3;
-      writeRgb(colors, colorCursor, magB, colorRange);
+      writeRgb(colors, colorCursor, magB, colorRange, darkMode);
       colorCursor += 3;
     }
   }
@@ -147,8 +172,8 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
     // Must stay white so per-vertex colours are not tinted.
     color: 0xffffff,
     vertexColors: true,
-    transparent: opacity < 0.995,
-    opacity,
+    transparent: drawnOpacity < 0.995,
+    opacity: drawnOpacity,
     depthTest: true,
     depthWrite: true,
   });
@@ -157,13 +182,23 @@ export function buildFieldLines(sample: FieldSampler, options: FieldLineOptions)
   segments.name = 'field-line-segments';
   segments.frustumCulled = true;
   segments.userData['fieldMagnitudes'] = magnitudes;
+  // Stable draw order above every detector shell (see FIELD_LINE_RENDER_ORDER
+  // doc) — without this, the whole field-line mesh competes in the unstable,
+  // camera-distance-sorted transparent queue against the detector shells and
+  // can flip from "in front of" to "behind" a shell as the camera orbits.
+  segments.renderOrder = FIELD_LINE_RENDER_ORDER;
   group.add(segments);
 
-  const arrows = buildDirectionArrows(lines, scale, opacity, colorRange);
-  if (arrows) group.add(arrows);
+  const arrows = buildDirectionArrows(lines, scale, drawnOpacity, colorRange, darkMode);
+  if (arrows) {
+    arrows.renderOrder = FIELD_LINE_RENDER_ORDER + 1;
+    group.add(arrows);
+  }
 
   group.userData['lineMaterial'] = material;
   group.userData['linewidth'] = linewidth;
+  group.userData['fieldOpacity'] = opacity;
+  group.userData['fieldDarkMode'] = darkMode;
   group.userData['fieldColorMinT'] = colorRange.minT;
   group.userData['fieldColorMaxT'] = colorRange.maxT;
   /**
@@ -178,7 +213,8 @@ function buildDirectionArrows(
   lines: FieldLinePolyline[],
   scale: number,
   opacity: number,
-  colorRange: FieldColorRange
+  colorRange: FieldColorRange,
+  darkMode: boolean
 ): THREE.InstancedMesh | null {
   const placements: ArrowPlacement[] = [];
   for (const line of lines) {
@@ -214,7 +250,7 @@ function buildDirectionArrows(
     matrix.compose(posWorld, quat, new THREE.Vector3(1, 1, 1));
     mesh.setMatrixAt(i, matrix);
     arrowMagnitudes[i] = p.magnitude;
-    const [r, g, b] = magnitudeToRgb(p.magnitude, colorRange);
+    const [r, g, b] = magnitudeToRgbForTheme(p.magnitude, colorRange, darkMode);
     color.setRGB(r, g, b);
     mesh.setColorAt(i, color);
   }
@@ -267,23 +303,48 @@ function collectArrowPlacements(line: FieldLinePolyline, out: ArrowPlacement[]):
 
 /** Sets opacity on both lines and arrow cones in a {@link buildFieldLines} group. */
 export function setFieldLinesOpacity(group: THREE.Object3D, opacity: number): void {
+  const darkMode = group.userData['fieldDarkMode'] !== false;
+  const drawn = effectiveFieldOpacity(opacity, darkMode);
+  group.userData['fieldOpacity'] = opacity;
   group.traverse((o) => {
     const line = o as THREE.LineSegments;
     if (line.isLineSegments) {
       const mat = line.material as THREE.LineBasicMaterial;
-      mat.opacity = opacity;
-      mat.transparent = opacity < 0.995;
+      mat.opacity = drawn;
+      mat.transparent = drawn < 0.995;
       mat.needsUpdate = true;
       return;
     }
     const mesh = o as THREE.Mesh;
     if (mesh.isMesh) {
       const mat = mesh.material as THREE.Material;
-      mat.opacity = opacity;
-      mat.transparent = opacity < 0.995;
+      mat.opacity = drawn;
+      mat.transparent = drawn < 0.995;
       mat.needsUpdate = true;
     }
   });
+}
+
+/**
+ * Retunes vertex colours + drawn opacity for dark/light canvas. Does not
+ * re-trace streamlines — remaps stored `|B|` magnitudes like the strength slider.
+ */
+export function setFieldLinesDarkMode(group: THREE.Object3D, darkMode: boolean): void {
+  group.userData['fieldDarkMode'] = darkMode;
+  const minT = group.userData['fieldColorMinT'] as number | undefined;
+  const maxT = group.userData['fieldColorMaxT'] as number | undefined;
+  const magnitudeScale =
+    typeof group.userData['fieldMagnitudeScale'] === 'number'
+      ? (group.userData['fieldMagnitudeScale'] as number)
+      : 1;
+  if (typeof minT === 'number' && typeof maxT === 'number') {
+    setFieldLinesColorRange(group, { minT, maxT }, magnitudeScale);
+  }
+  const userOpacity =
+    typeof group.userData['fieldOpacity'] === 'number'
+      ? (group.userData['fieldOpacity'] as number)
+      : DEFAULT_FIELD_OPACITY;
+  setFieldLinesOpacity(group, userOpacity);
 }
 
 /**
@@ -300,6 +361,7 @@ export function setFieldLinesColorRange(
   colorRange: FieldColorRange,
   magnitudeScale = 1
 ): void {
+  const darkMode = group.userData['fieldDarkMode'] !== false;
   const color = new THREE.Color();
   group.traverse((o) => {
     const line = o as THREE.LineSegments;
@@ -309,7 +371,7 @@ export function setFieldLinesColorRange(
       if (!mags || !attr || mags.length * 3 !== attr.array.length) return;
       const colors = attr.array as Float32Array;
       for (let i = 0; i < mags.length; i++) {
-        writeRgb(colors, i * 3, mags[i] * magnitudeScale, colorRange);
+        writeRgb(colors, i * 3, mags[i] * magnitudeScale, colorRange, darkMode);
       }
       attr.needsUpdate = true;
       return;
@@ -319,7 +381,7 @@ export function setFieldLinesColorRange(
       const mags = mesh.userData['fieldMagnitudes'] as Float32Array | undefined;
       if (!mags || !mesh.instanceColor) return;
       for (let i = 0; i < mags.length; i++) {
-        const [r, g, b] = magnitudeToRgb(mags[i] * magnitudeScale, colorRange);
+        const [r, g, b] = magnitudeToRgbForTheme(mags[i] * magnitudeScale, colorRange, darkMode);
         color.setRGB(r, g, b);
         mesh.setColorAt(i, color);
       }

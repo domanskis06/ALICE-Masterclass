@@ -43,6 +43,7 @@ import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { PropagationTimeline } from './scene/propagation-timeline';
 import {
   defaultDetectorPartVisible,
+  defaultOpacityForAsset,
   detectorPartAccentColor,
   isOuterMagnet,
   setDetectorPartOpacity,
@@ -51,7 +52,9 @@ import {
 import {
   buildFieldLines,
   DEFAULT_FIELD_LINEWIDTH,
+  DEFAULT_FIELD_OPACITY,
   setFieldLinesColorRange,
+  setFieldLinesDarkMode,
   setFieldLinesOpacity,
   setFieldLinesResolution,
 } from './scene/field-line-visualizer';
@@ -66,6 +69,10 @@ import {
   COLLISION_FLASH_PEAK_INTENSITY,
   DEFAULT_NS_PER_MS,
 } from './scene/timeline-constants';
+import {
+  physicalNsToPresentationMs,
+  presentationMsToPhysicalNs,
+} from './scene/physical-timeline';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { PropagationWelcomeDialogComponent } from './welcome-dialog/propagation-welcome-dialog.component';
 import { PropagationSessionCacheService } from './propagation-session-cache.service';
@@ -136,15 +143,18 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
    */
   tracksNeedRecompute = false;
   isPlaying = false;
+  /** Presentation scrubber clock (ms) fed to {@link PropagationTimeline.applyTime}. */
   currentTimeMs = 0;
   minTimeMs = -1;
   maxTimeMs = 1;
+  /** Physics-ns per presentation-ms for the active timeline (propagation phase). */
+  private timelineNsPerMs = DEFAULT_NS_PER_MS;
   playbackSpeed = 1;
   /** Field overlay on by default so students see |B|-coloured streamlines. */
   fieldVisible = true;
   /** Dipole-transition bend at the forward (negative-z) detector end. */
   fieldDipoleTransitionVisible = true;
-  fieldOpacity = 0.65;
+  fieldOpacity = DEFAULT_FIELD_OPACITY;
   /** Seed density: sparse ↔ dense (former medium). */
   fieldDensity: FieldLineDensity = 'sparse';
   /** Stored line-width preference (native WebGL lines ignore linewidth). */
@@ -162,7 +172,22 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     positionPct:
       ((m.tesla - FIELD_STRENGTH_MIN_T) / (FIELD_STRENGTH_MAX_T - FIELD_STRENGTH_MIN_T)) * 100,
   }));
-  readonly fieldColorbarGradient = fieldColorbarCssGradient();
+  get fieldColorbarGradient(): string {
+    return fieldColorbarCssGradient(this.isDarkMode);
+  }
+
+  /** Detector-frame time for the sidebar readout / slider (ns, option A intro map). */
+  get displayTimeNs(): number {
+    return presentationMsToPhysicalNs(this.currentTimeMs, { nsPerMs: this.timelineNsPerMs });
+  }
+
+  get minTimeNs(): number {
+    return presentationMsToPhysicalNs(this.minTimeMs, { nsPerMs: this.timelineNsPerMs });
+  }
+
+  get maxTimeNs(): number {
+    return presentationMsToPhysicalNs(this.maxTimeMs, { nsPerMs: this.timelineNsPerMs });
+  }
 
   /** Colorbar scale ends (Tesla) — track the selected field strength / dipole view. */
   get fieldColorMinT(): number {
@@ -312,7 +337,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.requestRender();
   }
 
-  onTimeChange(valueMs: number): void {
+  onTimeChangeNs(valueNs: number): void {
+    const valueMs = physicalNsToPresentationMs(valueNs, { nsPerMs: this.timelineNsPerMs });
     this.currentTimeMs = valueMs;
     this.isPlaying = false;
     this.timeline?.applyTime(valueMs);
@@ -411,6 +437,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   onDarkModeChange(darkMode: boolean): void {
     this.isDarkMode = darkMode;
     this.scene?.setDarkMode(darkMode);
+    if (this.fieldLines) setFieldLinesDarkMode(this.fieldLines, darkMode);
     this.requestRender();
     this.cdr.markForCheck();
   }
@@ -574,6 +601,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       linewidth: this.fieldLinewidth,
       includeDipoleTransition: this.fieldDipoleTransitionVisible,
       colorRange: this.activeFieldColorRange(),
+      darkMode: this.isDarkMode,
       resolution: {
         width: host?.clientWidth || 1,
         height: host?.clientHeight || 1,
@@ -685,28 +713,34 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
 
     if (ui) {
       this.selectedEventIndex = ui.selectedEventIndex;
-      this.cameraMode = ui.cameraMode;
-      this.fieldVisible = ui.fieldVisible;
+      // Camera / field toggles always restart at defaults (see below).
       this.fieldDipoleTransitionVisible = ui.fieldDipoleTransitionVisible;
-      this.fieldOpacity = ui.fieldOpacity;
-      this.fieldDensity = ui.fieldDensity;
+      // Opacity always restarts at defaults — do not restore last-visit slider values.
+      this.fieldOpacity = DEFAULT_FIELD_OPACITY;
       this.fieldLinewidth = ui.fieldLinewidth;
       this.fieldStrengthT = ui.fieldStrengthT;
-      this.solenoidPolarity = ui.solenoidPolarity;
       this.playbackSpeed = ui.playbackSpeed;
       this.magneticField.setFieldStrengthT(ui.fieldStrengthT);
-      this.magneticField.setSolenoidPolarity(ui.solenoidPolarity);
-      if (ui.isDarkMode !== this.isDarkMode) {
-        this.isDarkMode = ui.isDarkMode;
-        scene.setDarkMode(ui.isDarkMode);
-      }
-      scene.setCameraMode(ui.cameraMode);
     }
+
+    // Visibility / camera / sparse field / nominal polarity — reset every visit.
+    const fieldNeedsRebuild =
+      ui?.fieldDensity === 'dense' || ui?.solenoidPolarity === -1;
+    this.cameraMode = 'centered';
+    this.fieldVisible = true;
+    this.fieldDensity = 'sparse';
+    this.solenoidPolarity = 1;
+    this.magneticField.setSolenoidPolarity(1);
+    scene.setCameraMode('centered');
 
     if (cache.detectorModel) {
       this.applyDetectorModel(cache.detectorModel);
       if (cache.detectorPartsForUi) {
-        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => ({ ...p }));
+        this.detectorPartsForUi = cache.detectorPartsForUi.map((p) => ({
+          ...p,
+          opacity: defaultOpacityForAsset(p.assetPath),
+          visible: defaultDetectorPartVisible(p.assetPath),
+        }));
         for (const part of this.detectorPartsForUi) {
           const root = this.detectorPartRootByPath.get(part.assetPath);
           if (!root) continue;
@@ -722,11 +756,26 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.detectorModel = cache.detectorModel;
     }
 
+    // Theme always restarts in dark mode — after detector re-attach so materials update.
+    this.isDarkMode = true;
+    scene.setDarkMode(true);
+
     if (cache.fieldLines) {
       this.fieldLines = cache.fieldLines;
       this.fieldLinesBuiltAtStrengthT = cache.fieldLinesBuiltAtStrengthT;
-      this.fieldLines.visible = this.fieldVisible;
-      scene.fieldGroup.add(this.fieldLines);
+      cache.fieldLines = null;
+      if (fieldNeedsRebuild) {
+        // Dense / reversed lines were baked into the cached group — rebuild sparse +z.
+        this.rebuildFieldVisualization();
+      } else {
+        this.fieldLines.visible = this.fieldVisible;
+        setFieldLinesOpacity(this.fieldLines, this.fieldOpacity);
+        setFieldLinesDarkMode(this.fieldLines, this.isDarkMode);
+        const builtAt = this.fieldLinesBuiltAtStrengthT;
+        const magnitudeScale = builtAt > 0 ? this.fieldStrengthT / builtAt : 1;
+        setFieldLinesColorRange(this.fieldLines, this.activeFieldColorRange(), magnitudeScale);
+        scene.fieldGroup.add(this.fieldLines);
+      }
     }
 
     if (cache.collisionIntro) {
@@ -742,6 +791,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.tracks = [];
     this.tracksNeedRecompute = false;
     this.timeline = null;
+    this.timelineNsPerMs = DEFAULT_NS_PER_MS;
     this.minTimeMs = 0;
     this.maxTimeMs = 1;
     this.currentTimeMs = 0;
@@ -845,13 +895,14 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       });
       this.scene?.tracksGroup.add(...this.lines);
 
+      this.timelineNsPerMs = DEFAULT_NS_PER_MS;
       this.timeline = new PropagationTimeline(
         collisionIntro,
         this.scene!.tracksGroup,
         this.tracks,
         this.lines,
         timelineMaxNs,
-        { nsPerMs: DEFAULT_NS_PER_MS, onCollisionMoment: () => this.triggerCollisionFlash() }
+        { nsPerMs: this.timelineNsPerMs, onCollisionMoment: () => this.triggerCollisionFlash() }
       );
       this.timeline.reset();
       this.minTimeMs = this.timeline.minTimeMs;

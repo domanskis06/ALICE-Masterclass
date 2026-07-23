@@ -43,6 +43,33 @@ describe('CollisionIntro', () => {
     expect(sepJustBeforeCollision).toBeGreaterThanOrEqual(0);
   });
 
+  it('starts the protons just inside the beam pipe end, not floating past it', () => {
+    // BP.glb is authored asymmetrically about the IP: after the detector's
+    // ITS-based recenter it spans z ~ [-12.95, +5.81] at the scene scale
+    // (1e-2). A symmetric start distance is bounded by the shorter (+z)
+    // side, so assert it sits comfortably inside that ~5.81 edge (with
+    // margin) rather than checking the exact constant, which is free to be
+    // retuned by a few percent.
+    expect(PROTON_HALF_SEPARATION_START).toBeGreaterThan(4);
+    expect(PROTON_HALF_SEPARATION_START).toBeLessThan(5.81);
+  });
+
+  it('applies a non-linear ease-in: separation shrinks slowly at first, then rapidly near the collision', () => {
+    intro.update(-INTRO_DURATION_MS);
+    const [minusZ, plusZ] = intro.group.children as THREE.Object3D[];
+    const sep = (): number => plusZ.position.z - minusZ.position.z;
+
+    const sepAtStart = sep();
+    intro.update(-INTRO_DURATION_MS * 0.9);
+    const sepAt10PctIn = sep();
+    intro.update(-INTRO_DURATION_MS * 0.1);
+    const sepAt90PctIn = sep();
+
+    const dropInFirst10Pct = sepAtStart - sepAt10PctIn;
+    const dropInLast10Pct = sepAt90PctIn - 0; // separation at t~=0 is ~0
+    expect(dropInLast10Pct).toBeGreaterThan(dropInFirst10Pct);
+  });
+
   it('update() hides both protons once t >= 0 (post-collision)', () => {
     intro.update(0);
     const [minusZ, plusZ] = intro.group.children as THREE.Object3D[];
@@ -65,5 +92,47 @@ describe('CollisionIntro', () => {
 
   it('dispose() does not throw', () => {
     expect(() => intro.dispose()).not.toThrow();
+  });
+
+  it('treats the translucent shell as glass (depthWrite off) so RGB quarks inside stay visible', () => {
+    const proton = intro.group.children[0] as THREE.Object3D;
+    const mats: THREE.Material[] = [];
+    const meshes: THREE.Mesh[] = [];
+    proton.traverse((obj) => {
+      const mesh = obj as THREE.Mesh;
+      if (!(mesh as any).isMesh) return;
+      meshes.push(mesh);
+      const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      for (const m of list) if (m) mats.push(m);
+    });
+    expect(mats.length).toBeGreaterThanOrEqual(2);
+
+    const shell =
+      mats.find((m) => /material\.002/i.test(m.name || '')) ??
+      mats.reduce((best, m) => {
+        const o = (m as THREE.Material & { opacity?: number }).opacity ?? 1;
+        const bo = (best as THREE.Material & { opacity?: number }).opacity ?? 1;
+        return o < bo ? m : best;
+      });
+    expect(shell.depthWrite).toBe(false);
+    expect(shell.transparent).toBe(true);
+
+    const quarks = mats.filter((m) => m !== shell);
+    expect(quarks.length).toBeGreaterThanOrEqual(1);
+    for (const q of quarks) {
+      expect(q.depthWrite).toBe(true);
+      expect(q.transparent).toBe(true);
+    }
+
+    const shellMeshes = meshes.filter((mesh) => {
+      const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      return list.some((m) => m === shell);
+    });
+    const quarkMeshes = meshes.filter((mesh) => !shellMeshes.includes(mesh));
+    expect(shellMeshes.length).toBeGreaterThanOrEqual(1);
+    expect(quarkMeshes.length).toBeGreaterThanOrEqual(1);
+    const maxQuarkOrder = Math.max(...quarkMeshes.map((m) => m.renderOrder));
+    const minShellOrder = Math.min(...shellMeshes.map((m) => m.renderOrder));
+    expect(minShellOrder).toBeGreaterThan(maxQuarkOrder);
   });
 });

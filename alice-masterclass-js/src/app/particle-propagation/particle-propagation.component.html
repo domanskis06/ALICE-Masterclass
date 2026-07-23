@@ -172,18 +172,20 @@
       <section class="controls-section">
         <h4>Time</h4>
         @if (controlsEnabled) {
-          <div class="time-readout">{{ currentTimeMs | number: '1.0-0' }} ms</div>
+          <div class="time-readout" title="Time of flight in the detector (slowed down for visualisation)">
+            {{ displayTimeNs | number: '1.1-1' }} ns
+          </div>
           <mat-slider
             class="full-width"
-            [min]="minTimeMs"
-            [max]="maxTimeMs"
-            [step]="1"
+            [min]="minTimeNs"
+            [max]="maxTimeNs"
+            [step]="0.1"
             [discrete]="true">
             <input
               matSliderThumb
-              [(ngModel)]="currentTimeMs"
+              [ngModel]="displayTimeNs"
               [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="onTimeChange($event)" />
+              (ngModelChange)="onTimeChangeNs($event)" />
           </mat-slider>
         } @else {
           <p class="slider-label">Start the animation to scrub time.</p>
@@ -222,7 +224,10 @@
         <h4>Magnetic field</h4>
         <div class="field-strength-markers" aria-hidden="true">
           @for (marker of fieldStrengthMarkers; track marker.label) {
-            <span class="field-strength-marker" [style.left.%]="marker.positionPct">
+            <span
+              class="field-strength-marker"
+              [class.field-strength-marker--cms]="marker.label === 'CMS'"
+              [style.left.%]="marker.positionPct">
               <span class="field-strength-marker-label">{{ marker.label }}</span>
               <span class="field-strength-marker-value">{{ marker.tesla }} T</span>
               <span class="field-strength-marker-tick"></span>
@@ -250,17 +255,19 @@
           </p>
         }
 
-        @if (fieldVisible) {
-          <div class="field-colorbar" aria-label="Magnetic field strength colour scale">
-            <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
-            <div
-              class="field-colorbar-bar"
-              [style.background]="fieldColorbarGradient"
-              role="img"
-              [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
-            <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
-          </div>
-        }
+        <div
+          class="field-colorbar"
+          [class.field-colorbar--disabled]="!fieldVisible"
+          aria-label="Magnetic field strength colour scale"
+          [attr.aria-disabled]="!fieldVisible">
+          <span class="field-colorbar-label">{{ fieldColorMinT | number: '1.2-2' }} T</span>
+          <div
+            class="field-colorbar-bar"
+            [style.background]="fieldColorbarGradient"
+            role="img"
+            [attr.aria-label]="'|B| from ' + fieldColorMinT + ' T to ' + fieldColorMaxT + ' T'"></div>
+          <span class="field-colorbar-label">{{ fieldColorMaxT | number: '1.2-2' }} T</span>
+        </div>
 
         <label class="slider-label">Field opacity</label>
         <mat-slider
@@ -311,6 +318,11 @@
             Reverse L3
           </mat-slide-toggle>
         </div>
+        @if (solenoidPolarity < 0) {
+          <p class="slider-label field-recompute-hint">
+            Reversed L3: fewer lines bridge to the dipole — most solenoid flux returns at the exit.
+          </p>
+        }
       </section>
     </div>
   </aside>

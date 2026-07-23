@@ -14,6 +14,7 @@ import {
   MUON_AUX_LOD_FAR_DISTANCE,
   OUTER_MAGNET_DEFAULT_OPACITY,
   OUTER_MAGNET_LOD_FAR_DISTANCE,
+  RENDER_ORDER_LAYER_STRIDE,
   TPC_LOD_FAR_DISTANCE,
   countDetectorDrawables,
 } from './detector-appearance';
@@ -47,7 +48,7 @@ describe('loadDetectorModel', () => {
       'assets/models/alice components/EMCAL.glb',
       'assets/models/alice components/DCAL.glb',
       'assets/models/alice components/PHOS.glb',
-      'assets/models/alice components/L3.glb',
+      'assets/models/alice components/L3_pp.glb',
       'assets/models/alice components/ABSO.glb',
       'assets/models/alice components/DIPO.glb',
       'assets/models/alice components/MCH.glb',
@@ -58,10 +59,10 @@ describe('loadDetectorModel', () => {
     expect(isDetectorInnerPart('assets/models/alice components/BP.glb')).toBe(true);
     expect(isDetectorInnerPart('assets/models/alice components/its.glb')).toBe(true);
     expect(isDetectorInnerPart('assets/models/alice components/tpc.glb')).toBe(true);
-    expect(isDetectorInnerPart('assets/models/alice components/L3.glb')).toBe(false);
+    expect(isDetectorInnerPart('assets/models/alice components/L3_pp.glb')).toBe(false);
     expect(isDetectorInnerPart('assets/models/alice components/TRD.glb')).toBe(false);
     expect(isDetectorCorePart('assets/models/alice components/its.glb')).toBe(true);
-    expect(isDetectorCorePart('assets/models/alice components/L3.glb')).toBe(true);
+    expect(isDetectorCorePart('assets/models/alice components/L3_pp.glb')).toBe(true);
     expect(isDetectorCorePart('assets/models/alice components/BP.glb')).toBe(false);
   });
 
@@ -82,17 +83,29 @@ describe('loadDetectorModel', () => {
       expect(size.length()).toBeGreaterThan(0);
       expect(size.length()).toBeLessThan(50); // detector ~500cm across -> ~5 units at 1e-2 scale.
 
-      const isL3 = /l3\.glb$/i.test(part.assetPath);
+      const isL3 = /l3_pp\.glb$/i.test(part.assetPath);
       const isBp = /bp\.glb$/i.test(part.assetPath);
+      const layerIndex = DETECTOR_PART_PATHS.indexOf(part.assetPath);
       let sawMesh = false;
       part.root.traverse((obj) => {
         const mesh = obj as THREE.Mesh;
         if (!mesh.isMesh) return;
         sawMesh = true;
         const material = mesh.material as THREE.Material;
+        // Translucent defaults: BP disables depthWrite; other shells keep it (VA-style).
         expect(material.depthWrite).toBe(!isBp);
         expect(material.depthTest).toBe(true);
-        if (isBp) expect(mesh.renderOrder).toBeGreaterThan(0);
+        // Every layer must keep a stable, layer-scoped renderOrder — the
+        // regression this guards against is mergeStaticMeshesByMaterial
+        // resetting it to 0 for every merged part (TRD/TOF/EMCal/DCal/PHOS/
+        // ITS/ABSO/DIPO), which lets Three.js fall back to an unstable,
+        // camera-distance-based transparent sort and makes overlapping
+        // shells swap which one is drawn "on top" (and its colour) as the
+        // camera rotates. See applyDetectorPartOpacity.
+        expect(mesh.renderOrder).toBeGreaterThan(0);
+        if (!isBp) {
+          expect(mesh.renderOrder).toBeGreaterThanOrEqual(layerIndex * RENDER_ORDER_LAYER_STRIDE);
+        }
         expect(material.opacity).toBeGreaterThan(0);
         if (isL3) {
           expect(material.opacity).toBeCloseTo(OUTER_MAGNET_DEFAULT_OPACITY, 5);
@@ -106,8 +119,36 @@ describe('loadDetectorModel', () => {
     }
   });
 
-  it('wraps L3 in a distance LOD of InstancedMesh sector families (no material merge)', () => {
-    const l3 = model.parts.find((p) => /l3\.glb$/i.test(p.assetPath));
+  it('keeps each layer\'s renderOrder band non-overlapping, inner->outer (BP excepted, always foreground)', () => {
+    // The reported "colour jump on rotation" was caused by every merged
+    // layer sharing the default renderOrder=0 and falling back to an
+    // unstable, per-frame camera-distance sort. This asserts the fix holds
+    // end-to-end: layer i's meshes never reach into layer i+1's band.
+    const bandFor = (assetPath: string): { min: number; max: number } => {
+      const part = model.parts.find((p) => p.assetPath === assetPath);
+      expect(part).toBeDefined();
+      let min = Infinity;
+      let max = -Infinity;
+      part!.root.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        min = Math.min(min, mesh.renderOrder);
+        max = Math.max(max, mesh.renderOrder);
+      });
+      return { min, max };
+    };
+
+    // Skip BP (index 0): it intentionally jumps to BEAM_PIPE_RENDER_ORDER, far
+    // above every other layer, so it always wins ties at the bore.
+    for (let i = 1; i < DETECTOR_PART_PATHS.length - 1; i++) {
+      const current = bandFor(DETECTOR_PART_PATHS[i]);
+      const next = bandFor(DETECTOR_PART_PATHS[i + 1]);
+      expect(current.max).toBeLessThan(next.min);
+    }
+  });
+
+  it('wraps L3_pp in a distance LOD (lightweight octagon stand-in)', () => {
+    const l3 = model.parts.find((p) => /l3_pp\.glb$/i.test(p.assetPath));
     expect(l3).toBeDefined();
     expect(l3!.root).toBeInstanceOf(THREE.LOD);
     const lod = l3!.root as THREE.LOD;
@@ -115,23 +156,16 @@ describe('loadDetectorModel', () => {
     expect(lod.levels[0].distance).toBe(0);
     expect(lod.levels[1].distance).toBe(OUTER_MAGNET_LOD_FAR_DISTANCE);
 
-    const countInstanced = (root: THREE.Object3D): number => {
+    const countMeshes = (root: THREE.Object3D): number => {
       let n = 0;
       root.traverse((obj) => {
-        if ((obj as THREE.InstancedMesh).isInstancedMesh) n += 1;
+        if ((obj as THREE.Mesh).isMesh) n += 1;
       });
       return n;
     };
-    const instanceCount = (root: THREE.Object3D): number => {
-      let n = 0;
-      root.traverse((obj) => {
-        const mesh = obj as THREE.InstancedMesh;
-        if (mesh.isInstancedMesh) n += mesh.count;
-      });
-      return n;
-    };
-    expect(countInstanced(lod.levels[0].object)).toBeGreaterThanOrEqual(3);
-    expect(instanceCount(lod.levels[1].object)).toBeLessThan(instanceCount(lod.levels[0].object));
+    // Stand-in is Mesh_0 liner + Mesh_1 yoke (InstancedMesh count 1 + leftover).
+    expect(countMeshes(lod.levels[0].object)).toBeGreaterThanOrEqual(2);
+    expect(countMeshes(lod.levels[1].object)).toBe(countMeshes(lod.levels[0].object));
   });
 
   it('wraps TPC in a distance LOD with a lighter far level (thinned + decimated)', () => {
@@ -332,7 +366,7 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
     // Tiny path set keeps this fast: one inner (BP) + one outer (L3).
     const paths = [
       DETECTOR_PART_PATHS.find((p) => /bp\.glb$/i.test(p))!,
-      DETECTOR_PART_PATHS.find((p) => /l3\.glb$/i.test(p))!,
+      DETECTOR_PART_PATHS.find((p) => /l3_pp\.glb$/i.test(p))!,
     ];
 
     const loading = loadDetectorModelProgressive(paths, {
@@ -413,7 +447,7 @@ describe('loadDetectorModelProgressive + deferred Melax', () => {
     expect((bp!.root as THREE.LOD).levels.length).toBe(1);
 
     // L3 thinning is sync (no Melax) — both levels present immediately.
-    const l3 = deferred.parts.find((p) => /l3\.glb$/i.test(p.assetPath));
+    const l3 = deferred.parts.find((p) => /l3_pp\.glb$/i.test(p.assetPath));
     expect((l3!.root as THREE.LOD).levels.length).toBe(2);
 
     const attached = attachDeferredLowLods(deferred.group);

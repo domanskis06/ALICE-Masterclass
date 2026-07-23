@@ -2,7 +2,7 @@
 
 Angular application for the ALICE MasterClass student experience, served in the browser.
 
-Monorepo overview and running Django + teacher together: [`../README.md`](../README.md). Docs index: [`../docs/README.md`](../docs/README.md).
+Monorepo overview and running Django + teacher together: [`../README.md`](../README.md). Docs index: [`../ci/docs/README.md`](../ci/docs/README.md).
 
 ## Prerequisites
 
@@ -45,7 +45,8 @@ Output is written to `dist/`.
 
 ## Architecture notes
 
-- [EventDisplay](../docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
+- [EventDisplay](../ci/docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
+- [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, detector shell including `L3_pp.glb` stand-in (VA keeps CAD `L3.glb`)
 
 ## Third-party attribution
 
@@ -72,7 +73,7 @@ Requires a Chrome/Chromium installation (set `CHROME_BIN` if the binary is not o
 
 ### End-to-end tests (Playwright)
 
-**Full E2E documentation:** [docs/E2E.md](../docs/E2E.md) — layout, Django seed, CI, tags, troubleshooting.
+**Full E2E documentation:** [ci/docs/E2E.md](../ci/docs/E2E.md) — layout, Django seed, CI, tags, troubleshooting.
 
 First-time browser download:
 
@@ -148,4 +149,4 @@ Prefer **`data-testid`** on stable hooks (auth dialog, nav, exercise shell, uplo
 
 ### CI artifacts
 
-GitLab job **`e2e_playwright`** currently has **`allow_failure: true`**. It uploads HTML reports and traces (**`when: always`**) under `playwright-report-django/`, `playwright-report-teacher/`, and matching `test-results-*` folders when tests fail or retries capture traces. See [docs/E2E.md](../docs/E2E.md) for the full CI layout.
+GitLab job **`e2e_playwright`** currently has **`allow_failure: true`**. It uploads HTML reports and traces (**`when: always`**) under `playwright-report-django/`, `playwright-report-teacher/`, and matching `test-results-*` folders when tests fail or retries capture traces. See [ci/docs/E2E.md](../ci/docs/E2E.md) for the full CI layout.
