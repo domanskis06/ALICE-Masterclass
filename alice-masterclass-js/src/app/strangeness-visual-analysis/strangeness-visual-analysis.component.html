@@ -15,6 +15,14 @@
           (error)="onProtonCollisionIntroFinished()"
         ></video>
       </div>
+      <button
+        type="button"
+        class="va-skip-assembly-btn va-skip-assembly-btn--over-intro"
+        data-testid="va-skip-detector-assembly"
+        (click)="onSkipDetectorAssembly()"
+      >
+        skip
+      </button>
     </div>
   }
 
@@ -91,59 +99,71 @@
   }
 
   <div class="container" [class.va-dark-mode]="visualDarkMode" fxFlex="grow" fxLayout="column">
-    <app-event-display
-      #eventDisplayHost
-      [decaysShown]="true"
+    <div class="va-event-display-wrap">
+      @if (isDetectorAssemblyInProgress && !showCollisionVideoIntro) {
+        <button
+          type="button"
+          class="va-skip-assembly-btn"
+          data-testid="va-skip-detector-assembly"
+          (click)="onSkipDetectorAssembly()"
+        >
+          skip
+        </button>
+      }
+      <app-event-display
+        #eventDisplayHost
+        [decaysShown]="true"
 
-      [backgroundColor]="visualDarkMode ? visualDarkBackgroundColor : visualLightBackgroundColor"
-      [hasClusters]="event.clusters.length !== 0"
-      [landscape]="(isLandscape$ | async)"
-      [assemblyCoachHighlightAssetPath]="assemblyCoachHighlightPath"
-      [assemblyAllowedDragAssetPath]="assemblyAllowedDragPath"
-      [detectorModel]="ALICE_DETECTOR_MODEL"
-      [showThemeToggle]="true"
-      [darkMode]="visualDarkMode"
-      (darkModeChange)="visualDarkMode = $event"
-      [cornerOverlayTemplate]="showLetsUsPanel ? letsUsPanelTpl : null"
-      [event]="event"
-      [previousEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
-      (previousEvent)="onPreviousEvent()"
-      [nextEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
-      (nextEvent)="onNextEvent()"
-      (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
-      (trackClickedEvent)="onTrackClicked($event)"
-      >
-      <div class="event-meta-panel">
-        <div class="dataset-controls">
-          <mat-form-field appearance="outline" class="dataset-select">
-            <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
-            <mat-select
-              data-testid="va-dataset-select"
-              [value]="datasetID"
-              [disabled]="isDetectorAssemblyInProgress"
-              (selectionChange)="onDatasetChange($event.value)">
-              @if (dataService.VA_DATASET.hasDemo) {
-                <mat-option [value]="-1">{{ 'SELECT_DATASET_DIALOG.DEMO' | translate }}</mat-option>
-              }
-              @for (ds of dataService.VA_DATASET.dataset; track ds) {
-                <mat-option [value]="ds">
-                  <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: ds - 1}"></span>
-                </mat-option>
-              }
-              @if (dataService.VA_DATASET.hasFull) {
-                <mat-option [value]="-2">{{ 'SELECT_DATASET_DIALOG.FULL_EVENT' | translate }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+        [backgroundColor]="visualDarkMode ? visualDarkBackgroundColor : visualLightBackgroundColor"
+        [hasClusters]="event.clusters.length !== 0"
+        [landscape]="(isLandscape$ | async)"
+        [assemblyCoachHighlightAssetPath]="assemblyCoachHighlightPath"
+        [assemblyAllowedDragAssetPath]="assemblyAllowedDragPath"
+        [detectorModel]="ALICE_DETECTOR_MODEL"
+        [showThemeToggle]="true"
+        [darkMode]="visualDarkMode"
+        (darkModeChange)="visualDarkMode = $event"
+        [cornerOverlayTemplate]="showLetsUsPanel ? letsUsPanelTpl : null"
+        [event]="event"
+        [previousEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
+        (previousEvent)="onPreviousEvent()"
+        [nextEventButtonDisabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
+        (nextEvent)="onNextEvent()"
+        (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
+        (trackClickedEvent)="onTrackClicked($event)"
+        >
+        <div class="event-meta-panel">
+          <div class="dataset-controls">
+            <mat-form-field appearance="outline" class="dataset-select">
+              <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
+              <mat-select
+                data-testid="va-dataset-select"
+                [value]="datasetID"
+                [disabled]="isDetectorAssemblyInProgress"
+                (selectionChange)="onDatasetChange($event.value)">
+                @if (dataService.VA_DATASET.hasDemo) {
+                  <mat-option [value]="-1">{{ 'SELECT_DATASET_DIALOG.DEMO' | translate }}</mat-option>
+                }
+                @for (ds of dataService.VA_DATASET.dataset; track ds) {
+                  <mat-option [value]="ds">
+                    <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: ds - 1}"></span>
+                  </mat-option>
+                }
+                @if (dataService.VA_DATASET.hasFull) {
+                  <mat-option [value]="-2">{{ 'SELECT_DATASET_DIALOG.FULL_EVENT' | translate }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="event-label-row">
+            <span class="event-label">{{ 'EVENT_DISPLAY.EVENT' | translate }} {{ eventID }}</span>
+            @if (isCurrentEventDone) {
+              <mat-icon id="done">done</mat-icon>
+            }
+          </div>
         </div>
-        <div class="event-label-row">
-          <span class="event-label">{{ 'EVENT_DISPLAY.EVENT' | translate }} {{ eventID }}</span>
-          @if (isCurrentEventDone) {
-            <mat-icon id="done">done</mat-icon>
-          }
-        </div>
-      </div>
-    </app-event-display>
+      </app-event-display>
+    </div>
 
     <ng-template #letsUsPanelTpl>
       <app-lets-us-panel

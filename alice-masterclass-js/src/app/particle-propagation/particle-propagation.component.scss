@@ -145,6 +145,8 @@ canvas {
   padding-right: 32px;
   border-right: 1px solid var(--pp-border);
   transform: translateX(0);
+  // Keep detector parts fixed — no vertical rubber-band / drag scroll.
+  overflow-y: hidden;
 }
 
 .particle-propagation-host.pp-sidebar-collapsed .controls-sidebar--right {

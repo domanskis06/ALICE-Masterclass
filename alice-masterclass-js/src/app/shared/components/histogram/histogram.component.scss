@@ -21,6 +21,9 @@ figure {
 
   #bars rect {
     fill: var(--bar-color);
+    stroke: #fff;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
   }
 
   #bars rect.bin-landing-pulse {

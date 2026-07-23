@@ -25,7 +25,7 @@ export class MockApiService extends ApiService {
   }
 
   // Pozostałe metody, które frontend może wywołać, zwracają sukces bez efektu
-  submitVisualAnalysisResults(results: Map<string, VisualAnalysisResultsEntry>, datasetID: number): Observable<any> {
+  submitVisualAnalysisResults(results: Map<string, VisualAnalysisResultsEntry[]>, datasetID: number): Observable<any> {
     console.log('[MockApiService] submitVisualAnalysisResults', datasetID, Array.from(results.entries()));
     return of({ ok: true });
   }

@@ -33,13 +33,13 @@
 }
 
 mat-card-content {
-  min-height: 560px;
+  min-height: 452px;
 }
 
 .hist-grid {
   align-items: stretch;
-  column-gap: 24px;
-  row-gap: 28px;
+  column-gap: 12px;
+  row-gap: 14px;
 }
 
 .hist-item {
@@ -51,7 +51,7 @@ mat-card-content {
 .hist-item app-histogram {
   display: block;
   flex: 1 1 auto;
-  min-height: 160px;
+  min-height: 129px;
 }
 
 .bin-control {

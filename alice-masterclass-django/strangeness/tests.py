@@ -136,6 +136,33 @@ class VisualAnalysisAPITestCase(APITestCase):
 		self.assertEqual(VisualAnalysisResultsEntry.objects.get().particle, particle)
 		self.assertEqual(VisualAnalysisResultsEntry.objects.get().mass, mass)
 
+	def test_create_result_multi_v0_same_event(self):
+		"""Multi-V0 events may submit several mother particles under one event id."""
+		student = 0
+		dataset = 1
+		eventid = 0
+
+		data = {
+			'password': self.PASSWORD,
+			'results': {
+				str(eventid): [
+					{'particle': Particle.K0, 'mass': 0.5},
+					{'particle': Particle.LAMBDA, 'mass': 1.1},
+				]
+			}
+		}
+
+		response = self.client.put(f'/api/v1/strangeness_visual_analysis/{student}/{dataset}/', data, format='json')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+		self.assertEqual(VisualAnalysisResult.objects.count(), 1)
+		self.assertEqual(VisualAnalysisResultsEntry.objects.count(), 2)
+		self.assertEqual(VisualAnalysisResultsEntry.objects.filter(eventid=eventid).count(), 2)
+		self.assertEqual(
+			set(VisualAnalysisResultsEntry.objects.values_list('particle', flat=True)),
+			{Particle.K0, Particle.LAMBDA},
+		)
+
 	def test_create_result2(self):
 		student = 0
 		dataset = 1
