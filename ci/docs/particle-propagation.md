@@ -235,16 +235,15 @@ Do **not** point PP at `L3.glb` or VA at `L3_pp.glb`. Temporary compare/inspect 
 2. RK4 must stay off the main thread (Worker) or explicitly chunked with a yield — never a tight sync loop over `MAX_TRACKED_PARTICLES × MAX_RK4_STEPS`.
 3. Binary field parsing only via `DataView` + explicit little-endian.
 4. `FIELD_SCALE` is **not** a blind copy of `gpu_propagator`'s GLSL `SCALE` — the sign was corrected against real VA trajectories (`rk4-trajectory-validation.spec.ts`). Do not “fix” it back to match GLSL without re-running that spec.
-5. After new services/physics and a successful build: from `alice-masterclass-js`, run `graphify update .`.
 
 ---
 
 ## How to extend
 
-1. Orient with Graphify (`graphify query` / `path`) or the responsibility map above.
+1. Orient with the responsibility map above; then open only the relevant `physics/` / `scene/` files.
 2. New physics → file under `physics/` (plain TS if it must run in the Worker) + unit spec.
 3. New visuals over pre-computed data → `scene/`; wire from the component.
-4. `npm run build` (or targeted tests), then `graphify update .`.
+4. `npm run build` (or targeted tests).
 
 ---
 

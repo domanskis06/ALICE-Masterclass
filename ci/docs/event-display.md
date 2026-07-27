@@ -1,6 +1,6 @@
 # EventDisplay (student app)
 
-Guide for [`EventDisplayComponent`](../alice-masterclass-js/src/app/shared/components/event-display/event-display.component.ts) (~2200 lines, graph god node). Read this before editing the component. Do **not** load the full source into an AI chat unless you already know the exact methods to change.
+Guide for [`EventDisplayComponent`](../alice-masterclass-js/src/app/shared/components/event-display/event-display.component.ts) (~4000 lines, graph god node). Read this before editing the component. Do **not** load the full source into an AI chat unless you already know the exact methods to change.
 
 ## Role
 
@@ -42,15 +42,14 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 
 1. **No heavy physics/math** in `EventDisplayComponent` (Lorentz force, RK4, new invariant-mass pipelines, track fitting, etc.).
 2. New math → dedicated Angular `*.service.ts`; EventDisplay gets at most inject + a thin call (prefer calling from the parent analysis component).
-3. Prefer Graphify (`graphify query` / `path`) over grepping the whole file.
-4. After new services and a successful build: from `alice-masterclass-js`, run `graphify update .`.
+3. Prefer this responsibility map + targeted / ranged reads of the component. Do **not** dump the full ~4000-line file into an AI chat unless you already know the methods to change (or the user asks for a whole-file review).
 
 ## How to extend
 
-1. Orient with Graphify / this doc — identify the zone above.
+1. Orient with this doc — identify the zone above; then open only the relevant methods / related services.
 2. Add or extend a service under `alice-masterclass-js/src/app/` (shared or feature folder).
 3. Wire from Visual Analysis (or other parent); touch EventDisplay only for rendering hooks if unavoidable.
-4. `npm run build` (or targeted test), then `graphify update .`.
+4. `npm run build` (or targeted test).
 
 ## Testing
 

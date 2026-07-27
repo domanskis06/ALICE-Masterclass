@@ -31,6 +31,3 @@ alice-masterclass-django/.venv/
 
 # Blender working files / rendered frames (local only)
 alice-masterclass-js/src/assets/models/blender/
-
-# Graphify local AI context
-graphify-out/

@@ -58,7 +58,6 @@ Thumbs.db
 src/assets/exercises/strangeness/part1/*
 src/assets/exercises/strangeness/part2/*
 scripts/.cache/
-graphify-out/
 
 # Local one-off bake / A-B helpers (not part of the shipped app)
 scripts/bake-bp-lod.mjs
