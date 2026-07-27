@@ -88,6 +88,9 @@ export function caloPanelCellCount(
 /**
  * Sparse cell activation from pp (or other) collision data.
  * Indices address the detector’s panel list; `energy` drives bar height.
+ *
+ * TODO(future-data-update): Consumed by event-display readout bars once real
+ * calorimeter hit data ships; display is currently disabled (CALORIMETER_HITS_ENABLED).
  */
 export interface CalorimeterCellHit {
   detector: CalorimeterDetectorId;
@@ -97,6 +100,7 @@ export interface CalorimeterCellHit {
   energy: number;
 }
 
+/** TODO(future-data-update): Dense packs for a future collision-data release. */
 export interface CalorimeterEnergyPacks {
   caloEmcal?: number[];
   caloDcal?: number[];
@@ -106,7 +110,10 @@ export function emptyCaloEnergyPack(detector: CalorimeterDetectorId = 'emcal'): 
   return new Array(caloFlatSizeFor(detector)).fill(0);
 }
 
-/** Merges sparse hits into a dense pack for one detector (out-of-range hits ignored). */
+/**
+ * Merges sparse hits into a dense pack for one detector (out-of-range hits ignored).
+ * TODO(future-data-update): Used when calorimeter hit display is re-enabled.
+ */
 export function packCalorimeterHits(
   hits: CalorimeterCellHit[] | undefined,
   detector: CalorimeterDetectorId

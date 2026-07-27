@@ -107,7 +107,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     'assets/models/alice components/EMCAL.glb',
     'assets/models/alice components/DCAL.glb',
     'assets/models/alice components/PHOS.glb',
-    'assets/models/alice components/L3.glb',
+    'assets/models/alice components/L3_pp.glb',
   ];
 
   datasetID: number = DATASET_PICKER_DEMO;
@@ -360,7 +360,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       'tof.glb': 'TOF',
       'emcal.glb': 'CALORIMETERS',
       'phos.glb': 'PHOS',
-      'l3.glb': 'L3',
+      'l3_pp.glb': 'L3',
     };
     return byFile[file] ?? null;
   }

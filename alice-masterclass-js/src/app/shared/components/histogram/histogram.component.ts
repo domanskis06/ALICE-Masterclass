@@ -6,6 +6,8 @@ const BIN_LANDING_PULSE_CLASS = 'bin-landing-pulse';
 const BIN_LANDING_PULSE_MS = 480;
 /** From this bin count, x-axis tick labels are drawn at -45°. */
 const X_TICK_LABEL_ROTATE_BINS = 15;
+/** Half-length of X-axis tick marks (same distance above and below the axis). */
+const X_TICK_SIZE = 6;
 
 /** Logical bin that would receive a new value (no screen coordinates). */
 export interface HistogramIncomingBin {
@@ -124,13 +126,18 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   private brushX: d3.BrushBehavior<number> = d3.brushX()
 
   @Input()
-  get xDomain(): [number, number] { return this._xDomain; }
+  get xDomain(): [number, number] { return this._effectiveXDomain; }
   set xDomain(domain: [number, number]) {
-    this._xDomain = domain;
-
-    this.xDomainZoom = domain;
+    this._baseXDomain = domain;
+    this.applyEffectiveDomain(this.data);
   }
-  private _xDomain: [number, number] = [0, 1];
+  /** Nominal axis range from the parent (e.g. Kaon [0.4, 0.6]). */
+  private _baseXDomain: [number, number] = [0, 1];
+  /**
+   * Working axis range: at least `_baseXDomain`, expanded to cover every finite
+   * data value so misclassified masses still land in a bin.
+   */
+  private _effectiveXDomain: [number, number] = [0, 1];
 
   get xDomainZoom(): [number, number] { return this._xDomainZoom.getValue(); }
   set xDomainZoom(domainZoom: [number, number]) {
@@ -158,6 +165,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Input()
   get data(): Array<number> { return this._data.getValue(); }
   set data(data: Array<number>) {
+    this.applyEffectiveDomain(data);
+
     this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
 
     const bins = this.binGenerator(data);
@@ -193,6 +202,40 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     const x0 = bin.x0 ?? 0;
     const x1 = bin.x1 ?? x0;
     return (x1 - x0) / 2 + x0;
+  }
+
+  /**
+   * Expand the nominal domain so every finite sample (and optional extras) is inside.
+   * Bin count stays fixed — equal-width bins cover the new span.
+   */
+  private domainCovering(values: Iterable<number>): [number, number] {
+    let lo = this._baseXDomain[0];
+    let hi = this._baseXDomain[1];
+    for (const value of values) {
+      if (!Number.isFinite(value)) {
+        continue;
+      }
+      if (value < lo) {
+        lo = value;
+      }
+      if (value > hi) {
+        hi = value;
+      }
+    }
+    if (!(hi > lo)) {
+      hi = lo + Number.EPSILON;
+    }
+    return [lo, hi];
+  }
+
+  private applyEffectiveDomain(values: Iterable<number>): void {
+    const next = this.domainCovering(values);
+    const prev = this._effectiveXDomain;
+    this._effectiveXDomain = next;
+    if (prev[0] !== next[0] || prev[1] !== next[1] || this.xDomainZoom[0] !== next[0] || this.xDomainZoom[1] !== next[1]) {
+      // Keep the brush zoom in sync with the working axis (full span after expand/shrink).
+      this.xDomainZoom = next;
+    }
   }
 
   constructor() { }
@@ -254,13 +297,16 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Which bin would receive `value` (data-space only — screen mapping is done by the parent grid).
+   * Uses the domain that would apply after `value` is added (so out-of-range masses expand the axis).
    */
   resolveIncomingBin(value: number): HistogramIncomingBin | null {
     if (!this.viewInitialized || !Number.isFinite(value)) {
       return null;
     }
 
-    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
+    const domain = this.domainCovering([...this.data, value]);
+    const thresholds = this.getBinThresholdsFor(domain);
+    this.binGenerator.domain(domain).thresholds(thresholds);
     const currentBins = this.binGenerator(this.data);
     const projectedBins = this.binGenerator([...this.data, value]);
 
@@ -272,7 +318,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     }
 
     const bin = projectedBins[binIndex];
-    const x0 = bin.x0 ?? this.xDomain[0];
+    const x0 = bin.x0 ?? domain[0];
     const x1 = bin.x1 ?? x0;
     const yMax = Math.max(d3.max(projectedBins, (d) => d.length) ?? 1, this.yDomain[1] || 1);
 
@@ -294,6 +340,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Viewport landing spot: X = bin center, Y = vertical middle of this plot's SVG.
+   * Maps against the projected (possibly expanded) domain so the flight lands where the bar will sit.
    */
   previewBinTarget(value: number): HistogramBinTarget | null {
     const incoming = this.resolveIncomingBin(value);
@@ -305,6 +352,10 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     if (svgRect.width <= 0 || svgRect.height <= 0) {
       return null;
     }
+
+    const domain = this.domainCovering([...this.data, value]);
+    const previousDomain = this.xScale.domain() as [number, number];
+    this.xScale.domain(domain);
 
     const svgX = this.CONTENT_AREA.X + this.xScale(incoming.binCenter);
     const svgY = this.CONTENT_AREA.Y + this.CONTENT_AREA.H / 2;
@@ -319,6 +370,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
         targetY = mapped.y;
       }
     }
+
+    this.xScale.domain(previousDomain);
 
     return {
       binIndex: incoming.binIndex,
@@ -419,12 +472,16 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Interior edges of `bins` equal-width intervals on `xDomain`.
+   * Interior edges of `bins` equal-width intervals on `domain` (defaults to effective xDomain).
    * 2 bins → 1 tick (midpoint), 3 bins → 2 ticks, etc.
    */
   protected getBinThresholds(): number[] {
+    return this.getBinThresholdsFor(this.xDomain);
+  }
+
+  protected getBinThresholdsFor(domain: [number, number]): number[] {
     const n = Math.max(1, Math.round(this.bins));
-    const [x0, x1] = this.xDomain;
+    const [x0, x1] = domain;
     if (!(x1 > x0) || n <= 1) {
       return [];
     }
@@ -470,18 +527,25 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   protected updateXDomain(): void {
     const axis = d3.axisBottom(this.xScale)
       .tickValues(this.getXTickValues())
-      .tickFormat((d) => this.getXTickFormat()(d as number));
+      .tickFormat((d) => this.getXTickFormat()(d as number))
+      .tickSizeInner(X_TICK_SIZE);
 
     this.xAxisSelector
       .transition()
       .duration(this.ANIMATION_DURATION)
       .call(axis)
       .end()
-      .then(() => this.applyXTickLabelStyle())
-      .catch(() => this.applyXTickLabelStyle());
+      .then(() => this.applyXTickStyle())
+      .catch(() => this.applyXTickStyle());
   }
 
-  private applyXTickLabelStyle(): void {
+  private applyXTickStyle(): void {
+    // Mirror ticks above the axis so bin edges are visible in the plot.
+    this.xAxisSelector
+      .selectAll<SVGLineElement, unknown>('.tick line')
+      .attr('y1', -X_TICK_SIZE)
+      .attr('y2', X_TICK_SIZE);
+
     const rotated = this.shouldRotateXTickLabels();
 
     this.xAxisSelector
