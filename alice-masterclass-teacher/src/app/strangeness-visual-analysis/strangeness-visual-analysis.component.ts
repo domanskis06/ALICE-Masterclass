@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Type } from '@angular/core';
 import { ApiService, SessionAPI, VisualAnalysisResultAPI } from '../shared/services/api.service';
+import { InstructionsProvider } from '../shared/interfaces';
 import { StudentSelectedEvent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 export interface StudentResultAPI {
   student: number,
@@ -27,7 +29,9 @@ export interface StudentResult {
     styleUrls: ['./strangeness-visual-analysis.component.scss'],
     standalone: false
 })
-export class StrangenessVisualAnalysisComponent implements OnInit {
+export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsProvider {
+
+  instructionsComponent: Type<any> = InstructionsComponent;
 
   public studentResults: StudentResult[] = [];
 

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { of } from 'rxjs';
 
@@ -11,6 +12,7 @@ import { ApiService, SessionAPI, VisualAnalysisResultAPI } from '../shared/servi
 import { StrangenessVisualAnalysisComponent } from './strangeness-visual-analysis.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
 import { ResultsComponent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 describe('StrangenessVisualAnalysisComponent', () => {
   let component: StrangenessVisualAnalysisComponent;
@@ -30,9 +32,10 @@ describe('StrangenessVisualAnalysisComponent', () => {
     declarations: [
         StrangenessVisualAnalysisComponent,
         MassHistogramsComponent,
-        ResultsComponent
+        ResultsComponent,
+        InstructionsComponent
     ],
-    imports: [AngularModule, SharedModule],
+    imports: [AngularModule, SharedModule, TranslateModule.forRoot()],
     providers: [ApiService, provideHttpClient(withInterceptorsFromDi())]
 })
     .compileComponents();

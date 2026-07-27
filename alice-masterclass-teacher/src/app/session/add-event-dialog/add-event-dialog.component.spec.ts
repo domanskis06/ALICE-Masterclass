@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AngularModule } from '../../shared/angular.module';
 import { SharedModule } from 'src/app/shared/shared.module';
@@ -15,7 +16,7 @@ describe('AddEventDialogComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
     declarations: [AddEventDialogComponent],
-    imports: [AngularModule, SharedModule],
+    imports: [AngularModule, SharedModule, TranslateModule.forRoot()],
     providers: [
         { provide: MAT_DIALOG_DATA, useValue: {} },
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) },

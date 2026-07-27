@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { of } from 'rxjs';
 
@@ -11,6 +12,7 @@ import { ApiService, CentralityType, CollisionType, EventAPI, ParticleType, Stra
 import { CentralityNamePipe, StrangenessLargeScaleAnalysisComponent } from './strangeness-large-scale-analysis.component';
 import { StrangenessEnhancementPlotComponent } from './strangeness-enhancement-plot/strangeness-enhancement-plot.component';
 import { ResultsComponent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 describe('StrangenessLargeScaleAnalysisComponent', () => {
   let component: StrangenessLargeScaleAnalysisComponent;
@@ -31,9 +33,10 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
         StrangenessLargeScaleAnalysisComponent,
         StrangenessEnhancementPlotComponent,
         ResultsComponent,
-        CentralityNamePipe
+        CentralityNamePipe,
+        InstructionsComponent
     ],
-    imports: [AngularModule, SharedModule],
+    imports: [AngularModule, SharedModule, TranslateModule.forRoot()],
     providers: [ApiService, provideHttpClient(withInterceptorsFromDi())]
 })
     .compileComponents();

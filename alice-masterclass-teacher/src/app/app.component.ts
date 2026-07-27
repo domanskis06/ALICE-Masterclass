@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { TranslateService, LangChangeEvent } from '@ngx-translate/core';
 import { ApiService } from './shared/services/api.service';
 import { environment } from '../environments/environment';
 
@@ -11,7 +12,25 @@ import { environment } from '../environments/environment';
 export class AppComponent {
   title = 'alice-masterclass-teacher';
 
-  constructor(private apiService: ApiService) {
+  readonly LANGUAGES: string[] = ['en', 'de'];
+  readonly languageKey = 'language';
+
+  constructor(
+    private apiService: ApiService,
+    private translateService: TranslateService
+  ) {
     apiService.API_URL = environment.apiUrl;
+
+    this.translateService.setDefaultLang(this.LANGUAGES[0]);
+
+    let language = localStorage.getItem(this.languageKey);
+    if (language === null || !this.LANGUAGES.includes(language)) {
+      language = this.LANGUAGES[0];
+    }
+    this.translateService.use(language);
+
+    this.translateService.onLangChange.subscribe((params: LangChangeEvent) => {
+      localStorage.setItem(this.languageKey, params.lang);
+    });
   }
 }

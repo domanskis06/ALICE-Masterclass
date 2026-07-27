@@ -1,0 +1,128 @@
+{
+  "LANGUAGES": {
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "GENERAL": {
+    "MENU": "Menu",
+    "ALICE_MASTERCLASS_TEACHER": "ALICE Masterclass Teacher",
+    "TOGGLE_SIDENAV": "Toggle sidenav",
+    "INSTRUCTIONS_BUTTON": "Instructions button",
+    "CHANGE_LANGUAGE": "Change language",
+    "AND": "and"
+  },
+  "INSTRUCTIONS_DIALOG": {
+    "BUTTON_DISMISS": "Dismiss"
+  },
+  "NAV": {
+    "SESSION": "Session",
+    "STRANGENESS": "Strangeness",
+    "VISUAL_ANALYSIS": "Visual Analysis",
+    "LARGE_SCALE_ANALYSIS": "Large Scale Analysis"
+  },
+  "SESSION": {
+    "TITLE": "Events",
+    "ADD_EVENT": "Add Event",
+    "NO_EVENTS": "No events yet. Click the + button to add an event.",
+    "SESSIONS_COUNT": "{{count}} session(s)",
+    "SESSION_NAME": "Session Name",
+    "PASSWORD": "Password",
+    "MAX_STUDENTS": "Max students",
+    "URL": "URL",
+    "CREATED": "Created",
+    "DELETE": "Delete",
+    "NO_SESSIONS": "No sessions yet for this event.",
+    "ADD_SESSION": "Add Session",
+    "URL_COPIED": "URL copied to clipboard",
+    "ADD_EVENT_DIALOG": {
+      "EVENT_NAME": "Event name",
+      "NAME_EXISTS": "Event with this name already exists.",
+      "CREATE": "Create Event",
+      "CANCEL": "Cancel"
+    },
+    "ADD_SESSION_DIALOG": {
+      "EVENT_NAME": "Event name",
+      "SESSION_NAME": "Session name",
+      "PASSWORD": "Password",
+      "PASSWORD_EXISTS": "Session with this password already exists.",
+      "MAX_STUDENTS": "Maximum number of students",
+      "CREATE": "Create Session",
+      "CANCEL": "Cancel"
+    },
+    "CONFIRM_DIALOG": {
+      "MESSAGE": "Are you sure?",
+      "YES": "Yes",
+      "NO": "No"
+    }
+  },
+  "VISUAL_ANALYSIS": {
+    "SESSION": "Session",
+    "MASS_HISTOGRAMS": "Mass Histograms",
+    "INVARIANT_MASS": "Invariant Mass",
+    "COUNTS": "Counts",
+    "RESULTS": "Results",
+    "STUDENT": "Student",
+    "DATASET": "Dataset",
+    "MASSES": "Masses",
+    "INSTRUCTIONS": {
+      "TITLE": "About Visual Analysis",
+      "INTRO": "This module lets you inspect the invariant-mass results collected by students in a selected session.",
+      "HOW_TO_USE": "How to use it",
+      "STEP_1": "Choose a session from the dropdown above the Results table.",
+      "STEP_2": "The Mass Histograms show the combined distribution of particle masses reported by the selected students.",
+      "STEP_3": "In the Results table, select or deselect students to include or exclude their data from the histograms.",
+      "STEP_4": "Use the refresh button if new student results become available.",
+      "HOW_TO_READ": "How to read the histograms",
+      "HOW_TO_READ_INTRO": "Each histogram shows the invariant mass of a candidate particle:",
+      "PEAK_KAON": "— typically a peak near ~0.5 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_LAMBDA": "— typically a peak near ~1.115 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_XI": "— typically a peak near ~1.32 GeV/<em>c</em><sup>2</sup>",
+      "CLEAR_PEAK": "A clear peak indicates that students correctly identified that particle.",
+      "BROAD_DISTRIBUTION": "A broad or flat distribution may mean misidentification or too few candidates.",
+      "TIP_LABEL": "Tip:",
+      "TIP": "Compare histograms across students or sessions to see how consistently the class reconstructed each particle species."
+    }
+  },
+  "LARGE_SCALE_ANALYSIS": {
+    "EVENT": "Event",
+    "NO_PARTICIPANTS": "No. participants",
+    "ENHANCEMENT": "Enhancement",
+    "RESULTS": "Results",
+    "CENTRALITY": "Centrality",
+    "NO_EVENTS": "No. events",
+    "NO": "No.",
+    "EFFICIENCY": "Efficiency",
+    "YIELD": "Yield",
+    "UNKNOWN": "unknown",
+    "INSTRUCTIONS": {
+      "TITLE": "About Large Scale Analysis",
+      "INTRO": "This module combines results from a masterclass event to study <strong>strangeness enhancement</strong> — how the production of strange particles increases in heavy-ion Pb–Pb collisions relative to proton–proton collisions.",
+      "HOW_TO_USE": "How to use it",
+      "STEP_1": "Choose an event from the dropdown above the plot.",
+      "STEP_2": "The plot shows strangeness enhancement as a function of collision centrality, measured by the number of participating nucleons <em>N</em><sub>part</sub>.",
+      "STEP_3": "The Results table lists yields and enhancement values for each centrality class and particle species.",
+      "STEP_4": "Use the refresh button if new results become available.",
+      "HOW_TO_INTERPRET": "How to interpret the quantities",
+      "YIELD_DEF": "number of particles of a given type reconstructed in that centrality class",
+      "NPART_DEF": "average number of nucleons participating in the collision",
+      "ENHANCEMENT_DEF": "yield per participant, normalised to a pp reference:",
+      "WHERE_YPP": "where <em>Y</em><sub>pp</sub> is the reference yield in pp collisions.",
+      "FACTOR_TWO": "The factor 2 converts the pp yield to a per-participant scale, since a pp collision involves two protons.",
+      "WHAT_TO_LOOK_FOR": "What to look for",
+      "LOOK_FOR": "Enhancement is usually larger for more central collisions with higher <em>N</em><sub>part</sub> and can differ between",
+      "LOOK_FOR_END": "Discuss with students why denser collisions may produce more strange quarks.",
+      "TIP_LABEL": "Tip:",
+      "TIP": "Use the coloured markers in the table together with the plot to connect a specific centrality class to its point on the graph.",
+      "FORMULA_ENHANCEMENT": "Enhancement",
+      "FORMULA_YIELD": "Yield"
+    }
+  },
+  "PAGINATOR": {
+    "ITEMS_PER_PAGE": "Items per page:",
+    "NEXT_PAGE": "Next page",
+    "PREVIOUS_PAGE": "Previous page",
+    "FIRST_PAGE": "First page",
+    "LAST_PAGE": "Last page",
+    "OF_LABEL": "of"
+  }
+}

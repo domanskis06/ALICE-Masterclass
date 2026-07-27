@@ -6,13 +6,15 @@ import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 import { StrangenessEnhancementPlotComponent } from './strangeness-enhancement-plot/strangeness-enhancement-plot.component';
 import { ResultsComponent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 @NgModule({
   declarations: [
     StrangenessLargeScaleAnalysisComponent,
     StrangenessEnhancementPlotComponent,
     ResultsComponent,
-    CentralityNamePipe
+    CentralityNamePipe,
+    InstructionsComponent
   ],
   imports: [
     CommonModule,

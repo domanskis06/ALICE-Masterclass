@@ -8,7 +8,7 @@
       (reloadClickedEvent)="onReload()"
       >
       <mat-form-field sessionSelector appearance="outline" class="selector" color="primary">
-        <mat-label>Session</mat-label>
+        <mat-label>{{ 'VISUAL_ANALYSIS.SESSION' | translate }}</mat-label>
         <mat-select [(ngModel)]="sessionID" (selectionChange)="onSessionChange()">
           @for (s of sessions; track s.id) {
             <mat-option [value]="s.id">{{ s.name }}</mat-option>

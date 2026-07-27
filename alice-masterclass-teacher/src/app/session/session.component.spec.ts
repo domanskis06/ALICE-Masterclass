@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { AngularModule } from '../shared/angular.module';
@@ -22,7 +23,7 @@ describe('SessionComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
     declarations: [SessionComponent],
-    imports: [AngularModule, SharedModule],
+    imports: [AngularModule, SharedModule, TranslateModule.forRoot()],
     providers: [ApiService, SessionUrlPipe, provideHttpClient(withInterceptorsFromDi())]
 })
     .compileComponents();

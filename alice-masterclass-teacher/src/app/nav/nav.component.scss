@@ -29,3 +29,16 @@
   top: 0;
   z-index: 2;
 }
+
+#buttons {
+  margin-left: auto;
+
+  button {
+    vertical-align: middle;
+    font-size: 1em;
+
+    span {
+      margin-left: 0.3em;
+    }
+  }
+}

@@ -1,6 +1,9 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, Type } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ParticleType, CentralityType, CollisionType, EventAPI, StrangenesLargeScaleAnalysisResultAPI, ApiService } from '../shared/services/api.service';
+import { InstructionsProvider } from '../shared/interfaces';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 export interface StrangenessEnhancementEntry {
   centrality: string;
@@ -34,6 +37,8 @@ export interface StrangenessEnhancementPlotEntry {
     standalone: false
 })
 export class CentralityNamePipe implements PipeTransform {
+  constructor(private translate: TranslateService) {}
+
   transform(key: string): string {
     switch(key) {
       case CentralityType.C000_010:
@@ -53,7 +58,7 @@ export class CentralityNamePipe implements PipeTransform {
       case CentralityType.C070_080:
         return '70 - 80%';
       default:
-        return 'unknown';
+        return this.translate.instant('LARGE_SCALE_ANALYSIS.UNKNOWN');
     }
   }
 }
@@ -68,7 +73,9 @@ export const ANTILAMBDA_COLOR: string = '#E31A1C';
     styleUrls: ['./strangeness-large-scale-analysis.component.scss'],
     standalone: false
 })
-export class StrangenessLargeScaleAnalysisComponent implements OnInit, OnDestroy {
+export class StrangenessLargeScaleAnalysisComponent implements OnInit, OnDestroy, InstructionsProvider {
+
+  instructionsComponent: Type<any> = InstructionsComponent;
 
   public eventID: number | null = null;
   public events: EventAPI[] = [];

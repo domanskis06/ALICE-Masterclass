@@ -2,10 +2,10 @@
   <form [formGroup]="form">
     <div>
       <mat-form-field appearance="fill">
-        <mat-label>Event name</mat-label>
+        <mat-label>{{ 'SESSION.ADD_EVENT_DIALOG.EVENT_NAME' | translate }}</mat-label>
         <input matInput type="text" [formControl]="$any(form.controls.name)" required>
         @if (form.controls.name.value !== '') {
-          <mat-error>Event with this name already exists.</mat-error>
+          <mat-error>{{ 'SESSION.ADD_EVENT_DIALOG.NAME_EXISTS' | translate }}</mat-error>
         }
       </mat-form-field>
     </div>
@@ -13,7 +13,7 @@
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <app-spinner-container [loading]="loading">
-    <button mat-raised-button color="primary" [disabled]="loading || form.invalid" (click)="onCreateButtonClicked()">Create Event</button>
+    <button mat-raised-button color="primary" [disabled]="loading || form.invalid" (click)="onCreateButtonClicked()">{{ 'SESSION.ADD_EVENT_DIALOG.CREATE' | translate }}</button>
   </app-spinner-container>
-  <button mat-raised-button mat-dialog-close tabindex="-1">Cancel</button>
+  <button mat-raised-button mat-dialog-close tabindex="-1">{{ 'SESSION.ADD_EVENT_DIALOG.CANCEL' | translate }}</button>
 </mat-dialog-actions>
