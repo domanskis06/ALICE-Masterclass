@@ -62,11 +62,10 @@ export interface AssemblyUnlockState {
 })
 export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /**
-   * Side views: full-res WebGLRenderTargets updated only when dirty (and not mid
-   * camera gesture). Blit the cached textures while the main camera moves (or
-   * right after a cache refresh); idle frames skip blit and keep the frozen
-   * frame via scissor. Main 3D keeps full devicePixelRatio + AA + bloom (composer
-   * sized to the main viewport so side regions are untouched).
+   * Side views: full-res WebGLRenderTargets of the same scene from fixed Rφ/ρz
+   * cameras (no link to main-camera zoom). Re-rendered only when scene content /
+   * layout is dirty; blit every frame after the main pass so bloom/composer
+   * cannot leave the side regions blank. Picking is main-viewport only.
    *
    * Layer 0 — shared by main + Rφ/ρz: detector parts (respecting root.visible), tracks,
    * decays, clusters, markers, calorimeter readouts, lights, axes.
@@ -78,7 +77,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
 
   @HostBinding("style.--primary-axis-ratio")
-  readonly PRIMARY_AXIS_RATIO: number = 1 / 1.61803398875; // Golden ratio
+  /** Share of canvas width (landscape) / height (portrait) for the main 3D pane. */
+  readonly PRIMARY_AXIS_RATIO: number = 0.70;
   @HostBinding("style.--secondary-axis-ratio")
   readonly SECONDARY_AXIS_RATIO: number = 1 / 2;
 
@@ -97,6 +97,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * Same +Z ray as overview (~3.7× nearer) so zoom-out stays end-on.
    */
   static readonly CAMERA_3D_ASSEMBLY_START = { x: 0, y: 0, z: 3 } as const;
+  /**
+   * Fixed PerspectiveCamera.zoom for Rφ/ρz side views (overview framing).
+   * Independent of the main orbit distance so zooming 3D View does not rescaled
+   * or re-render the side panes.
+   */
+  static readonly SIDE_VIEW_FIXED_ZOOM =
+    10 / EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
   /** Duration of the auto zoom-out after each assembly piece is snapped. */
   static readonly ASSEMBLY_CAMERA_ZOOM_MS = 700;
   /**
@@ -943,11 +950,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private layerHitMarkers: THREE.Object3D = new THREE.Object3D();
   /** When true, Rφ/ρz scene is re-rendered into the full-res side-view caches. */
   private sideViewsDirty = true;
-  private sideViewsInteracting = false;
   /** True after at least one successful side-view cache render (safe to blit). */
   private sideViewCacheValid = false;
-  /** Orbit distance last used for side-view zoom; refresh when it changes after a gesture. */
-  private lastSideViewZoom = -1;
   private sideViewRphiRT: THREE.WebGLRenderTarget | null = null;
   private sideViewRhozRT: THREE.WebGLRenderTarget | null = null;
   private sideViewBlitScene: THREE.Scene | null = null;
@@ -3324,16 +3328,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   };
 
   private onControlsStart = (): void => {
-    this.sideViewsInteracting = true;
     this.requestRender();
   };
 
   private onControlsEnd = (): void => {
-    this.sideViewsInteracting = false;
     this.requestRender();
   };
 
-  /** Mark Rφ/ρz caches stale (content / layout / zoom after gesture). */
+  /** Mark Rφ/ρz caches stale (content / layout — not main-camera zoom). */
   private invalidateSideViews(): void {
     this.sideViewsDirty = true;
   }
@@ -3349,14 +3351,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.sideViewRphiRT.height !== th;
     if (needsNew) {
       this.disposeSideViewTargets();
-      this.sideViewRphiRT = new THREE.WebGLRenderTarget(tw, th, {
+      const rtOpts = {
         depthBuffer: true,
         stencilBuffer: false
-      });
-      this.sideViewRhozRT = new THREE.WebGLRenderTarget(tw, th, {
-        depthBuffer: true,
-        stencilBuffer: false
-      });
+      } as const;
+      this.sideViewRphiRT = new THREE.WebGLRenderTarget(tw, th, rtOpts);
+      this.sideViewRhozRT = new THREE.WebGLRenderTarget(tw, th, rtOpts);
+      // Match canvas output so side-view backgrounds don't drift vs the main 3D pass.
+      const outSpace = this.renderer.outputColorSpace ?? THREE.SRGBColorSpace;
+      this.sideViewRphiRT.texture.colorSpace = outSpace;
+      this.sideViewRhozRT.texture.colorSpace = outSpace;
       this.sideViewCacheValid = false;
       this.invalidateSideViews();
     }
@@ -3395,12 +3399,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.sideViewBlitCamera = null;
   }
 
+  /** Blit a cached side-view texture into `vp` at 1:1 (fixed framing). */
   private blitSideViewRT(rt: THREE.WebGLRenderTarget, vp: THREE.Vector4): void {
     if (!this.sideViewBlitScene || !this.sideViewBlitCamera || !this.sideViewBlitMaterial) return;
     this.sideViewBlitMaterial.map = rt.texture;
     this.sideViewBlitMaterial.needsUpdate = true;
     this.renderer.setViewport(vp);
     this.renderer.setScissor(vp);
+    // Clear with the same tone as the main 3D view so empty regions match exactly.
+    this.renderer.setClearColor(this._backgroundColor, 1);
+    this.renderer.clear(true, true, true);
     const prevAutoClear = this.renderer.autoClear;
     this.renderer.autoClear = false;
     this.renderer.render(this.sideViewBlitScene, this.sideViewBlitCamera);
@@ -3413,20 +3421,23 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     materials: any[]
   ): void {
     materials.forEach((m: any) => m.resolution?.set(rt.width, rt.height));
+    const prevTarget = this.renderer.getRenderTarget();
+    const prevClear = new THREE.Color();
+    this.renderer.getClearColor(prevClear);
+    const prevAlpha = this.renderer.getClearAlpha();
     this.renderer.setRenderTarget(rt);
     this.renderer.setClearColor(this._backgroundColor, 1);
     this.renderer.clear();
     this.renderer.render(this.scene, camera);
-    this.renderer.setRenderTarget(null);
+    this.renderer.setRenderTarget(prevTarget);
+    this.renderer.setClearColor(prevClear, prevAlpha);
   }
 
   /** Side views on/off: invalidate caches and fix layout. Main keeps full DPR + AA. */
   private syncSideViewResources(): void {
     if (!this.renderer || !this.canvas || !this.camera3D) return;
     if (!this.effectiveSideViewsShown) {
-      this.sideViewsInteracting = false;
       this.disposeSideViewTargets();
-      this.lastSideViewZoom = -1;
     } else {
       this.invalidateSideViews();
     }
@@ -3631,7 +3642,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.applyKeyboardPan();
     }
     this.controls.update();
-    const zoomz = this.controls.target.distanceTo(this.controls.object.position);
     this.renderer.setScissorTest(this.effectiveSideViewsShown);
     const oldVP = new THREE.Vector4();
     this.renderer.getViewport(oldVP);
@@ -3651,19 +3661,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.camRphiVP.set(oldVP.x, oldVP.y, width, height);
         this.camRhozVP.set(oldVP.x + width, oldVP.y, width, height);
       }
-      // Cache Rφ/ρz at full res when dirty. Blit only while the main camera is
-      // moving (or right after a cache refresh) — idle frames skip blit and rely
-      // on scissor so the frozen side frame stays on screen.
+      // Full-res scene render into cache when content/layout dirty; fixed framing.
       this.ensureSideViewTargets(this.camRphiVP.z, this.camRphiVP.w);
-      if (!this.sideViewsInteracting && Math.abs(zoomz - this.lastSideViewZoom) > 1e-3) {
-        this.sideViewsDirty = true;
-      }
-      const mustFillCache = this.sideViewsDirty && (!this.sideViewsInteracting || !this.sideViewCacheValid);
-      let cacheFilledThisFrame = false;
-      if (mustFillCache && this.sideViewRphiRT && this.sideViewRhozRT) {
+      if (this.sideViewsDirty && this.sideViewRphiRT && this.sideViewRhozRT) {
         this.sideViewsDirty = false;
-        this.lastSideViewZoom = zoomz;
-        this.cameraRphi.zoom = this.cameraRhoz.zoom = 10 / zoomz;
+        this.cameraRphi.zoom = this.cameraRhoz.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
         this.cameraRphi.updateProjectionMatrix();
         this.cameraRhoz.updateProjectionMatrix();
         const sideMaterials = [
@@ -3676,19 +3678,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.renderSideViewToRT(this.cameraRphi, this.sideViewRphiRT, sideMaterials);
         this.renderSideViewToRT(this.cameraRhoz, this.sideViewRhozRT, sideMaterials);
         this.sideViewCacheValid = true;
-        cacheFilledThisFrame = true;
       }
       this.renderMainView();
-      const mainMoving =
-        this.sideViewsInteracting ||
-        this.isMousePanning ||
-        (this.cameraMode === 'free' && this.hasPanKeysDown());
-      if (
-        this.sideViewCacheValid &&
-        this.sideViewRphiRT &&
-        this.sideViewRhozRT &&
-        (mainMoving || cacheFilledThisFrame)
-      ) {
+      if (this.sideViewCacheValid && this.sideViewRphiRT && this.sideViewRhozRT) {
         this.blitSideViewRT(this.sideViewRphiRT, this.camRphiVP);
         this.blitSideViewRT(this.sideViewRhozRT, this.camRhozVP);
       }
@@ -3849,16 +3841,44 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private applyCascadeHover(decayGroup: THREE.Object3D) {
     this.decayGroupHovered = decayGroup;
-    // Keep original decay-track colors on hover (no black override).
-    // Emphasis comes from fading background tracks + detector.
+    // Keep original decay-track colors on the hovered group.
+    // Background tracks + other decays + detector fade; clusters hide completely.
     this.cascadeHoverActive = true;
-    (this.trackMaterial as any).transparent = true;
-    (this.trackMaterial as any).opacity = 0;
+    const fadeOpacity = EventDisplayComponent.DETECTOR_FADE_OPACITY;
+
+    for (const mat of this.getCascadeFadeTrackMaterials()) {
+      (mat as any).transparent = true;
+      (mat as any).opacity = fadeOpacity;
+    }
+
+    // Hovered decay keeps full opacity via per-line clones (shared mats are faded above).
+    for (const child of decayGroup.children) {
+      const line = child as Line2;
+      if (!(line as any).isLine2 || !line.material) {
+        continue;
+      }
+      const orig = line.material as LineMaterial;
+      (line as any).userData = {
+        ...((line as any).userData || {}),
+        cascadeHoverOrigMat: orig,
+      };
+      const emphasis = orig.clone();
+      // Share resolution with the shared material so resize/render updates stay in sync.
+      emphasis.resolution = orig.resolution;
+      emphasis.transparent = false;
+      emphasis.opacity = 1;
+      emphasis.depthWrite = true;
+      line.material = emphasis;
+    }
+
+    // Hide clusters entirely while a decay is emphasized.
+    this.clusters.visible = false;
+
     this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
       if ((o as any).isMesh) {
         const raw = (o as THREE.Mesh).material;
         const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-        for (const m of mats) { if (m) (m as any).opacity = EventDisplayComponent.DETECTOR_FADE_OPACITY; }
+        for (const m of mats) { if (m) (m as any).opacity = fadeOpacity; }
       }
     });
     this.requestRender(true);
@@ -3870,12 +3890,27 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.cascadeHoverActive
     );
     if (this.decayGroupHovered) {
+      for (const child of this.decayGroupHovered.children) {
+        const line = child as Line2;
+        const orig = (line as any).userData?.cascadeHoverOrigMat as LineMaterial | undefined;
+        if (orig && (line as any).isLine2) {
+          const cloned = line.material as LineMaterial;
+          line.material = orig;
+          if (cloned && cloned !== orig) {
+            cloned.dispose();
+          }
+          delete (line as any).userData.cascadeHoverOrigMat;
+        }
+      }
       this.decayGroupHovered = null;
     }
     if (this.cascadeHoverActive) {
       this.cascadeHoverActive = false;
-      (this.trackMaterial as any).transparent = false;
-      (this.trackMaterial as any).opacity = 1;
+      for (const mat of this.getCascadeFadeTrackMaterials()) {
+        (mat as any).transparent = false;
+        (mat as any).opacity = 1;
+      }
+      this.applyDesiredPhysicsVisibility();
       this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
         if ((o as any).isMesh) {
           const raw = (o as THREE.Mesh).material;
@@ -3893,6 +3928,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /** Shared track materials faded during cascade hover (hovered decay uses clones). */
+  private getCascadeFadeTrackMaterials(): THREE.Material[] {
+    return [
+      this.trackMaterial,
+      this.postiveTrackMaterial,
+      this.negativeTrackMaterial,
+      this.bachelorTrackMaterial,
+    ].filter((m): m is THREE.Material => !!m);
+  }
+
   private findMarkerByProximity(event: MouseEvent): { label: string } | null {
     const markers = [
       ...this.primaryVertexMarkers.children,
@@ -3904,9 +3949,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const cursorY = rect.height - (event.clientY - rect.top);
     const maxDist = EventDisplayComponent.MARKER_PROXIMITY_PX * EventDisplayComponent.MARKER_PROXIMITY_PX;
     let closest: { label: string; dist: number } | null = null;
-    const viewports = this.effectiveSideViewsShown
-      ? [{ view: this.cam3DVP, cam: this.camera3D }, { view: this.camRphiVP, cam: this.cameraRphi }, { view: this.camRhozVP, cam: this.cameraRhoz }]
-      : [{ view: this.cam3DVP, cam: this.camera3D }];
+    // Side views are display-only — picking only on the main 3D viewport.
+    const viewports = [{ view: this.cam3DVP, cam: this.camera3D }];
     const v = new THREE.Vector3();
     for (const { view, cam } of viewports) {
       const ndcX = (cursorX - view.x) / view.z;
@@ -3937,29 +3981,25 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private findIntersect(event: MouseEvent): THREE.Intersection[] {
     const intersects: THREE.Intersection[] = [];
     const zoomz = this.controls.target.distanceTo(this.controls.object.position);
+    // ~30% larger than the previous zoomz/55 threshold so decay tracks are easier to hover.
+    const lineThreshold = zoomz / 42;
     const raycaster = new THREE.Raycaster();
     if (!raycaster.params.Line2) {
-      raycaster.params.Line2 = { threshold: zoomz / 55 };
+      raycaster.params.Line2 = { threshold: lineThreshold };
     } else {
-      raycaster.params.Line2.threshold = zoomz / 55;
+      raycaster.params.Line2.threshold = lineThreshold;
     }
-    (raycaster.params as any).Line = (raycaster.params as any).Line || { threshold: zoomz / 55 };
-    (raycaster.params as any).Line.threshold = zoomz / 55;
+    (raycaster.params as any).Line = (raycaster.params as any).Line || { threshold: lineThreshold };
+    (raycaster.params as any).Line.threshold = lineThreshold;
     const windowOffset = this.renderer.domElement.getBoundingClientRect();
     const viewportclick = new THREE.Vector2(
       event.clientX - windowOffset.left,
       -(event.clientY - windowOffset.top) + this.renderer.domElement.clientHeight
     );
-    let viewports: { view: THREE.Vector4; cam: THREE.Camera }[];
-    if (this.effectiveSideViewsShown) {
-      viewports = [
-        { view: this.cam3DVP, cam: this.camera3D },
-        { view: this.camRphiVP, cam: this.cameraRphi },
-        { view: this.camRhozVP, cam: this.cameraRhoz }
-      ];
-    } else {
-      viewports = [{ view: this.cam3DVP, cam: this.camera3D }];
-    }
+    // Side views are display-only — track/marker picks only on main 3D.
+    const viewports: { view: THREE.Vector4; cam: THREE.Camera }[] = [
+      { view: this.cam3DVP, cam: this.camera3D }
+    ];
     for (let v of viewports) {
       const vp = v.view;
       const cam = v.cam;
@@ -4011,6 +4051,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cameraRphi.position.set(0.0, 0.0, 10.0);
     this.cameraRphi.up.set(0.0, 1.0, 0.0);
     this.cameraRphi.lookAt(new THREE.Vector3(0, 0, 0));
+    this.cameraRphi.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+    this.cameraRphi.updateProjectionMatrix();
     this.cameraRphi.layers.set(EventDisplayComponent.LAYER_SHARED);
     this.cameraRhoz = new THREE.PerspectiveCamera(
       EventDisplayComponent.fieldOfView,
@@ -4021,6 +4063,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.cameraRhoz.position.set(-10.0, 0.0, 0.0);
     this.cameraRhoz.up.set(0.0, 1.0, 0.0);
     this.cameraRhoz.lookAt(new THREE.Vector3(0, 0, 0));
+    this.cameraRhoz.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+    this.cameraRhoz.updateProjectionMatrix();
     this.cameraRhoz.layers.set(EventDisplayComponent.LAYER_SHARED);
     this.controls = new OrbitControls(this.camera3D, this.renderer.domElement);
     this.controls.target.set(0.0, 0.0, 0.0);

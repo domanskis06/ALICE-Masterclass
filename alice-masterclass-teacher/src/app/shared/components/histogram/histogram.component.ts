@@ -277,24 +277,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   protected updateXDomain(): void {
     if (this.xAxisRef) {
-      const tickSize = 6;
-      this.xAxisSelector
-        .transition()
-        .duration(this.ANIMATION_DURATION)
-        .call(d3.axisBottom(this.xScale).tickSizeInner(tickSize))
-        .end()
-        .then(() => {
-          this.xAxisSelector
-            .selectAll<SVGLineElement, unknown>('.tick line')
-            .attr('y1', -tickSize)
-            .attr('y2', tickSize);
-        })
-        .catch(() => {
-          this.xAxisSelector
-            .selectAll<SVGLineElement, unknown>('.tick line')
-            .attr('y1', -tickSize)
-            .attr('y2', tickSize);
-        });
+      this.xAxisSelector.transition().duration(this.ANIMATION_DURATION).call(d3.axisBottom(this.xScale));
     }
   }
 

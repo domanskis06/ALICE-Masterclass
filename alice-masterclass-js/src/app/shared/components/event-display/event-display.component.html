@@ -35,20 +35,19 @@
           }
         </aside>
 
-        <div id="content" [class.disabled]="loading" fxLayout="row" fxLayoutAlign="center stretch">
+        <div id="content" [class.disabled]="loading">
           @if (showControls) {
             <button
               class="event-nav-btn event-nav-btn--prev"
               type="button"
               [disabled]="previousEventButtonDisabled"
-              fxFlexAlign="center"
               (click)="onPreviousEventClick()"
               mat-icon-button
               aria-label="Previous Event button">
               <mat-icon>skip_previous</mat-icon>
             </button>
           }
-          <div id="render-area" fxFlex="1 0.5 calc(100%-100px)" (pointerleave)="onPointerLeave()" tabindex="0">
+          <div id="render-area" (pointerleave)="onPointerLeave()" tabindex="0">
             <canvas #canvas (pointerdown)="onPointerDown($event); $event.currentTarget.parentElement?.focus()" (pointermove)="onPointerMove($event)" (pointerleave)="onPointerLeave()"></canvas>
             @if (vertexMarkerTooltip) {
               <div class="vertex-tooltip" [style.left.px]="vertexMarkerTooltip.x" [style.top.px]="vertexMarkerTooltip.y">
@@ -67,7 +66,6 @@
               class="event-nav-btn event-nav-btn--next"
               type="button"
               [disabled]="nextEventButtonDisabled"
-              fxFlexAlign="center"
               (click)="onNextEventClick()"
               mat-icon-button
               aria-label="Next Event button">

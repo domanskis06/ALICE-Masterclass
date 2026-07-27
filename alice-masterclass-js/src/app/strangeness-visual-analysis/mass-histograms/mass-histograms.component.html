@@ -57,6 +57,7 @@
       <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #kaonHistogram
+          class="histogram-va"
           [data]="kaonMasses"
           [xDomain]="[0.4, 0.6]"
           [bins]="bins"
@@ -72,6 +73,7 @@
       <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #lambdaHistogram
+          class="histogram-va"
           [data]="lambdaMasses"
           [xDomain]="[1.0, 1.4]"
           [bins]="bins"
@@ -87,6 +89,7 @@
       <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #antiLambdaHistogram
+          class="histogram-va"
           [data]="antiLambdaMasses"
           [xDomain]="[1.0, 1.4]"
           [bins]="bins"
@@ -102,6 +105,7 @@
       <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
         <app-histogram
           #xiHistogram
+          class="histogram-va"
           [data]="xiMasses"
           [xDomain]="[1.0, 1.4]"
           [bins]="bins"
