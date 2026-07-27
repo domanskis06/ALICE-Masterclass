@@ -3,7 +3,7 @@
     <div class="plot-header">
       <ng-content select="[cardTitle]"></ng-content>
     </div>
-    <div class="plot-frame" fxLayout="row" fxLayoutAlign="space-around center">
+    <div class="plot-frame" fxLayout="row" fxLayoutAlign="space-around center" #plotFrame>
       <svg #svg attr.viewBox="0 0 {{SVG.W}} {{SVG.H}}" preserveAspectRatio="xMidYMid meet">
         <g id="yAxisLabel" attr.transform="translate({{MARGIN.LEFT_YLABEL}}, {{MARGIN.TOP}}) rotate(-90)" text-anchor="end">
           <ng-content select="[yAxisLabel]"></ng-content>
@@ -25,6 +25,15 @@
           <ng-content select="[xAxisLabel]"></ng-content>
         </g>
       </svg>
+      @if (tooltipVisible && tooltipEntry) {
+        <div
+          class="plot-tooltip"
+          [style.left.px]="tooltipX"
+          [style.top.px]="tooltipY">
+          <div>{{ 'LARGE_SCALE_ANALYSIS.NO_PARTICIPANTS' | translate }}: {{ tooltipEntry.nParticipants }}</div>
+          <div>{{ 'LARGE_SCALE_ANALYSIS.ENHANCEMENT' | translate }}: {{ tooltipEntry.enhancement | number:'1.3-3' }}</div>
+        </div>
+      }
     </div>
   </mat-card-content>
 </mat-card>

@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, ElementRef, Input, HostBinding, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, ElementRef, Input, HostBinding, OnDestroy, NgZone } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import * as d3 from 'd3';
 
@@ -48,12 +48,20 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
 
   public readonly ANIMATION_DURATION: number = 500;
 
+  public tooltipVisible = false;
+  public tooltipEntry: StrangenessEnhancementPlotEntry | null = null;
+  public tooltipX = 0;
+  public tooltipY = 0;
+
   @ViewChild('svg')
   private svgRef!: ElementRef;
 
   private get svg(): SVGElement {
     return this.svgRef.nativeElement;
   }
+
+  @ViewChild('plotFrame')
+  private plotFrameRef!: ElementRef<HTMLElement>;
 
   @ViewChild('xAxis')
   private xAxisRef!: ElementRef;
@@ -134,7 +142,7 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
   protected xScale: d3.ScaleLinear<number,number> = d3.scaleLinear<number>();
   protected yScale: d3.ScaleLinear<number,number> = d3.scaleLinear<number>();
 
-  constructor() { }
+  constructor(private readonly ngZone: NgZone) { }
 
   ngAfterViewInit(): void {
     this.xScale.range([0, this.CONTENT_AREA.W]);
@@ -182,7 +190,7 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
   }
 
   private updateDots(): void {
-    const dotsSelection = this.dotsSelector.selectAll('circle').data(this.data);
+    const dotsSelection = this.dotsSelector.selectAll<SVGCircleElement, StrangenessEnhancementPlotEntry>('circle').data(this.data);
 
     dotsSelection
       .join(
@@ -202,7 +210,9 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
             })
             .attr('cx', (d) => this.xScale(d.nParticipants))
             .attr('cy', (d) => this.yScale(0))
-            .attr('r', 0);
+            .attr('r', 0)
+            .attr('stroke', 'transparent')
+            .attr('stroke-width', 12);
         },
         (update) => {
           return update;
@@ -211,10 +221,35 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
           return exit.remove();
         }
       )
+      .on('mouseenter', (event, d) => this.showTooltip(event, d))
+      .on('mousemove', (event, d) => this.showTooltip(event, d))
+      .on('mouseleave', () => this.hideTooltip())
       .transition().duration(this.ANIMATION_DURATION)
       .attr('cx', (d) => this.xScale(d.nParticipants))
       .attr('cy', (d) => this.yScale(d.enhancement))
       .attr('r', (d) => d.enhancement > 0 ? 4 : 0);
+  }
+
+  private showTooltip(event: MouseEvent, entry: StrangenessEnhancementPlotEntry): void {
+    if (entry.enhancement <= 0 || !this.plotFrameRef) {
+      this.hideTooltip();
+      return;
+    }
+
+    const frameRect = this.plotFrameRef.nativeElement.getBoundingClientRect();
+    this.ngZone.run(() => {
+      this.tooltipEntry = entry;
+      this.tooltipVisible = true;
+      this.tooltipX = event.clientX - frameRect.left;
+      this.tooltipY = event.clientY - frameRect.top;
+    });
+  }
+
+  private hideTooltip(): void {
+    this.ngZone.run(() => {
+      this.tooltipVisible = false;
+      this.tooltipEntry = null;
+    });
   }
 
 }
