@@ -78,7 +78,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   @HostBinding("style.--primary-axis-ratio")
   /** Share of canvas width (landscape) / height (portrait) for the main 3D pane. */
-  readonly PRIMARY_AXIS_RATIO: number = 0.70;
+  readonly PRIMARY_AXIS_RATIO: number = 0.62;
   @HostBinding("style.--secondary-axis-ratio")
   readonly SECONDARY_AXIS_RATIO: number = 1 / 2;
 
