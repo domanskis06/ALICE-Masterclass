@@ -22,7 +22,7 @@
         </g>
         <g id="xAxis" #xAxis attr.transform="translate(0, {{CONTENT_AREA.H}})"></g>
       </g>
-      <g id="xAxisLabel" attr.transform="translate({{CONTENT_AREA.X + CONTENT_AREA.W / 2}}, {{SVG.H - MARGIN.BOTTOM_TEXT}})" text-anchor="middle">
+      <g id="xAxisLabel" attr.transform="translate({{CONTENT_AREA.X + CONTENT_AREA.W}}, {{SVG.H - MARGIN.BOTTOM_TEXT}})" text-anchor="end">
         <ng-content select="[xAxisLabel]"></ng-content>
       </g>
     </svg>

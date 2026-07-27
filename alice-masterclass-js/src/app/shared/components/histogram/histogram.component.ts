@@ -43,6 +43,14 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     return this.shouldRotateXTickLabels();
   }
 
+  /**
+   * VA-only: expand the working x-domain to cover every finite data value
+   * (and previewed masses) so misclassified points still land in a bin.
+   * Leave false for LSA / fit-histogram so the parent xmin/xmax stay fixed.
+   */
+  @Input()
+  expandDomainToData = false;
+
   readonly SVG = {
     W: 400,
     // Tall enough for rotated tick labels + x-axis title without viewBox clipping.
@@ -138,8 +146,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   /** Nominal axis range from the parent (e.g. Kaon [0.4, 0.6]). */
   private _baseXDomain: [number, number] = [0, 1];
   /**
-   * Working axis range: at least `_baseXDomain`, expanded to cover every finite
-   * data value so misclassified masses still land in a bin.
+   * Working axis range: equals `_baseXDomain`, or expanded to cover data when
+   * `expandDomainToData` is enabled.
    */
   private _effectiveXDomain: [number, number] = [0, 1];
 
@@ -209,12 +217,15 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Expand the nominal domain so every finite sample (and optional extras) is inside.
-   * Bin count stays fixed — equal-width bins cover the new span.
+   * Expand the nominal domain so every finite sample is inside when
+   * `expandDomainToData` is on; otherwise keep the parent xmin/xmax.
    */
   private domainCovering(values: Iterable<number>): [number, number] {
     let lo = this._baseXDomain[0];
     let hi = this._baseXDomain[1];
+    if (!this.expandDomainToData) {
+      return [lo, hi];
+    }
     for (const value of values) {
       if (!Number.isFinite(value)) {
         continue;
@@ -301,7 +312,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Which bin would receive `value` (data-space only — screen mapping is done by the parent grid).
-   * Uses the domain that would apply after `value` is added (so out-of-range masses expand the axis).
+   * With `expandDomainToData`, uses the domain that would apply after `value` is added.
    */
   resolveIncomingBin(value: number): HistogramIncomingBin | null {
     if (!this.viewInitialized || !Number.isFinite(value)) {
@@ -344,7 +355,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Viewport landing spot: X = bin center, Y = vertical middle of this plot's SVG.
-   * Maps against the projected (possibly expanded) domain so the flight lands where the bar will sit.
+   * With `expandDomainToData`, maps against the projected domain so the flight lands on the bar.
    */
   previewBinTarget(value: number): HistogramBinTarget | null {
     const incoming = this.resolveIncomingBin(value);
