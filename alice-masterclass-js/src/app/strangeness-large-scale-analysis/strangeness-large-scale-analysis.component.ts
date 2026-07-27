@@ -107,7 +107,7 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
         if (start === true) {
           this.lsaTutorial.startMainTour();
         } else if (start === false) {
-          // Only permanently dismiss when the user explicitly clicks Skip.
+          // Skip for this page load only (resets on refresh).
           this.lsaTutorial.dismiss();
         }
         // undefined = dialog closed by some other means — do not dismiss.
