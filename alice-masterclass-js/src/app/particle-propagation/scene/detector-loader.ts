@@ -16,8 +16,8 @@
  *    (Melax-from-merged / InstancedMesh thinning) attach after the first painted
  *    frame (`scheduleDeferredLowLods`).
  *
- * L3 uses `L3_pp.glb` — a lightweight octagon yoke + liner stand-in (CAD
- * `L3.glb` is reserved for Visual Analysis). The loader wraps it in a distance
+ * L3 uses `L3.glb` — a lightweight octagon yoke + liner stand-in (archived CAD
+ * lives as `L3_original.glb`). The loader wraps it in a distance
  * {@link THREE.LOD}; `buildOuterMagnetInstanced` keeps non-sector meshes as
  * ordinary meshes when the authored file has no Mesh_1/2/3 sector families.
  * TPC / MCH use InstancedMesh families for repeated panels. BP skips
@@ -75,7 +75,7 @@ export const DETECTOR_PART_PATHS: readonly string[] = [
   `${DETECTOR_MODEL_BASE_PATH}/EMCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DCAL.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/PHOS.glb`,
-  `${DETECTOR_MODEL_BASE_PATH}/L3_pp.glb`,
+  `${DETECTOR_MODEL_BASE_PATH}/L3.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/ABSO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/DIPO.glb`,
   `${DETECTOR_MODEL_BASE_PATH}/MCH.glb`,
@@ -91,7 +91,7 @@ export function isDetectorInnerPart(assetPath: string): boolean {
 
 /** @deprecated Prefer {@link isDetectorInnerPart}; kept for older call sites/tests. */
 export function isDetectorCorePart(assetPath: string): boolean {
-  return /(^|[/\\])(its|tpc|l3_pp)\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])(its|tpc|l3)\.glb($|\?)/i.test(assetPath);
 }
 
 /** Per-slider clamp for the layer radial inflate (reduces z-fighting between shells). */
@@ -191,7 +191,7 @@ function finalizeBeamPipeMeshes(
 }
 
 /**
- * Builds a distance LOD for L3_pp: full yoke at both levels.
+ * Builds a distance LOD for L3: full yoke at both levels.
  *
  * For the octagon stand-in both levels are identical (no sector thinning).
  * Historically the CAD L3 far level kept every Nth sector
@@ -378,7 +378,7 @@ function loadOnePart(
  * reveal) would shift the whole detector along Z relative to tracks / field lines.
  */
 function beamAxisReference(parts: DetectorPart[]): THREE.Object3D | null {
-  const prefer = [/\/its\.glb$/i, /\/tpc\.glb$/i, /\/l3_pp\.glb$/i];
+  const prefer = [/\/its\.glb$/i, /\/tpc\.glb$/i, /\/l3\.glb$/i];
   for (const re of prefer) {
     const hit = parts.find((p) => re.test(p.assetPath));
     if (hit) return hit.root;

@@ -8,7 +8,7 @@ wall thickness matches CAD by growing the bore inward.
 Mesh_0 becomes a thin octagon liner flush with the yoke bore (almost no
 gap) so end-on views do not show a dark ring between circle and octagon.
 
-Writes L3_pp.glb (Particle Propagation stand-in) from L3.glb (CAD / VA asset).
+Writes L3.glb (shared VA / Particle Propagation stand-in) from L3_original.glb (archived CAD).
 """
 from __future__ import annotations
 
@@ -24,8 +24,8 @@ ASSET_DIR = (
     "/home/szymon/Desktop/new_alice/alice_szymon/alice-masterclass-js/"
     "src/assets/models/alice components"
 )
-INPUT = os.path.join(ASSET_DIR, "L3.glb")
-OUTPUT = os.path.join(ASSET_DIR, "L3_pp.glb")
+INPUT = os.path.join(ASSET_DIR, "L3_original.glb")
+OUTPUT = os.path.join(ASSET_DIR, "L3.glb")
 
 SIDES = 8
 RIB_COUNT = 64

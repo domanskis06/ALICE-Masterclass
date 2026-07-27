@@ -12,8 +12,8 @@
  * `opacity 0.35`, `depthWrite = false`), these materials keep `depthWrite =
  * true` and rely on per-mesh `polygonOffset` + `renderOrder`. Depth writes let
  * the GPU reject fragments hidden behind nearer shells instead of blending all
- * of them. The L3 magnet is the PP stand-in `L3_pp.glb` (octagon yoke + liner;
- * CAD `L3.glb` stays on Visual Analysis) inside a distance {@link THREE.LOD},
+ * of them. The L3 magnet is `L3.glb` (octagon yoke + liner stand-in;
+ * archived CAD is `L3_original.glb`) inside a distance {@link THREE.LOD},
  * with default opacity {@link OUTER_MAGNET_DEFAULT_OPACITY}. Legacy helpers
  * still collapse Mesh_1/2/3 sector families into {@link THREE.InstancedMesh}
  * when present. TPC uses a distance LOD whose far level thins fine detail and
@@ -65,7 +65,7 @@ const BEAM_PIPE_RENDER_ORDER = 500_000;
 /**
  * Keep 1 of every N azimuthal yoke sectors (Mesh_1/2/3 families).
  * The historical CAD L3 repeated the same ~128-tri panel ~168× around the ring.
- * Current `L3_pp.glb` is a single octagon mesh (no sector families).
+ * Current `L3.glb` is a single octagon mesh (no sector families).
  *
  * No longer used by the live L3 LOD in `detector-loader.ts` — thinning left
  * gaps that read as white holes in light mode. Kept for
@@ -212,7 +212,7 @@ export function detectorPartLabel(assetPath: string): string {
     'emcal.glb': 'EMCal',
     'dcal.glb': 'DCal',
     'phos.glb': 'PHOS',
-    'l3_pp.glb': 'L3-Magnet',
+    'l3.glb': 'L3-Magnet',
     'mch.glb': 'MCH',
     'abso.glb': 'ABSO',
     'dipo.glb': 'DIPO-Magnet',
@@ -229,7 +229,7 @@ function isCalorimeter(assetPath: string): boolean {
 
 /** Outer L3 magnet yoke — large screen coverage under the PP camera. */
 export function isOuterMagnet(assetPath: string): boolean {
-  return /(^|[/\\])l3_pp\.glb($|\?)/i.test(assetPath);
+  return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
 }
 
 /** TPC barrel — largest triangle budget in the ALICE detector GLB set. */

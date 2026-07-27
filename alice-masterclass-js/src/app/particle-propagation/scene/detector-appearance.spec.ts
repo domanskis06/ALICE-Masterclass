@@ -64,7 +64,7 @@ function firstMaterial(root: THREE.Object3D): THREE.MeshStandardMaterial & THREE
 describe('detectorPartLabel', () => {
   it('maps known GLB filenames to short human labels', () => {
     expect(detectorPartLabel('assets/models/alice components/its.glb')).toBe('ITS');
-    expect(detectorPartLabel('assets/models/alice components/L3_pp.glb')).toBe('L3-Magnet');
+    expect(detectorPartLabel('assets/models/alice components/L3.glb')).toBe('L3-Magnet');
     expect(detectorPartLabel('assets/models/alice components/EMCAL.glb')).toBe('EMCal');
     expect(detectorPartLabel('assets/models/alice components/MCH.glb')).toBe('MCH');
     expect(detectorPartLabel('assets/models/alice components/ABSO.glb')).toBe('ABSO');
@@ -81,7 +81,7 @@ describe('detectorPartLabel', () => {
 describe('detectorPartAccentColor', () => {
   it('maps known GLB filenames to signature accent hex colours', () => {
     expect(detectorPartAccentColor('assets/models/alice components/its.glb')).toBe('#33FF71');
-    expect(detectorPartAccentColor('assets/models/alice components/L3_pp.glb')).toBe('#FF0D12');
+    expect(detectorPartAccentColor('assets/models/alice components/L3.glb')).toBe('#FF0D12');
     expect(detectorPartAccentColor('assets/models/alice components/tpc.glb')).toBe('#22C4FF');
     expect(detectorPartAccentColor('assets/models/alice components/MCH.glb')).toBe('#814244');
     expect(detectorPartAccentColor('assets/models/alice components/ABSO.glb')).toBe('#DE782B');
@@ -114,7 +114,7 @@ describe('defaultLayerOpacity', () => {
   });
 
   it('defaults the L3 magnet to OUTER_MAGNET_DEFAULT_OPACITY', () => {
-    expect(defaultLayerOpacity('assets/models/alice components/L3_pp.glb', 7, 8)).toBe(
+    expect(defaultLayerOpacity('assets/models/alice components/L3.glb', 7, 8)).toBe(
       OUTER_MAGNET_DEFAULT_OPACITY
     );
   });
@@ -181,7 +181,7 @@ describe('defaultDetectorPartVisible', () => {
     expect(defaultDetectorPartVisible('assets/models/alice components/DIPO.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/BP.glb')).toBe(true);
     expect(defaultDetectorPartVisible('assets/models/alice components/its.glb')).toBe(true);
-    expect(defaultDetectorPartVisible('assets/models/alice components/L3_pp.glb')).toBe(true);
+    expect(defaultDetectorPartVisible('assets/models/alice components/L3.glb')).toBe(true);
   });
 });
 

@@ -46,7 +46,7 @@ Output is written to `dist/`.
 ## Architecture notes
 
 - [EventDisplay](../ci/docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
-- [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, detector shell including `L3_pp.glb` stand-in (VA keeps CAD `L3.glb`)
+- [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, detector shell including shared `L3.glb` magnet stand-in (CAD archived as `L3_original.glb`)
 
 ## Third-party attribution
 

@@ -83,8 +83,8 @@ alice-masterclass-js/src/assets/
 │   ├── …
 │   └── event_9.json
 └── models/alice components/                  ← detector GLBs (shared folder)
-    ├── L3.glb                                ← CAD magnet — Visual Analysis only
-    ├── L3_pp.glb                             ← octagon stand-in — Particle Propagation
+    ├── L3.glb                                ← octagon stand-in — VA + Particle Propagation
+    ├── L3_original.glb                       ← archived CAD magnet (source for unify_l3.py)
     └── …                                     ← ITS, TPC, TRD, TOF, calorimeters, muon arm, BP
 ```
 
@@ -195,27 +195,27 @@ Streamlines in the spirit of Fig. 19 of the 2022 distributed-field paper — den
 
 `detector-loader` → `DetectorModel` with ITS-centred recentering (~+30 cm Y offset fix). Most shells merge via `mergeStaticMeshesByMaterial`; TPC / MCH use `InstancedMesh` families; L3 is a lightweight stand-in (below). Materials use `depthWrite` + `polygonOffset` like Visual Analysis; DPR capped while orbiting. Camera opens in a fixed 3/4 “down the barrel” pose.
 
-### L3 magnet: CAD vs PP stand-in
+### L3 magnet
 
-Visual Analysis (`EventDisplayComponent`) and Particle Propagation **do not share the same L3 GLB**:
+Visual Analysis (`EventDisplayComponent`) and Particle Propagation **share the same L3 GLB** (octagon stand-in). The heavier CAD source is kept as an archive:
 
 | Asset | Consumer | Role |
 | --- | --- | --- |
-| `assets/models/alice components/L3.glb` | Visual Analysis / EventDisplay | Full CAD magnet |
-| `assets/models/alice components/L3_pp.glb` | Particle Propagation (`DETECTOR_PART_PATHS`) | Lightweight octagon yoke + flush octagon liner |
+| `assets/models/alice components/L3.glb` | Visual Analysis / EventDisplay + Particle Propagation (`DETECTOR_PART_PATHS`) | Lightweight octagon yoke + flush octagon liner |
+| `assets/models/alice components/L3_original.glb` | Archive / `scripts/unify_l3.py` input | Full CAD magnet (not loaded at runtime) |
 
-Why a separate file: the CAD L3 is heavy (many sector meshes). PP replaces it with a ribbed octagon tube whose outer envelope matches the CAD max radius, thickened **inward**, plus a thin octagon liner flush with the bore (avoids the dark corner ring a circular liner left against the octagon). Accent colour stays the same red (`detector-part-accent.ts` maps both `l3.glb` and `l3_pp.glb`).
+Why a stand-in: the CAD L3 is heavy (many sector meshes). The shipped file is a ribbed octagon tube whose outer envelope matches the CAD max radius, thickened **inward**, plus a thin octagon liner flush with the bore (avoids the dark corner ring a circular liner left against the octagon). Accent colour stays the same red (`detector-part-accent.ts` maps `l3.glb`).
 
-Regenerate the PP asset from the CAD source (requires Blender/`bpy` headless):
+Regenerate the stand-in from the archived CAD (requires Blender/`bpy` headless):
 
 ```bash
 cd alice-masterclass-js
 blender -b -P scripts/unify_l3.py
-# reads  …/alice components/L3.glb
-# writes …/alice components/L3_pp.glb
+# reads  …/alice components/L3_original.glb
+# writes …/alice components/L3.glb
 ```
 
-Do **not** point PP at `L3.glb` or VA at `L3_pp.glb`. Temporary compare/inspect scripts and alternate GLB names (`L3_cad.glb`, `L3_unified.glb`, …) are gitignored — see `alice-masterclass-js/.gitignore`.
+Temporary compare/inspect scripts and alternate GLB names (`L3_cad.glb`, `L3_unified.glb`, …) are gitignored — see `alice-masterclass-js/.gitignore`.
 
 ---
 
@@ -265,7 +265,7 @@ Key specs:
 | `rk4-trajectory-validation.spec.ts` | RK4 vs real VA `trajectory` in `event_0_0.json` (bending direction / arc) — catches `FIELD_SCALE` sign bugs |
 | `particle-data.service.spec.ts` | Curated `event_0.json` + truncation keeps V0 |
 | `field-line-tracer.spec.ts`, `field-colormap.spec.ts`, `field-line-visualizer.spec.ts` | Streamlines, Jet map, native `LineSegments` |
-| `detector-loader.spec.ts`, `detector-appearance.spec.ts` | GLB recenter, materials, dark mode; assembly includes `L3_pp.glb` (octagon LOD) |
+| `detector-loader.spec.ts`, `detector-appearance.spec.ts` | GLB recenter, materials, dark mode; assembly includes `L3.glb` (octagon LOD) |
 | `particle-propagation.component.spec.ts` | UI-shell smoke (detector / intro mocked) |
 
 ---
@@ -281,7 +281,7 @@ Key specs:
 cd alice-masterclass-js
 node scripts/curate-propagation-events.mjs
 
-# L3_pp stand-in — rebuild from CAD L3.glb (Blender required; do not overwrite L3.glb)
+# L3 stand-in — rebuild from archived CAD L3_original.glb (Blender required)
 blender -b -P scripts/unify_l3.py
 
 # Sanity

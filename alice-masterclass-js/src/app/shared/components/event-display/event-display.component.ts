@@ -678,6 +678,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private static readonly CALO_BAR_DARK_EMISSIVE = 0.9;
   /** Extra screen-space linewidth in light mode so tracks punch through pale detectors. */
   private static readonly LIGHT_MODE_TRACK_WIDTH_SCALE = 1.5;
+  /**
+   * Light-mode metalness ceiling (same as Particle Propagation
+   * `LIGHT_MODE_MAX_METALNESS`). Authored L3 metalness (~0.5) plus the two
+   * directional lights blows flat octagon facets out to glare/white.
+   */
+  private static readonly LIGHT_MODE_MAX_METALNESS = 0.15;
   /** Soft fill: midpoint between the original dim lights and the brighter light-mode pass. */
   private static readonly LIGHT_MODE_AMBIENT = { color: 0xa2a2a2, intensity: 0.925 };
   private static readonly LIGHT_MODE_HEMISPHERE = { sky: 0xd5dff4, ground: 0x81838b, intensity: 0.7 };
@@ -1519,6 +1525,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const layerOffset = -(layerIndex + 1) * 2;
     const layerRenderOrderBase = layerIndex * EventDisplayComponent.DETECTOR_RENDER_ORDER_LAYER_STRIDE;
     object.renderOrder = layerRenderOrderBase;
+    const assetPath = String(object.userData?.['detectorAssetPath'] ?? '');
+    const isL3 = EventDisplayComponent.isL3AssetPath(assetPath);
     const tempVec = new THREE.Vector3();
     const meshes: THREE.Mesh[] = [];
     object.traverse((o: THREE.Object3D) => {
@@ -1535,13 +1543,27 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       // Unique static renderOrder per mesh avoids z-flicker between sibling shells.
       mesh.renderOrder = layerRenderOrderBase + meshIndex;
       const subOffset = layerOffset - meshIndex * 0.01;
+      // L3 liner + yoke share one GLB material. Clone per mesh like PP's
+      // `buildOuterMagnetInstanced` so polygon-offset / opacity stay independent.
+      if (isL3) {
+        const raw = mesh.material;
+        mesh.material = Array.isArray(raw)
+          ? raw.map((m) => (m ? m.clone() : m))
+          : raw
+            ? raw.clone()
+            : raw;
+      }
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       materials.forEach((mat: THREE.Material) => {
         if (!mat) return;
         (mat as any).transparent = false;
         (mat as any).opacity = 1;
         (mat as any).userData = { ...((mat as any).userData || {}), baseOpacity: opacity };
-        (mat as any).side = THREE.FrontSide;
+        // Octagon L3 stand-in: VA's end-on camera looks into the bore. Authored
+        // inner-wall normals are culled with FrontSide, so the tunnel reads as a
+        // thin washed frame against the white clear color. DoubleSide restores
+        // the saturated red interior facets (matches PP light-mode look).
+        (mat as any).side = isL3 ? THREE.DoubleSide : THREE.FrontSide;
         (mat as any).depthWrite = true;
         (mat as any).alphaTest = 0;
         (mat as any).polygonOffset = true;
@@ -1631,15 +1653,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         } else {
           m.color.copy(userData.neonBaseColor);
           // Soften metallic self-shadows: keep albedo, cut metalness so light mode stays airy.
+          // Same ceiling as Particle Propagation `applyDetectorDarkMode`.
           if ('metalness' in m) {
             if (typeof userData.baseMetalness !== 'number') {
               userData.baseMetalness = typeof m.metalness === 'number' ? m.metalness : 0;
             }
-            m.metalness = Math.min(userData.baseMetalness, 0.15);
+            m.metalness = Math.min(
+              userData.baseMetalness,
+              EventDisplayComponent.LIGHT_MODE_MAX_METALNESS
+            );
           }
           if ('emissive' in m) {
             m.emissive.setRGB(0, 0, 0);
-            (m as any).emissiveIntensity = 1;
+            (m as any).emissiveIntensity = 0;
           }
         }
         (m as any).needsUpdate = true;
