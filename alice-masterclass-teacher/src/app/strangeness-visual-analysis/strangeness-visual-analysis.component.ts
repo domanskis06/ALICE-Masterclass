@@ -1,7 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { SelectSessionDialogComponent } from '../select-session-dialog/select-session-dialog.component';
-import { ApiService, VisualAnalysisResultAPI } from '../shared/services/api.service';
+import { ApiService, SessionAPI, VisualAnalysisResultAPI } from '../shared/services/api.service';
 import { StudentSelectedEvent } from './results/results.component';
 
 export interface StudentResultAPI {
@@ -38,25 +36,30 @@ export class StrangenessVisualAnalysisComponent implements OnInit {
   public antiLambdaMasses: number[] = [];
   public xiMasses: number[] = [];
 
-  private sessionID: number = -1;
+  public sessionID: number | null = null;
+  public sessions: SessionAPI[] = [];
 
-  constructor(private dialog: MatDialog, private apiService: ApiService) { }
+  constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.disableClose = true;
-    dialogConfig.autoFocus = true;
-
-    const dialogRef = this.dialog.open(SelectSessionDialogComponent, dialogConfig);
-
-    dialogRef.componentInstance.proceedClickedEvent.subscribe((data: number) => {
-      this.sessionID = data;
-      this.reload();
-      dialogRef.close();
+    this.apiService.getSessions().subscribe((sessions: SessionAPI[]) => {
+      this.sessions = sessions;
+      if (sessions.length > 0 && this.sessionID === null) {
+        this.sessionID = sessions[0].id;
+        this.reload();
+      }
     });
   }
 
+  onSessionChange(): void {
+    this.reload();
+  }
+
   reload(): void {
+    if (this.sessionID === null) {
+      return;
+    }
+
     this.apiService.getStrangenessVisualAnalysisResults(this.sessionID).subscribe((data: VisualAnalysisResultAPI[]) => {
       const newData: StudentResult[] = [];
       for (let elm of data) {

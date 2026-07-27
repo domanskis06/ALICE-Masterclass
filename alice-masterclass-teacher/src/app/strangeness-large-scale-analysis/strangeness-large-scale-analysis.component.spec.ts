@@ -6,9 +6,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
-import { MatDialog } from '@angular/material/dialog';
-
-import { ApiService, CentralityType, CollisionType, ParticleType, StrangenesLargeScaleAnalysisResultAPI } from '../shared/services/api.service';
+import { ApiService, CentralityType, CollisionType, EventAPI, ParticleType, StrangenesLargeScaleAnalysisResultAPI } from '../shared/services/api.service';
 
 import { CentralityNamePipe, StrangenessLargeScaleAnalysisComponent } from './strangeness-large-scale-analysis.component';
 import { StrangenessEnhancementPlotComponent } from './strangeness-enhancement-plot/strangeness-enhancement-plot.component';
@@ -19,12 +17,13 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
   let fixture: ComponentFixture<StrangenessLargeScaleAnalysisComponent>;
 
   let service: ApiService;
-  let spy1: jasmine.Spy;
-  let spy2: jasmine.Spy;
-  let dialog: MatDialog;
-  let dialogSpy: jasmine.Spy;
-  let dialogRefSpyObj = jasmine.createSpyObj({ afterClosed : of({}), close: null });
-  dialogRefSpyObj.componentInstance = { body: '', proceedClickedEvent: of(0) };
+  let spyEvents: jasmine.Spy;
+  let spyResults: jasmine.Spy;
+
+  const EVENTS: EventAPI[] = [
+    { id: 1, name: 'Event A', created: new Date() },
+    { id: 2, name: 'Event B', created: new Date() },
+  ];
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -43,19 +42,16 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(StrangenessLargeScaleAnalysisComponent);
     component = fixture.componentInstance;
-    dialog = fixture.debugElement.injector.get(MatDialog);
     service = fixture.debugElement.injector.get(ApiService);
 
-    spy1 = spyOn(service, 'autoRefresh').and.returnValue(false);
+    spyOn(service, 'autoRefresh').and.returnValue(false);
   });
 
   describe('with empty set', () => {
     beforeEach(() => {
-      spy2 = spyOn(service, 'getStrangenessLargeScaleAnalysisResults').and.returnValue(of([]));
-      dialogRefSpyObj.componentInstance = { body: '', proceedClickedEvent: of(0) };
-  
-      dialogSpy = spyOn(dialog, 'open').and.returnValue(dialogRefSpyObj);
-  
+      spyEvents = spyOn(service, 'getEvents').and.returnValue(of([]));
+      spyResults = spyOn(service, 'getStrangenessLargeScaleAnalysisResults').and.returnValue(of([]));
+
       fixture.detectChanges();
     });
 
@@ -74,16 +70,21 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
     const eventID: number = 1;
 
     beforeEach(() => {
-      spy2 = spyOn(service, 'getStrangenessLargeScaleAnalysisResults').and.returnValue(of(RESULTS));
-      dialogRefSpyObj.componentInstance = { body: '', proceedClickedEvent: of(eventID) };
-  
-      dialogSpy = spyOn(dialog, 'open').and.returnValue(dialogRefSpyObj);
-  
+      spyEvents = spyOn(service, 'getEvents').and.returnValue(of(EVENTS));
+      spyResults = spyOn(service, 'getStrangenessLargeScaleAnalysisResults').and.returnValue(of(RESULTS));
+
       fixture.detectChanges();
     });
 
     it('should have fetched data from correct event', () => {
-      expect(spy2).toHaveBeenCalledWith(eventID);
+      expect(spyResults).toHaveBeenCalledWith(eventID);
+    });
+
+    it('should reload data when event changes', () => {
+      spyResults.calls.reset();
+      component.eventID = 2;
+      component.onEventChange();
+      expect(spyResults).toHaveBeenCalledWith(2);
     });
   });
 });

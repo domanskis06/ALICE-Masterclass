@@ -1,9 +1,9 @@
 <mat-card fxFill fxLayout="column">
-  <mat-card-title fxLayout="row" fxLayoutAlign="space-between start">
-    <span class="title">Mass Histograms</span>
-  </mat-card-title>
-  <mat-card-content>
-    <div fxLayout="row" fxLayoutGap="10px">
+  <mat-card-content fxFlex="grow" fxLayout="column" class="histograms-body">
+    <div class="histograms-header">
+      <span class="title">Mass Histograms</span>
+    </div>
+    <div class="histograms-frame" fxLayout="row" fxLayoutGap="10px">
       <app-histogram fxFlex="grow" [data]="kaonMasses" [xDomain]="[0.4, 0.6]" [bins]="40" barColor="#3F51B5">
         <svg:text xAxisLabel>Invariant Mass (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
         <svg:text yAxisLabel>Counts</svg:text>
@@ -17,7 +17,7 @@
       <app-histogram fxFlex="grow" [data]="antiLambdaMasses" [xDomain]="[1.0, 1.4]" [bins]="40" barColor="#3F51B5">
         <svg:text xAxisLabel>Invariant Mass (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
         <svg:text yAxisLabel>Counts</svg:text>
-        <span title class="particle hist-title">Λ&#773;</span>
+        <span title class="particle particle-anti hist-title">Λ</span>
       </app-histogram>
       <app-histogram fxFlex="grow" [data]="xiMasses" [xDomain]="[1.0, 1.4]" [bins]="40" barColor="#3F51B5">
         <svg:text xAxisLabel>Invariant Mass (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>

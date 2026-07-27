@@ -2,8 +2,29 @@
   padding: 10px;
 }
 
+.session-body {
+  gap: 12px;
+}
+
+.session-toolbar {
+  width: 100%;
+  min-height: 36px;
+}
+
+.session-actions {
+  min-height: 36px;
+}
+
+.session-frame {
+  width: 100%;
+}
+
 .title {
-  line-height: 40px;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 36px;
+  margin: 0;
+  padding: 0;
 }
 
 .no-events,

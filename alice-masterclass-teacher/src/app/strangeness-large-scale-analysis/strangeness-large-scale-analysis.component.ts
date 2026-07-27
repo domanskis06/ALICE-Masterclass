@@ -1,8 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { SelectEventDialogComponent } from '../select-event-dialog/select-event-dialog.component';
-import { ParticleType, CentralityType, CollisionType, StrangenesLargeScaleAnalysisResultAPI, ApiService } from '../shared/services/api.service';
+import { ParticleType, CentralityType, CollisionType, EventAPI, StrangenesLargeScaleAnalysisResultAPI, ApiService } from '../shared/services/api.service';
 
 export interface StrangenessEnhancementEntry {
   centrality: string;
@@ -70,11 +68,10 @@ export const ANTILAMBDA_COLOR: string = '#E31A1C';
     styleUrls: ['./strangeness-large-scale-analysis.component.scss'],
     standalone: false
 })
-export class StrangenessLargeScaleAnalysisComponent implements OnInit {
+export class StrangenessLargeScaleAnalysisComponent implements OnInit, OnDestroy {
 
-  private readonly REFRESH_INTERVAL = 10000;
-
-  private eventID: number = -1;
+  public eventID: number | null = null;
+  public events: EventAPI[] = [];
 
   public entries: StrangenessEnhancementEntry[] = [
     {centrality: CentralityType.C000_010, nParticipants: 360, nEvents: 213, nKaons: 0, effKaons: 0.26, yieldKaons: 0, enhKaons: 0, nLambdas: 0, effLambdas: 0.2,  yieldLambdas: 0, enhLambdas: 0, nAntiLambdas: 0, effAntiLambdas: 0.2,  yieldAntiLambdas: 0, enhAntiLambdas: 0},
@@ -89,25 +86,37 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit {
 
   public plotData: StrangenessEnhancementPlotEntry[] = [];
 
-  constructor(private dialog: MatDialog, private apiService: ApiService) { }
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+
+  constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.disableClose = true;
-    dialogConfig.autoFocus = true;
-
-    const dialogRef = this.dialog.open(SelectEventDialogComponent, dialogConfig);
-
-    dialogRef.componentInstance.proceedClickedEvent.subscribe((data: number) => {
-      this.eventID = data;
-      this.reload();
-
-      if (this.apiService.autoRefresh()) {
-        setInterval(()=> { this.reload(); }, this.apiService.REFRESH_INTERVAL);
+    this.apiService.getEvents().subscribe((events: EventAPI[]) => {
+      this.events = events;
+      if (events.length > 0 && this.eventID === null) {
+        this.eventID = events[0].id;
+        this.reload();
       }
-
-      dialogRef.close();
     });
+
+    if (this.apiService.autoRefresh()) {
+      this.refreshTimer = setInterval(() => {
+        if (this.eventID !== null) {
+          this.reload();
+        }
+      }, this.apiService.REFRESH_INTERVAL);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer !== null) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
+  }
+
+  onEventChange(): void {
+    this.reload();
   }
 
   onReload(): void {
@@ -115,8 +124,14 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit {
   }
 
   reload(): void {
+    if (this.eventID === null) {
+      return;
+    }
+
     this.apiService.getStrangenessLargeScaleAnalysisResults(this.eventID).subscribe((res: StrangenesLargeScaleAnalysisResultAPI[]) => {
-      const average = (arr: number[]) => arr.reduce( (p: number, c: number) => p + c, 0 ) / arr.length;
+      const average = (arr: number[]) => arr.length === 0 ? 0 : arr.reduce( (p: number, c: number) => p + c, 0 ) / arr.length;
+
+      this.resetParticleCounts();
 
       for (let elm of res) {
         if (elm.collision === CollisionType.PBPB) {
@@ -164,6 +179,14 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit {
     }
 
     this.plotData = plotData;
+  }
+
+  private resetParticleCounts(): void {
+    for (const entry of this.entries) {
+      entry.nKaons = 0;
+      entry.nLambdas = 0;
+      entry.nAntiLambdas = 0;
+    }
   }
 
 }

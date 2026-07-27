@@ -1,12 +1,15 @@
 <mat-card fxFill fxLayout="column">
-  <mat-card-title fxLayout="row" fxLayoutAlign="space-between start">
-    <span class="title">Results</span>
-    <button mat-icon-button (click)="reloadButtonClicked()">
-      <mat-icon>refresh</mat-icon>
-    </button>
-  </mat-card-title>
-  <mat-card-content fxFlex="grow">
-    <div class="mat-elevation-z2">
+  <mat-card-content fxFlex="grow" fxLayout="column" class="results-body">
+    <div class="results-toolbar" fxLayout="row" fxLayoutAlign="space-between start">
+      <div class="results-header" fxLayout="column" fxLayoutAlign="start start">
+        <span class="title">Results</span>
+        <ng-content select="[sessionSelector]"></ng-content>
+      </div>
+      <button mat-icon-button (click)="reloadButtonClicked()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <div class="mat-elevation-z2 results-frame">
       <table mat-table [dataSource]="tableRows">
 
         <ng-container matColumnDef="select">
