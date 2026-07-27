@@ -484,7 +484,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   static isL3AssetPath(assetPath: string): boolean {
-    return /(^|[/\\])l3(_pp)?\.glb($|\?)/i.test(assetPath);
+    return /(^|[/\\])l3\.glb($|\?)/i.test(assetPath);
   }
 
   static isFitAssetPath(assetPath: string): boolean {
@@ -500,7 +500,6 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       'trd.glb': 'EVENT_DISPLAY.DETECTOR_TRD',
       'tof.glb': 'EVENT_DISPLAY.DETECTOR_TOF',
       'l3.glb': 'EVENT_DISPLAY.DETECTOR_L3',
-      'l3_pp.glb': 'EVENT_DISPLAY.DETECTOR_L3',
       'emcal.glb': 'EVENT_DISPLAY.DETECTOR_EMCAL',
       'dcal.glb': 'EVENT_DISPLAY.DETECTOR_DCAL',
       'phos.glb': 'EVENT_DISPLAY.DETECTOR_PHOS',

@@ -5,7 +5,7 @@ describe('EventDisplayComponent detector part UI persistence', () => {
   const paths = [
     'assets/models/alice components/ITS.glb',
     'assets/models/alice components/FIT.glb',
-    'assets/models/alice components/L3_pp.glb',
+    'assets/models/alice components/L3.glb',
   ];
 
   afterEach(() => {
