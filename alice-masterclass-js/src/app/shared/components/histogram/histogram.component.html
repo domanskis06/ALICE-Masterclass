@@ -20,6 +20,7 @@
           <g id="bars" #bars></g>
           <g id="brush" #brush></g>
         </g>
+        <!-- After bars so VA mirrored tick marks stay visible above the plot. -->
         <g id="xAxis" #xAxis attr.transform="translate(0, {{CONTENT_AREA.H}})"></g>
       </g>
       <g id="xAxisLabel" attr.transform="translate({{CONTENT_AREA.X + CONTENT_AREA.W}}, {{SVG.H - MARGIN.BOTTOM_TEXT}})" text-anchor="end">

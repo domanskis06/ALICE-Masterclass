@@ -44,9 +44,9 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * VA-only: expand the working x-domain to cover every finite data value
-   * (and previewed masses) so misclassified points still land in a bin.
-   * Leave false for LSA / fit-histogram so the parent xmin/xmax stay fixed.
+   * VA mass-histograms only: Mateusz domain expand + mirrored tick marks.
+   * Pair with host class `histogram-va` in the VA template for Mateusz layout CSS.
+   * Leave false for LSA (`app-fit-histogram`) and any other shared consumers.
    */
   @Input()
   expandDomainToData = false;
@@ -559,8 +559,12 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   protected updateXDomain(): void {
     const axis = d3.axisBottom(this.xScale)
       .tickValues(this.getXTickValues())
-      .tickFormat((d) => this.getXTickFormat()(d as number))
-      .tickSizeInner(X_TICK_SIZE);
+      .tickFormat((d) => this.getXTickFormat()(d as number));
+
+    // Mirrored bin-edge ticks are a VA (Mateusz) display detail — keep LSA plain.
+    if (this.expandDomainToData) {
+      axis.tickSizeInner(X_TICK_SIZE);
+    }
 
     this.xAxisSelector
       .transition()
@@ -572,11 +576,12 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   private applyXTickStyle(): void {
-    // Mirror ticks above the axis so bin edges are visible in the plot.
-    this.xAxisSelector
-      .selectAll<SVGLineElement, unknown>('.tick line')
-      .attr('y1', -X_TICK_SIZE)
-      .attr('y2', X_TICK_SIZE);
+    if (this.expandDomainToData) {
+      this.xAxisSelector
+        .selectAll<SVGLineElement, unknown>('.tick line')
+        .attr('y1', -X_TICK_SIZE)
+        .attr('y2', X_TICK_SIZE);
+    }
 
     const rotated = this.shouldRotateXTickLabels();
 
