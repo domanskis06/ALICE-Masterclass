@@ -12,8 +12,8 @@ def doconvert(particle, centrality, dataset_nr):
 	out_file = {}
 	
 	if particle == 'k0':
-		out_file['xmin'] = 0
-		out_file['xmax'] = 1
+		out_file['xmin'] = 0.2
+		out_file['xmax'] = 1.2
 	else:
 		out_file['xmin'] = 1
 		out_file['xmax'] = 2

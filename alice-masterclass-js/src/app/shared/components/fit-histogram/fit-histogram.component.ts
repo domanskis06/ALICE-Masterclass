@@ -177,4 +177,27 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
     }
   }
 
+  /** Nice ticks every 0.04 within the visible zoom domain (LSA only). */
+  protected getXTickValues(): number[] {
+    const step = 0.04;
+    const [zoom0, zoom1] = this.xDomainZoom;
+    if (!(zoom1 > zoom0)) {
+      return super.getXTickValues();
+    }
+
+    const first = Math.ceil((zoom0 - 1e-9) / step) * step;
+    const ticks: number[] = [];
+    for (let value = first; value <= zoom1 + 1e-9; value += step) {
+      const rounded = Math.round(value / step) * step;
+      if (rounded >= zoom0 - 1e-9 && rounded <= zoom1 + 1e-9) {
+        ticks.push(Number(rounded.toFixed(2)));
+      }
+    }
+    return ticks.length > 0 ? ticks : super.getXTickValues();
+  }
+
+  protected getXTickFormat(): (value: number) => string {
+    return (value: number) => value.toFixed(2);
+  }
+
 }
