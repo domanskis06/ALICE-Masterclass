@@ -58,6 +58,14 @@ app-root {
 @import './alice-theme.scss';
 
 /* VA calculator mat-select overlay (rendered outside component; needs global styles). */
+.calculator-particle-select-panel {
+  .particle-option {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35em;
+  }
+}
+
 .calculator-particle-select-panel.calculator-particle-select-panel--dark {
   background: rgba(15, 23, 42, 0.98);
   border: 1px solid rgba(148, 163, 184, 0.28);

@@ -30,6 +30,26 @@ export class CalculatorComponent implements OnInit {
 
   particleTypes: ParticleType[] = [ParticleType.KAON, ParticleType.LAMBDA, ParticleType.ANTI_LAMBDA, ParticleType.XI, ParticleType.BACKGROUND];
 
+  /** Same symbols as the histogram titles (K⁰_S, Λ, Λ̅, Ξ); null for Background. */
+  particleSymbolHtml(type: ParticleType | string | null | undefined): string | null {
+    switch (type) {
+      case ParticleType.KAON:
+        return 'K<span class="supsub"><sup>0</sup><sub>S</sub></span>';
+      case ParticleType.LAMBDA:
+        return 'Λ';
+      case ParticleType.ANTI_LAMBDA:
+        return 'Λ&#773;';
+      case ParticleType.XI:
+        return 'Ξ';
+      default:
+        return null;
+    }
+  }
+
+  particleTypeLabelKey(type: ParticleType | string): string {
+    return 'STRANGENESS.CALCULATOR.' + String(type).toUpperCase();
+  }
+
   @Input()
   submitDisabled: boolean = false;
 
