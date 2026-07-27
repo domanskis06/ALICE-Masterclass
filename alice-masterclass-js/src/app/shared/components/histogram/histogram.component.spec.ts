@@ -42,11 +42,37 @@ describe('HistogramComponent', () => {
     expect(Number.isFinite(target!.targetY)).toBeTrue();
   });
 
-  it('should return null when the value falls outside the domain', () => {
+  it('should return null for non-finite values', () => {
     component.data = [0.2];
     fixture.detectChanges();
 
-    expect(component.previewBinTarget(2.5)).toBeNull();
+    expect(component.previewBinTarget(Number.NaN)).toBeNull();
+  });
+
+  it('expands the axis and rebins when a value falls outside the base domain', () => {
+    component.xDomain = [0.5, 0.6];
+    component.bins = 6;
+    component.data = [0.52];
+    fixture.detectChanges();
+
+    expect(component.xDomain).toEqual([0.5, 0.6]);
+
+    const preview = component.resolveIncomingBin(1.1);
+    expect(preview).not.toBeNull();
+    expect(preview!.binIndex).toBe(5);
+
+    component.data = [0.52, 1.1];
+    fixture.detectChanges();
+
+    expect(component.xDomain[0]).toBeCloseTo(0.5, 10);
+    expect(component.xDomain[1]).toBeCloseTo(1.1, 10);
+
+    // 6 equal bins on [0.5, 1.1] → left edges 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
+    // (user example listed mid-style steps; equal-width rebin is the rule).
+    const thresholds = (component as unknown as { getBinThresholds(): number[] }).getBinThresholds();
+    expect(thresholds.length).toBe(5);
+    expect(thresholds[0]).toBeCloseTo(0.6, 10);
+    expect(thresholds[4]).toBeCloseTo(1.0, 10);
   });
 
   it('should pulse a bin without throwing', fakeAsync(() => {

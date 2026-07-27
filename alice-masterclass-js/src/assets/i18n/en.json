@@ -190,6 +190,7 @@
       "LAMBDA": "Lambda",
       "ANTILAMBDA": "Anti-Lambda",
       "XI": "Xi",
+      "ANTIXI": "Anti-Xi",
       "SELECT_PARTICLE": "Select particle type",
       "ADD": "Add"
     },

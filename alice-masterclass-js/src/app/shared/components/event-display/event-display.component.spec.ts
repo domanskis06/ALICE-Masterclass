@@ -5,7 +5,7 @@ describe('EventDisplayComponent detector part UI persistence', () => {
   const paths = [
     'assets/models/alice components/ITS.glb',
     'assets/models/alice components/FIT.glb',
-    'assets/models/alice components/L3.glb',
+    'assets/models/alice components/L3_pp.glb',
   ];
 
   afterEach(() => {
@@ -24,6 +24,19 @@ describe('EventDisplayComponent detector part UI persistence', () => {
 });
 
 describe('EventDisplayComponent calorimeter assembly grouping', () => {
+  it('freezes static detector transforms after bake', () => {
+    const root = new THREE.Group();
+    const child = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
+    child.position.set(1, 2, 3);
+    root.add(child);
+    EventDisplayComponent.freezeStaticTransforms(root);
+    expect(root.matrixAutoUpdate).toBe(false);
+    expect(child.matrixAutoUpdate).toBe(false);
+    expect(child.matrix.elements[12]).toBeCloseTo(1);
+    expect(child.matrix.elements[13]).toBeCloseTo(2);
+    expect(child.matrix.elements[14]).toBeCloseTo(3);
+  });
+
   it('labels EMCal as Calorimeters in the assembly palette', () => {
     expect(
       EventDisplayComponent.assemblyPalettePresentation(
@@ -191,6 +204,135 @@ describe('EventDisplayComponent decay/background track dedupe', () => {
     expect(EventDisplayComponent.backgroundTrackIndicesHiddenByDecays(event as any)).toEqual(
       new Set([0, 2])
     );
+  });
+});
+
+describe('EventDisplayComponent straight-track building mode', () => {
+  it('points along momentum, ignoring a misleading far helix sample', () => {
+    const trajectory = [
+      [0, 0, 0],
+      [10, 0.1, 0],
+      [-30, 40, -400],
+    ];
+    const result = EventDisplayComponent.buildStraightTrajectory(trajectory, 1, 0, 0);
+    expect(result).not.toBeNull();
+    const [p0, p1] = result!;
+    expect(p0).toEqual([0, 0, 0]);
+    expect(p1[0]).toBeGreaterThan(0);
+    expect(Math.abs(p1[1])).toBeLessThan(1e-6);
+    expect(Math.abs(p1[2])).toBeLessThan(1e-6);
+  });
+
+  it('uses a fixed reach independent of the trajectory chord length', () => {
+    const shortTraj = [[0, 0, 0], [1, 0, 0]];
+    const longTraj = [[0, 0, 0], [1, 0, 0], [5000, 0, 0]];
+    const a = EventDisplayComponent.buildStraightTrajectory(shortTraj, 1, 0, 0)!;
+    const b = EventDisplayComponent.buildStraightTrajectory(longTraj, 1, 0, 0)!;
+    const lenA = Math.hypot(a[1][0] - a[0][0], a[1][1] - a[0][1], a[1][2] - a[0][2]);
+    const lenB = Math.hypot(b[1][0] - b[0][0], b[1][1] - b[0][1], b[1][2] - b[0][2]);
+    expect(lenA).toBeCloseTo(lenB);
+    expect(lenA).toBeGreaterThan(
+      Math.hypot(EventDisplayComponent.TRACK_RADIUS_TPC, EventDisplayComponent.TRACK_Z_TPC)
+    );
+  });
+
+  it('returns null without usable momentum', () => {
+    expect(EventDisplayComponent.buildStraightTrajectory([[0, 0, 0], [1, 0, 0]], 0, 0, 0)).toBeNull();
+    expect(EventDisplayComponent.buildStraightTrajectory([[0, 0, 0]], 0, 0, 0)).toBeNull();
+  });
+
+  it('pins the origin to startOverride while keeping the momentum direction', () => {
+    const trajectory = [
+      [10, 0, 0],
+      [11, 1, 0],
+    ];
+    const vertex = [5, 5, 5];
+    const result = EventDisplayComponent.buildStraightTrajectory(trajectory, 0, 1, 0, vertex);
+    expect(result).not.toBeNull();
+    const [p0, p1] = result!;
+    expect(p0).toEqual(vertex);
+    expect(p1[0]).toBeCloseTo(vertex[0]);
+    expect(p1[1]).toBeGreaterThan(vertex[1]);
+    expect(p1[2]).toBeCloseTo(vertex[2]);
+  });
+
+  it('centers primary tracks on the beam axis at the original sample z', () => {
+    const trajectory = [
+      [20, 15, -8],
+      [25, 18, -10],
+    ];
+    const result = EventDisplayComponent.buildStraightTrajectory(trajectory, 0.3, 0.4, 0.1);
+    expect(result).not.toBeNull();
+    const [p0, p1] = result!;
+    expect(p0[0]).toBeCloseTo(0);
+    expect(p0[1]).toBeCloseTo(0);
+    expect(p0[2]).toBeCloseTo(-8);
+    const pMag = Math.hypot(0.3, 0.4, 0.1);
+    const d = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
+    const len = Math.hypot(d[0], d[1], d[2]);
+    expect(d[0] / len).toBeCloseTo(0.3 / pMag);
+    expect(d[1] / len).toBeCloseTo(0.4 / pMag);
+    expect(d[2] / len).toBeCloseTo(0.1 / pMag);
+  });
+});
+
+describe('EventDisplayComponent cylinder track clip', () => {
+  it('clips a radial track at the barrel wall', () => {
+    const traj = [
+      [0, 0, 0],
+      [300, 0, 0],
+    ];
+    const clipped = EventDisplayComponent.clipTrajectoryToCylinder(traj, 250, 250);
+    expect(clipped.length).toBe(2);
+    expect(clipped[0]).toEqual([0, 0, 0]);
+    expect(Math.hypot(clipped[1][0], clipped[1][1])).toBeCloseTo(250);
+    expect(clipped[1][2]).toBeCloseTo(0);
+  });
+
+  it('clips a forward track at the end-cap instead of dying mid-volume', () => {
+    // Nearly along +z: never reaches R=250 within a short path — without z
+    // clip this would keep the whole segment and look like a random stub.
+    const traj = [
+      [0, 0, 0],
+      [10, 0, 400],
+    ];
+    const clipped = EventDisplayComponent.clipTrajectoryToCylinder(traj, 250, 250);
+    expect(clipped.length).toBe(2);
+    expect(Math.abs(clipped[1][2])).toBeCloseTo(250);
+    expect(Math.hypot(clipped[1][0], clipped[1][1])).toBeLessThan(250);
+  });
+
+  it('returns empty when the first sample is already outside', () => {
+    expect(
+      EventDisplayComponent.clipTrajectoryToCylinder([[300, 0, 0], [400, 0, 0]], 250, 250)
+    ).toEqual([]);
+    expect(
+      EventDisplayComponent.clipTrajectoryToCylinder([[0, 0, 300], [0, 0, 400]], 250, 250)
+    ).toEqual([]);
+  });
+});
+
+describe('EventDisplayComponent layer-hit radius intersection', () => {
+  it('returns the crossing on the barrel wall within zMax', () => {
+    const traj = [
+      [0, 0, 0],
+      [500, 0, 50],
+    ];
+    const hit = EventDisplayComponent.intersectTrajectoryAtRadius(traj, 370, 250);
+    expect(hit).not.toBeNull();
+    expect(Math.hypot(hit![0], hit![1])).toBeCloseTo(370);
+    expect(Math.abs(hit![2])).toBeLessThan(250);
+  });
+
+  it('rejects a crossing that lies past the layer half-length in z', () => {
+    // Hits TRD radius at z ≈ 300, outside TRACK_Z_TRD = 250.
+    const traj = [
+      [0, 0, 0],
+      [370, 0, 300],
+    ];
+    expect(
+      EventDisplayComponent.intersectTrajectoryAtRadius(traj, 370, 250)
+    ).toBeNull();
   });
 });
 

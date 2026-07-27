@@ -184,6 +184,7 @@
       "LAMBDA": "Lambda",
       "ANTILAMBDA": "Anti-Lambda",
       "XI": "Xi",
+      "ANTIXI": "Anti-Xi",
       "SELECT_PARTICLE": "Teilchenart auswählen",
       "ADD": "Hinzufügen"
     },

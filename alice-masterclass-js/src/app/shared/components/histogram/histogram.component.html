@@ -16,11 +16,11 @@
           </clipPath>
         </defs>
         <g id="yAxis" #yAxis></g>
-        <g id="xAxis" #xAxis attr.transform="translate(0, {{CONTENT_AREA.H}})"></g>
         <g id="mainArea" clip-path="url(#clip)">
           <g id="bars" #bars></g>
           <g id="brush" #brush></g>
         </g>
+        <g id="xAxis" #xAxis attr.transform="translate(0, {{CONTENT_AREA.H}})"></g>
       </g>
       <g id="xAxisLabel" attr.transform="translate({{CONTENT_AREA.X + CONTENT_AREA.W / 2}}, {{SVG.H - MARGIN.BOTTOM_TEXT}})" text-anchor="middle">
         <ng-content select="[xAxisLabel]"></ng-content>
