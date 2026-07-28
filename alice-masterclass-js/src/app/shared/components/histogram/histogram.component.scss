@@ -57,8 +57,9 @@ figure {
   }
 
   figure {
-    // Extra CSS padding so the scaled SVG is not flush with the next row / slider.
-    padding-bottom: 4px;
+    // Compact chrome so five plots fit one viewport; room for larger particle titles.
+    padding-top: 26px;
+    padding-bottom: 0;
     padding-left: 0;
     flex: 1 1 auto;
     display: flex;
@@ -69,7 +70,7 @@ figure {
   }
 
   &.histogram-x-ticks-rotated figure {
-    padding-bottom: 20px;
+    padding-bottom: 2px;
   }
 
   ::ng-deep svg {
@@ -77,6 +78,16 @@ figure {
     height: 100%;
     flex: 1 1 auto;
     min-height: 0;
+
+    #xAxis text,
+    #yAxis text {
+      font-size: 0.62em;
+    }
+
+    #yAxisLabel,
+    #xAxisLabel {
+      font-size: 0.62em;
+    }
 
     #bars rect {
       stroke: #fff;

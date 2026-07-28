@@ -1,11 +1,12 @@
 :host {
-  // Full viewport under CERN (40) + app (64) toolbars × 0.96 (was 0.8, +20%).
-  --hist-viewport-height: calc((100dvh - 104px) * 0.96);
-  --hist-title-size: clamp(1.25rem, 2.8vw, 1.75rem);
+  // Fits under toolbars with a little slack so the five-plot card never needs its own scroll.
+  --hist-viewport-height: calc(100dvh - 140px);
+  --hist-title-size: clamp(1.2rem, 2.4vw, 1.65rem);
   display: block;
   box-sizing: border-box;
   height: var(--hist-viewport-height);
   min-height: var(--hist-viewport-height);
+  max-height: var(--hist-viewport-height);
 }
 
 :host ::ng-deep > mat-card {
@@ -14,22 +15,37 @@
   box-sizing: border-box;
   height: 100%;
   min-height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .title {
-  line-height: 40px;
-  padding-left: 16px;
+  line-height: 28px;
+  padding-left: 8px;
+  font-size: 0.95rem;
 }
 
 .hist-card-title {
   flex: 0 0 auto;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
+  padding-top: 2px !important;
+  margin-bottom: 0 !important;
 }
 
 .hist-card-actions {
   flex-shrink: 0;
-  padding-top: 4px;
+  padding-top: 0;
+}
+
+:host ::ng-deep mat-card-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px 6px !important;
 }
 
 .hist-title {
@@ -53,33 +69,52 @@
   height: 18px;
 }
 
-:host ::ng-deep mat-card-content {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-  box-sizing: border-box;
-}
-
 .hist-grid {
   flex: 1 1 auto;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr;
+  display: grid;
+  // 12 columns: top = three equal thirds; bottom Ξ / Ξ̅ centered with a 1-col gap.
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-template-rows: 1fr 1fr;
-  gap: 12px;
+  gap: 6px;
   align-items: stretch;
   min-height: 0;
   height: 100%;
+  width: 100%;
 }
 
 .hist-item {
   min-width: 0;
   min-height: 0;
   box-sizing: border-box;
-  display: flex !important;
+  display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.hist-item--kaon {
+  grid-column: 1 / 5;
+  grid-row: 1;
+}
+
+.hist-item--lambda {
+  grid-column: 5 / 9;
+  grid-row: 1;
+}
+
+.hist-item--antilambda {
+  grid-column: 9 / 13;
+  grid-row: 1;
+}
+
+// Same width as a top plot (4/12); centered with a narrower 1-col gap.
+.hist-item--xi {
+  grid-column: 2 / 6;
+  grid-row: 2;
+}
+
+.hist-item--antixi {
+  grid-column: 7 / 11;
+  grid-row: 2;
 }
 
 .hist-item app-histogram {
@@ -92,14 +127,16 @@
 
 @media (max-width: 959px) {
   :host {
-    // Don't squash 4 stacked plots into one short viewport — keep each plot large.
+    // Don't squash 5 stacked plots into one short viewport — keep each plot large.
     height: auto;
     min-height: var(--hist-viewport-height);
+    max-height: none;
   }
 
   :host ::ng-deep > mat-card {
     height: auto;
     min-height: var(--hist-viewport-height);
+    max-height: none;
   }
 
   .hist-grid {
@@ -108,7 +145,14 @@
     height: auto;
   }
 
-  .hist-item {
+  .hist-item,
+  .hist-item--kaon,
+  .hist-item--lambda,
+  .hist-item--antilambda,
+  .hist-item--xi,
+  .hist-item--antixi {
+    grid-column: auto;
+    grid-row: auto;
     height: clamp(14rem, 46vh, 22rem);
   }
 }

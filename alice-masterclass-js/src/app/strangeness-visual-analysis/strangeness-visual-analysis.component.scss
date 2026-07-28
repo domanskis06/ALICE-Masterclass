@@ -546,8 +546,8 @@
   display: block;
   margin-top: 10px;
   padding: 0 10px;
-  // Same as mass-histograms: viewport under toolbars × 0.96.
-  min-height: calc((100dvh - 104px) * 0.96);
+  // Same as mass-histograms: fits under toolbars without an extra page scroll.
+  min-height: calc(100dvh - 140px);
   box-sizing: border-box;
 }
 

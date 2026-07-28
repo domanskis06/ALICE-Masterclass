@@ -47,6 +47,7 @@ Output is written to `dist/`.
 
 - [EventDisplay](../ci/docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
 - [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, detector shell including shared `L3.glb` magnet stand-in (CAD archived as `L3_original.glb`)
+- [Xi cascades (VA data)](data/strangeness/part1_Xi/README.md) — how the 32 Ξ / Ξ̅ Visual Analysis events were built and how to regenerate them
 
 ## Third-party attribution
 

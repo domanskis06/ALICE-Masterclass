@@ -51,13 +51,20 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Input()
   expandDomainToData = false;
 
+  /**
+   * Tighter axis chrome (smaller Invariant Mass / Counts band, less gap under Ox).
+   * Used by VA mass-histograms so five plots fit one viewport; leave false for LSA.
+   */
+  @Input()
+  compactChrome = false;
+
   readonly SVG = {
     W: 400,
     // Tall enough for rotated tick labels + x-axis title without viewBox clipping.
     H: 218
   }
 
-  readonly MARGIN = {
+  private readonly MARGIN_DEFAULT = {
     TOP: 3,
     RIGHT: 10,
     // Room for -45° tick labels under the plot.
@@ -72,12 +79,41 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     LEFT_YLABEL: 12
   };
 
-  readonly CONTENT_AREA = {
-    X: this.MARGIN.LEFT + this.MARGIN.LEFT_YLABEL,
-    Y: this.MARGIN.TOP,
-    W: this.SVG.W - this.MARGIN.LEFT - this.MARGIN.LEFT_YLABEL - this.MARGIN.RIGHT,
-    H: this.SVG.H - this.MARGIN.TOP - this.MARGIN.BOTTOM - this.MARGIN.BOTTOM_XLABEL
+  /** VA: pull axis titles closer to the axes and reclaim plot height. */
+  private readonly MARGIN_COMPACT = {
+    TOP: 2,
+    RIGHT: 6,
+    // Tick numbers only — keep short so the title can sit near Ox.
+    BOTTOM: 14,
+    // Band for "Invariant Mass" under the ticks (a little room to nudge the label down).
+    BOTTOM_XLABEL: 15,
+    BOTTOM_TEXT: 3,
+    LEFT: 22,
+    LEFT_YLABEL: 8
   };
+
+  get MARGIN() {
+    return this.compactChrome ? this.MARGIN_COMPACT : this.MARGIN_DEFAULT;
+  }
+
+  get CONTENT_AREA() {
+    const m = this.MARGIN;
+    return {
+      X: m.LEFT + m.LEFT_YLABEL,
+      Y: m.TOP,
+      W: this.SVG.W - m.LEFT - m.LEFT_YLABEL - m.RIGHT,
+      H: this.SVG.H - m.TOP - m.BOTTOM - m.BOTTOM_XLABEL
+    };
+  }
+
+  /** Baseline y for the horizontal axis title. */
+  get xAxisLabelY(): number {
+    if (!this.compactChrome) {
+      return this.SVG.H - this.MARGIN.BOTTOM_TEXT;
+    }
+    // Just under the tick row; +11 nudges the title a touch below the axis numbers.
+    return this.CONTENT_AREA.Y + this.CONTENT_AREA.H + this.MARGIN.BOTTOM + 11;
+  }
 
   protected readonly ANIMATION_DURATION: number = 250;
 

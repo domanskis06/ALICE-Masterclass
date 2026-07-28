@@ -15,6 +15,7 @@ export enum ParticleType {
   LAMBDA = 'lambda',
   ANTI_LAMBDA = 'antilambda',
   XI = 'xi',
+  ANTI_XI = 'antixi',
   BACKGROUND = 'background'
 }
 

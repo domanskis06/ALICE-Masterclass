@@ -28,9 +28,16 @@ export class CalculatorComponent implements OnInit {
     {color: bachelorTrackColor, type: '(b)', track: null}
   ];
 
-  particleTypes: ParticleType[] = [ParticleType.KAON, ParticleType.LAMBDA, ParticleType.ANTI_LAMBDA, ParticleType.XI, ParticleType.BACKGROUND];
+  particleTypes: ParticleType[] = [
+    ParticleType.KAON,
+    ParticleType.LAMBDA,
+    ParticleType.ANTI_LAMBDA,
+    ParticleType.XI,
+    ParticleType.ANTI_XI,
+    ParticleType.BACKGROUND,
+  ];
 
-  /** Same symbols as the histogram titles (K⁰_S, Λ, Λ̅, Ξ); null for Background. */
+  /** Same symbols as the histogram titles (K⁰_S, Λ, Λ̅, Ξ, Ξ̅); null for Background. */
   particleSymbolHtml(type: ParticleType | string | null | undefined): string | null {
     switch (type) {
       case ParticleType.KAON:
@@ -41,6 +48,8 @@ export class CalculatorComponent implements OnInit {
         return 'Λ&#773;';
       case ParticleType.XI:
         return 'Ξ';
+      case ParticleType.ANTI_XI:
+        return 'Ξ&#773;';
       default:
         return null;
     }

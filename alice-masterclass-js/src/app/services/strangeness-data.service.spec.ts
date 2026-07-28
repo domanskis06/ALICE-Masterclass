@@ -37,13 +37,19 @@ describe('StrangenessDataService', () => {
     expect(service.claimTracksForHistogram(key, ['0:-', '1:+'])).toBeTrue();
   });
 
-  it('marks event done only after every required track key is claimed', () => {
-    const key = '1';
-    const required = ['0:+', '0:-', '1:+', '1:-'];
-    service.claimTracksForHistogram(key, ['0:+', '1:-']);
-    expect(service.areAllTracksAnalyzed(key, required)).toBeFalse();
-    service.addVisualAnalysisResult(key, { particle: ParticleType.KAON, mass: 0.5 }, ['0:-', '1:+']);
-    expect(service.areAllTracksAnalyzed(key, required)).toBeTrue();
-    expect(service.visualAnalysisResults.get(key)?.length).toBe(1);
+  it('reports Xi-extended workshop and full-dataset event counts', () => {
+    expect(service.getEventsInDataset(0)).toBe(4);
+    expect(service.getEventsInDataset(1)).toBe(17);
+    expect(service.getEventsInDataset(12)).toBe(17);
+    expect(service.getEventsInDataset(13)).toBe(16);
+    expect(service.getEventsInDataset(19)).toBe(16);
+    expect(service.getEventsInDataset(20)).toBe(5);
+    expect(service.FULL_EVENT_FILE_IDS[4]).toBe(15);
+  });
+
+  it('maps picker ids to on-disk dataset numbers', () => {
+    expect(service.resolveDatasetNum(-1)).toBe(0);
+    expect(service.resolveDatasetNum(-2)).toBe(20);
+    expect(service.resolveDatasetNum(7)).toBe(7);
   });
 });

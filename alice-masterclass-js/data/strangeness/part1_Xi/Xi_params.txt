@@ -1,0 +1,288 @@
+[200773:femto-universe-producer-task]: pos daughter: px = -0.190491, py = 0.117845, pz = -0.00610739
+[200773:femto-universe-producer-task]: pos daughter: x = 19.7762, y = 2.22749, z = -2.33748
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.0647891, py = 0.142765, pz = -0.0127465
+[200773:femto-universe-producer-task]: neg daughter: x = 24.6791, y = 0.673206, z = -3.43821
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.230941, py = 0.0863848, pz = -0.132702
+[200773:femto-universe-producer-task]: bachelor: x = 19.4785, y = -0.442491, z = -11.2303
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.256865, py = -0.154062, pz = -0.258505
+[200773:femto-universe-producer-task]: pos daughter: x = 19.2673, y = 0.102664, z = -17.6052
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.790202, py = -0.73404, pz = -0.614064
+[200773:femto-universe-producer-task]: neg daughter: x = 24.2124, y = 0.21397, z = -15.258
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0836109, py = -0.206415, pz = -0.162713
+[200773:femto-universe-producer-task]: bachelor: x = 19.2561, y = 0.227721, z = -15.4697
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.0211996, py = -0.261403, pz = 0.00153272
+[200773:femto-universe-producer-task]: pos daughter: x = 19.6382, y = 2.57464, z = -1.82457
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.0819851, py = -0.528439, pz = -0.113156
+[200773:femto-universe-producer-task]: neg daughter: x = 19.3035, y = -0.638549, z = -5.02794
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.295326, py = -0.343165, pz = 0.0397058
+[200773:femto-universe-producer-task]: bachelor: x = 19.622, y = 1.01389, z = 0.114712
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.278903, py = 0.536903, pz = 0.212708
+[200773:femto-universe-producer-task]: pos daughter: x = 19.7276, y = 3.08883, z = 3.76182
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.14014, py = 0.00327781, pz = -0.0543004
+[200773:femto-universe-producer-task]: neg daughter: x = 34.6937, y = 2.65121, z = -13.6134
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.200492, py = 0.282643, pz = 0.103395
+[200773:femto-universe-producer-task]: bachelor: x = 24.3479, y = -0.921304, z = 4.4849
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -1.11344, py = 0.11636, pz = 0.300803
+[200773:femto-universe-producer-task]: pos daughter: x = 19.4799, y = 0.337724, z = 2.87549
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.215737, py = 0.0807987, pz = 0.141711
+[200773:femto-universe-producer-task]: neg daughter: x = 24.4282, y = 0.440026, z = 9.28353
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.165443, py = 0.14091, pz = 0.00181313
+[200773:femto-universe-producer-task]: bachelor: x = 19.4307, y = -0.525732, z = -2.05694
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.309911, py = 0.123699, pz = 0.0225248
+[200773:femto-universe-producer-task]: pos daughter: x = 19.8201, y = 2.23509, z = 0.315802
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.922422, py = 0.243857, pz = 0.323848
+[200773:femto-universe-producer-task]: neg daughter: x = 19.4797, y = -1.80468, z = 3.31151
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.452913, py = 0.0490973, pz = 0.0804016
+[200773:femto-universe-producer-task]: bachelor: x = 19.4795, y = 0.444067, z = 1.43686
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.0154195, py = -0.348701, pz = 0.0504487
+[200773:femto-universe-producer-task]: pos daughter: x = 34.1227, y = 0.472625, z = 5.43288
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.409869, py = -0.985605, pz = 0.0782848
+[200773:femto-universe-producer-task]: neg daughter: x = 19.3529, y = -0.766147, z = 1.69177
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.00823585, py = -0.221037, pz = -0.0689296
+[200773:femto-universe-producer-task]: bachelor: x = 19.3039, y = 0.657141, z = -2.9704
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.381985, py = 0.422531, pz = -0.30287
+[200773:femto-universe-producer-task]: pos daughter: x = 24.2633, y = -1.42588, z = -11.8673
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.00175678, py = 0.204854, pz = -0.100368
+[200773:femto-universe-producer-task]: neg daughter: x = 19.321, y = 0.502284, z = -8.42776
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.238007, py = 0.137043, pz = 0.0348498
+[200773:femto-universe-producer-task]: bachelor: x = 19.6914, y = 2.30683, z = 2.54997
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.246781, py = -0.62644, pz = -0.313825
+[200773:femto-universe-producer-task]: pos daughter: x = 24.2932, y = -0.341816, z = -10.489
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.0888546, py = -0.263215, pz = -0.0476719
+[200773:femto-universe-producer-task]: neg daughter: x = 19.3454, y = -0.771115, z = -3.56116
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.118004, py = 0.0659472, pz = -0.0838985
+[200773:femto-universe-producer-task]: bachelor: x = 34.5981, y = 1.40711, z = -21.6441
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -1.42112, py = 0.0539564, pz = -0.226632
+[200773:femto-universe-producer-task]: pos daughter: x = 0.0295681, y = 0.0560233, z = 0.885523
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.309786, py = -0.0963055, pz = 0.0281618
+[200773:femto-universe-producer-task]: neg daughter: x = 19.6705, y = 2.26046, z = 1.21915
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.306466, py = -0.0962213, pz = -0.091575
+[200773:femto-universe-producer-task]: bachelor: x = 0.0294377, y = -0.373325, z = 1.11453
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.289351, py = 0.0206228, pz = -0.0306829
+[200773:femto-universe-producer-task]: pos daughter: x = 24.2817, y = -0.75824, z = -7.12761
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.704979, py = -0.161726, pz = 0.0113725
+[200773:femto-universe-producer-task]: neg daughter: x = 19.6737, y = 1.98572, z = -5.39934
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0823693, py = -0.127007, pz = -0.0446529
+[200773:femto-universe-producer-task]: bachelor: x = 24.5611, y = 1.49485, z = -11.8232
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.508399, py = -0.0418562, pz = 0.400391
+[200773:femto-universe-producer-task]: pos daughter: x = 19.6694, y = 1.91493, z = 15.6275
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.19843, py = -0.091029, pz = 0.16124
+[200773:femto-universe-producer-task]: neg daughter: x = 34.1246, y = -1.91112, z = 26.3003
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.242298, py = -0.124818, pz = 0.115093
+[200773:femto-universe-producer-task]: bachelor: x = 24.2679, y = 0.248589, z = 16.3645
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = 1.58475, py = 0.551601, pz = -0.161611
+[200773:femto-universe-producer-task]: pos daughter: x = 19.3322, y = -1.04029, z = -7.84984
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.258084, py = 0.0138442, pz = -0.0480995
+[200773:femto-universe-producer-task]: neg daughter: x = 34.5713, y = 1.02147, z = -11.2429
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.571058, py = 0.276098, pz = -0.0306082
+[200773:femto-universe-producer-task]: bachelor: x = 19.3336, y = 0.207553, z = -7.2686
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = 1.28966, py = 0.41589, pz = -0.105107
+[200773:femto-universe-producer-task]: pos daughter: x = 19.3324, y = -1.41365, z = -8.03742
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.258084, py = 0.0138442, pz = -0.0480995
+[200773:femto-universe-producer-task]: neg daughter: x = 34.5713, y = 1.02147, z = -11.2429
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.571058, py = 0.276098, pz = -0.0306082
+[200773:femto-universe-producer-task]: bachelor: x = 19.3336, y = 0.207553, z = -7.2686
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.78786, py = -0.848658, pz = 0.579172
+[200773:femto-universe-producer-task]: pos daughter: x = 0.0205124, y = 0.125083, z = 0.807339
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.175328, py = -0.0475338, pz = 0.0929905
+[200773:femto-universe-producer-task]: neg daughter: x = 19.2937, y = -2.03941, z = 10.676
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0556396, py = -0.18368, pz = -0.0845765
+[200773:femto-universe-producer-task]: bachelor: x = 19.262, y = 0.340931, z = -6.19178
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.0790581, py = -0.177315, pz = 0.0667332
+[200773:femto-universe-producer-task]: pos daughter: x = 19.2694, y = -1.64766, z = 7.69968
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.658083, py = -0.461486, pz = 0.443963
+[200773:femto-universe-producer-task]: neg daughter: x = 24.6118, y = 2.04474, z = 14.5072
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.137219, py = -0.0720305, pz = 0.0145227
+[200773:femto-universe-producer-task]: bachelor: x = 24.6064, y = 2.13758, z = 4.09228
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.194158, py = -0.00387352, pz = 0.0836692
+[200773:femto-universe-producer-task]: pos daughter: x = 19.3087, y = -1.57474, z = 8.23363
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.350099, py = -0.0207696, pz = 0.107701
+[200773:femto-universe-producer-task]: neg daughter: x = 24.2742, y = -2.12219, z = 8.18292
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0681645, py = 0.143627, pz = 0.0192908
+[200773:femto-universe-producer-task]: bachelor: x = 24.3433, y = 0.425933, z = 4.24014
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = 1.33712, py = -0.27442, pz = 0.639184
+[200773:femto-universe-producer-task]: pos daughter: x = 34.685, y = 2.58925, z = 22.6788
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.380509, py = 0.0387953, pz = 0.113815
+[200773:femto-universe-producer-task]: neg daughter: x = 34.2988, y = -0.0188291, z = 21.0733
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.11496, py = -0.0780984, pz = 0.0984303
+[200773:femto-universe-producer-task]: bachelor: x = 24.4138, y = -1.31695, z = 23.9158
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.0711566, py = 0.313897, pz = -0.0473195
+[200773:femto-universe-producer-task]: pos daughter: x = 19.3693, y = -0.532624, z = 4.23979
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.365441, py = 0.823466, pz = -0.0629811
+[200773:femto-universe-producer-task]: neg daughter: x = 34.1667, y = -1.76304, z = 3.78475
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0231305, py = 0.273389, pz = -0.0899152
+[200773:femto-universe-producer-task]: bachelor: x = 19.6983, y = 1.97554, z = 2.03083
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.548127, py = -1.27634, pz = -0.283303
+[200773:femto-universe-producer-task]: pos daughter: x = 34.5282, y = 1.5887, z = -1.42768
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.250821, py = -0.363476, pz = -0.11189
+[200773:femto-universe-producer-task]: neg daughter: x = 34.5303, y = 2.95779, z = -1.85869
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.303576, py = -0.36836, pz = -0.203028
+[200773:femto-universe-producer-task]: bachelor: x = 24.6448, y = 3.36115, z = -0.257728
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.887911, py = 1.01356, pz = -0.713093
+[200773:femto-universe-producer-task]: pos daughter: x = 34.1479, y = -0.0783396, z = -24.3099
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.296294, py = 0.294183, pz = -0.271553
+[200773:femto-universe-producer-task]: neg daughter: x = 34.148, y = -0.596462, z = -25.0648
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.277424, py = 0.186109, pz = -0.250729
+[200773:femto-universe-producer-task]: bachelor: x = 24.6285, y = 0.478939, z = -20.1504
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.0305549, py = -1.10578, pz = -0.716596
+[200773:femto-universe-producer-task]: pos daughter: x = 24.2203, y = -0.413455, z = -10.9748
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.0222571, py = -0.371698, pz = -0.260119
+[200773:femto-universe-producer-task]: neg daughter: x = 19.6326, y = 2.8788, z = -8.71327
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.14225, py = -0.338695, pz = -0.18403
+[200773:femto-universe-producer-task]: bachelor: x = 19.6237, y = 1.73414, z = -6.21636
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.593304, py = -1.2326, pz = -0.621942
+[200773:femto-universe-producer-task]: pos daughter: x = 34.432, y = 0.878363, z = -8.39339
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.0209828, py = -0.198211, pz = 0.00582459
+[200773:femto-universe-producer-task]: neg daughter: x = 34.0892, y = -1.644, z = -4.12724
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.124903, py = -0.0935657, pz = -0.0040725
+[200773:femto-universe-producer-task]: bachelor: x = 34.447, y = 0.851451, z = 0.748018
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.111174, py = 1.08295, pz = 0.537135
+[200773:femto-universe-producer-task]: pos daughter: x = 19.675, y = 0.687084, z = 5.91051
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.0984358, py = 0.185096, pz = 0.15442
+[200773:femto-universe-producer-task]: neg daughter: x = 19.2939, y = -0.247323, z = 9.00467
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0118139, py = 0.47234, pz = 0.120826
+[200773:femto-universe-producer-task]: bachelor: x = 83, y = -8.31341, z = 18.5347
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = 1.19845, py = -0.220161, pz = -0.193519
+[200773:femto-universe-producer-task]: pos daughter: x = 19.4867, y = -0.465739, z = -6.54614
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.278334, py = -0.14957, pz = -0.0826559
+[200773:femto-universe-producer-task]: neg daughter: x = 19.4692, y = -0.954378, z = -8.6059
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.247261, py = -0.0732018, pz = 0.107711
+[200773:femto-universe-producer-task]: bachelor: x = 19.8372, y = 2.01856, z = 2.84765
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -1.00125, py = -0.230063, pz = -0.430791
+[200773:femto-universe-producer-task]: pos daughter: x = 24.2691, y = -1.80987, z = -11.359
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.308241, py = -0.119781, pz = -0.0506772
+[200773:femto-universe-producer-task]: neg daughter: x = 24.2691, y = -1.25, z = -10.2364
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.143156, py = 0.0561901, pz = -0.026342
+[200773:femto-universe-producer-task]: bachelor: x = 19.4816, y = -0.0571248, z = -7.37232
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.179082, py = 0.0118896, pz = -0.0599942
+[200773:femto-universe-producer-task]: pos daughter: x = 24.8028, y = 3.34138, z = -5.90432
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.301039, py = -0.00835056, pz = -0.055166
+[200773:femto-universe-producer-task]: neg daughter: x = 24.8028, y = 2.58228, z = -3.95232
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.225249, py = 0.0721337, pz = 0.0293066
+[200773:femto-universe-producer-task]: bachelor: x = 19.4823, y = -0.965402, z = 2.44492
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = 0.470276, py = 0.432256, pz = -0.0854946
+[200773:femto-universe-producer-task]: pos daughter: x = 24.6241, y = 0.901654, z = -2.55363
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = 0.199048, py = 0.148388, pz = 0.00112156
+[200773:femto-universe-producer-task]: neg daughter: x = 19.3062, y = -0.586096, z = -0.284633
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.149987, py = -0.0449809, pz = -0.00411337
+[200773:femto-universe-producer-task]: bachelor: x = 24.437, y = -0.224324, z = -0.0143677
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.0299731, py = 0.177259, pz = -0.0278478
+[200773:femto-universe-producer-task]: pos daughter: x = 19.3388, y = -0.634147, z = 9.26122
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.182274, py = 1.43893, pz = 0.571519
+[200773:femto-universe-producer-task]: neg daughter: x = 19.3394, y = -0.658181, z = 9.5439
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.0947586, py = 0.45377, pz = 0.113348
+[200773:femto-universe-producer-task]: bachelor: x = 19.3413, y = -1.40481, z = 9.33519
+[200773:femto-universe-producer-task]: bachelor: sign = 1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.666353, py = -1.10573, pz = -0.66232
+[200773:femto-universe-producer-task]: pos daughter: x = 19.261, y = -1.72979, z = -13.0135
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.11175, py = -0.392618, pz = -0.199724
+[200773:femto-universe-producer-task]: neg daughter: x = 34.0714, y = -1.21189, z = -19.561
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.0263977, py = -0.16407, pz = -0.125905
+[200773:femto-universe-producer-task]: bachelor: x = 24.5838, y = 0.913482, z = -21.2062
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.666353, py = -1.10573, pz = -0.66232
+[200773:femto-universe-producer-task]: pos daughter: x = 19.261, y = -1.72979, z = -13.0135
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.11175, py = -0.392618, pz = -0.199724
+[200773:femto-universe-producer-task]: neg daughter: x = 34.0714, y = -1.21189, z = -19.561
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = -0.0966926, py = -0.372173, pz = -0.0849518
+[200773:femto-universe-producer-task]: bachelor: x = 19.6222, y = 1.75318, z = -8.3833
+[200773:femto-universe-producer-task]: bachelor: sign = -1
+[200773:femto-universe-producer-task]: pos daughter: px = -0.666353, py = -1.10573, pz = -0.66232
+[200773:femto-universe-producer-task]: pos daughter: x = 19.261, y = -1.72979, z = -13.0135
+[200773:femto-universe-producer-task]: pos daughter: sign = 1
+[200773:femto-universe-producer-task]: neg daughter: px = -0.11175, py = -0.392618, pz = -0.199724
+[200773:femto-universe-producer-task]: neg daughter: x = 34.0714, y = -1.21189, z = -19.561
+[200773:femto-universe-producer-task]: neg daughter: sign = -1
+[200773:femto-universe-producer-task]: bachelor: px = 0.0316591, py = -0.295465, pz = -0.202572
+[200773:femto-universe-producer-task]: bachelor: x = 19.6247, y = 1.7275, z = -15.9935
+[200773:femto-universe-producer-task]: bachelor: sign = -1

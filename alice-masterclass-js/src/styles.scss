@@ -58,6 +58,12 @@ app-root {
 @import './alice-theme.scss';
 
 /* VA calculator mat-select overlay (rendered outside component; needs global styles). */
+/* Material uses `div.mat-mdc-select-panel { max-height: 275px }` — must match/beat that specificity. */
+div.mat-mdc-select-panel.calculator-particle-select-panel {
+  // 6 options × ~48px + panel padding; default 275px forces a scrollbar.
+  max-height: 340px;
+}
+
 .calculator-particle-select-panel {
   .particle-option {
     display: inline-flex;

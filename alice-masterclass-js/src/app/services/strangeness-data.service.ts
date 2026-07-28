@@ -23,9 +23,22 @@ export class StrangenessDataService {
   readonly EVENTS_IN_DEMO_DATASET = 4;
   readonly DEMO_DATASET_ID = 0;
 
-  readonly EVENTS_IN_DATASET = 15;
+  /**
+   * Workshop datasets 1–19: original events 0–14 plus Xi at 15 (and 16 for datasets 1–12).
+   * Use {@link getEventsInDataset} for the per-dataset length.
+   */
+  readonly EVENTS_IN_DATASET = 17;
+  /** Datasets 13–19 have a single appended Xi (event index 15 only). */
+  readonly EVENTS_IN_DATASET_ONE_XI = 16;
+  /** Datasets 1–12 have two appended Xi events (indices 15 and 16). */
+  readonly XI_DOUBLE_DATASET_MAX = 12;
 
-  readonly EVENTS_IN_FULL_DATASET = 4;
+  /**
+   * Full (dataset 20) keeps the original four dense events, then the Xi cascade
+   * file `event_20_15.json` as the 5th navigable slot.
+   */
+  readonly FULL_EVENT_FILE_IDS: readonly number[] = [0, 1, 2, 3, 15];
+  readonly EVENTS_IN_FULL_DATASET = 5;
   readonly FULL_DATASET_ID = 20;
 
   readonly DATA_UPLOAD_COMPLETED_DURATION = 800;
@@ -169,8 +182,44 @@ export class StrangenessDataService {
 
   constructor(private http: HttpClient, private apiService: ApiService) { }
 
+  /** Number of navigable events for a concrete dataset id (0 demo, 1–19 workshop, 20 full). */
+  getEventsInDataset(datasetNum: number): number {
+    if (datasetNum === this.DEMO_DATASET_ID) {
+      return this.EVENTS_IN_DEMO_DATASET;
+    }
+    if (datasetNum === this.FULL_DATASET_ID) {
+      return this.EVENTS_IN_FULL_DATASET;
+    }
+    if (datasetNum >= 1 && datasetNum <= this.XI_DOUBLE_DATASET_MAX) {
+      return this.EVENTS_IN_DATASET;
+    }
+    if (datasetNum >= 13 && datasetNum <= 19) {
+      return this.EVENTS_IN_DATASET_ONE_XI;
+    }
+    return this.EVENTS_IN_DATASET;
+  }
+
+  /** Map picker value (-1 demo / -2 full / 1–19) to on-disk dataset number. */
+  resolveDatasetNum(datasetPickerId: number): number {
+    if (datasetPickerId === DATASET_PICKER_DEMO) {
+      return this.DEMO_DATASET_ID;
+    }
+    if (datasetPickerId === DATASET_PICKER_FULL_EVENT) {
+      return this.FULL_DATASET_ID;
+    }
+    return datasetPickerId;
+  }
+
   getEvent(datasetNum: number, eventID: number) {
-    const url = `${this.EVENT_DATA_PATH}/event_${datasetNum}_${eventID}.json`;
+    let fileEventId = eventID;
+    if (datasetNum === this.FULL_DATASET_ID) {
+      const mapped = this.FULL_EVENT_FILE_IDS[eventID];
+      if (mapped === undefined) {
+        throw new Error(`Full-dataset event index out of range: ${eventID}`);
+      }
+      fileEventId = mapped;
+    }
+    const url = `${this.EVENT_DATA_PATH}/event_${datasetNum}_${fileEventId}.json`;
 
     return this.http.get<Event>(url);
   }
