@@ -1,11 +1,26 @@
 <div fxFlex="grow">
   <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
-    <app-mass-histograms [kaonMasses]="kaonMasses" [lambdaMasses]="lambdaMasses" [antiLambdaMasses]="antiLambdaMasses" [xiMasses]="xiMasses"></app-mass-histograms>
+    <app-mass-histograms
+      [kaonMasses]="kaonMasses"
+      [lambdaMasses]="lambdaMasses"
+      [antiLambdaMasses]="antiLambdaMasses"
+      [xiMasses]="xiMasses"
+      [antiXiMasses]="antiXiMasses"
+    ></app-mass-histograms>
     <app-results
       [resultsData]="studentResults"
       (studentSelectedEvent)="onStudentSelected($event)"
       (allSelectedEvent)="onAllSelected($event)"
       (reloadClickedEvent)="onReload()"
-      ></app-results>
+      >
+      <mat-form-field sessionSelector appearance="outline" class="selector" color="primary">
+        <mat-label>{{ 'VISUAL_ANALYSIS.SESSION' | translate }}</mat-label>
+        <mat-select [(ngModel)]="sessionID" (selectionChange)="onSessionChange()">
+          @for (s of sessions; track s.id) {
+            <mat-option [value]="s.id">{{ s.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </app-results>
   </div>
 </div>

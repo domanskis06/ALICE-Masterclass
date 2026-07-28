@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { AngularModule } from 'src/app/shared/angular.module';
 
 import { ResultsComponent } from './results.component';
@@ -10,7 +11,7 @@ describe('ResultsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ ResultsComponent ],
-      imports: [ AngularModule ]
+      imports: [ AngularModule, TranslateModule.forRoot() ]
     })
     .compileComponents();
   });

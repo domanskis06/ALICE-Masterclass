@@ -1,7 +1,7 @@
 <mat-dialog-content>
-  Are you sure?
+  {{ 'SESSION.CONFIRM_DIALOG.MESSAGE' | translate }}
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-	<button mat-raised-button [mat-dialog-close]="true" color="primary">Yes</button>
-	<button mat-raised-button [mat-dialog-close]="false" tabindex="-1">No</button>
+	<button mat-raised-button [mat-dialog-close]="true" color="primary">{{ 'SESSION.CONFIRM_DIALOG.YES' | translate }}</button>
+	<button mat-raised-button [mat-dialog-close]="false" tabindex="-1">{{ 'SESSION.CONFIRM_DIALOG.NO' | translate }}</button>
 </mat-dialog-actions>

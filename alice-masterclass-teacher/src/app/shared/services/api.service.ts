@@ -24,14 +24,16 @@ export interface VisualAnalysisResultAPI {
   k0: number[],
   lambda: number[],
   antilambda: number[],
-  xi: number[]
+  xi: number[],
+  antixi?: number[]
 }
 
 export enum ParticleType {
   KAON = 'k0',
   LAMBDA = 'lambda',
   ANTI_LAMBDA = 'antilambda',
-  XI = 'xi'
+  XI = 'xi',
+  ANTI_XI = 'antixi'
 }
 
 export enum CollisionType {

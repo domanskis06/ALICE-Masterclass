@@ -60,8 +60,29 @@
         <mat-form-field class="calculator-particle-field" appearance="outline">
           <mat-label>{{ 'STRANGENESS.CALCULATOR.SELECT_PARTICLE' | translate }}</mat-label>
           <mat-select formControlName="type" [panelClass]="particleSelectPanelClass">
+            <mat-select-trigger>
+              @if (calculatorForm.controls.type.value; as selectedType) {
+                <span class="particle-option">
+                  @if (particleSymbolHtml(selectedType); as symbol) {
+                    <span class="particle" [innerHTML]="symbol"></span>
+                    ({{ particleTypeLabelKey(selectedType) | translate }})
+                  } @else {
+                    {{ particleTypeLabelKey(selectedType) | translate }}
+                  }
+                </span>
+              }
+            </mat-select-trigger>
             @for (type of particleTypes; track type) {
-              <mat-option [value]="type">{{ 'STRANGENESS.CALCULATOR.' + type | uppercase | translate }}</mat-option>
+              <mat-option [value]="type">
+                <span class="particle-option">
+                  @if (particleSymbolHtml(type); as symbol) {
+                    <span class="particle" [innerHTML]="symbol"></span>
+                    ({{ particleTypeLabelKey(type) | translate }})
+                  } @else {
+                    {{ particleTypeLabelKey(type) | translate }}
+                  }
+                </span>
+              </mat-option>
             }
           </mat-select>
         </mat-form-field>

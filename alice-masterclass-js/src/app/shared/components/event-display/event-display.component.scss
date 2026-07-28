@@ -308,17 +308,18 @@ mat-card-content {
 }
 
 #content {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
-// Slide inward with the overlay sidebars so prev/next stay visible (no canvas resize).
+// Overlay on the canvas (full-bleed render-area) — slide with open sidebars.
 // Distinct from .sidebar-toggle: taller capsule, skip icons, no frosted blur.
 .event-nav-btn {
-  position: relative;
+  position: absolute;
+  top: 50%;
   z-index: 5;
-  flex-shrink: 0;
   width: 36px !important;
   height: 64px !important;
   padding: 0 !important;
@@ -327,8 +328,10 @@ mat-card-content {
   background: color-mix(in srgb, var(--ed-bg-panel-solid) 62%, transparent);
   color: var(--ed-text);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+  transform: translateY(-50%);
   transition:
-    transform var(--ed-sidebar-duration) ease,
+    left var(--ed-sidebar-duration) ease,
+    right var(--ed-sidebar-duration) ease,
     background 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -362,26 +365,35 @@ mat-card-content {
   }
 }
 
+.event-nav-btn--prev {
+  left: 8px;
+}
+
+.event-nav-btn--next {
+  right: 8px;
+}
+
 .event-display-host:not(.ed-left-sidebar-collapsed) .event-nav-btn--prev {
-  transform: translateX(var(--ed-left-sidebar-width));
+  left: calc(var(--ed-left-sidebar-width) + 8px);
 }
 
 .event-display-host:not(.ed-sidebar-collapsed) .event-nav-btn--next {
-  transform: translateX(calc(-1 * var(--ed-right-sidebar-width)));
+  right: calc(var(--ed-right-sidebar-width) + 8px);
 }
 
 /* Above sidebar toggle (z=5) so LETS US is not covered by the chevron. */
 .event-display-corner-overlay {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 12px;
+  right: 12px;
   z-index: 6;
   pointer-events: none;
   max-width: min(300px, 42%);
 }
 
 .event-display-host:not(.ed-sidebar-collapsed) .event-display-corner-overlay {
-  right: var(--ed-right-sidebar-width);
+  /* Gap from the open assembly / options drawer. */
+  right: calc(var(--ed-right-sidebar-width) + 14px);
 }
 
 #spinner {
@@ -427,6 +439,8 @@ mat-card-content {
   overflow: hidden;
   box-sizing: border-box;
   position: relative;
+  width: 100%;
+  height: 100%;
   max-height: 100%;
   outline: none;
 
@@ -436,6 +450,8 @@ mat-card-content {
 
   canvas {
     display: block;
+    width: 100%;
+    height: 100%;
     outline: none;
   }
 
@@ -463,8 +479,10 @@ mat-card-content {
     left: 0;
     top: 0;
     width: 100%;
+    padding-top: 8px;
     text-align: center;
     pointer-events: none;
+    box-sizing: border-box;
 
     &.landscape {
       width: calc(100% * var(--primary-axis-ratio));
@@ -503,6 +521,16 @@ mat-card-content {
       top: calc(100% * var(--secondary-axis-ratio));
       width: calc(100% * (1 - var(--primary-axis-ratio)));
     }
+  }
+
+  #view1,
+  #view2 {
+    padding-top: 8px;
+    box-sizing: border-box;
+  }
+
+  #view2 {
+    padding-top: 2px;
   }
 
   #scales1, #scales2 {

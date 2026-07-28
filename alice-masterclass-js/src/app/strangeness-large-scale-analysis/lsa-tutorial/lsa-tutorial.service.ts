@@ -3,8 +3,6 @@ import { driver, type DriveStep, type Driver } from 'driver.js';
 
 import { FitService } from '../../shared/services/fit.service';
 import {
-  LSA_TUTORIAL_STORAGE_KEY,
-  LSA_TUTORIAL_STORAGE_VALUE_DISMISSED,
   LSA_TUTORIAL_STEP_INDEX_ACCEPT,
   LSA_TUTORIAL_STEP_INDEX_FIT,
   LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM,
@@ -16,40 +14,22 @@ export class LsaTutorialService {
   private driverInstance: Driver | null = null;
   private suppressDismissOnDestroy = false;
   private awaitingHistogramAdvance = false;
+  /** In-memory only — resets on full page reload so the welcome dialog shows again. */
+  private dismissedThisSession = false;
 
   constructor(private readonly fitService: FitService) {}
 
   shouldShow(): boolean {
-    try {
-      if (typeof localStorage === 'undefined') {
-        return true;
-      }
-      return localStorage.getItem(LSA_TUTORIAL_STORAGE_KEY) !== LSA_TUTORIAL_STORAGE_VALUE_DISMISSED;
-    } catch {
-      // Private mode / blocked storage: still offer the tutorial.
-      return true;
-    }
+    return !this.dismissedThisSession;
   }
 
   dismiss(): void {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(LSA_TUTORIAL_STORAGE_KEY, LSA_TUTORIAL_STORAGE_VALUE_DISMISSED);
-      }
-    } catch {
-      /* ignore */
-    }
+    this.dismissedThisSession = true;
   }
 
   /** For unit tests only. */
   clearDismissFlag(): void {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(LSA_TUTORIAL_STORAGE_KEY);
-      }
-    } catch {
-      /* ignore */
-    }
+    this.dismissedThisSession = false;
   }
 
   /**

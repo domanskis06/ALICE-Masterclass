@@ -85,7 +85,8 @@ class GetVisualAnalysisResultsAPI(APIView):
                     'k0': [],
                     'lambda': [],
                     'antilambda': [],
-                    'xi': []
+                    'xi': [],
+                    'antixi': []
                 }
 
                 entries = VisualAnalysisResultsEntry.objects.filter(result=r)

@@ -15,7 +15,7 @@ export interface StudentSelectedEvent {
     standalone: false
 })
 export class ResultsComponent implements OnInit {
-  public readonly displayedColumns: string[] = ['select', 'student', 'dataset', 'kaonMasses', 'lambdaMasses', 'antiLambdaMasses', 'xiMasses'];
+  public readonly displayedColumns: string[] = ['select', 'student', 'dataset', 'kaonMasses', 'lambdaMasses', 'antiLambdaMasses', 'xiMasses', 'antiXiMasses'];
   
   @Input()
   get resultsData(): StudentResult[] { return this._studentResults; }

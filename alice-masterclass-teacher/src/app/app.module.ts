@@ -1,6 +1,9 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AuthGuard } from './shared/services/auth.guard';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -20,6 +23,12 @@ import { AddEventDialogComponent } from './session/add-event-dialog/add-event-di
 import { SelectEventDialogComponent } from './select-event-dialog/select-event-dialog.component';
 import { LoginComponent } from './login/login.component';
 import { UnauthorizedInterceptor } from './shared/unauthorized.interceptor';
+import { InstructionsDialogComponent } from './instructions-dialog/instructions-dialog.component';
+import { TranslatedPaginatorIntl } from './shared/translated-paginator-intl';
+
+export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
+  return new TranslateHttpLoader(http, './assets/i18n/', '.json');
+}
 
 @NgModule({ declarations: [
         AppComponent,
@@ -31,15 +40,24 @@ import { UnauthorizedInterceptor } from './shared/unauthorized.interceptor';
         ConfirmDialogComponent,
         AddEventDialogComponent,
         SelectEventDialogComponent,
-        LoginComponent
+        LoginComponent,
+        InstructionsDialogComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         AppRoutingModule,
         AngularModule,
         SharedModule,
+        TranslateModule.forRoot({
+          loader: {
+            provide: TranslateLoader,
+            useFactory: HttpLoaderFactory,
+            deps: [HttpClient]
+          }
+        }),
         StrangenessVisualAnalysisModule,
         StrangenessLargeScaleAnalysisModule], providers: [
         { provide: HTTP_INTERCEPTORS, useClass: UnauthorizedInterceptor, multi: true },
+        { provide: MatPaginatorIntl, useClass: TranslatedPaginatorIntl },
         AuthGuard,
         SessionUrlPipe,
         provideHttpClient(withInterceptorsFromDi())

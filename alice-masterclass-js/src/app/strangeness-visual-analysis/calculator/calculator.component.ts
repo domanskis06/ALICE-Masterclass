@@ -28,7 +28,36 @@ export class CalculatorComponent implements OnInit {
     {color: bachelorTrackColor, type: '(b)', track: null}
   ];
 
-  particleTypes: ParticleType[] = [ParticleType.KAON, ParticleType.LAMBDA, ParticleType.ANTI_LAMBDA, ParticleType.XI, ParticleType.BACKGROUND];
+  particleTypes: ParticleType[] = [
+    ParticleType.KAON,
+    ParticleType.LAMBDA,
+    ParticleType.ANTI_LAMBDA,
+    ParticleType.XI,
+    ParticleType.ANTI_XI,
+    ParticleType.BACKGROUND,
+  ];
+
+  /** Same symbols as the histogram titles (K⁰_S, Λ, Λ̅, Ξ, Ξ̅); null for Background. */
+  particleSymbolHtml(type: ParticleType | string | null | undefined): string | null {
+    switch (type) {
+      case ParticleType.KAON:
+        return 'K<span class="supsub"><sup>0</sup><sub>S</sub></span>';
+      case ParticleType.LAMBDA:
+        return 'Λ';
+      case ParticleType.ANTI_LAMBDA:
+        return 'Λ&#773;';
+      case ParticleType.XI:
+        return 'Ξ';
+      case ParticleType.ANTI_XI:
+        return 'Ξ&#773;';
+      default:
+        return null;
+    }
+  }
+
+  particleTypeLabelKey(type: ParticleType | string): string {
+    return 'STRANGENESS.CALCULATOR.' + String(type).toUpperCase();
+  }
 
   @Input()
   submitDisabled: boolean = false;
@@ -119,7 +148,12 @@ export class CalculatorComponent implements OnInit {
   }
 
   onSubmit(): void {
-    this.addToHistogramEvent.emit({type: this.calculatorForm.controls.type.value, mass: this.calculatorForm.controls.mass.value});
+    this.addToHistogramEvent.emit({
+      type: this.calculatorForm.controls.type.value,
+      mass: this.calculatorForm.controls.mass.value,
+    });
+    // Reset after emit so the parent still receives the chosen particle type.
+    this.resetTypeField();
   }
 
 }

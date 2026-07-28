@@ -313,6 +313,7 @@ class GetVisualAnalysisResultsAPITestCase(APITestCase):
 		self.assertEqual(len(studentObj['lambda']), 1)
 		self.assertEqual(len(studentObj['antilambda']), 1)
 		self.assertEqual(len(studentObj['xi']), 0)
+		self.assertEqual(len(studentObj['antixi']), 0)
 
 class GetLargeScaleAnalysisResultsAPITestCase(APITestCase):
 	EVENT_NAME = 'TEST'

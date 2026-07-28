@@ -71,7 +71,7 @@ tmp-*.mjs
 *-tmp.cjs
 *-tmp.mjs
 
-# Local L3 CAD copies / rebuild intermediates (shipped: L3.glb + L3_pp.glb)
+# Local L3 CAD copies / rebuild intermediates (shipped: L3.glb; archive: L3_original.glb)
 src/assets/models/alice components/L3_cad.glb
 src/assets/models/alice components/L3_unified.glb
 src/assets/models/alice components/L3_original_backup.glb

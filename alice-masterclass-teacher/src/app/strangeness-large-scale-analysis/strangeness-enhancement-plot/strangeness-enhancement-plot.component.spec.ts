@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { AngularModule } from '../../shared/angular.module';
+import { SharedModule } from '../../shared/shared.module';
 
 import { StrangenessEnhancementPlotComponent } from './strangeness-enhancement-plot.component';
 
@@ -11,7 +13,7 @@ describe('StrangenessEnhancementPlotComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ StrangenessEnhancementPlotComponent ],
-      imports: [ AngularModule ]
+      imports: [ AngularModule, SharedModule, TranslateModule.forRoot() ]
     })
     .compileComponents();
   });

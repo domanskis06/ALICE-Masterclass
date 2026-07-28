@@ -19,4 +19,36 @@ html, body {
   font-family: "Gentium Alt";
 }
 
+/* Centered antiparticle bar (better than Unicode combining overline). */
+.particle-anti {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+
+.particle-anti::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 0.02em;
+  border-top: 0.09em solid currentColor;
+}
+
+.supsub {
+  display: inline-block;
+}
+
+.supsub sup,
+.supsub sub {
+  position: relative;
+  display: block;
+  font-size: .5em;
+  line-height: 1.2;
+}
+
+.supsub sub {
+  top: .3em;
+}
+
 @import url('material-icons/iconfont/material-icons.css');

@@ -25,15 +25,18 @@ export interface Event {
   clusters: number[][];
   decays: Track[][];
   /**
-   * Optional dense EMCal cell energies (length = CALO_EMCAL_FLAT_SIZE).
-   * When set, readout bars use these values instead of the procedural preview.
+   * TODO(future-data-update): Dense EMCal cell energies (length = CALO_EMCAL_FLAT_SIZE).
+   * Not shown yet — readout bars are gated until a future collision-data update.
    */
   caloEmcal?: number[];
-  /** Optional dense DCal cell energies (length = CALO_DCAL_FLAT_SIZE). */
+  /**
+   * TODO(future-data-update): Dense DCal cell energies (length = CALO_DCAL_FLAT_SIZE).
+   * Not shown yet — readout bars are gated until a future collision-data update.
+   */
   caloDcal?: number[];
   /**
-   * Optional sparse calorimeter hits. Applied when the matching dense pack is absent;
-   * useful while wiring real pp activation data.
+   * TODO(future-data-update): Sparse calorimeter hits when dense packs are absent.
+   * Not shown yet — enable with CALORIMETER_HITS_ENABLED after the data update.
    */
   caloHits?: CalorimeterCellHit[];
 }

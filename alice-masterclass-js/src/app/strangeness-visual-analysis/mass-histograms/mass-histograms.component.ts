@@ -4,6 +4,7 @@ import { ParticleType, VisualAnalysisResultsEntry } from '../../shared/services/
 import { HistogramBinTarget, HistogramComponent } from '../../shared/components/histogram/histogram.component';
 import {
   antiLambdaHistogramColor,
+  antiXiHistogramColor,
   kaonHistogramColor,
   lambdaHistogramColor,
   xiHistogramColor,
@@ -22,6 +23,7 @@ export class MassHistogramsComponent implements OnInit {
   readonly lambdaBarColor = lambdaHistogramColor;
   readonly antiLambdaBarColor = antiLambdaHistogramColor;
   readonly xiBarColor = xiHistogramColor;
+  readonly antiXiBarColor = antiXiHistogramColor;
 
   readonly binMin = 1;
   readonly binMax = 25;
@@ -42,11 +44,13 @@ export class MassHistogramsComponent implements OnInit {
   lambdaMasses: Array<number> = [];
   antiLambdaMasses: Array<number> = [];
   xiMasses: Array<number> = [];
+  antiXiMasses: Array<number> = [];
 
   @ViewChild('kaonHistogram') private kaonHistogram?: HistogramComponent;
   @ViewChild('lambdaHistogram') private lambdaHistogram?: HistogramComponent;
   @ViewChild('antiLambdaHistogram') private antiLambdaHistogram?: HistogramComponent;
   @ViewChild('xiHistogram') private xiHistogram?: HistogramComponent;
+  @ViewChild('antiXiHistogram') private antiXiHistogram?: HistogramComponent;
 
   @Input()
   uploadDisabled: boolean = false;
@@ -60,6 +64,7 @@ export class MassHistogramsComponent implements OnInit {
     const newLambdaMasses: Array<number> = [];
     const newAntiLambdaMasses: Array<number> = [];
     const newXiMasses: Array<number> = [];
+    const newAntiXiMasses: Array<number> = [];
 
     for (const entries of Array.from(this._results.values())) {
       for (const value of entries) {
@@ -76,6 +81,9 @@ export class MassHistogramsComponent implements OnInit {
           case ParticleType.XI:
             newXiMasses.push(value.mass);
             break;
+          case ParticleType.ANTI_XI:
+            newAntiXiMasses.push(value.mass);
+            break;
         }
       }
     }
@@ -84,6 +92,7 @@ export class MassHistogramsComponent implements OnInit {
     this.lambdaMasses = newLambdaMasses;
     this.antiLambdaMasses = newAntiLambdaMasses;
     this.xiMasses = newXiMasses;
+    this.antiXiMasses = newAntiXiMasses;
   }
   private _results: Map<string, VisualAnalysisResultsEntry[]> = new Map<string, VisualAnalysisResultsEntry[]>();
 
@@ -136,6 +145,8 @@ export class MassHistogramsComponent implements OnInit {
         return this.antiLambdaHistogram;
       case ParticleType.XI:
         return this.xiHistogram;
+      case ParticleType.ANTI_XI:
+        return this.antiXiHistogram;
       default:
         return undefined;
     }

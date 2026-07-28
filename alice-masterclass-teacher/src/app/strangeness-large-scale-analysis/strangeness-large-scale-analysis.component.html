@@ -1,8 +1,16 @@
 <div fxFlex="grow">
   <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
     <app-strangeness-enhancement-plot [xDomain]="[0, 370]" [yDomain]="[0, 2.6]" [data]="plotData">
-      <svg:text xAxisLabel>No. participants</svg:text>
-      <svg:text yAxisLabel>Enhancement</svg:text>
+      <mat-form-field cardTitle appearance="outline" class="selector" color="primary">
+        <mat-label>{{ 'LARGE_SCALE_ANALYSIS.EVENT' | translate }}</mat-label>
+        <mat-select [(ngModel)]="eventID" (selectionChange)="onEventChange()">
+          @for (e of events; track e.id) {
+            <mat-option [value]="e.id">{{ e.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <svg:text xAxisLabel>{{ 'LARGE_SCALE_ANALYSIS.NO_PARTICIPANTS' | translate }}</svg:text>
+      <svg:text yAxisLabel>{{ 'LARGE_SCALE_ANALYSIS.ENHANCEMENT' | translate }}</svg:text>
     </app-strangeness-enhancement-plot>
     <app-results [resultsData]="entries" (reloadClickedEvent)="onReload()"></app-results>
   </div>

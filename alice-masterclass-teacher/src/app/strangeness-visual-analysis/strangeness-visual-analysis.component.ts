@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { SelectSessionDialogComponent } from '../select-session-dialog/select-session-dialog.component';
-import { ApiService, VisualAnalysisResultAPI } from '../shared/services/api.service';
+import { Component, OnInit, Type } from '@angular/core';
+import { ApiService, SessionAPI, VisualAnalysisResultAPI } from '../shared/services/api.service';
+import { InstructionsProvider } from '../shared/interfaces';
 import { StudentSelectedEvent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 export interface StudentResultAPI {
   student: number,
@@ -10,7 +10,8 @@ export interface StudentResultAPI {
   k0: number[],
   lambda: number[],
   antilambda: number[],
-  xi: number[]
+  xi: number[],
+  antixi: number[]
 }
 
 export interface StudentResult {
@@ -20,7 +21,8 @@ export interface StudentResult {
   k0: number[],
   lambda: number[],
   antilambda: number[],
-  xi: number[]
+  xi: number[],
+  antixi: number[]
 }
 
 @Component({
@@ -29,7 +31,9 @@ export interface StudentResult {
     styleUrls: ['./strangeness-visual-analysis.component.scss'],
     standalone: false
 })
-export class StrangenessVisualAnalysisComponent implements OnInit {
+export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsProvider {
+
+  instructionsComponent: Type<any> = InstructionsComponent;
 
   public studentResults: StudentResult[] = [];
 
@@ -37,26 +41,28 @@ export class StrangenessVisualAnalysisComponent implements OnInit {
   public lambdaMasses: number[] = [];
   public antiLambdaMasses: number[] = [];
   public xiMasses: number[] = [];
+  public antiXiMasses: number[] = [];
 
-  private sessionID: number = -1;
+  public sessionID: number | null = null;
+  public sessions: SessionAPI[] = [];
 
-  constructor(private dialog: MatDialog, private apiService: ApiService) { }
+  constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.disableClose = true;
-    dialogConfig.autoFocus = true;
-
-    const dialogRef = this.dialog.open(SelectSessionDialogComponent, dialogConfig);
-
-    dialogRef.componentInstance.proceedClickedEvent.subscribe((data: number) => {
-      this.sessionID = data;
-      this.reload();
-      dialogRef.close();
+    this.apiService.getSessions().subscribe((sessions: SessionAPI[]) => {
+      this.sessions = sessions;
     });
   }
 
+  onSessionChange(): void {
+    this.reload();
+  }
+
   reload(): void {
+    if (this.sessionID === null) {
+      return;
+    }
+
     this.apiService.getStrangenessVisualAnalysisResults(this.sessionID).subscribe((data: VisualAnalysisResultAPI[]) => {
       const newData: StudentResult[] = [];
       for (let elm of data) {
@@ -67,7 +73,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit {
           k0: elm.k0,
           lambda: elm.lambda,
           antilambda: elm.antilambda,
-          xi: elm.xi
+          xi: elm.xi,
+          antixi: elm.antixi ?? []
         });
       }
       this.studentResults = newData;
@@ -103,6 +110,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit {
     const lambdaMasses = [];
     const antiLambdaMasses = [];
     const xiMasses = [];
+    const antiXiMasses = [];
 
     for (let elm of this.studentResults) {
       if (elm.selected) {
@@ -110,6 +118,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit {
         lambdaMasses.push(...elm.lambda);
         antiLambdaMasses.push(...elm.antilambda);
         xiMasses.push(...elm.xi);
+        antiXiMasses.push(...elm.antixi);
       }
     }
 
@@ -117,6 +126,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit {
     this.lambdaMasses = lambdaMasses;
     this.antiLambdaMasses = antiLambdaMasses;
     this.xiMasses = xiMasses;
+    this.antiXiMasses = antiXiMasses;
   }
 
 }

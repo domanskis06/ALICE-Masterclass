@@ -1,0 +1,128 @@
+{
+  "LANGUAGES": {
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "GENERAL": {
+    "MENU": "Menü",
+    "ALICE_MASTERCLASS_TEACHER": "ALICE Masterclass Teacher",
+    "TOGGLE_SIDENAV": "Seitenmenü umschalten",
+    "INSTRUCTIONS_BUTTON": "Anleitung",
+    "CHANGE_LANGUAGE": "Sprache ändern",
+    "AND": "und"
+  },
+  "INSTRUCTIONS_DIALOG": {
+    "BUTTON_DISMISS": "Schließen"
+  },
+  "NAV": {
+    "SESSION": "Sitzung",
+    "STRANGENESS": "Strangeness",
+    "VISUAL_ANALYSIS": "Visuelle Analyse",
+    "LARGE_SCALE_ANALYSIS": "Großskalige Analyse"
+  },
+  "SESSION": {
+    "TITLE": "Ereignisse",
+    "ADD_EVENT": "Ereignis hinzufügen",
+    "NO_EVENTS": "Noch keine Ereignisse. Klicken Sie auf +, um ein Ereignis hinzuzufügen.",
+    "SESSIONS_COUNT": "{{count}} Sitzung(en)",
+    "SESSION_NAME": "Sitzungsname",
+    "PASSWORD": "Kennwort",
+    "MAX_STUDENTS": "Max. Schüler",
+    "URL": "URL",
+    "CREATED": "Erstellt",
+    "DELETE": "Löschen",
+    "NO_SESSIONS": "Noch keine Sitzungen für dieses Ereignis.",
+    "ADD_SESSION": "Sitzung hinzufügen",
+    "URL_COPIED": "URL in die Zwischenablage kopiert",
+    "ADD_EVENT_DIALOG": {
+      "EVENT_NAME": "Ereignisname",
+      "NAME_EXISTS": "Ein Ereignis mit diesem Namen existiert bereits.",
+      "CREATE": "Ereignis erstellen",
+      "CANCEL": "Abbrechen"
+    },
+    "ADD_SESSION_DIALOG": {
+      "EVENT_NAME": "Ereignisname",
+      "SESSION_NAME": "Sitzungsname",
+      "PASSWORD": "Kennwort",
+      "PASSWORD_EXISTS": "Eine Sitzung mit diesem Kennwort existiert bereits.",
+      "MAX_STUDENTS": "Maximale Anzahl an Schülern",
+      "CREATE": "Sitzung erstellen",
+      "CANCEL": "Abbrechen"
+    },
+    "CONFIRM_DIALOG": {
+      "MESSAGE": "Sind Sie sicher?",
+      "YES": "Ja",
+      "NO": "Nein"
+    }
+  },
+  "VISUAL_ANALYSIS": {
+    "SESSION": "Sitzung",
+    "MASS_HISTOGRAMS": "Massenhistogramme",
+    "INVARIANT_MASS": "Invariante Masse",
+    "COUNTS": "Anzahl",
+    "RESULTS": "Ergebnisse",
+    "STUDENT": "Schüler",
+    "DATASET": "Datensatz",
+    "MASSES": "Massen",
+    "INSTRUCTIONS": {
+      "TITLE": "Über die Visuelle Analyse",
+      "INTRO": "In diesem Modul können Sie die Ergebnisse zur invarianten Masse prüfen, die Schülerinnen und Schüler in einer ausgewählten Sitzung erfasst haben.",
+      "HOW_TO_USE": "So funktioniert es",
+      "STEP_1": "Wählen Sie eine Sitzung aus dem Dropdown-Menü oberhalb der Ergebnistabelle.",
+      "STEP_2": "Die Massenhistogramme zeigen die kombinierte Verteilung der von den ausgewählten Schülern gemeldeten Teilchenmassen.",
+      "STEP_3": "In der Ergebnistabelle können Sie Schüler aus- oder abwählen, um ihre Daten in die Histogramme einzubeziehen oder auszuschließen.",
+      "STEP_4": "Nutzen Sie den Aktualisieren-Button, wenn neue Schülerergebnisse verfügbar werden.",
+      "HOW_TO_READ": "So liest man die Histogramme",
+      "HOW_TO_READ_INTRO": "Jedes Histogramm zeigt die invariante Masse eines Kandidatenteilchens:",
+      "PEAK_KAON": "— typischerweise ein Peak bei ~0,5 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_LAMBDA": "— typischerweise ein Peak bei ~1,115 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_XI": "— typischerweise ein Peak bei ~1,32 GeV/<em>c</em><sup>2</sup>",
+      "CLEAR_PEAK": "Ein klarer Peak zeigt, dass die Schüler dieses Teilchen korrekt identifiziert haben.",
+      "BROAD_DISTRIBUTION": "Eine breite oder flache Verteilung kann auf Fehlidentifikation oder zu wenige Kandidaten hindeuten.",
+      "TIP_LABEL": "Tipp:",
+      "TIP": "Vergleichen Sie Histogramme zwischen Schülern oder Sitzungen, um zu sehen, wie konsistent die Klasse jede Teilchenart rekonstruiert hat."
+    }
+  },
+  "LARGE_SCALE_ANALYSIS": {
+    "EVENT": "Ereignis",
+    "NO_PARTICIPANTS": "Anz. Teilnehmer",
+    "ENHANCEMENT": "Verstärkung",
+    "RESULTS": "Ergebnisse",
+    "CENTRALITY": "Zentralität",
+    "NO_EVENTS": "Anz. Ereignisse",
+    "NO": "Anz.",
+    "EFFICIENCY": "Effizienz",
+    "YIELD": "Ausbeute",
+    "UNKNOWN": "unbekannt",
+    "INSTRUCTIONS": {
+      "TITLE": "Über die Großskalige Analyse",
+      "INTRO": "Dieses Modul kombiniert die Ergebnisse eines Masterclass-Ereignisses zur Untersuchung der <strong>Strangeheitsverstärkung</strong> — also wie die Produktion seltsamer Teilchen in Schwerionenkollisionen Pb–Pb im Vergleich zu Proton–Proton-Kollisionen zunimmt.",
+      "HOW_TO_USE": "So funktioniert es",
+      "STEP_1": "Wählen Sie ein Ereignis aus dem Dropdown-Menü oberhalb des Diagramms.",
+      "STEP_2": "Das Diagramm zeigt die Strangeheitsverstärkung als Funktion der Kollisionszentralität, gemessen über die Anzahl der teilnehmenden Nukleonen <em>N</em><sub>part</sub>.",
+      "STEP_3": "Die Ergebnistabelle listet Ausbeuten und Verstärkungswerte für jede Zentralitätsklasse und Teilchenart.",
+      "STEP_4": "Nutzen Sie den Aktualisieren-Button, wenn neue Ergebnisse verfügbar werden.",
+      "HOW_TO_INTERPRET": "So interpretiert man die Größen",
+      "YIELD_DEF": "Anzahl der Teilchen einer bestimmten Art, die in dieser Zentralitätsklasse rekonstruiert wurden",
+      "NPART_DEF": "durchschnittliche Anzahl der an der Kollision beteiligten Nukleonen",
+      "ENHANCEMENT_DEF": "Ausbeute pro Teilnehmer, normiert auf eine pp-Referenz:",
+      "WHERE_YPP": "wobei <em>Y</em><sub>pp</sub> die Referenzausbeute in pp-Kollisionen ist.",
+      "FACTOR_TWO": "Der Faktor 2 rechnet die pp-Ausbeute auf eine Skala pro Teilnehmer um, da an einer pp-Kollision zwei Protonen beteiligt sind.",
+      "WHAT_TO_LOOK_FOR": "Worauf Sie achten sollten",
+      "LOOK_FOR": "Die Verstärkung ist meist größer für zentralere Kollisionen mit höherem <em>N</em><sub>part</sub> und kann sich zwischen",
+      "LOOK_FOR_END": "unterscheiden. Diskutieren Sie mit den Schülern, warum dichtere Kollisionen mehr seltsame Quarks erzeugen können.",
+      "TIP_LABEL": "Tipp:",
+      "TIP": "Nutzen Sie die farbigen Markierungen in der Tabelle zusammen mit dem Diagramm, um eine bestimmte Zentralitätsklasse mit ihrem Punkt im Graphen zu verbinden.",
+      "FORMULA_ENHANCEMENT": "Verstärkung",
+      "FORMULA_YIELD": "Ausbeute"
+    }
+  },
+  "PAGINATOR": {
+    "ITEMS_PER_PAGE": "Einträge pro Seite:",
+    "NEXT_PAGE": "Nächste Seite",
+    "PREVIOUS_PAGE": "Vorherige Seite",
+    "FIRST_PAGE": "Erste Seite",
+    "LAST_PAGE": "Letzte Seite",
+    "OF_LABEL": "von"
+  }
+}

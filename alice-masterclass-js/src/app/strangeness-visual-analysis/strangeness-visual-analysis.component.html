@@ -143,9 +143,18 @@
               <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
               <mat-select
                 data-testid="va-dataset-select"
-                [value]="datasetID"
+                [(ngModel)]="datasetID"
                 [disabled]="isDetectorAssemblyInProgress"
                 (selectionChange)="onDatasetChange($event.value)">
+                <mat-select-trigger>
+                  @if (datasetID === -1) {
+                    {{ 'SELECT_DATASET_DIALOG.DEMO' | translate }}
+                  } @else if (datasetID === -2) {
+                    {{ 'SELECT_DATASET_DIALOG.FULL_EVENT' | translate }}
+                  } @else {
+                    <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: datasetID - 1}"></span>
+                  }
+                </mat-select-trigger>
                 @if (dataService.VA_DATASET.hasDemo) {
                   <mat-option [value]="-1">{{ 'SELECT_DATASET_DIALOG.DEMO' | translate }}</mat-option>
                 }

@@ -9,6 +9,35 @@ th, td {
   white-space: nowrap;
 }
 
+.results-body {
+  gap: 12px;
+}
+
+.results-toolbar {
+  width: 100%;
+}
+
+.results-header {
+  gap: 10px;
+  // Same left edge as .results-frame below
+  align-items: stretch;
+}
+
 .title {
-  line-height: 40px;
+  line-height: 1.2;
+  margin: 0;
+  padding: 0;
+}
+
+.results-frame {
+  width: 100%;
+}
+
+:host ::ng-deep .selector {
+  width: 280px;
+  margin: 0;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
 }

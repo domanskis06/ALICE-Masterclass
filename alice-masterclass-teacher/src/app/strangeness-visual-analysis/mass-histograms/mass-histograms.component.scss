@@ -1,3 +1,185 @@
+:host {
+  // Same footprint as student VA (`100dvh - 140px`), scaled to 80%.
+  --hist-viewport-height: calc((100dvh - 140px) * 0.8);
+  // Match student VA particle titles above each plot.
+  --hist-title-size: clamp(1.2rem, 2.4vw, 1.65rem);
+  display: block;
+  box-sizing: border-box;
+  height: var(--hist-viewport-height);
+  max-height: var(--hist-viewport-height);
+  // Same width as Results below (full container width).
+  width: 100%;
+  max-width: 100%;
+}
+
+:host ::ng-deep > mat-card {
+  display: flex !important;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  max-height: 100%;
+  // Do not clip Invariant Mass descenders at the card edge.
+  overflow: visible;
+}
+
+// Trim chrome only — leftover height goes to the plots (do not shrink plots further).
+:host ::ng-deep mat-card-content.histograms-body,
+:host ::ng-deep .histograms-body {
+  gap: 2px;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
+  // Extra bottom padding so Invariant Mass descenders are not flush with the card edge.
+  padding: 4px 8px 14px !important;
+}
+
+.histograms-header {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
 .title {
-  line-height: 40px;
+  // Match Results panel title size.
+  line-height: 1.2;
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+}
+
+.hist-grid {
+  flex: 1 1 auto;
+  display: grid;
+  // 12 columns: top = three equal thirds; bottom Ξ / Ξ̅ centered with a 1-col gap.
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: 1fr 1fr;
+  column-gap: 6px;
+  // A few more pixels between the top and bottom histogram rows.
+  row-gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.hist-item {
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.hist-item--kaon {
+  grid-column: 1 / 5;
+  grid-row: 1;
+}
+
+.hist-item--lambda {
+  grid-column: 5 / 9;
+  grid-row: 1;
+}
+
+.hist-item--antilambda {
+  grid-column: 9 / 13;
+  grid-row: 1;
+}
+
+.hist-item--xi {
+  grid-column: 2 / 6;
+  grid-row: 2;
+}
+
+.hist-item--antixi {
+  grid-column: 7 / 11;
+  grid-row: 2;
+}
+
+.hist-item app-histogram {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+
+// Fill grid cell; title band sized for JS-matching symbols (no extra empty chrome).
+:host ::ng-deep .hist-item app-histogram {
+  > div {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  figure {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    // Room for particle title only — matches student VA padding-top band.
+    padding-top: 26px;
+    // Room under the SVG so ), ² of Invariant Mass are not clipped.
+    padding-bottom: 12px;
+    padding-left: 0;
+  }
+
+  #title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+  }
+
+  // ng-content projects into child; pierce encapsulation for title size.
+  .hist-title {
+    font-size: var(--hist-title-size);
+    line-height: 1;
+  }
+
+  svg {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    // Default SVG overflow:hidden was clipping Invariant Mass descenders.
+    overflow: visible;
+  }
+}
+
+@media (max-width: 959px) {
+  :host {
+    height: auto;
+    max-height: none;
+  }
+
+  :host ::ng-deep > mat-card {
+    height: auto;
+    max-height: none;
+  }
+
+  .hist-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    height: auto;
+  }
+
+  .hist-item,
+  .hist-item--kaon,
+  .hist-item--lambda,
+  .hist-item--antilambda,
+  .hist-item--xi,
+  .hist-item--antixi {
+    grid-column: auto;
+    grid-row: auto;
+    height: clamp(14rem, 46vh, 22rem);
+  }
 }

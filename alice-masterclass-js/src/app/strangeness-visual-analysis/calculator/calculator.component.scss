@@ -1,5 +1,12 @@
 .title {
   line-height: 40px;
+  padding-left: 16px;
+}
+
+.particle-option {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35em;
 }
 
 mat-card {

@@ -1,93 +1,95 @@
 <div fxFlex="grow">
   <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
     <mat-card fxFill fxLayout="column">
-      <mat-card-title fxLayout="row" fxLayoutAlign="space-between start">
-        <span class="title" data-testid="teacher-events-title">Events and Sessions</span>
-        <div fxLayout="row" fxLayoutGap="8px">
-          <button mat-icon-button (click)="reload()">
-            <mat-icon>refresh</mat-icon>
-          </button>
-          <button mat-raised-button color="primary" (click)="onAddEventButtonClicked()">
-            <mat-icon>add</mat-icon>
-            Add Event
-          </button>
+      <mat-card-content fxFlex="grow" fxLayout="column" class="session-body">
+        <div class="session-toolbar" fxLayout="row" fxLayoutAlign="space-between center">
+          <span class="title" data-testid="teacher-events-title">{{ 'SESSION.TITLE' | translate }}</span>
+          <div class="session-actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
+            <button mat-icon-button (click)="reload()">
+              <mat-icon>refresh</mat-icon>
+            </button>
+            <button mat-raised-button color="primary" (click)="onAddEventButtonClicked()">
+              <mat-icon>add</mat-icon>
+              {{ 'SESSION.ADD_EVENT' | translate }}
+            </button>
+          </div>
         </div>
-      </mat-card-title>
-      <mat-card-content fxFlex="grow">
-        @if (eventsWithSessions.length === 0) {
-          <p class="no-events">No events yet. Click the + button to add an event.</p>
-        }
-        @if (eventsWithSessions.length > 0) {
-          <mat-accordion>
-            @for (item of eventsWithSessions; track item) {
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    {{ item.event.name }}
-                  </mat-panel-title>
-                  <mat-panel-description>
-                    {{ item.event.created | date:'medium' }} · {{ item.sessions.length }} session(s)
-                  </mat-panel-description>
-                  <button mat-icon-button (click)="onEventDeleteButtonClicked(item.event); $event.stopPropagation()">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </mat-expansion-panel-header>
-                <div class="sessions-container">
-                  @if (item.sessions.length > 0) {
-                    <div class="mat-elevation-z2">
-                      <table mat-table [dataSource]="item.sessions">
-                        <ng-container matColumnDef="name">
-                          <th mat-header-cell *matHeaderCellDef>Session Name</th>
-                          <td mat-cell *matCellDef="let element;"> {{ element.name }} </td>
-                        </ng-container>
-                        <ng-container matColumnDef="password">
-                          <th mat-header-cell *matHeaderCellDef>Password</th>
-                          <td mat-cell *matCellDef="let element;"> {{ element.password }} </td>
-                        </ng-container>
-                        <ng-container matColumnDef="maxStudents">
-                          <th mat-header-cell *matHeaderCellDef>Max students</th>
-                          <td mat-cell *matCellDef="let element;"> {{ element.maxStudents }} </td>
-                        </ng-container>
-                        <ng-container matColumnDef="url">
-                          <th mat-header-cell *matHeaderCellDef>URL</th>
-                          <td class="hover-visible" mat-cell *matCellDef="let element;">
-                            {{ element.password | sessionUrl }}
-                            <button mat-icon-button (click)="onClipboardButtonClicked(element)">
-                              <mat-icon>content_copy</mat-icon>
-                            </button>
-                          </td>
-                        </ng-container>
-                        <ng-container matColumnDef="created">
-                          <th mat-header-cell *matHeaderCellDef>Created</th>
-                          <td mat-cell *matCellDef="let element;"> {{ element.created | date:'medium' }} </td>
-                        </ng-container>
-                        <ng-container matColumnDef="delete">
-                          <th mat-header-cell *matHeaderCellDef>Delete</th>
-                          <td mat-cell *matCellDef="let element;">
-                            <button mat-icon-button (click)="onSessionDeleteButtonClicked(element)">
-                              <mat-icon>delete</mat-icon>
-                            </button>
-                          </td>
-                        </ng-container>
-                        <tr mat-header-row *matHeaderRowDef="displayedSessionColumns"></tr>
-                        <tr mat-row *matRowDef="let row; columns: displayedSessionColumns;"></tr>
-                      </table>
-                    </div>
-                  }
-                  @if (item.sessions.length === 0) {
-                    <p class="no-sessions">No sessions yet for this event.</p>
-                  }
-                  <p fxLayout="row" fxLayoutAlign="end center">
-                    <button mat-raised-button color="primary" (click)="onAddSessionButtonClicked(item.event.name)">
-                      <mat-icon>add</mat-icon>
-                      Add Session
+        <div class="session-frame">
+          @if (eventsWithSessions.length === 0) {
+            <p class="no-events">{{ 'SESSION.NO_EVENTS' | translate }}</p>
+          }
+          @if (eventsWithSessions.length > 0) {
+            <mat-accordion>
+              @for (item of eventsWithSessions; track item) {
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      {{ item.event.name }}
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      {{ item.event.created | date:'medium' }} · {{ 'SESSION.SESSIONS_COUNT' | translate:{ count: item.sessions.length } }}
+                    </mat-panel-description>
+                    <button mat-icon-button (click)="onEventDeleteButtonClicked(item.event); $event.stopPropagation()">
+                      <mat-icon>delete</mat-icon>
                     </button>
-                  </p>
-                </div>
-              </mat-expansion-panel>
-            }
-          </mat-accordion>
-        }
+                  </mat-expansion-panel-header>
+                  <div class="sessions-container">
+                    @if (item.sessions.length > 0) {
+                      <div class="mat-elevation-z2">
+                        <table mat-table [dataSource]="item.sessions">
+                          <ng-container matColumnDef="name">
+                            <th mat-header-cell *matHeaderCellDef>{{ 'SESSION.SESSION_NAME' | translate }}</th>
+                            <td mat-cell *matCellDef="let element;"> {{ element.name }} </td>
+                          </ng-container>
+                          <ng-container matColumnDef="password">
+                            <th mat-header-cell *matHeaderCellDef>{{ 'SESSION.PASSWORD' | translate }}</th>
+                            <td mat-cell *matCellDef="let element;"> {{ element.password }} </td>
+                          </ng-container>
+                          <ng-container matColumnDef="maxStudents">
+                            <th mat-header-cell *matHeaderCellDef>{{ 'SESSION.MAX_STUDENTS' | translate }}</th>
+                            <td mat-cell *matCellDef="let element;"> {{ element.maxStudents }} </td>
+                          </ng-container>
+                          <ng-container matColumnDef="url">
+                            <th mat-header-cell *matHeaderCellDef>{{ 'SESSION.URL' | translate }}</th>
+                            <td class="hover-visible" mat-cell *matCellDef="let element;">
+                              {{ element.password | sessionUrl }}
+                              <button mat-icon-button (click)="onClipboardButtonClicked(element)">
+                                <mat-icon>content_copy</mat-icon>
+                              </button>
+                            </td>
+                          </ng-container>
+                          <ng-container matColumnDef="created">
+                            <th mat-header-cell *matHeaderCellDef>{{ 'SESSION.CREATED' | translate }}</th>
+                            <td mat-cell *matCellDef="let element;"> {{ element.created | date:'medium' }} </td>
+                          </ng-container>
+                          <ng-container matColumnDef="delete">
+                            <th mat-header-cell *matHeaderCellDef>{{ 'SESSION.DELETE' | translate }}</th>
+                            <td mat-cell *matCellDef="let element;">
+                              <button mat-icon-button (click)="onSessionDeleteButtonClicked(element)">
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </td>
+                          </ng-container>
+                          <tr mat-header-row *matHeaderRowDef="displayedSessionColumns"></tr>
+                          <tr mat-row *matRowDef="let row; columns: displayedSessionColumns;"></tr>
+                        </table>
+                      </div>
+                    }
+                    @if (item.sessions.length === 0) {
+                      <p class="no-sessions">{{ 'SESSION.NO_SESSIONS' | translate }}</p>
+                    }
+                    <p fxLayout="row" fxLayoutAlign="end center">
+                      <button mat-raised-button color="primary" (click)="onAddSessionButtonClicked(item.event.name)">
+                        <mat-icon>add</mat-icon>
+                        {{ 'SESSION.ADD_SESSION' | translate }}
+                      </button>
+                    </p>
+                  </div>
+                </mat-expansion-panel>
+              }
+            </mat-accordion>
+          }
+        </div>
       </mat-card-content>
     </mat-card>
   </div>

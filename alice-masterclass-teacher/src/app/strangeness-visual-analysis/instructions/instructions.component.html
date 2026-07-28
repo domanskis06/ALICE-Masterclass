@@ -1,0 +1,39 @@
+<h1>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.TITLE' | translate }}</h1>
+
+<p>
+  {{ 'VISUAL_ANALYSIS.INSTRUCTIONS.INTRO' | translate }}
+</p>
+
+<h2>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.HOW_TO_USE' | translate }}</h2>
+<ol>
+  <li>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.STEP_1' | translate }}</li>
+  <li>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.STEP_2' | translate }}</li>
+  <li>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.STEP_3' | translate }}</li>
+  <li>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.STEP_4' | translate }}</li>
+</ol>
+
+<h2>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.HOW_TO_READ' | translate }}</h2>
+<p>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.HOW_TO_READ_INTRO' | translate }}</p>
+<ul>
+  <li>
+    <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span>
+    <span [innerHtml]="'VISUAL_ANALYSIS.INSTRUCTIONS.PEAK_KAON' | translate"></span>
+  </li>
+  <li>
+    <span class="particle">Λ</span> {{ 'GENERAL.AND' | translate }} <span class="particle particle-anti">Λ</span>
+    <span [innerHtml]="'VISUAL_ANALYSIS.INSTRUCTIONS.PEAK_LAMBDA' | translate"></span>
+  </li>
+  <li>
+    <span class="particle">Ξ</span>
+    <span [innerHtml]="'VISUAL_ANALYSIS.INSTRUCTIONS.PEAK_XI' | translate"></span>
+  </li>
+</ul>
+<p>
+  {{ 'VISUAL_ANALYSIS.INSTRUCTIONS.CLEAR_PEAK' | translate }}
+  {{ 'VISUAL_ANALYSIS.INSTRUCTIONS.BROAD_DISTRIBUTION' | translate }}
+</p>
+
+<p>
+  <strong>{{ 'VISUAL_ANALYSIS.INSTRUCTIONS.TIP_LABEL' | translate }}</strong>
+  {{ 'VISUAL_ANALYSIS.INSTRUCTIONS.TIP' | translate }}
+</p>

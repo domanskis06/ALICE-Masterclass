@@ -13,17 +13,28 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @HostBinding("style.--bar-color")
   public barColor: string = "#4169E1";
 
+  /**
+   * When true, SVG stretches to the cell (no letterboxing). Used by VA mass-histograms
+   * so the 80%-scaled panel is filled by plots instead of empty bands.
+   */
+  @Input()
+  stretchToFit = false;
+
   public readonly SVG = {
     W: 400,
-    H: 200
+    // Extra height vs original 200: room under Invariant Mass for glyph descenders
+    // (), ²) that would otherwise clip at the viewBox edge.
+    H: 216
   }
 
   public readonly MARGIN = {
     TOP: 5,
     RIGHT: 10,
     BOTTOM: 20,
-    BOTTOM_XLABEL: 10,
-    BOTTOM_TEXT: 3,
+    // Keeps plot height same as original (H - TOP - BOTTOM - BOTTOM_XLABEL = 165).
+    BOTTOM_XLABEL: 26,
+    // Baseline inset from viewBox bottom — clears ), ² (clipped when this was 0).
+    BOTTOM_TEXT: 10,
     LEFT: 25,
     LEFT_YLABEL: 10
   };

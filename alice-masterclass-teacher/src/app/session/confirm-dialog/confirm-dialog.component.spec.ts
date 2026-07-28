@@ -1,5 +1,6 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { AngularModule } from 'src/app/shared/angular.module';
 
 import { ConfirmDialogComponent } from './confirm-dialog.component';
@@ -11,7 +12,7 @@ describe('ConfirmDialogComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
     declarations: [ConfirmDialogComponent],
-    imports: [AngularModule],
+    imports: [AngularModule, TranslateModule.forRoot()],
     providers: [provideHttpClient(withInterceptorsFromDi())]
 })
     .compileComponents();

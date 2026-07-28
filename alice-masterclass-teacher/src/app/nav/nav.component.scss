@@ -10,8 +10,35 @@
   background: inherit;
 }
 
+.nav-section-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.7);
+  margin: 8px 0 0;
+  // Match mat-list-item text inset so "Strangeness" shares the same left edge
+  padding-left: 16px;
+  padding-right: 16px;
+  box-sizing: border-box;
+  pointer-events: none;
+  cursor: default;
+}
+
 .sticky {
   position: sticky;
   top: 0;
   z-index: 2;
+}
+
+#buttons {
+  margin-left: auto;
+
+  button {
+    vertical-align: middle;
+    font-size: 1em;
+
+    span {
+      margin-left: 0.3em;
+    }
+  }
 }

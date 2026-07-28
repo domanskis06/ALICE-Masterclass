@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { of } from 'rxjs';
 
@@ -6,32 +7,35 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
-import { MatDialog } from '@angular/material/dialog';
-
-import { ApiService, VisualAnalysisResultAPI } from '../shared/services/api.service';
+import { ApiService, SessionAPI, VisualAnalysisResultAPI } from '../shared/services/api.service';
 
 import { StrangenessVisualAnalysisComponent } from './strangeness-visual-analysis.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
 import { ResultsComponent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 describe('StrangenessVisualAnalysisComponent', () => {
   let component: StrangenessVisualAnalysisComponent;
   let fixture: ComponentFixture<StrangenessVisualAnalysisComponent>;
 
   let service: ApiService;
-  let spy: jasmine.Spy;
-  let dialog: MatDialog;
-  let dialogSpy: jasmine.Spy;
-  let dialogRefSpyObj = jasmine.createSpyObj({ afterClosed : of({}), close: null });
+  let spySessions: jasmine.Spy;
+  let spyResults: jasmine.Spy;
+
+  const SESSIONS: SessionAPI[] = [
+    { id: 1, event: 'Event A', name: 'Session A', password: 'aaa', maxStudents: 10, created: new Date() },
+    { id: 2, event: 'Event A', name: 'Session B', password: 'bbb', maxStudents: 10, created: new Date() },
+  ];
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
     declarations: [
         StrangenessVisualAnalysisComponent,
         MassHistogramsComponent,
-        ResultsComponent
+        ResultsComponent,
+        InstructionsComponent
     ],
-    imports: [AngularModule, SharedModule],
+    imports: [AngularModule, SharedModule, TranslateModule.forRoot()],
     providers: [ApiService, provideHttpClient(withInterceptorsFromDi())]
 })
     .compileComponents();
@@ -40,17 +44,14 @@ describe('StrangenessVisualAnalysisComponent', () => {
   beforeEach(() => {
     fixture = TestBed.createComponent(StrangenessVisualAnalysisComponent);
     component = fixture.componentInstance;
-    dialog = fixture.debugElement.injector.get(MatDialog);
     service = fixture.debugElement.injector.get(ApiService);
   });
 
   describe('with empty set', () => {
     beforeEach(() => {
-      spy = spyOn(service, 'getStrangenessVisualAnalysisResults').and.returnValue(of([]));
-      dialogRefSpyObj.componentInstance = { body: '', proceedClickedEvent: of(0) };
-  
-      dialogSpy = spyOn(dialog, 'open').and.returnValue(dialogRefSpyObj);
-  
+      spySessions = spyOn(service, 'getSessions').and.returnValue(of([]));
+      spyResults = spyOn(service, 'getStrangenessVisualAnalysisResults').and.returnValue(of([]));
+
       fixture.detectChanges();
     });
 
@@ -61,27 +62,40 @@ describe('StrangenessVisualAnalysisComponent', () => {
 
   describe('with sample set', () => {
     const RESULTS: VisualAnalysisResultAPI[] = [
-      {student: 0, dataset: 0, k0: [0.49, 0.48, 0.5], lambda: [], antilambda: [], xi: []},
-      {student: 1, dataset: 1, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: []},
-      {student: 2, dataset: 3, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: []},
+      {student: 0, dataset: 0, k0: [0.49, 0.48, 0.5], lambda: [], antilambda: [], xi: [], antixi: []},
+      {student: 1, dataset: 1, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: [], antixi: []},
+      {student: 2, dataset: 3, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: [], antixi: []},
     ];
 
     const sessionID: number = 1;
 
     beforeEach(() => {
-      spy = spyOn(service, 'getStrangenessVisualAnalysisResults').and.returnValue(of(RESULTS));
-      dialogRefSpyObj.componentInstance = { body: '', proceedClickedEvent: of(sessionID) };
-  
-      dialogSpy = spyOn(dialog, 'open').and.returnValue(dialogRefSpyObj);
-  
+      spySessions = spyOn(service, 'getSessions').and.returnValue(of(SESSIONS));
+      spyResults = spyOn(service, 'getStrangenessVisualAnalysisResults').and.returnValue(of(RESULTS));
+
       fixture.detectChanges();
     });
 
-    it('should have fetched data from correct session', () => {
-      expect(spy).toHaveBeenCalledWith(sessionID);
+    it('should leave session selector empty until user chooses', () => {
+      expect(component.sessionID).toBeNull();
+      expect(spyResults).not.toHaveBeenCalled();
+    });
+
+    it('should reload data when session changes', () => {
+      component.sessionID = sessionID;
+      component.onSessionChange();
+      expect(spyResults).toHaveBeenCalledWith(sessionID);
+
+      spyResults.calls.reset();
+      component.sessionID = 2;
+      component.onSessionChange();
+      expect(spyResults).toHaveBeenCalledWith(2);
     });
 
     it('should select and deselect all student entries if requested', () => {
+      component.sessionID = sessionID;
+      component.onSessionChange();
+
       component.onAllSelected(true);
 
       for(let i in component.studentResults) {
@@ -96,6 +110,9 @@ describe('StrangenessVisualAnalysisComponent', () => {
     });
 
     it('should select and deselect specific entry if requested', () => {
+      component.sessionID = sessionID;
+      component.onSessionChange();
+
       const student1 = 1;
       const student2 = 2;
 

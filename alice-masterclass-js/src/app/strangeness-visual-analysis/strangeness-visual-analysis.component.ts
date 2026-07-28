@@ -22,6 +22,7 @@ import { MassHistogramsComponent } from './mass-histograms/mass-histograms.compo
 import { FlightService } from '../shared/services/flight.service';
 import {
   antiLambdaHistogramColor,
+  antiXiHistogramColor,
   backgroundHistogramColor,
   kaonHistogramColor,
   lambdaHistogramColor,
@@ -40,6 +41,7 @@ const FLIGHT_COLORS: Record<ParticleType, string> = {
   [ParticleType.LAMBDA]: lambdaHistogramColor,
   [ParticleType.ANTI_LAMBDA]: antiLambdaHistogramColor,
   [ParticleType.XI]: xiHistogramColor,
+  [ParticleType.ANTI_XI]: antiXiHistogramColor,
   [ParticleType.BACKGROUND]: backgroundHistogramColor,
 };
 
@@ -138,8 +140,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   /** Delay so students see the particle leave the detector before the page scrolls. */
   private static readonly SCROLL_AFTER_FLIGHT_START_MS = 500;
   private scrollAfterFlightTimeouts: number[] = [];
-  /** Shown once after the first mass-to-histogram flight finishes. */
-  private static readonly HISTOGRAM_INFO_STORAGE_KEY = 'va-histogram-info-seen';
+  /** Shown once per page load after the first mass-to-histogram flight finishes. */
+  private histogramInfoDialogShownThisLoad = false;
   /** Brief pause after the bin pulse so the landing is visible before the dialog. */
   private static readonly HISTOGRAM_INFO_DIALOG_DELAY_MS = 480;
   private histogramInfoDialogTimeout: number | null = null;
@@ -517,7 +519,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   ngOnInit(): void {
-    this.maxEvents = this.dataService.EVENTS_IN_DEMO_DATASET;
+    this.maxEvents = this.dataService.getEventsInDataset(this.dataService.DEMO_DATASET_ID);
     if (!this.isDetectorAssemblyInProgress) {
       // Returning session: no collision intro before assembly.
       this.protonCollisionIntroFinished = true;
@@ -539,16 +541,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   private loadEvent() {
-    let datasetNum;
-
-    if (this.datasetID === DATASET_PICKER_DEMO) {
-      datasetNum = this.dataService.DEMO_DATASET_ID;
-    } else if (this.datasetID === DATASET_PICKER_FULL_EVENT) {
-      datasetNum = this.dataService.FULL_DATASET_ID;
-    } else {
-      datasetNum = this.datasetID;
-    }
-
+    const datasetNum = this.dataService.resolveDatasetNum(this.datasetID);
     return this.dataService.getEvent(datasetNum, this.eventID);
   }
 
@@ -562,14 +555,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.pendingFlightEntries.clear();
     this.dataService.clearVisualAnalysisResults();
     this.datasetID = newDatasetID;
-
-    if (this.datasetID === DATASET_PICKER_DEMO) {
-      this.maxEvents = this.dataService.EVENTS_IN_DEMO_DATASET;
-    } else if (this.datasetID === DATASET_PICKER_FULL_EVENT) {
-      this.maxEvents = this.dataService.EVENTS_IN_FULL_DATASET;
-    } else {
-      this.maxEvents = this.dataService.EVENTS_IN_DATASET;
-    }
+    this.maxEvents = this.dataService.getEventsInDataset(
+      this.dataService.resolveDatasetNum(this.datasetID)
+    );
 
     this.eventID = 0;
     this.loadEvent().subscribe(
@@ -714,26 +702,15 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.dataService.addVisualAnalysisResult(String(this.eventID), value, trackKeys);
   }
 
-  /** One-shot tip after the first animated add lands in a histogram bar. */
+  /** One-shot tip after the first animated add lands in a histogram bar (resets on refresh). */
   private maybeShowHistogramInfoDialog(): void {
     if (typeof window === 'undefined') {
       return;
     }
-    try {
-      if (sessionStorage.getItem(StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_STORAGE_KEY) === '1') {
-        return;
-      }
-      sessionStorage.setItem(StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_STORAGE_KEY, '1');
-    } catch {
-      // Private mode / blocked storage — still show once this session via timeout guard.
-      if (this.histogramInfoDialogTimeout != null) {
-        return;
-      }
-    }
-
-    if (this.histogramInfoDialogTimeout != null) {
+    if (this.histogramInfoDialogShownThisLoad || this.histogramInfoDialogTimeout != null) {
       return;
     }
+    this.histogramInfoDialogShownThisLoad = true;
 
     this.histogramInfoDialogTimeout = window.setTimeout(() => {
       this.histogramInfoDialogTimeout = null;

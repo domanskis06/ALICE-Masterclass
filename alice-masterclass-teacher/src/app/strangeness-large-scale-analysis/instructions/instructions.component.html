@@ -1,0 +1,44 @@
+<h1>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.TITLE' | translate }}</h1>
+
+<p [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.INTRO' | translate"></p>
+
+<h2>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.HOW_TO_USE' | translate }}</h2>
+<ol>
+  <li>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.STEP_1' | translate }}</li>
+  <li [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.STEP_2' | translate"></li>
+  <li>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.STEP_3' | translate }}</li>
+  <li>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.STEP_4' | translate }}</li>
+</ol>
+
+<h2>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.HOW_TO_INTERPRET' | translate }}</h2>
+<ul>
+  <li>
+    <strong>{{ 'LARGE_SCALE_ANALYSIS.YIELD' | translate }}</strong>
+    — {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.YIELD_DEF' | translate }}
+  </li>
+  <li>
+    <strong><em>N</em><sub>part</sub></strong>
+    — {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.NPART_DEF' | translate }}
+  </li>
+  <li>
+    <strong>{{ 'LARGE_SCALE_ANALYSIS.ENHANCEMENT' | translate }}</strong>
+    — {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.ENHANCEMENT_DEF' | translate }}
+    <div #enhancementFormula class="formula"></div>
+    <span [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.WHERE_YPP' | translate"></span>
+    {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.FACTOR_TWO' | translate }}
+  </li>
+</ul>
+
+<h2>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.WHAT_TO_LOOK_FOR' | translate }}</h2>
+<p>
+  <span [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.LOOK_FOR' | translate"></span>
+  <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span>,
+  <span class="particle">Λ</span> {{ 'GENERAL.AND' | translate }}
+  <span class="particle particle-anti">Λ</span>.
+  {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.LOOK_FOR_END' | translate }}
+</p>
+
+<p>
+  <strong>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.TIP_LABEL' | translate }}</strong>
+  {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.TIP' | translate }}
+</p>

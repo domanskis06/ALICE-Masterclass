@@ -20,6 +20,9 @@ export class MassHistogramsComponent implements OnInit {
   @Input()
   xiMasses: number[] = [];
 
+  @Input()
+  antiXiMasses: number[] = [];
+
   constructor() { }
 
   ngOnInit(): void {

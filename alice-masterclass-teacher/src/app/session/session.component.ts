@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 import { EventAPI, SessionAPI, ApiService } from '../shared/services/api.service';
 
@@ -48,7 +49,8 @@ export class SessionComponent implements AfterViewInit {
     private dialog: MatDialog,
     private clipboard: Clipboard,
     private apiService: ApiService,
-    private urlPipe: SessionUrlPipe) { }
+    private urlPipe: SessionUrlPipe,
+    private translate: TranslateService) { }
 
   ngAfterViewInit(): void {
     this.host = environment.masterclassHost;
@@ -78,7 +80,7 @@ export class SessionComponent implements AfterViewInit {
   }
 
   onClipboardButtonClicked(elm: SessionAPI): void {
-    this.snackBar.open('URL copied to clipboard', undefined, {duration: this.URL_COPIED_DURATION});
+    this.snackBar.open(this.translate.instant('SESSION.URL_COPIED'), undefined, {duration: this.URL_COPIED_DURATION});
 
     this.clipboard.copy(this.urlPipe.transform(elm.password));
   }

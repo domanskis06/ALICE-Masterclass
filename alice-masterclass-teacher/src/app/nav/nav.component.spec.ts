@@ -1,4 +1,5 @@
 import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 
 import { RouterTestingModule } from '@angular/router/testing';
 import { AngularModule } from '../shared/angular.module';
@@ -16,7 +17,8 @@ describe('NavComponent', () => {
       imports: [
         RouterTestingModule,
         AngularModule,
-        SharedModule
+        SharedModule,
+        TranslateModule.forRoot()
       ]
     }).compileComponents();
   }));

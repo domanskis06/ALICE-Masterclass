@@ -1,12 +1,13 @@
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav #drawer class="sidenav" fixedInViewport role="dialog">
     <div fxFill fxLayout="column">
-      <mat-toolbar>Menu</mat-toolbar>
+      <mat-toolbar>{{ 'GENERAL.MENU' | translate }}</mat-toolbar>
       <mat-nav-list fxFlex="grow" fxLayout="column">
-        <a mat-list-item routerLink="/session">Session</a>
-        <h1 matSubheader>Strangeness</h1>
-        <a mat-list-item routerLink="/strangeness-visual-analysis">Visual Analysis</a>
-        <a mat-list-item routerLink="/strangeness-large-scale-analysis">Large Scale Analysis</a>
+        <a mat-list-item routerLink="/session">{{ 'NAV.SESSION' | translate }}</a>
+        <h1 matSubheader class="nav-section-header">{{ 'NAV.STRANGENESS' | translate }}</h1>
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/strangeness-visual-analysis">{{ 'NAV.VISUAL_ANALYSIS' | translate }}</a>
+        <a mat-list-item routerLink="/strangeness-large-scale-analysis">{{ 'NAV.LARGE_SCALE_ANALYSIS' | translate }}</a>
       </mat-nav-list>
     </div>
   </mat-sidenav>
@@ -17,15 +18,36 @@
         <mat-toolbar color="primary">
           <button
             type="button"
-            aria-label="Toggle sidenav"
+            [attr.aria-label]="'GENERAL.TOGGLE_SIDENAV' | translate"
             mat-icon-button
             (click)="drawer.toggle()">
             <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
           </button>
-          <span>ALICE Masterclass Teacher</span>
+          <span>{{ 'GENERAL.ALICE_MASTERCLASS_TEACHER' | translate }}</span>
+          <span id="buttons">
+            @if (instructionsComponent) {
+              <button mat-icon-button [attr.aria-label]="'GENERAL.INSTRUCTIONS_BUTTON' | translate" (click)="onInstructionsButtonClicked()">
+                <mat-icon>help_outline</mat-icon>
+              </button>
+            }
+            <button
+              [attr.aria-label]="'GENERAL.CHANGE_LANGUAGE' | translate"
+              mat-button
+              [matMenuTriggerFor]="langMenu">
+              <mat-icon aria-label="Change language icon" inline="true">language</mat-icon>
+              <span>{{ translate.currentLang | uppercase }}</span>
+            </button>
+            <mat-menu #langMenu>
+              @for (lang of languages; track lang) {
+                <button mat-menu-item (click)="onLangButtonClicked(lang)">
+                  {{ 'LANGUAGES.' + lang | translate }}
+                </button>
+              }
+            </mat-menu>
+          </span>
         </mat-toolbar>
       </div>
-      <router-outlet (activate)="onRouterActivate()"></router-outlet>
+      <router-outlet (activate)="onRouterActivate($event)"></router-outlet>
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

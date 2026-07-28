@@ -7,6 +7,7 @@ class Particle(models.TextChoices):
     LAMBDA = 'lambda', 'Lambda'
     ANTILAMBDA = 'antilambda', 'Anti-Lambda'
     XI = 'xi', 'xi'
+    ANTIXI = 'antixi', 'Anti-Xi'
 
 class Collision(models.TextChoices):
     PP = 'pp', 'pp'

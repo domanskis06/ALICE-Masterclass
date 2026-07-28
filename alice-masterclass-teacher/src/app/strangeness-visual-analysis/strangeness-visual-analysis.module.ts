@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { StrangenessVisualAnalysisComponent } from './strangeness-visual-analysis.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
 import { ResultsComponent } from './results/results.component';
+import { InstructionsComponent } from './instructions/instructions.component';
 
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
@@ -11,7 +12,8 @@ import { SharedModule } from '../shared/shared.module';
   declarations: [
     StrangenessVisualAnalysisComponent,
     MassHistogramsComponent,
-    ResultsComponent
+    ResultsComponent,
+    InstructionsComponent
   ],
   imports: [
     CommonModule,

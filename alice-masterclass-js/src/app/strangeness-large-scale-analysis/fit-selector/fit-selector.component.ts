@@ -22,6 +22,8 @@ export class FitSelectorComponent implements OnInit {
   @Input()
   get signalRange(): [number, number] { return [this.signal.options.floor, this.signal.options.ceil]; };
   set signalRange(range: [number, number]) {
+    this.signal.start = range[0];
+    this.signal.end = range[1];
     this.signal.options = {
       floor: range[0],
       ceil: range[1],
@@ -33,6 +35,8 @@ export class FitSelectorComponent implements OnInit {
   @Input()
   get backgroundRange(): [number, number] { return [this.background.options.floor, this.background.options.ceil]; };
   set backgroundRange(range: [number, number]) {
+    this.background.start = range[0];
+    this.background.end = range[1];
     this.background.options = {
       floor: range[0],
       ceil: range[1],

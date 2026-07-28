@@ -36,6 +36,7 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/katex/dist/katex.min.css",
               "src/styles.scss"
             ],
             "scripts": [],
@@ -105,6 +106,7 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/katex/dist/katex.min.css",
               "src/styles.scss"
             ],
             "scripts": []

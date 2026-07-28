@@ -53,14 +53,18 @@
     </div>
   </mat-card-title>
   <mat-card-content>
-    <div class="hist-grid" fxLayout="row wrap" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="12px grid">
-      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
+    <!-- 2 rows: K⁰ Λ Λ̅ on top (full width), Ξ Ξ̅ below -->
+    <div class="hist-grid">
+      <div class="hist-item hist-item--kaon">
         <app-histogram
           #kaonHistogram
+          class="histogram-va"
           [data]="kaonMasses"
           [xDomain]="[0.4, 0.6]"
           [bins]="bins"
           [barColor]="kaonBarColor"
+          [expandDomainToData]="true"
+          [compactChrome]="true"
         >
           <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.COUNTS' | translate }}</svg:text>
@@ -68,13 +72,16 @@
         </app-histogram>
       </div>
 
-      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
+      <div class="hist-item hist-item--lambda">
         <app-histogram
           #lambdaHistogram
+          class="histogram-va"
           [data]="lambdaMasses"
           [xDomain]="[1.0, 1.4]"
           [bins]="bins"
           [barColor]="lambdaBarColor"
+          [expandDomainToData]="true"
+          [compactChrome]="true"
         >
           <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.COUNTS' | translate }}</svg:text>
@@ -82,13 +89,16 @@
         </app-histogram>
       </div>
 
-      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
+      <div class="hist-item hist-item--antilambda">
         <app-histogram
           #antiLambdaHistogram
+          class="histogram-va"
           [data]="antiLambdaMasses"
           [xDomain]="[1.0, 1.4]"
           [bins]="bins"
           [barColor]="antiLambdaBarColor"
+          [expandDomainToData]="true"
+          [compactChrome]="true"
         >
           <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.COUNTS' | translate }}</svg:text>
@@ -96,17 +106,37 @@
         </app-histogram>
       </div>
 
-      <div class="hist-item" fxFlex="1 1 calc(50% - 6px)" fxLayout="column">
+      <div class="hist-item hist-item--xi">
         <app-histogram
           #xiHistogram
+          class="histogram-va"
           [data]="xiMasses"
           [xDomain]="[1.0, 1.4]"
           [bins]="bins"
           [barColor]="xiBarColor"
+          [expandDomainToData]="true"
+          [compactChrome]="true"
         >
           <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.COUNTS' | translate }}</svg:text>
           <span title class="particle hist-title">Ξ</span>
+        </app-histogram>
+      </div>
+
+      <div class="hist-item hist-item--antixi">
+        <app-histogram
+          #antiXiHistogram
+          class="histogram-va"
+          [data]="antiXiMasses"
+          [xDomain]="[1.0, 1.4]"
+          [bins]="bins"
+          [barColor]="antiXiBarColor"
+          [expandDomainToData]="true"
+          [compactChrome]="true"
+        >
+          <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
+          <svg:text yAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.COUNTS' | translate }}</svg:text>
+          <span title class="particle hist-title">Ξ&#773;</span>
         </app-histogram>
       </div>
     </div>

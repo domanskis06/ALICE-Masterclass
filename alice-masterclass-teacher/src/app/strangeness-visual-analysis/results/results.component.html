@@ -1,12 +1,15 @@
 <mat-card fxFill fxLayout="column">
-  <mat-card-title fxLayout="row" fxLayoutAlign="space-between start">
-    <span class="title">Results</span>
-    <button mat-icon-button (click)="reloadButtonClicked()">
-      <mat-icon>refresh</mat-icon>
-    </button>
-  </mat-card-title>
-  <mat-card-content fxFlex="grow">
-    <div class="mat-elevation-z2">
+  <mat-card-content fxFlex="grow" fxLayout="column" class="results-body">
+    <div class="results-toolbar" fxLayout="row" fxLayoutAlign="space-between start">
+      <div class="results-header" fxLayout="column" fxLayoutAlign="start start">
+        <span class="title">{{ 'VISUAL_ANALYSIS.RESULTS' | translate }}</span>
+        <ng-content select="[sessionSelector]"></ng-content>
+      </div>
+      <button mat-icon-button (click)="reloadButtonClicked()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <div class="mat-elevation-z2 results-frame">
       <table mat-table [dataSource]="tableRows">
 
         <ng-container matColumnDef="select">
@@ -15,17 +18,19 @@
         </ng-container>
 
         <ng-container matColumnDef="student">
-          <th mat-header-cell *matHeaderCellDef>Student</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'VISUAL_ANALYSIS.STUDENT' | translate }}</th>
           <td mat-cell *matCellDef="let element;"> {{ element.student }} </td>
         </ng-container>
 
         <ng-container matColumnDef="dataset">
-          <th mat-header-cell *matHeaderCellDef>Dataset</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'VISUAL_ANALYSIS.DATASET' | translate }}</th>
           <td mat-cell *matCellDef="let element;"> {{ element.dataset - 1 }} </td>
         </ng-container>
 
         <ng-container matColumnDef="kaonMasses">
-          <th mat-header-cell *matHeaderCellDef>Kaon Masses</th>
+          <th mat-header-cell *matHeaderCellDef>
+            <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span> {{ 'VISUAL_ANALYSIS.MASSES' | translate }}
+          </th>
           <td mat-cell *matCellDef="let element;">
             [@for (item of element.k0; track item; let lastElm = $last) {
             <span>{{ item | number:'1.3-3'}}@if (!lastElm) {
@@ -36,7 +41,9 @@
         </ng-container>
 
         <ng-container matColumnDef="lambdaMasses">
-          <th mat-header-cell *matHeaderCellDef>Lambda Masses</th>
+          <th mat-header-cell *matHeaderCellDef>
+            <span class="particle">Λ</span> {{ 'VISUAL_ANALYSIS.MASSES' | translate }}
+          </th>
           <td mat-cell *matCellDef="let element;">
             [@for (item of element.lambda; track item; let lastElm = $last) {
             <span>{{ item | number:'1.3-3'}}@if (!lastElm) {
@@ -47,7 +54,9 @@
         </ng-container>
 
         <ng-container matColumnDef="antiLambdaMasses">
-          <th mat-header-cell *matHeaderCellDef>Anti-Lambda Masses</th>
+          <th mat-header-cell *matHeaderCellDef>
+            <span class="particle particle-anti">Λ</span> {{ 'VISUAL_ANALYSIS.MASSES' | translate }}
+          </th>
           <td mat-cell *matCellDef="let element;">
             [@for (item of element.antilambda; track item; let lastElm = $last) {
             <span>{{ item | number:'1.3-3'}}@if (!lastElm) {
@@ -58,9 +67,24 @@
         </ng-container>
 
         <ng-container matColumnDef="xiMasses">
-          <th mat-header-cell *matHeaderCellDef>Xi Masses</th>
+          <th mat-header-cell *matHeaderCellDef>
+            <span class="particle">Ξ</span> {{ 'VISUAL_ANALYSIS.MASSES' | translate }}
+          </th>
           <td mat-cell *matCellDef="let element;">
             [@for (item of element.xi; track item; let lastElm = $last) {
+            <span>{{ item | number:'1.3-3'}}@if (!lastElm) {
+              <span>,</span>
+            }</span>
+            }]
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="antiXiMasses">
+          <th mat-header-cell *matHeaderCellDef>
+            <span class="particle particle-anti">Ξ</span> {{ 'VISUAL_ANALYSIS.MASSES' | translate }}
+          </th>
+          <td mat-cell *matCellDef="let element;">
+            [@for (item of element.antixi; track item; let lastElm = $last) {
             <span>{{ item | number:'1.3-3'}}@if (!lastElm) {
               <span>,</span>
             }</span>

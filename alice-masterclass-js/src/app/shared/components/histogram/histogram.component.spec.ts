@@ -49,6 +49,49 @@ describe('HistogramComponent', () => {
     expect(component.previewBinTarget(2.5)).toBeNull();
   });
 
+  it('should return null for non-finite values', () => {
+    component.data = [0.2];
+    fixture.detectChanges();
+
+    expect(component.previewBinTarget(Number.NaN)).toBeNull();
+  });
+
+  it('expands the axis and rebins when expandDomainToData is enabled', () => {
+    component.expandDomainToData = true;
+    component.xDomain = [0.5, 0.6];
+    component.bins = 6;
+    component.data = [0.52];
+    fixture.detectChanges();
+
+    expect(component.xDomain).toEqual([0.5, 0.6]);
+
+    const preview = component.resolveIncomingBin(1.1);
+    expect(preview).not.toBeNull();
+    expect(preview!.binIndex).toBe(5);
+
+    component.data = [0.52, 1.1];
+    fixture.detectChanges();
+
+    expect(component.xDomain[0]).toBeCloseTo(0.5, 10);
+    expect(component.xDomain[1]).toBeCloseTo(1.1, 10);
+
+    const thresholds = (component as unknown as { getBinThresholds(): number[] }).getBinThresholds();
+    expect(thresholds.length).toBe(5);
+    expect(thresholds[0]).toBeCloseTo(0.6, 10);
+    expect(thresholds[4]).toBeCloseTo(1.0, 10);
+  });
+
+  it('keeps the parent domain when expandDomainToData is disabled', () => {
+    component.expandDomainToData = false;
+    component.xDomain = [0.5, 0.6];
+    component.bins = 6;
+    component.data = [0.52, 1.1];
+    fixture.detectChanges();
+
+    expect(component.xDomain).toEqual([0.5, 0.6]);
+    expect(component.resolveIncomingBin(1.1)).toBeNull();
+  });
+
   it('should pulse a bin without throwing', fakeAsync(() => {
     component.data = [0.2, 0.25, 0.55];
     fixture.detectChanges();
