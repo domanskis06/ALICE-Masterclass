@@ -76,11 +76,16 @@ describe('StrangenessVisualAnalysisComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should have fetched data from correct session', () => {
-      expect(spyResults).toHaveBeenCalledWith(sessionID);
+    it('should leave session selector empty until user chooses', () => {
+      expect(component.sessionID).toBeNull();
+      expect(spyResults).not.toHaveBeenCalled();
     });
 
     it('should reload data when session changes', () => {
+      component.sessionID = sessionID;
+      component.onSessionChange();
+      expect(spyResults).toHaveBeenCalledWith(sessionID);
+
       spyResults.calls.reset();
       component.sessionID = 2;
       component.onSessionChange();
@@ -88,6 +93,9 @@ describe('StrangenessVisualAnalysisComponent', () => {
     });
 
     it('should select and deselect all student entries if requested', () => {
+      component.sessionID = sessionID;
+      component.onSessionChange();
+
       component.onAllSelected(true);
 
       for(let i in component.studentResults) {
@@ -102,6 +110,9 @@ describe('StrangenessVisualAnalysisComponent', () => {
     });
 
     it('should select and deselect specific entry if requested', () => {
+      component.sessionID = sessionID;
+      component.onSessionChange();
+
       const student1 = 1;
       const student2 = 2;
 

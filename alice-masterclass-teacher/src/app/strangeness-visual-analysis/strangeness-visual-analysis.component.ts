@@ -51,10 +51,6 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
   ngOnInit(): void {
     this.apiService.getSessions().subscribe((sessions: SessionAPI[]) => {
       this.sessions = sessions;
-      if (sessions.length > 0 && this.sessionID === null) {
-        this.sessionID = sessions[0].id;
-        this.reload();
-      }
     });
   }
 

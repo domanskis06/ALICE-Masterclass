@@ -100,10 +100,6 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, OnDestroy
   ngOnInit(): void {
     this.apiService.getEvents().subscribe((events: EventAPI[]) => {
       this.events = events;
-      if (events.length > 0 && this.eventID === null) {
-        this.eventID = events[0].id;
-        this.reload();
-      }
     });
 
     if (this.apiService.autoRefresh()) {

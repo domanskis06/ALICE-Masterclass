@@ -79,11 +79,16 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
       fixture.detectChanges();
     });
 
-    it('should have fetched data from correct event', () => {
-      expect(spyResults).toHaveBeenCalledWith(eventID);
+    it('should leave event selector empty until user chooses', () => {
+      expect(component.eventID).toBeNull();
+      expect(spyResults).not.toHaveBeenCalled();
     });
 
     it('should reload data when event changes', () => {
+      component.eventID = eventID;
+      component.onEventChange();
+      expect(spyResults).toHaveBeenCalledWith(eventID);
+
       spyResults.calls.reset();
       component.eventID = 2;
       component.onEventChange();
