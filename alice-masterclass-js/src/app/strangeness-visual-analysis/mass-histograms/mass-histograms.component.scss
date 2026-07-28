@@ -1,6 +1,6 @@
 :host {
-  // Fits under toolbars with a little slack so the five-plot card never needs its own scroll.
-  --hist-viewport-height: calc(100dvh - 140px);
+  // Shortened so between-row / bottom slack match ~50% / ~30% of the old empty bands.
+  --hist-viewport-height: calc(100dvh - 275px);
   --hist-title-size: clamp(1.2rem, 2.4vw, 1.65rem);
   display: block;
   box-sizing: border-box;
@@ -20,9 +20,9 @@
 }
 
 .title {
-  line-height: 28px;
-  padding-left: 8px;
-  font-size: 0.95rem;
+  // Match Calculator / Particles mat-card titles.
+  line-height: 40px;
+  padding-left: 16px;
 }
 
 .hist-card-title {
@@ -45,7 +45,8 @@
   min-height: 0;
   height: 100%;
   box-sizing: border-box;
-  padding: 4px 8px 6px !important;
+  // Bottom pad: room for compact axis title (incl. rotated-tick nudge) inside the card.
+  padding: 4px 8px 8px !important;
 }
 
 .hist-title {
@@ -74,8 +75,10 @@
   display: grid;
   // 12 columns: top = three equal thirds; bottom Ξ / Ξ̅ centered with a 1-col gap.
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-rows: 1fr 1fr;
-  gap: 6px;
+  // Top row slightly taller so between-row empty ≈ half the old gap; bottom tighter to the card edge.
+  grid-template-rows: 1.06fr 1fr;
+  // Row gap halved (6px → 3px); remaining between-row slack comes from cell height.
+  gap: 3px;
   align-items: stretch;
   min-height: 0;
   height: 100%;

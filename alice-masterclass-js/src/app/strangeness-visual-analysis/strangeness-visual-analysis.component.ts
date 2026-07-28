@@ -140,8 +140,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   /** Delay so students see the particle leave the detector before the page scrolls. */
   private static readonly SCROLL_AFTER_FLIGHT_START_MS = 500;
   private scrollAfterFlightTimeouts: number[] = [];
-  /** Shown once after the first mass-to-histogram flight finishes. */
-  private static readonly HISTOGRAM_INFO_STORAGE_KEY = 'va-histogram-info-seen';
+  /** Shown once per page load after the first mass-to-histogram flight finishes. */
+  private histogramInfoDialogShownThisLoad = false;
   /** Brief pause after the bin pulse so the landing is visible before the dialog. */
   private static readonly HISTOGRAM_INFO_DIALOG_DELAY_MS = 480;
   private histogramInfoDialogTimeout: number | null = null;
@@ -702,26 +702,15 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.dataService.addVisualAnalysisResult(String(this.eventID), value, trackKeys);
   }
 
-  /** One-shot tip after the first animated add lands in a histogram bar. */
+  /** One-shot tip after the first animated add lands in a histogram bar (resets on refresh). */
   private maybeShowHistogramInfoDialog(): void {
     if (typeof window === 'undefined') {
       return;
     }
-    try {
-      if (sessionStorage.getItem(StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_STORAGE_KEY) === '1') {
-        return;
-      }
-      sessionStorage.setItem(StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_STORAGE_KEY, '1');
-    } catch {
-      // Private mode / blocked storage — still show once this session via timeout guard.
-      if (this.histogramInfoDialogTimeout != null) {
-        return;
-      }
-    }
-
-    if (this.histogramInfoDialogTimeout != null) {
+    if (this.histogramInfoDialogShownThisLoad || this.histogramInfoDialogTimeout != null) {
       return;
     }
+    this.histogramInfoDialogShownThisLoad = true;
 
     this.histogramInfoDialogTimeout = window.setTimeout(() => {
       this.histogramInfoDialogTimeout = null;

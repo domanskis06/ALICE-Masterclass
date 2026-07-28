@@ -148,7 +148,12 @@ export class CalculatorComponent implements OnInit {
   }
 
   onSubmit(): void {
-    this.addToHistogramEvent.emit({type: this.calculatorForm.controls.type.value, mass: this.calculatorForm.controls.mass.value});
+    this.addToHistogramEvent.emit({
+      type: this.calculatorForm.controls.type.value,
+      mass: this.calculatorForm.controls.mass.value,
+    });
+    // Reset after emit so the parent still receives the chosen particle type.
+    this.resetTypeField();
   }
 
 }

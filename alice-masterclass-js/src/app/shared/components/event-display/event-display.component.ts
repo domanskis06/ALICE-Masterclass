@@ -634,73 +634,23 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Persist left-sidebar detector layer toggles for the current multipart set. */
-  private persistDetectorPartUiState(): void {
-    if (this.detectorMultipartModelPathsOrder.length === 0 && this.detectorPartsForUi.length === 0) {
-      return;
-    }
-    const paths =
-      this.detectorMultipartModelPathsOrder.length > 0
-        ? this.detectorMultipartModelPathsOrder
-        : this.detectorPartsForUi.map((p) => p.assetPath);
-    const parts: Record<string, { visible: boolean; opacity: number }> = {};
-    for (const part of this.detectorPartsForUi) {
-      parts[part.assetPath] = { visible: !!part.visible, opacity: part.opacity };
-    }
+  /**
+   * Layer toggles / opacity are intentionally not persisted across refresh or remount:
+   * VA always restores the analysis defaults (FIT+L3 off, authored opacities).
+   */
+  private clearStoredDetectorPartUiState(): void {
     try {
-      sessionStorage.setItem(
-        EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY,
-        JSON.stringify({
-          signature: EventDisplayComponent.detectorAssemblyPathsSignature(paths),
-          parts
-        })
-      );
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY);
+      }
     } catch {
       /* private browsing / quota */
     }
   }
 
-  /**
-   * Load persisted layer toggles when the path set matches.
-   * Returns null when nothing usable is stored for this assembly.
-   */
-  private readStoredDetectorPartUi(
-    paths: string[]
-  ): Map<string, { visible: boolean; opacity: number }> | null {
-    if (!paths?.length) return null;
-    try {
-      const raw =
-        typeof sessionStorage !== 'undefined'
-          ? sessionStorage.getItem(EventDisplayComponent.DETECTOR_PART_UI_STORAGE_KEY)
-          : null;
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as {
-        signature?: string;
-        parts?: Record<string, { visible?: boolean; opacity?: number }>;
-      };
-      if (
-        !parsed ||
-        parsed.signature !== EventDisplayComponent.detectorAssemblyPathsSignature(paths) ||
-        !parsed.parts ||
-        typeof parsed.parts !== 'object'
-      ) {
-        return null;
-      }
-      const map = new Map<string, { visible: boolean; opacity: number }>();
-      for (const [assetPath, state] of Object.entries(parsed.parts)) {
-        if (!state || typeof state !== 'object') continue;
-        map.set(assetPath, {
-          visible: state.visible !== false,
-          opacity:
-            typeof state.opacity === 'number' && Number.isFinite(state.opacity)
-              ? state.opacity
-              : EventDisplayComponent.DETECTOR_OUTER_OPACITY
-        });
-      }
-      return map.size > 0 ? map : null;
-    } catch {
-      return null;
-    }
+  /** No-op keeper so call sites stay readable; defaults are reapplied on each detector load. */
+  private persistDetectorPartUiState(): void {
+    this.clearStoredDetectorPartUiState();
   }
 
   /** Post-assembly analysis default when no saved toggles exist: hide FIT and L3. */
@@ -1043,17 +993,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const finishImmediateAttached = () => {
       this.detectorPartRootByPath.clear();
       this.detectorMultipartModelPathsOrder = [...modelPaths];
-      const savedUi = this.readStoredDetectorPartUi(modelPaths);
+      // Always analysis defaults on load/remount (ignore any stale session toggles).
+      this.clearStoredDetectorPartUiState();
       const nextUi: DetectorPartToggleModel[] = [];
       for (const modelPath of modelPaths) {
         const scene = loadedByPath.get(modelPath);
         if (!scene) continue;
         const pres = EventDisplayComponent.detectorPartPresentation(modelPath);
-        const saved = savedUi?.get(modelPath);
-        const visible = saved
-          ? saved.visible
-          : this.defaultRestoredPartVisible(modelPath);
-        const opacity = saved?.opacity ?? this.getDetectorPartOpacity(scene);
+        const visible = this.defaultRestoredPartVisible(modelPath);
+        const opacity = this.getDetectorPartOpacity(scene);
         scene.visible = visible;
         this.zeroDetectorSceneOpacity(scene);
         this.detector.add(scene);
@@ -1071,6 +1019,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.persistDetectorPartUiState();
       this.detectorScene = this.detector;
       this.loading = false;
+      // Options panel stays open after the staggered shell reveal.
+      this.sidebarOpened = true;
       if (nextUi.length > 0) {
         this.detectorLayersPanelOpened = true;
       }
@@ -1083,6 +1033,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.staggeredRevealDetectorParts(modelPaths, 350, 500, () => {
         this.deferPhysicsUntilDetectorReveal = false;
         this.refreshPhysicsForAssemblyUnlock();
+        this.sidebarOpened = true;
+        this.cdr.markForCheck();
       });
     };
 
@@ -1345,7 +1297,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (this.detectorPartsForUi.length > 0) {
       this.detectorLayersPanelOpened = true;
     }
-    this.sidebarOpened = false;
+    // After assembly finishes, keep the right options panel open by default.
+    this.sidebarOpened = true;
     this.applyUiDetectorOpacities();
     this.rebuildCalorimeterReadouts();
     this.refreshPhysicsForAssemblyUnlock();

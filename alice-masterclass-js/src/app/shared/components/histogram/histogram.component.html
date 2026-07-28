@@ -1,7 +1,11 @@
 <div fxFill fxLayout="row">
   <figure fxFlex="grow" fxLayout="column">
     <div id="title" class="no-interaction"><ng-content select="[title]"></ng-content></div>
-    <svg #svg attr.viewBox="0 0 {{SVG.W}} {{SVG.H}}" preserveAspectRatio="xMidYMid meet">
+    <svg
+      #svg
+      attr.viewBox="0 0 {{SVG.W}} {{SVG.H}}"
+      [attr.preserveAspectRatio]="compactChrome ? 'xMidYMin meet' : 'xMidYMid meet'"
+    >
       <g
         id="yAxisLabel"
         attr.transform="translate({{MARGIN.LEFT_YLABEL}}, {{CONTENT_AREA.Y + CONTENT_AREA.H / 2}}) rotate(-90)"

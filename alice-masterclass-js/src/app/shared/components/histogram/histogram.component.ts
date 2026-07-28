@@ -83,13 +83,13 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   private readonly MARGIN_COMPACT = {
     TOP: 2,
     RIGHT: 6,
-    // Tick numbers only — keep short so the title can sit near Ox.
-    BOTTOM: 14,
-    // Band for "Invariant Mass" under the ticks (a little room to nudge the label down).
-    BOTTOM_XLABEL: 15,
+    // Slightly more than the original 14 so ~0.75em tick numbers clear the axis title.
+    BOTTOM: 16,
+    BOTTOM_XLABEL: 16,
     BOTTOM_TEXT: 3,
-    LEFT: 22,
-    LEFT_YLABEL: 8
+    // Slightly more than the original 22/8 so ~0.75em Y tick numbers clear "Counts".
+    LEFT: 24,
+    LEFT_YLABEL: 10
   };
 
   get MARGIN() {
@@ -106,13 +106,22 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     };
   }
 
+  /**
+   * Extra SVG y nudge for the axis title while x-tick labels are at -45°
+   * (they hang lower than upright numbers and would otherwise collide).
+   */
+  private static readonly X_AXIS_LABEL_ROTATED_NUDGE = 14;
+
   /** Baseline y for the horizontal axis title. */
   get xAxisLabelY(): number {
+    const rotatedNudge = this.shouldRotateXTickLabels()
+      ? HistogramComponent.X_AXIS_LABEL_ROTATED_NUDGE
+      : 0;
     if (!this.compactChrome) {
-      return this.SVG.H - this.MARGIN.BOTTOM_TEXT;
+      return this.SVG.H - this.MARGIN.BOTTOM_TEXT + rotatedNudge;
     }
-    // Just under the tick row; +11 nudges the title a touch below the axis numbers.
-    return this.CONTENT_AREA.Y + this.CONTENT_AREA.H + this.MARGIN.BOTTOM + 11;
+    // Just under the tick-number row — keep clear of ~0.75em labels.
+    return this.CONTENT_AREA.Y + this.CONTENT_AREA.H + this.MARGIN.BOTTOM + 12 + rotatedNudge;
   }
 
   protected readonly ANIMATION_DURATION: number = 250;

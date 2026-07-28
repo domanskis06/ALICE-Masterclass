@@ -2,17 +2,37 @@
   display: block;
   pointer-events: none;
   max-width: min(300px, 42vw);
+  overflow: visible;
 }
 
 .lets-us-panel {
+  position: relative;
   pointer-events: auto;
   margin: 0;
   padding: 0.7em 0.85em 0.75em;
-  border-radius: 10px 0 0 10px;
+  border-radius: 10px;
   background: rgba(255, 248, 225, 0.96);
   border: 1px solid rgba(255, 179, 0, 0.55);
-  border-right: none;
   box-shadow: -2px 2px 12px rgba(0, 0, 0, 0.14);
+  overflow: visible;
+}
+
+/*
+ * Points at the first (top) palette card in the right drawer.
+ * Measured against .palette-part-card centre (host top inset already applied on overlay).
+ */
+.lets-us-arrow {
+  position: absolute;
+  top: 139px;
+  right: -10px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 9px 0 9px 10px;
+  border-color: transparent transparent transparent rgba(255, 248, 225, 0.96);
+  filter: drop-shadow(1px 0 0 rgba(255, 179, 0, 0.7));
+  pointer-events: none;
+  z-index: 1;
 }
 
 .lets-us-heading {

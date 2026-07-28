@@ -1,7 +1,7 @@
 import { EventDisplayComponent } from './event-display.component';
 import * as THREE from 'three';
 
-describe('EventDisplayComponent detector part UI persistence', () => {
+describe('EventDisplayComponent detector part UI defaults', () => {
   const paths = [
     'assets/models/alice components/ITS.glb',
     'assets/models/alice components/FIT.glb',
