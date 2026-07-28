@@ -10,7 +10,8 @@ export interface StudentResultAPI {
   k0: number[],
   lambda: number[],
   antilambda: number[],
-  xi: number[]
+  xi: number[],
+  antixi: number[]
 }
 
 export interface StudentResult {
@@ -20,7 +21,8 @@ export interface StudentResult {
   k0: number[],
   lambda: number[],
   antilambda: number[],
-  xi: number[]
+  xi: number[],
+  antixi: number[]
 }
 
 @Component({
@@ -39,6 +41,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
   public lambdaMasses: number[] = [];
   public antiLambdaMasses: number[] = [];
   public xiMasses: number[] = [];
+  public antiXiMasses: number[] = [];
 
   public sessionID: number | null = null;
   public sessions: SessionAPI[] = [];
@@ -74,7 +77,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
           k0: elm.k0,
           lambda: elm.lambda,
           antilambda: elm.antilambda,
-          xi: elm.xi
+          xi: elm.xi,
+          antixi: elm.antixi ?? []
         });
       }
       this.studentResults = newData;
@@ -110,6 +114,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
     const lambdaMasses = [];
     const antiLambdaMasses = [];
     const xiMasses = [];
+    const antiXiMasses = [];
 
     for (let elm of this.studentResults) {
       if (elm.selected) {
@@ -117,6 +122,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
         lambdaMasses.push(...elm.lambda);
         antiLambdaMasses.push(...elm.antilambda);
         xiMasses.push(...elm.xi);
+        antiXiMasses.push(...elm.antixi);
       }
     }
 
@@ -124,6 +130,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, InstructionsP
     this.lambdaMasses = lambdaMasses;
     this.antiLambdaMasses = antiLambdaMasses;
     this.xiMasses = xiMasses;
+    this.antiXiMasses = antiXiMasses;
   }
 
 }

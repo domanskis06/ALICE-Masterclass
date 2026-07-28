@@ -119,9 +119,9 @@ describe('ApiService', () => {
 
   it('should fetch VSA results', () => {
     const VSA_RESULTS: VisualAnalysisResultAPI[] = [
-      {student: 0, dataset: 0, k0: [0.49, 0.48, 0.5], lambda: [], antilambda: [], xi: []},
-      {student: 1, dataset: 1, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: []},
-      {student: 2, dataset: 3, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: []},
+      {student: 0, dataset: 0, k0: [0.49, 0.48, 0.5], lambda: [], antilambda: [], xi: [], antixi: []},
+      {student: 1, dataset: 1, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: [], antixi: []},
+      {student: 2, dataset: 3, k0: [0.485, 0.49, 0.49], lambda: [], antilambda: [], xi: [], antixi: []},
     ];
 
     const sessionID: number = 0;

@@ -1,6 +1,12 @@
 <div fxFlex="grow">
   <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
-    <app-mass-histograms [kaonMasses]="kaonMasses" [lambdaMasses]="lambdaMasses" [antiLambdaMasses]="antiLambdaMasses" [xiMasses]="xiMasses"></app-mass-histograms>
+    <app-mass-histograms
+      [kaonMasses]="kaonMasses"
+      [lambdaMasses]="lambdaMasses"
+      [antiLambdaMasses]="antiLambdaMasses"
+      [xiMasses]="xiMasses"
+      [antiXiMasses]="antiXiMasses"
+    ></app-mass-histograms>
     <app-results
       [resultsData]="studentResults"
       (studentSelectedEvent)="onStudentSelected($event)"
