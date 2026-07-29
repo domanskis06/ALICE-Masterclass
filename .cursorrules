@@ -1,5 +1,0 @@
-# Cursor Rules for ALICE MasterClass
-
-1. **God node:** `EventDisplayComponent` — do not add heavy physics/math (Lorentz, RK4, invariant-mass pipelines, track fitting). Put that in a dedicated Angular Service; prefer wiring from the parent analysis component.
-2. Before editing EventDisplay: read `ci/docs/event-display.md`. Prefer targeted / ranged reads — avoid dumping the full ~4000-line component unless a whole-file review is required.
-3. Particle propagation: see `ci/docs/particle-propagation.md` (physics stays under `physics/`, not in the component / `scene/`).
