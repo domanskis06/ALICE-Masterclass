@@ -12,6 +12,8 @@ import { ParticleType } from '../../shared/services/api.service';
     standalone: false
 })
 export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDestroy {
+  protected readonly ParticleType = ParticleType;
+
   @Input()
   @HostBinding("style.--kaon-color")
   public kaonColor: string = KAON_COLOR;
@@ -250,6 +252,23 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
       this.tooltipVisible = false;
       this.tooltipEntry = null;
     });
+  }
+
+  protected tooltipParticleName(particle: ParticleType): string {
+    switch (particle) {
+      case ParticleType.KAON:
+        return 'Kaon';
+      case ParticleType.LAMBDA:
+        return 'Lambda';
+      case ParticleType.ANTI_LAMBDA:
+        return 'Anti-Lambda';
+      default:
+        return 'Particle';
+    }
+  }
+
+  protected tooltipParticleSymbol(particle: ParticleType): string {
+    return particle === ParticleType.KAON ? 'K0S' : 'Λ';
   }
 
 }
