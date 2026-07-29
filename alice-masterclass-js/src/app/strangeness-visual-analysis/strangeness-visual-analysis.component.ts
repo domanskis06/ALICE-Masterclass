@@ -123,6 +123,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   readonly visualLightBackgroundColor = 0xFFFFFF;
   readonly visualDarkBackgroundColor = 0x0a1832;
 
+  /** CDK overlay lives outside the host; dark class must be applied via panelClass. */
+  get datasetSelectPanelClass(): string | string[] {
+    return this.visualDarkMode
+      ? ['va-dataset-select-panel', 'va-dataset-select-panel--dark']
+      : 'va-dataset-select-panel';
+  }
+
   uploadDisabledDatasets: Array<Number> = [DATASET_PICKER_DEMO];
   
   isLandscape$: Observable<boolean>;

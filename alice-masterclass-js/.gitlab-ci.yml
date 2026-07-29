@@ -4,7 +4,11 @@ convert_strangeness_events:
   before_script:
     - cd "$CI_PROJECT_DIR/alice-masterclass-js"
   script:
+    # Clean VA hosts from AliVSD ROOT (gitignore'd under src/assets/.../part1/).
     - root -b -q "./data/strangeness/part1/convert_events.C(\"./data/strangeness/part1/events\", \"./src/assets/exercises/strangeness/part1\")"
+    # Ξ / Ξ̅ helices from FemtoUniverse dump, then merge into host events (seed map).
+    - python3 ./data/strangeness/part1_Xi/convert_xi_params.py
+    - python3 ./data/strangeness/part1_Xi/merge_cascades_into_hosts.py --cascades ./data/strangeness/part1_Xi/_out/xi_cascades.json
   artifacts:
     paths:
       - alice-masterclass-js/src/assets/exercises/strangeness/part1

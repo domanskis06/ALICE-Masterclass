@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-Convert FemtoUniverse Xi_params.txt (or normalized JSON) into VA event JSON.
+Convert FemtoUniverse Xi_params.txt (or normalized JSON) into VA cascade JSON.
 
 Propagation mirrors convert_events.C / TEveTrackPropagator:
   uniform B = 0.5 T, step ~1.5 cm, stop at R = 600 cm.
 
-Full pipeline docs (dataset mapping, promote-to-assets steps):
+Full pipeline docs (host merge, seed map, ROOT restore):
   data/strangeness/part1_Xi/README.md
 
 Source data and this converter live under data/strangeness/part1_Xi/.
-Production VA event files go to src/assets/exercises/strangeness/part1/
-as event_[1-20]_15/16.json (not written here by default).
+This script writes regenerable artefacts under part1_Xi/_out/ only.
+Promote into production hosts with merge_cascades_into_hosts.py (cascades
+are appended into existing event_{1-20}_{0-14}.json — no *_15/*_16 slots).
 
 Usage:
   python3 data/strangeness/part1_Xi/convert_xi_params.py
@@ -20,6 +21,10 @@ Usage:
     --cascades-out data/strangeness/part1_Xi/_out/xi_cascades.json \\
     --events-out data/strangeness/part1_Xi/_out/xi_events \\
     --dataset 21
+
+  # After restoring clean hosts from ROOT (see README), merge:
+  python3 data/strangeness/part1_Xi/merge_cascades_into_hosts.py \\
+    --cascades data/strangeness/part1_Xi/_out/xi_cascades.json
 """
 from __future__ import annotations
 
@@ -191,8 +196,13 @@ def propagate_helix(
     """
     Uniform-Bz helix via Euler steps on the unit direction.
 
-    Convention (matches particle-propagation / legacy xi_cascades):
-      du/ds = (q * B2C / |p|) * (u × B),  B = (0, 0, Bz)
+    Convention: empirically matched to convert_events.C / TEveTrackPropagator,
+    which produced the trusted legacy V0 (event_0_0.json) and cascade
+    (event_0_3.json) trajectories: sign=+1 bends CCW, sign=-1 bends CW (in the
+    stored x/y physics coordinates). Verified directly against event_0_3.json's
+    proton (sign=+1) and pion (sign=-1) trajectory arrays — do not "simplify"
+    this back to the naive textbook +(u × B) rotation without re-checking
+    against that file, it reproduces the OPPOSITE (wrong) bending sense.
     """
     p = math.hypot(px, py, pz)
     if p < 1e-12:
@@ -210,9 +220,11 @@ def propagate_helix(
     path = 0.0
 
     for _ in range(max_points - 1):
-        # u × e_z = (uy, -ux, 0); multiply by k*Bz already in k
-        dux = k * uy
-        duy = -k * ux
+        # u × e_z = (uy, -ux, 0), but flipped in sign relative to the naive
+        # textbook formula to match convert_events.C's actual bending sense
+        # (see docstring above).
+        dux = -k * uy
+        duy = k * ux
         ux2 = ux + dux * step_cm
         uy2 = uy + duy * step_cm
         uz2 = uz

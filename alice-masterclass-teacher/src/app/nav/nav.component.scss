@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
 .sidenav-container {
   height: 100%;
 }
@@ -10,18 +15,10 @@
   background: inherit;
 }
 
-.nav-section-header {
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(0, 0, 0, 0.7);
-  margin: 8px 0 0;
-  // Match mat-list-item text inset so "Strangeness" shares the same left edge
-  padding-left: 16px;
-  padding-right: 16px;
+mat-sidenav-content > div {
+  min-height: 100%;
+  width: 100%;
   box-sizing: border-box;
-  pointer-events: none;
-  cursor: default;
 }
 
 .sticky {

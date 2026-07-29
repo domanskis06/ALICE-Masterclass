@@ -589,7 +589,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private static readonly WHEEL_PAN_FACTOR = 0.05;
   private static readonly MOUSE_DRAG_PAN_FACTOR = 0.001;
   private static readonly FADE_OPACITY = 0.25;
-  private static readonly DETECTOR_FADE_OPACITY = 0.4;
+  /** Detector shell opacity while a decay is hovered (from ~0.75–0.80 base). */
+  private static readonly DETECTOR_FADE_OPACITY = 0.45;
+  /** Shared track / non-hovered decay opacity during cascade hover. */
+  private static readonly TRACK_FADE_OPACITY = 0.55;
+  /** Enter/leave opacity ramp duration. */
+  private static readonly CASCADE_HOVER_LERP_MS = 50;
+  /**
+   * Opacity restore after a decay click. ~20ms is only 1–2 frames and reads as a
+   * snap; keep this long enough to perceive the ease-out.
+   */
+  private static readonly CASCADE_HOVER_CLICK_FADE_MS = 100;
+  /** Ignore brief raycast misses before starting the leave fade. */
+  private static readonly CASCADE_HOVER_LEAVE_DEBOUNCE_MS = 20;
   /** Slider default; materials load solid (opacity 1) then sync via setDetectorPartOpacity. */
   private static readonly DETECTOR_COMPONENT_OPACITY = 0.78;
   private static readonly DETECTOR_INNER_OPACITY = 0.80;
@@ -853,10 +865,20 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** Cancels an in-flight assembly zoom-out when another piece is placed. */
   private assemblyCameraZoomGeneration = 0;
   cameraMode: 'centered' | 'free' = 'centered';
+  /** Track currently flashing yellow after a decay click (not pointer-hover). */
   private trackHoverObj: THREE.Object3D = null;
   private trackHoverOrigMaterial: THREE.Material = null;
+  private clickHighlightTimer: ReturnType<typeof setTimeout> | null = null;
   private decayGroupHovered: THREE.Object3D | null = null;
+  /** True while fade strength > 0 or a leave fade is in progress. */
   private cascadeHoverActive: boolean = false;
+  /** 0 = normal scene, 1 = full hover fade targets. */
+  private cascadeHoverStrength = 0;
+  private cascadeHoverTarget = 0;
+  private cascadeHoverLastTs: number | null = null;
+  private cascadeHoverLeaveTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Active lerp duration (enter uses default; click fade-out can override). */
+  private cascadeHoverLerpMs = EventDisplayComponent.CASCADE_HOVER_LERP_MS;
   vertexMarkerTooltip: { label: string; x: number; y: number } | null = null;
 
   // 3D
@@ -2351,6 +2373,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.requestRender(true);
   }
 
+
   @Input()
   get detectorShown(): boolean { return this.detector.visible; }
   set detectorShown(detectorShown: boolean) {
@@ -2776,6 +2799,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   private rebuildTracksFromEvent(): void {
     this.clearCascadeHover();
+    this.clearClickHighlight();
     this.tracks.clear();
     this.decays.clear();
     this.clearPrimaryVertexMarkers();
@@ -3266,6 +3290,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private isRenderActivityPending(): boolean {
     if (this.isMousePanning) return true;
     if (this.cameraMode === 'free' && this.hasPanKeysDown()) return true;
+    if (this.cascadeHoverStrength !== this.cascadeHoverTarget) return true;
     return false;
   }
 
@@ -3424,6 +3449,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.viewDestroyed = true;
     this.assemblyCameraZoomGeneration++;
+    this.cancelCascadeHoverLeaveDebounce();
+    if (this.clickHighlightTimer != null) {
+      clearTimeout(this.clickHighlightTimer);
+      this.clickHighlightTimer = null;
+    }
     if (this.rafId != null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
@@ -3588,6 +3618,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private render(): void {
     if (!this.renderer || !this.camera3D || !this.controls) return;
+    this.updateCascadeHoverFade();
     this.resize(false);
     if (this.cameraMode === 'centered') {
       this.controls.target.set(0, 0, 0);
@@ -3696,22 +3727,32 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (this.decays.visible) {
-      this.clearCascadeHover();
-      if (this.trackHoverObj === null) {
-        this.trackHoverObj = obj;
-        this.trackHoverOrigMaterial = Array.isArray(obj.material) ? obj.material[0] : obj.material;
-        obj.material = this.highlightTrackMaterial;
-        const highlightStop = () => {
-          if (this.trackHoverObj !== null) {
-            (this.trackHoverObj as THREE.Mesh).material = this.trackHoverOrigMaterial;
-          }
-          this.trackHoverObj = null;
-          this.trackHoverOrigMaterial = null;
-          this.requestRender(true);
-        };
-        setTimeout(highlightStop, this.CLICK_HIGHLIGHT_DURATION);
-        this.requestRender(true);
+      // Soft fade-out instead of snapping detector/tracks back on click.
+      this.beginCascadeHoverFadeOut(EventDisplayComponent.CASCADE_HOVER_CLICK_FADE_MS);
+      // Brief yellow flash on the clicked daughter. Hover must not run during this
+      // window — otherwise cascade hover stores highlightTrackMaterial as
+      // cascadeHoverOrigMat and clearCascadeHover leaves the yellow stuck.
+      this.clearClickHighlight();
+      this.trackHoverObj = obj;
+      // Prefer the shared pre-hover material if emphasis clones are still active.
+      const prevMat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      const hoverOrig = (obj as any).userData?.cascadeHoverOrigMat as THREE.Material | undefined;
+      this.trackHoverOrigMaterial = hoverOrig || prevMat;
+      if (
+        hoverOrig &&
+        prevMat &&
+        prevMat !== hoverOrig &&
+        prevMat !== this.highlightTrackMaterial
+      ) {
+        (prevMat as THREE.Material).dispose();
       }
+      obj.material = this.highlightTrackMaterial;
+      this.clickHighlightTimer = setTimeout(() => {
+        this.clickHighlightTimer = null;
+        this.clearClickHighlight();
+        this.requestRender(true);
+      }, this.CLICK_HIGHLIGHT_DURATION);
+      this.requestRender(true);
       this.trackClickedEvent.emit((obj as any).userData);
     }
   }
@@ -3723,6 +3764,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.lastMousePanX = event.clientX;
       this.lastMousePanY = event.clientY;
       this.applyMousePan(deltaX, deltaY);
+      return;
+    }
+    // Click-flash owns materials until the timeout; skip cascade hover so it
+    // cannot capture highlightTrackMaterial as the restore target.
+    if (this.trackHoverObj !== null) {
+      this.vertexMarkerTooltip = null;
       return;
     }
     const intersects = this.findIntersect(event);
@@ -3741,7 +3788,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         x: event.clientX,
         y: event.clientY
       };
-      this.clearCascadeHover();
+      this.scheduleCascadeHoverClear();
     } else if (isDecayTrackHit) {
       this.vertexMarkerTooltip = null;
       let decayGroup: THREE.Object3D | null = null;
@@ -3749,11 +3796,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         const obj = intersects[0].object as THREE.Object3D & { userData?: { decayIndex?: number } };
         decayGroup = obj.parent?.parent === this.decays ? obj.parent : null;
       }
-      if (decayGroup != null && this.decayGroupHovered !== decayGroup) {
-        this.clearCascadeHover();
+      if (decayGroup != null) {
         this.applyCascadeHover(decayGroup);
-      } else if (decayGroup == null) {
-        this.clearCascadeHover();
+      } else {
+        this.scheduleCascadeHoverClear();
       }
     } else {
       this.vertexMarkerTooltip = null;
@@ -3761,15 +3807,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         const obj = intersects[0].object as THREE.Object3D;
         const decayGroup = obj.parent?.parent === this.decays ? obj.parent : null;
         if (decayGroup != null) {
-          if (this.decayGroupHovered !== decayGroup) {
-            this.clearCascadeHover();
-            this.applyCascadeHover(decayGroup);
-          }
+          this.applyCascadeHover(decayGroup);
         } else {
-          this.clearCascadeHover();
+          this.scheduleCascadeHoverClear();
         }
       } else {
-        this.clearCascadeHover();
+        this.scheduleCascadeHoverClear();
       }
     }
   }
@@ -3777,7 +3820,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   onPointerLeave() {
     this.isMousePanning = false;
     this.vertexMarkerTooltip = null;
-    this.clearCascadeHover();
+    this.scheduleCascadeHoverClear();
   }
 
   private findDecayGroupByIndex(decayIndex: number | undefined | null): THREE.Object3D | null {
@@ -3793,92 +3836,263 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private applyCascadeHover(decayGroup: THREE.Object3D) {
-    this.decayGroupHovered = decayGroup;
-    // Keep original decay-track colors on the hovered group.
-    // Background tracks + other decays + detector fade; clusters hide completely.
+    this.cancelCascadeHoverLeaveDebounce();
+    this.cascadeHoverLerpMs = EventDisplayComponent.CASCADE_HOVER_LERP_MS;
+    if (this.decayGroupHovered && this.decayGroupHovered !== decayGroup) {
+      this.restoreDecayGroupEmphasis(this.decayGroupHovered);
+    }
+    if (this.decayGroupHovered !== decayGroup) {
+      this.setupDecayGroupEmphasis(decayGroup);
+      this.decayGroupHovered = decayGroup;
+    }
     this.cascadeHoverActive = true;
-    const fadeOpacity = EventDisplayComponent.DETECTOR_FADE_OPACITY;
+    this.cascadeHoverTarget = 1;
+    // Clusters hide immediately (same as pre-lerp behaviour) so the hovered
+    // decay reads clearly against the dimmed detector/tracks.
+    this.clusters.visible = false;
+    this.requestRender(true);
+  }
 
+  /**
+   * Soft leave used on decay click: keep emphasis clones until the opacity
+   * ramp finishes (finalize), but lerp detector/track opacity back over `lerpMs`.
+   */
+  private beginCascadeHoverFadeOut(lerpMs: number): void {
+    this.cancelCascadeHoverLeaveDebounce();
+    if (!this.cascadeHoverActive && this.cascadeHoverStrength <= 0 && this.cascadeHoverTarget <= 0) {
+      this.cascadeHoverLerpMs = EventDisplayComponent.CASCADE_HOVER_LERP_MS;
+      return;
+    }
+    this.cascadeHoverLerpMs = Math.max(1, lerpMs);
+    this.cascadeHoverTarget = 0;
+    this.cascadeHoverLastTs = null;
+    this.cascadeHoverActive = true;
+    this.requestRender(true);
+  }
+
+  /** Debounced leave — brief raycast misses do not snap the scene back. */
+  private scheduleCascadeHoverClear(): void {
+    if (!this.cascadeHoverActive && this.cascadeHoverStrength === 0 && this.cascadeHoverTarget === 0) {
+      return;
+    }
+    if (this.cascadeHoverLeaveTimer != null) {
+      return;
+    }
+    this.cascadeHoverLeaveTimer = setTimeout(() => {
+      this.cascadeHoverLeaveTimer = null;
+      this.cascadeHoverLerpMs = EventDisplayComponent.CASCADE_HOVER_LERP_MS;
+      this.cascadeHoverTarget = 0;
+      this.requestRender(true);
+    }, EventDisplayComponent.CASCADE_HOVER_LEAVE_DEBOUNCE_MS);
+  }
+
+  private cancelCascadeHoverLeaveDebounce(): void {
+    if (this.cascadeHoverLeaveTimer != null) {
+      clearTimeout(this.cascadeHoverLeaveTimer);
+      this.cascadeHoverLeaveTimer = null;
+    }
+  }
+
+  /** Instant restore (event rebuild, teardown). */
+  private clearCascadeHover() {
+    this.cancelCascadeHoverLeaveDebounce();
+    const hadHover = !!(
+      this.decayGroupHovered ||
+      this.cascadeHoverActive ||
+      this.cascadeHoverStrength > 0 ||
+      this.cascadeHoverTarget > 0
+    );
+    this.cascadeHoverTarget = 0;
+    this.cascadeHoverStrength = 0;
+    this.cascadeHoverLastTs = null;
+    this.cascadeHoverLerpMs = EventDisplayComponent.CASCADE_HOVER_LERP_MS;
+    if (this.decayGroupHovered) {
+      this.restoreDecayGroupEmphasis(this.decayGroupHovered);
+      this.decayGroupHovered = null;
+    }
+    this.resetCascadeHoverSharedMaterials();
+    this.cascadeHoverActive = false;
+    if (hadHover) {
+      this.requestRender(true);
+    }
+  }
+
+  private updateCascadeHoverFade(): void {
+    if (this.cascadeHoverStrength === this.cascadeHoverTarget) {
+      this.cascadeHoverLastTs = null;
+      return;
+    }
+    const now = performance.now();
+    let dt: number;
+    if (this.cascadeHoverLastTs == null) {
+      // First animating frame: small step only — a full 16ms tick would
+      // almost finish a short click fade in one frame (reads as a snap).
+      dt = Math.min(1000 / 60, this.cascadeHoverLerpMs * 0.2);
+    } else {
+      dt = Math.min(64, Math.max(0, now - this.cascadeHoverLastTs));
+    }
+    this.cascadeHoverLastTs = now;
+    const step = dt / this.cascadeHoverLerpMs;
+    if (this.cascadeHoverStrength < this.cascadeHoverTarget) {
+      this.cascadeHoverStrength = Math.min(this.cascadeHoverTarget, this.cascadeHoverStrength + step);
+    } else {
+      this.cascadeHoverStrength = Math.max(this.cascadeHoverTarget, this.cascadeHoverStrength - step);
+    }
+    this.applyCascadeHoverFadeVisuals(this.cascadeHoverStrength);
+    this.invalidateSideViews();
+    if (this.cascadeHoverStrength <= 0 && this.cascadeHoverTarget <= 0) {
+      this.finalizeCascadeHoverOff();
+    }
+  }
+
+  private applyCascadeHoverFadeVisuals(t: number): void {
+    const trackOpacity =
+      1 + (EventDisplayComponent.TRACK_FADE_OPACITY - 1) * t;
     for (const mat of this.getCascadeFadeTrackMaterials()) {
-      (mat as any).transparent = true;
-      (mat as any).opacity = fadeOpacity;
+      (mat as any).transparent = trackOpacity < 0.995;
+      (mat as any).opacity = trackOpacity;
     }
 
-    // Hovered decay keeps full opacity via per-line clones (shared mats are faded above).
+    this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
+      if (!(o as any).isMesh) return;
+      const raw = (o as THREE.Mesh).material;
+      const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      for (const m of mats) {
+        if (!m) continue;
+        const base =
+          (m as any).userData?.baseOpacity ?? EventDisplayComponent.DETECTOR_COMPONENT_OPACITY;
+        const opacity =
+          base + (EventDisplayComponent.DETECTOR_FADE_OPACITY - base) * t;
+        (m as any).opacity = opacity;
+        (m as any).transparent = opacity < 0.995;
+      }
+    });
+  }
+
+  private finalizeCascadeHoverOff(): void {
+    if (this.decayGroupHovered) {
+      this.restoreDecayGroupEmphasis(this.decayGroupHovered);
+      this.decayGroupHovered = null;
+    }
+    this.resetCascadeHoverSharedMaterials();
+    this.cascadeHoverActive = false;
+    this.cascadeHoverLastTs = null;
+    this.cascadeHoverLerpMs = EventDisplayComponent.CASCADE_HOVER_LERP_MS;
+  }
+
+  private resetCascadeHoverSharedMaterials(): void {
+    for (const mat of this.getCascadeFadeTrackMaterials()) {
+      (mat as any).transparent = false;
+      (mat as any).opacity = 1;
+    }
+    this.applyDesiredPhysicsVisibility();
+    this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
+      if (!(o as any).isMesh) return;
+      const raw = (o as THREE.Mesh).material;
+      const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      for (const m of mats) {
+        if (!m) continue;
+        const baseOpacity =
+          (m as any).userData?.baseOpacity ?? EventDisplayComponent.DETECTOR_COMPONENT_OPACITY;
+        (m as any).opacity = baseOpacity;
+        (m as any).transparent = baseOpacity < 0.995;
+      }
+    });
+  }
+
+  private setupDecayGroupEmphasis(decayGroup: THREE.Object3D): void {
+    // Hovered decay keeps full opacity via per-line clones (shared mats are faded).
     for (const child of decayGroup.children) {
       const line = child as Line2;
       if (!(line as any).isLine2 || !line.material) {
         continue;
       }
-      const orig = line.material as LineMaterial;
+      if ((line as any).userData?.cascadeHoverOrigMat) {
+        continue;
+      }
+      let orig = line.material as LineMaterial;
+      if (orig === this.highlightTrackMaterial) {
+        orig = (this.trackHoverOrigMaterial as LineMaterial) || orig;
+      }
+      if (orig === this.highlightTrackMaterial) {
+        continue;
+      }
       (line as any).userData = {
         ...((line as any).userData || {}),
         cascadeHoverOrigMat: orig,
       };
       const emphasis = orig.clone();
-      // Share resolution with the shared material so resize/render updates stay in sync.
       emphasis.resolution = orig.resolution;
       emphasis.transparent = false;
       emphasis.opacity = 1;
       emphasis.depthWrite = true;
       line.material = emphasis;
     }
-
-    // Hide clusters entirely while a decay is emphasized.
-    this.clusters.visible = false;
-
-    this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
-      if ((o as any).isMesh) {
-        const raw = (o as THREE.Mesh).material;
-        const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-        for (const m of mats) { if (m) (m as any).opacity = fadeOpacity; }
-      }
-    });
-    this.requestRender(true);
   }
 
-  private clearCascadeHover() {
-    const hadHover = !!(
-      this.decayGroupHovered ||
-      this.cascadeHoverActive
-    );
-    if (this.decayGroupHovered) {
-      for (const child of this.decayGroupHovered.children) {
-        const line = child as Line2;
-        const orig = (line as any).userData?.cascadeHoverOrigMat as LineMaterial | undefined;
-        if (orig && (line as any).isLine2) {
-          const cloned = line.material as LineMaterial;
-          line.material = orig;
-          if (cloned && cloned !== orig) {
-            cloned.dispose();
+  private restoreDecayGroupEmphasis(decayGroup: THREE.Object3D): void {
+    for (const child of decayGroup.children) {
+      const line = child as Line2;
+      let orig = (line as any).userData?.cascadeHoverOrigMat as LineMaterial | undefined;
+      if (orig && (line as any).isLine2) {
+        if (orig === this.highlightTrackMaterial) {
+          orig = this.sharedMaterialForDecayLine(line) as LineMaterial;
+        }
+        const current = line.material as LineMaterial;
+        // Click flash may already own this line — keep yellow, remember shared orig.
+        if (current === this.highlightTrackMaterial) {
+          if (this.trackHoverObj === line) {
+            this.trackHoverOrigMaterial = orig;
           }
           delete (line as any).userData.cascadeHoverOrigMat;
+          continue;
         }
-      }
-      this.decayGroupHovered = null;
-    }
-    if (this.cascadeHoverActive) {
-      this.cascadeHoverActive = false;
-      for (const mat of this.getCascadeFadeTrackMaterials()) {
-        (mat as any).transparent = false;
-        (mat as any).opacity = 1;
-      }
-      this.applyDesiredPhysicsVisibility();
-      this.getDetectorFadeRoot()?.traverse((o: THREE.Object3D) => {
-        if ((o as any).isMesh) {
-          const raw = (o as THREE.Mesh).material;
-          const mats: THREE.Material[] = Array.isArray(raw) ? raw : (raw ? [raw] : []);
-          for (const m of mats) {
-            if (!m) continue;
-            const baseOpacity = (m as any).userData?.baseOpacity ?? EventDisplayComponent.DETECTOR_COMPONENT_OPACITY;
-            (m as any).opacity = baseOpacity;
-          }
+        line.material = orig;
+        if (current && current !== orig && current !== this.highlightTrackMaterial) {
+          current.dispose();
         }
-      });
+        delete (line as any).userData.cascadeHoverOrigMat;
+      }
     }
-    if (hadHover) {
-      this.requestRender(true);
+  }
+
+  /**
+   * Ends the yellow click-flash and restores the track material.
+   * Also repairs cascade-hover bookkeeping if hover captured the highlight mat.
+   */
+  private clearClickHighlight(): void {
+    if (this.clickHighlightTimer != null) {
+      clearTimeout(this.clickHighlightTimer);
+      this.clickHighlightTimer = null;
     }
+    if (this.trackHoverObj !== null) {
+      const mesh = this.trackHoverObj as THREE.Mesh & {
+        userData?: { cascadeHoverOrigMat?: THREE.Material };
+      };
+      if (mesh.userData?.cascadeHoverOrigMat === this.highlightTrackMaterial) {
+        mesh.userData.cascadeHoverOrigMat = this.trackHoverOrigMaterial;
+      }
+      if (mesh.material === this.highlightTrackMaterial && this.trackHoverOrigMaterial) {
+        mesh.material = this.trackHoverOrigMaterial;
+      }
+    }
+    this.trackHoverObj = null;
+    this.trackHoverOrigMaterial = null;
+  }
+
+  /** Shared decay material for a track line (used if hover restore data is corrupt). */
+  private sharedMaterialForDecayLine(line: Line2): THREE.Material {
+    const ud = (line as any).userData || {};
+    if (ud.type === TrackType.CASCADE_BACHELOR) {
+      return this.bachelorTrackMaterial;
+    }
+    if (typeof ud.sign === 'number' && ud.sign < 0) {
+      return this.negativeTrackMaterial;
+    }
+    if (typeof ud.sign === 'number' && ud.sign > 0) {
+      return this.postiveTrackMaterial;
+    }
+    return this.trackMaterial;
   }
 
   /** Shared track materials faded during cascade hover (hovered decay uses clones). */
@@ -3934,8 +4148,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private findIntersect(event: MouseEvent): THREE.Intersection[] {
     const intersects: THREE.Intersection[] = [];
     const zoomz = this.controls.target.distanceTo(this.controls.object.position);
-    // ~30% larger than the previous zoomz/55 threshold so decay tracks are easier to hover.
-    const lineThreshold = zoomz / 42;
+    // Larger than the visual linewidth so decay tracks are easier to hover/click.
+    const lineThreshold = zoomz / 2;
     const raycaster = new THREE.Raycaster();
     if (!raycaster.params.Line2) {
       raycaster.params.Line2 = { threshold: lineThreshold };

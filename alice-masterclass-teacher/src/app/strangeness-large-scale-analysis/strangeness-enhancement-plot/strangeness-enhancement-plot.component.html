@@ -30,6 +30,14 @@
           class="plot-tooltip"
           [style.left.px]="tooltipX"
           [style.top.px]="tooltipY">
+          <div class="plot-tooltip__title">
+            <span>{{ tooltipParticleName(tooltipEntry.particle) }}</span>
+            <span
+              class="particle"
+              [class.particle-anti]="tooltipEntry.particle === ParticleType.ANTI_LAMBDA">
+              {{ tooltipParticleSymbol(tooltipEntry.particle) }}
+            </span>
+          </div>
           <div>{{ 'LARGE_SCALE_ANALYSIS.NO_PARTICIPANTS' | translate }}: {{ tooltipEntry.nParticipants }}</div>
           <div>{{ 'LARGE_SCALE_ANALYSIS.ENHANCEMENT' | translate }}: {{ tooltipEntry.enhancement | number:'1.3-3' }}</div>
         </div>
