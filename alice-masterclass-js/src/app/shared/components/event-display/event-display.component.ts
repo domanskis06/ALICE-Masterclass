@@ -2351,6 +2351,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.requestRender(true);
   }
 
+
   @Input()
   get detectorShown(): boolean { return this.detector.visible; }
   set detectorShown(detectorShown: boolean) {
@@ -3934,8 +3935,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private findIntersect(event: MouseEvent): THREE.Intersection[] {
     const intersects: THREE.Intersection[] = [];
     const zoomz = this.controls.target.distanceTo(this.controls.object.position);
-    // ~30% larger than the previous zoomz/55 threshold so decay tracks are easier to hover.
-    const lineThreshold = zoomz / 42;
+    // Larger than the visual linewidth so decay tracks are easier to hover/click.
+    const lineThreshold = zoomz / 2;
     const raycaster = new THREE.Raycaster();
     if (!raycaster.params.Line2) {
       raycaster.params.Line2 = { threshold: lineThreshold };
