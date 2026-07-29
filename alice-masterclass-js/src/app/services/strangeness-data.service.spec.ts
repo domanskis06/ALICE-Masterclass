@@ -37,14 +37,13 @@ describe('StrangenessDataService', () => {
     expect(service.claimTracksForHistogram(key, ['0:-', '1:+'])).toBeTrue();
   });
 
-  it('reports Xi-extended workshop and full-dataset event counts', () => {
+  it('reports workshop and full-dataset event counts', () => {
     expect(service.getEventsInDataset(0)).toBe(4);
-    expect(service.getEventsInDataset(1)).toBe(17);
-    expect(service.getEventsInDataset(12)).toBe(17);
-    expect(service.getEventsInDataset(13)).toBe(16);
-    expect(service.getEventsInDataset(19)).toBe(16);
-    expect(service.getEventsInDataset(20)).toBe(5);
-    expect(service.FULL_EVENT_FILE_IDS[4]).toBe(15);
+    expect(service.getEventsInDataset(1)).toBe(15);
+    expect(service.getEventsInDataset(12)).toBe(15);
+    expect(service.getEventsInDataset(19)).toBe(15);
+    expect(service.getEventsInDataset(20)).toBe(4);
+    expect(service.FULL_EVENT_FILE_IDS).toEqual([0, 1, 2, 3]);
   });
 
   it('maps picker ids to on-disk dataset numbers', () => {

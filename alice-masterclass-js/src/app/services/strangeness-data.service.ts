@@ -24,21 +24,14 @@ export class StrangenessDataService {
   readonly DEMO_DATASET_ID = 0;
 
   /**
-   * Workshop datasets 1–19: original events 0–14 plus Xi at 15 (and 16 for datasets 1–12).
-   * Use {@link getEventsInDataset} for the per-dataset length.
+   * Workshop datasets 1–19: fifteen events (file ids 0–14). Ξ / Ξ̅ cascades are
+   * merged into selected hosts — see `data/strangeness/part1_Xi/`.
    */
-  readonly EVENTS_IN_DATASET = 17;
-  /** Datasets 13–19 have a single appended Xi (event index 15 only). */
-  readonly EVENTS_IN_DATASET_ONE_XI = 16;
-  /** Datasets 1–12 have two appended Xi events (indices 15 and 16). */
-  readonly XI_DOUBLE_DATASET_MAX = 12;
+  readonly EVENTS_IN_DATASET = 15;
 
-  /**
-   * Full (dataset 20) keeps the original four dense events, then the Xi cascade
-   * file `event_20_15.json` as the 5th navigable slot.
-   */
-  readonly FULL_EVENT_FILE_IDS: readonly number[] = [0, 1, 2, 3, 15];
-  readonly EVENTS_IN_FULL_DATASET = 5;
+  /** Full (dataset 20): four dense Pb–Pb events (cascade lives in event 1). */
+  readonly FULL_EVENT_FILE_IDS: readonly number[] = [0, 1, 2, 3];
+  readonly EVENTS_IN_FULL_DATASET = 4;
   readonly FULL_DATASET_ID = 20;
 
   readonly DATA_UPLOAD_COMPLETED_DURATION = 800;
@@ -189,12 +182,6 @@ export class StrangenessDataService {
     }
     if (datasetNum === this.FULL_DATASET_ID) {
       return this.EVENTS_IN_FULL_DATASET;
-    }
-    if (datasetNum >= 1 && datasetNum <= this.XI_DOUBLE_DATASET_MAX) {
-      return this.EVENTS_IN_DATASET;
-    }
-    if (datasetNum >= 13 && datasetNum <= 19) {
-      return this.EVENTS_IN_DATASET_ONE_XI;
     }
     return this.EVENTS_IN_DATASET;
   }

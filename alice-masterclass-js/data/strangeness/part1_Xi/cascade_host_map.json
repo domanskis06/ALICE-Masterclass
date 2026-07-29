@@ -1,0 +1,166 @@
+{
+  "seed": 20260729,
+  "notes": "Deterministic host map for merging 32 \u039e/\u039e\u0305 cascades into VA assets. Dataset 6 uses empty-decay hosts 6/7/10/14; dataset 20 uses event 1 and keeps its V0; other hosts demote existing V0s (plan A).",
+  "assignments": [
+    {
+      "cascadeIndex": 15,
+      "dataset": 1,
+      "event": 2
+    },
+    {
+      "cascadeIndex": 20,
+      "dataset": 1,
+      "event": 8
+    },
+    {
+      "cascadeIndex": 29,
+      "dataset": 2,
+      "event": 7
+    },
+    {
+      "cascadeIndex": 26,
+      "dataset": 2,
+      "event": 8
+    },
+    {
+      "cascadeIndex": 25,
+      "dataset": 3,
+      "event": 4
+    },
+    {
+      "cascadeIndex": 0,
+      "dataset": 4,
+      "event": 12
+    },
+    {
+      "cascadeIndex": 17,
+      "dataset": 5,
+      "event": 11
+    },
+    {
+      "cascadeIndex": 1,
+      "dataset": 6,
+      "event": 6
+    },
+    {
+      "cascadeIndex": 19,
+      "dataset": 6,
+      "event": 7
+    },
+    {
+      "cascadeIndex": 2,
+      "dataset": 6,
+      "event": 10
+    },
+    {
+      "cascadeIndex": 18,
+      "dataset": 6,
+      "event": 14
+    },
+    {
+      "cascadeIndex": 3,
+      "dataset": 7,
+      "event": 8
+    },
+    {
+      "cascadeIndex": 13,
+      "dataset": 8,
+      "event": 12
+    },
+    {
+      "cascadeIndex": 28,
+      "dataset": 9,
+      "event": 12
+    },
+    {
+      "cascadeIndex": 12,
+      "dataset": 9,
+      "event": 13
+    },
+    {
+      "cascadeIndex": 6,
+      "dataset": 10,
+      "event": 2
+    },
+    {
+      "cascadeIndex": 11,
+      "dataset": 10,
+      "event": 14
+    },
+    {
+      "cascadeIndex": 22,
+      "dataset": 11,
+      "event": 4
+    },
+    {
+      "cascadeIndex": 30,
+      "dataset": 11,
+      "event": 13
+    },
+    {
+      "cascadeIndex": 24,
+      "dataset": 12,
+      "event": 5
+    },
+    {
+      "cascadeIndex": 27,
+      "dataset": 12,
+      "event": 11
+    },
+    {
+      "cascadeIndex": 21,
+      "dataset": 13,
+      "event": 4
+    },
+    {
+      "cascadeIndex": 10,
+      "dataset": 13,
+      "event": 6
+    },
+    {
+      "cascadeIndex": 14,
+      "dataset": 14,
+      "event": 13
+    },
+    {
+      "cascadeIndex": 4,
+      "dataset": 15,
+      "event": 3
+    },
+    {
+      "cascadeIndex": 16,
+      "dataset": 16,
+      "event": 7
+    },
+    {
+      "cascadeIndex": 8,
+      "dataset": 17,
+      "event": 9
+    },
+    {
+      "cascadeIndex": 9,
+      "dataset": 17,
+      "event": 13
+    },
+    {
+      "cascadeIndex": 23,
+      "dataset": 18,
+      "event": 14
+    },
+    {
+      "cascadeIndex": 31,
+      "dataset": 19,
+      "event": 9
+    },
+    {
+      "cascadeIndex": 7,
+      "dataset": 19,
+      "event": 14
+    },
+    {
+      "cascadeIndex": 5,
+      "dataset": 20,
+      "event": 1
+    }
+  ]
+}

@@ -17,7 +17,7 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 | --- | --- |
 | [`event-display.md`](event-display.md) | Three.js EventDisplay (god component) and Services |
 | [`particle-propagation.md`](particle-propagation.md) | Particle Propagation module — origins, field/event data, architecture, L3 magnet stand-in |
-| [`../../alice-masterclass-js/data/strangeness/part1_Xi/README.md`](../../alice-masterclass-js/data/strangeness/part1_Xi/README.md) | Ξ / Ξ̅ cascade VA data — FemtoUniverse dump, helix converter, dataset mapping, regenerate |
+| [`../../alice-masterclass-js/data/strangeness/part1_Xi/README.md`](../../alice-masterclass-js/data/strangeness/part1_Xi/README.md) | Ξ / Ξ̅ cascade VA data — FemtoUniverse dump, helix converter, merge into host events, regenerate |
 
 ## Testing
 
