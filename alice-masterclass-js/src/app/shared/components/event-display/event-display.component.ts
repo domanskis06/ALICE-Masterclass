@@ -853,8 +853,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** Cancels an in-flight assembly zoom-out when another piece is placed. */
   private assemblyCameraZoomGeneration = 0;
   cameraMode: 'centered' | 'free' = 'centered';
+  /** Track currently flashing yellow after a decay click (not pointer-hover). */
   private trackHoverObj: THREE.Object3D = null;
   private trackHoverOrigMaterial: THREE.Material = null;
+  private clickHighlightTimer: ReturnType<typeof setTimeout> | null = null;
   private decayGroupHovered: THREE.Object3D | null = null;
   private cascadeHoverActive: boolean = false;
   vertexMarkerTooltip: { label: string; x: number; y: number } | null = null;
@@ -2777,6 +2779,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   private rebuildTracksFromEvent(): void {
     this.clearCascadeHover();
+    this.clearClickHighlight();
     this.tracks.clear();
     this.decays.clear();
     this.clearPrimaryVertexMarkers();
@@ -3698,21 +3701,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     if (this.decays.visible) {
       this.clearCascadeHover();
-      if (this.trackHoverObj === null) {
-        this.trackHoverObj = obj;
-        this.trackHoverOrigMaterial = Array.isArray(obj.material) ? obj.material[0] : obj.material;
-        obj.material = this.highlightTrackMaterial;
-        const highlightStop = () => {
-          if (this.trackHoverObj !== null) {
-            (this.trackHoverObj as THREE.Mesh).material = this.trackHoverOrigMaterial;
-          }
-          this.trackHoverObj = null;
-          this.trackHoverOrigMaterial = null;
-          this.requestRender(true);
-        };
-        setTimeout(highlightStop, this.CLICK_HIGHLIGHT_DURATION);
+      // Brief yellow flash on the clicked daughter. Hover must not run during this
+      // window — otherwise cascade hover stores highlightTrackMaterial as
+      // cascadeHoverOrigMat and clearCascadeHover leaves the yellow stuck.
+      this.clearClickHighlight();
+      this.trackHoverObj = obj;
+      this.trackHoverOrigMaterial = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      obj.material = this.highlightTrackMaterial;
+      this.clickHighlightTimer = setTimeout(() => {
+        this.clickHighlightTimer = null;
+        this.clearClickHighlight();
         this.requestRender(true);
-      }
+      }, this.CLICK_HIGHLIGHT_DURATION);
+      this.requestRender(true);
       this.trackClickedEvent.emit((obj as any).userData);
     }
   }
@@ -3724,6 +3725,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.lastMousePanX = event.clientX;
       this.lastMousePanY = event.clientY;
       this.applyMousePan(deltaX, deltaY);
+      return;
+    }
+    // Click-flash owns materials until the timeout; skip cascade hover so it
+    // cannot capture highlightTrackMaterial as the restore target.
+    if (this.trackHoverObj !== null) {
+      this.vertexMarkerTooltip = null;
       return;
     }
     const intersects = this.findIntersect(event);
@@ -3811,7 +3818,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (!(line as any).isLine2 || !line.material) {
         continue;
       }
-      const orig = line.material as LineMaterial;
+      let orig = line.material as LineMaterial;
+      // Never treat the temporary click-flash material as the restore target.
+      if (orig === this.highlightTrackMaterial) {
+        orig = (this.trackHoverOrigMaterial as LineMaterial) || orig;
+      }
+      if (orig === this.highlightTrackMaterial) {
+        continue;
+      }
       (line as any).userData = {
         ...((line as any).userData || {}),
         cascadeHoverOrigMat: orig,
@@ -3838,6 +3852,45 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.requestRender(true);
   }
 
+  /**
+   * Ends the yellow click-flash and restores the track material.
+   * Also repairs cascade-hover bookkeeping if hover captured the highlight mat.
+   */
+  private clearClickHighlight(): void {
+    if (this.clickHighlightTimer != null) {
+      clearTimeout(this.clickHighlightTimer);
+      this.clickHighlightTimer = null;
+    }
+    if (this.trackHoverObj !== null) {
+      const mesh = this.trackHoverObj as THREE.Mesh & {
+        userData?: { cascadeHoverOrigMat?: THREE.Material };
+      };
+      if (mesh.userData?.cascadeHoverOrigMat === this.highlightTrackMaterial) {
+        mesh.userData.cascadeHoverOrigMat = this.trackHoverOrigMaterial;
+      }
+      if (mesh.material === this.highlightTrackMaterial && this.trackHoverOrigMaterial) {
+        mesh.material = this.trackHoverOrigMaterial;
+      }
+    }
+    this.trackHoverObj = null;
+    this.trackHoverOrigMaterial = null;
+  }
+
+  /** Shared decay material for a track line (used if hover restore data is corrupt). */
+  private sharedMaterialForDecayLine(line: Line2): THREE.Material {
+    const ud = (line as any).userData || {};
+    if (ud.type === TrackType.CASCADE_BACHELOR) {
+      return this.bachelorTrackMaterial;
+    }
+    if (typeof ud.sign === 'number' && ud.sign < 0) {
+      return this.negativeTrackMaterial;
+    }
+    if (typeof ud.sign === 'number' && ud.sign > 0) {
+      return this.postiveTrackMaterial;
+    }
+    return this.trackMaterial;
+  }
+
   private clearCascadeHover() {
     const hadHover = !!(
       this.decayGroupHovered ||
@@ -3846,11 +3899,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (this.decayGroupHovered) {
       for (const child of this.decayGroupHovered.children) {
         const line = child as Line2;
-        const orig = (line as any).userData?.cascadeHoverOrigMat as LineMaterial | undefined;
+        let orig = (line as any).userData?.cascadeHoverOrigMat as LineMaterial | undefined;
         if (orig && (line as any).isLine2) {
+          // Guard: never leave the click-flash yellow material permanently applied.
+          if (orig === this.highlightTrackMaterial) {
+            orig = this.sharedMaterialForDecayLine(line) as LineMaterial;
+          }
           const cloned = line.material as LineMaterial;
           line.material = orig;
-          if (cloned && cloned !== orig) {
+          if (cloned && cloned !== orig && cloned !== this.highlightTrackMaterial) {
             cloned.dispose();
           }
           delete (line as any).userData.cascadeHoverOrigMat;
