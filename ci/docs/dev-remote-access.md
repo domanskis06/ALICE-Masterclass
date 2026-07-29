@@ -1,5 +1,9 @@
 # ALICE MasterClass dev — remote access via SSH SOCKS tunnel
 
+> **Before starting this guide:** activate **AFS service (AFS account, `/afs/cern.ch/user/` area)** at  
+> `https://resources-portal.web.cern.ch/service/central-compute-services`.  
+> Without active AFS (and LXPLUS/Linux access), SSH tunneling to `lxtunnel.cern.ch` may fail.
+
 This guide explains how to open the **dev** web apps from **outside the CERN
 network** (home, mobile hotspot, university Wi‑Fi, etc.).
 
