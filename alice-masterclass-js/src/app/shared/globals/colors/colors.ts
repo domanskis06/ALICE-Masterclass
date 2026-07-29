@@ -5,7 +5,7 @@ export const negativeTrackColor = '#32CD32';
 export const bachelorTrackColor = '#7B97EA';
 export const highlightColor = '#DEDE00';
 /** Dark-mode override for the generic (untyped) track only. */
-export const neonTrackColor = '#FFFFFF';
+export const neonTrackColor = '#C8D4E6';
 /** EMCal/DCal energy-readout bars — light background (deeper red for contrast). */
 export const caloBarColorLight = '#C62828';
 /** EMCal/DCal energy-readout bars — dark / neon scene (brighter red + bloom). */

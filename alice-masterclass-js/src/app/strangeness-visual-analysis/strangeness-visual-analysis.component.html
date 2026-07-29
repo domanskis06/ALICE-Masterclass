@@ -145,6 +145,7 @@
                 data-testid="va-dataset-select"
                 [(ngModel)]="datasetID"
                 [disabled]="isDetectorAssemblyInProgress"
+                [panelClass]="datasetSelectPanelClass"
                 (selectionChange)="onDatasetChange($event.value)">
                 <mat-select-trigger>
                   @if (datasetID === -1) {

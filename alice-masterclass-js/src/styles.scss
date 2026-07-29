@@ -113,3 +113,23 @@ div.mat-mdc-select-panel.calculator-particle-select-panel {
     background: rgba(148, 163, 184, 0.12);
   }
 }
+
+/* VA dataset mat-select overlay (CDK; outside component host). */
+.va-dataset-select-panel.va-dataset-select-panel--dark {
+  background: #0a1832;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+
+  .mat-mdc-option,
+  .mat-mdc-option .mdc-list-item__primary-text {
+    color: #e5edf7;
+  }
+
+  .mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) {
+    background: rgba(148, 163, 184, 0.18);
+  }
+
+  .mat-mdc-option:hover:not(.mdc-list-item--disabled),
+  .mat-mdc-option.mat-mdc-option-active {
+    background: rgba(148, 163, 184, 0.12);
+  }
+}
