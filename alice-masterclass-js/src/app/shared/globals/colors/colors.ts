@@ -3,7 +3,8 @@ export const clusterColor = '#9933FF';
 export const positiveTrackColor = '#E53935'; // red (positively charged decay tracks)
 export const negativeTrackColor = '#32CD32';
 export const bachelorTrackColor = '#7B97EA';
-export const highlightColor = '#DEDE00';
+/** Softened classic gold — brief click flash on a decay track. */
+export const highlightColor = '#D4D040';
 /** Dark-mode override for the generic (untyped) track only. */
 export const neonTrackColor = '#C8D4E6';
 /** EMCal/DCal energy-readout bars — light background (deeper red for contrast). */
