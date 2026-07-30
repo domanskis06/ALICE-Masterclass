@@ -2415,6 +2415,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get decaysShown(): boolean { return this.desiredDecaysShown; }
   set decaysShown(decaysShown: boolean) {
     this.desiredDecaysShown = decaysShown;
+    if (!decaysShown) {
+      this.clearClickHighlight();
+      this.beginCascadeHoverFadeOut();
+    }
     this.applyDecayTrackMaterials();
     this.applyDesiredPhysicsVisibility();
     this.requestRender(true);
@@ -3718,7 +3722,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     if (markerLabel) {
       return;
     }
-    if (this.decays.visible) {
+    if (this.desiredDecaysShown && this.decays.visible) {
       const line = obj as unknown as Line2;
       if (
         (line as any).isLine2 &&
@@ -3776,6 +3780,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.vertexMarkerTooltip = null;
       const obj = intersects[0]?.object as THREE.Object3D & { userData?: { isDecayTrack?: boolean } };
       const isDecayLine =
+        this.desiredDecaysShown &&
         this.decays.visible &&
         !!obj &&
         !!(obj as any).isLine2 &&
@@ -3799,7 +3804,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private findDecayGroupByIndex(decayIndex: number | undefined | null): THREE.Object3D | null {
-    if (decayIndex === undefined || decayIndex === null || !this.decays.visible) {
+    if (
+      decayIndex === undefined ||
+      decayIndex === null ||
+      !this.desiredDecaysShown ||
+      !this.decays.visible
+    ) {
       return null;
     }
     for (const child of this.decays.children) {
@@ -4145,7 +4155,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       );
       if (ndcpos.x < -1 || ndcpos.x > 1 || ndcpos.y < -1 || ndcpos.y > 1) continue;
       raycaster.setFromCamera(ndcpos, cam);
-      if (this.decays.children.length > 0) {
+      if (this.desiredDecaysShown && this.decays.children.length > 0) {
         intersects.push(...raycaster.intersectObjects(this.decays.children, true));
       }
       if (this.primaryVertexMarkers.children.length > 0) {
