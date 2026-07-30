@@ -74,6 +74,10 @@
           }
         </div>
 
+        <div class="scene-skip-slot">
+          <ng-content select="[edSceneSkip]"></ng-content>
+        </div>
+
         @if (loading && (!detectorMultipartAssemblyMode || detectorInteractiveAssemblyDone)) {
           <div id="spinner" fxLayout="column" fxLayoutAlign="center center"><mat-spinner></mat-spinner></div>
         }
@@ -84,28 +88,32 @@
         [attr.aria-label]="'EVENT_DISPLAY.DETECTOR_PARTS' | translate"
         [attr.aria-hidden]="!leftSidebarOpened">
         <div class="sidebar-body left-sidebar">
-          <div class="event-meta-slot">
-            <ng-content></ng-content>
-          </div>
           @if (detectorInteractiveAssemblyDone && detectorPartsForUi.length > 0) {
             <div class="detector-parts-panel">
               <h4>{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}</h4>
-              <div class="theme-toggle-row">
+              <div
+                class="detector-part-controls detector-global-controls"
+                fxLayout="column"
+                fxLayoutGap="4px"
+                style="--part-accent: #455a64">
                 <mat-slide-toggle
+                  class="detector-global-toggle"
                   [(ngModel)]="detectorShown"
                   [ngModelOptions]="{ standalone: true }"
                   aria-label="Toggle entire detector">
                   {{ 'EVENT_DISPLAY.DETECTOR' | translate }}
                 </mat-slide-toggle>
-                @if (showThemeToggle) {
-                  <mat-slide-toggle
-                    [ngModel]="darkMode"
-                    [ngModelOptions]="{ standalone: true }"
-                    (ngModelChange)="darkModeChange.emit($event)"
-                    aria-label="Toggle dark visual theme">
-                    <mat-icon aria-hidden="true">dark_mode</mat-icon>
-                  </mat-slide-toggle>
-                }
+                <input
+                  type="range"
+                  class="part-opacity-slider"
+                  min="0.05"
+                  max="0.95"
+                  step="0.01"
+                  [disabled]="!detectorShown"
+                  [ngModel]="detectorOpacity"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="setGlobalDetectorOpacity($event)"
+                  aria-label="Detector opacity slider" />
               </div>
               <div fxLayout="column" fxLayoutGap="8px">
                 @for (part of detectorPartsForUi; track part.assetPath) {
@@ -171,6 +179,12 @@
                 }
               </div>
             }
+            <div
+              class="event-meta-slot"
+              [hidden]="!detectorInteractiveAssemblyDone"
+              [attr.aria-hidden]="!detectorInteractiveAssemblyDone">
+              <ng-content select="[edSidebarMeta]"></ng-content>
+            </div>
             @if (detectorInteractiveAssemblyDone) {
               <div class="options">
                 <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
@@ -182,6 +196,15 @@
                   <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
                   <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
                   <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
+                  @if (showThemeToggle) {
+                    <mat-slide-toggle
+                      [ngModel]="darkMode"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="darkModeChange.emit($event)"
+                      [attr.aria-label]="'EVENT_DISPLAY.DARK_LIGHT_MODE' | translate">
+                      {{ 'EVENT_DISPLAY.DARK_LIGHT_MODE' | translate }}
+                    </mat-slide-toggle>
+                  }
                 </div>
                 @if (hasClusters) {
                   <h4>{{ 'EVENT_DISPLAY.CLUSTER_SIZE' | translate }}</h4>

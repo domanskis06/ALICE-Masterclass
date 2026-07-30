@@ -136,6 +136,20 @@ mat-card-content {
   padding: 12px 14px 8px;
   box-sizing: border-box;
   border-bottom: 1px solid var(--ed-border);
+
+  &:empty,
+  &[hidden] {
+    display: none;
+  }
+}
+
+.scene-skip-slot {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  // Projected skip keeps parent encapsulation — do not rely on `> *` for pointer-events.
+  pointer-events: auto;
 }
 
 .detector-parts-panel {
@@ -157,6 +171,16 @@ mat-card-content {
     white-space: normal;
     font-size: 13px;
     line-height: 1.35;
+  }
+
+  .detector-global-controls {
+    margin-bottom: 12px;
+  }
+
+  .detector-global-toggle {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
   }
 
   .detector-part-controls {
@@ -228,14 +252,6 @@ mat-card-content {
       }
     }
   }
-}
-
-.theme-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 0 0 12px;
 }
 
 .assembly-palette {

@@ -105,16 +105,6 @@
 
   <div class="container" [class.va-dark-mode]="visualDarkMode" fxFlex="grow" fxLayout="column">
     <div class="va-event-display-wrap">
-      @if (isDetectorAssemblyInProgress && !showCollisionVideoIntro) {
-        <button
-          type="button"
-          class="va-skip-assembly-btn"
-          data-testid="va-skip-detector-assembly"
-          (click)="onSkipDetectorAssembly()"
-        >
-          skip
-        </button>
-      }
       <app-event-display
         #eventDisplayHost
         [backgroundColor]="visualDarkMode ? visualDarkBackgroundColor : visualLightBackgroundColor"
@@ -135,7 +125,18 @@
         (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
         (trackClickedEvent)="onTrackClicked($event)"
         >
-        <div class="event-meta-panel">
+        @if (isDetectorAssemblyInProgress && !showCollisionVideoIntro) {
+          <button
+            edSceneSkip
+            type="button"
+            class="va-skip-assembly-btn"
+            data-testid="va-skip-detector-assembly"
+            (click)="onSkipDetectorAssembly()"
+          >
+            skip
+          </button>
+        }
+        <div edSidebarMeta class="event-meta-panel">
           <div class="dataset-controls">
             <mat-form-field appearance="outline" class="dataset-select">
               <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>

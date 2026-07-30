@@ -1068,6 +1068,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       // Options panel stays open after the staggered shell reveal.
       this.sidebarOpened = true;
       if (nextUi.length > 0) {
+        this.detectorOpacity = nextUi[0].opacity;
         this.detectorLayersPanelOpened = true;
       }
       this.cdr.markForCheck();
@@ -1337,6 +1338,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (root) {
         root.visible = true;
       }
+    }
+    if (this.detectorPartsForUi.length > 0) {
+      this.detectorOpacity = this.detectorPartsForUi[0].opacity;
     }
     this.syncCalorimeterReadoutVisibility();
     this.persistDetectorPartUiState();
@@ -2407,6 +2411,17 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.syncCalorimeterReadoutVisibility();
     }
     this.requestRender(true);
+  }
+
+  /** Master opacity for the whole detector (left-panel global slider). */
+  detectorOpacity = EventDisplayComponent.DETECTOR_COMPONENT_OPACITY;
+
+  setGlobalDetectorOpacity(value: number | string): void {
+    const nextOpacity = Math.max(0.05, Math.min(0.95, Number(value)));
+    this.detectorOpacity = Number.isFinite(nextOpacity) ? nextOpacity : this.detectorOpacity;
+    for (const part of this.detectorPartsForUi) {
+      this.setDetectorPartOpacity(part, this.detectorOpacity);
+    }
   }
 
   private desiredTracksShown = true;

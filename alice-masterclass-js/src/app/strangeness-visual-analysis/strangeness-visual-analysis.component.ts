@@ -89,10 +89,12 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   /** Collision intro finished (or skipped) for this component instance. */
   private protonCollisionIntroFinished = false;
   /**
-   * Intro already played/skipped during this browser page load.
-   * Survives SPA module navigation; cleared on full refresh.
+   * sessionStorage: intro already played/skipped in this browser tab.
+   * Survives refresh and SPA navigation; cleared when the tab is closed
+   * (a new tab shows the intro again).
    */
-  private static collisionIntroSeenThisPageLoad = false;
+  private static readonly COLLISION_INTRO_SEEN_STORAGE_KEY =
+    'alice_mc_visualAnalysis_collisionIntroSeen_v1';
 
   /**
    * Proton–proton collision intro: template lists WebM then MP4 sources for codec coverage.
@@ -328,8 +330,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   /**
    * Proton–proton collision intro before the detector assembly coach.
-   * Replays after a full page refresh; skipped when returning via SPA module navigation
-   * after the intro (or assembly) already ran this page load.
+   * Plays once per browser tab (sessionStorage); skipped on refresh and SPA remounts
+   * after it has been seen. A new tab starts a fresh session and shows the intro again.
    */
   get showCollisionVideoIntro(): boolean {
     return (
@@ -337,6 +339,31 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       this.eventReadyForProtonIntro &&
       !this.protonCollisionIntroFinished
     );
+  }
+
+  private static isCollisionIntroSeenInSession(): boolean {
+    try {
+      return (
+        typeof sessionStorage !== 'undefined' &&
+        sessionStorage.getItem(StrangenessVisualAnalysisComponent.COLLISION_INTRO_SEEN_STORAGE_KEY) ===
+          '1'
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private static markCollisionIntroSeenInSession(): void {
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(
+          StrangenessVisualAnalysisComponent.COLLISION_INTRO_SEEN_STORAGE_KEY,
+          '1'
+        );
+      }
+    } catch {
+      // Private browsing / quota — ignore.
+    }
   }
 
   get vaCoachCurrentPiecePresentation(): Pick<DetectorPartToggleModel, 'labelKey' | 'labelParams'> {
@@ -469,7 +496,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   onProtonCollisionIntroFinished(): void {
     if (this.protonCollisionIntroFinished) return;
     this.protonCollisionIntroFinished = true;
-    StrangenessVisualAnalysisComponent.collisionIntroSeenThisPageLoad = true;
+    StrangenessVisualAnalysisComponent.markCollisionIntroSeenInSession();
     this.tryScheduleVaCoach();
   }
 
@@ -547,9 +574,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.maxEvents = this.dataService.getEventsInDataset(this.dataService.DEMO_DATASET_ID);
     if (
       !this.isDetectorAssemblyInProgress ||
-      StrangenessVisualAnalysisComponent.collisionIntroSeenThisPageLoad
+      StrangenessVisualAnalysisComponent.isCollisionIntroSeenInSession()
     ) {
-      // Assembly already done this page load, or intro already seen (SPA remount).
+      // Assembly already done this page load, or intro already seen in this tab.
       this.protonCollisionIntroFinished = true;
     }
     this.loadEvent().subscribe(
