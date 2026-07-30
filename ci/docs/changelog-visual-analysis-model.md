@@ -72,9 +72,11 @@ values simplify more aggressively at the cost of surface detail. `0.5` was chose
 detector layers stay recognisable at the distances/zoom levels used in the app, while file size and
 GPU vertex load drop substantially.
 
-EventDisplay additionally merges **ITS** and **TPC** meshes by material at load time
-(`optimize-detector-part.ts`) to cut draw calls without changing triangle detail. A trial second
-`gltfpack` pass on TPC/FIT/ITS was reverted — close-up detail looked too soft.
+EventDisplay load path (`optimize-detector-part.ts`):
+- **ITS / TPC** — merge by material only (full triangle detail for close-ups).
+- **FIT** — additional `gltfpack -si 0.5` on the shared GLB, then prune tiny CAD fragments + merge.
+- **Other non-calorimeter layers** (TRD, TOF, PHOS, L3, …) — prune tiny fragments + merge (no extra asset decimate).
+- **EMCal / DCal** — authored `SMOD_` / `DCSM_` graph preserved for energy bars.
 
 ### 4. Manual pruning
 
