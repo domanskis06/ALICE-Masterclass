@@ -2,17 +2,24 @@
  * Visual Analysis detector-part load optimisations for EventDisplay.
  *
  * - EMCal / DCal: untouched scene graph (`SMOD_` / `DCSM_` needed for energy bars).
- * - ITS / TPC: merge by material only (full triangle detail — no prune / no asset
+ * - ITS / TPC: mild batched merge only (full triangle detail — no prune / no asset
  *   decimate; close-up viewing stays sharp).
  * - Every other static layer (FIT, TRD, TOF, PHOS, L3, …): prune tiny CAD
- *   fragments then merge by material. Heavier layers are also pre-simplified in
+ *   fragments then the same mild batched merge. FIT is also pre-simplified in
  *   the GLB via gltfpack (see changelog).
  *
- * Particle Propagation keeps its own loader path (InstancedMesh / Melax LOD).
+ * Particle Propagation keeps its own loader path (full merge / InstancedMesh).
  */
 
 import * as THREE from 'three';
 import { mergeStaticMeshesByMaterial } from './merge-static-meshes';
+
+/**
+ * Mild VA merge: at most this many source meshes per draw call (per material).
+ * Full collapse (~1 mesh/material) was too aggressive for EventDisplay
+ * polygonOffset / close-up look; ~20× fewer draws than raw GLB is enough.
+ */
+export const VA_MERGE_MAX_GEOMETRIES_PER_BATCH = 20;
 
 /** EMCal / DCal must keep named panel nodes for cylindrical energy bars. */
 export function mustPreserveDetectorSceneGraph(assetPath: string): boolean {
@@ -78,5 +85,7 @@ export function optimizeStaticDetectorPart(
   if (!isMergeOnlyDetectorPart(assetPath)) {
     pruneTinyDetectorMeshes(root);
   }
-  return mergeStaticMeshesByMaterial(root);
+  return mergeStaticMeshesByMaterial(root, {
+    maxGeometriesPerBatch: VA_MERGE_MAX_GEOMETRIES_PER_BATCH,
+  });
 }

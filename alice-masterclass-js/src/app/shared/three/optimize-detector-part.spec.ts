@@ -44,6 +44,7 @@ describe('optimizeStaticDetectorPart', () => {
     root.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat));
 
     const optimized = optimizeStaticDetectorPart(root, 'assets/models/alice components/its.glb');
+    // 11 < VA batch size → still one draw call.
     expect(countMeshes(optimized)).toBe(1);
     const posCount = ((optimized.children[0] as THREE.Mesh).geometry as THREE.BufferGeometry)
       .attributes.position.count;
@@ -51,10 +52,10 @@ describe('optimizeStaticDetectorPart', () => {
     expect(posCount).toBe(11 * 24);
   });
 
-  it('prunes then merges non-ITS/TPC layers', () => {
+  it('prunes then mildly batches non-ITS/TPC layers', () => {
     const root = new THREE.Group();
     const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 45; i++) {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), mat);
       mesh.position.set(i * 5, 0, 0);
       root.add(mesh);
@@ -62,10 +63,8 @@ describe('optimizeStaticDetectorPart', () => {
     root.add(new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat));
 
     const optimized = optimizeStaticDetectorPart(root, 'assets/models/alice components/FIT.glb');
-    expect(countMeshes(optimized)).toBe(1);
-    const posCount = ((optimized.children[0] as THREE.Mesh).geometry as THREE.BufferGeometry)
-      .attributes.position.count;
-    expect(posCount).toBe(10 * 24);
+    // Tiny pruned → 45 meshes / batch 20 → 3 draw calls.
+    expect(countMeshes(optimized)).toBe(3);
   });
 
   it('leaves EMCal scene graph untouched', () => {

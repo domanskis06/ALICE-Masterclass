@@ -1169,9 +1169,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             detectorAssetPath: modelPath,
             detectorLayerIndex: pathIndex
           };
-          // Merge by material (draw-call cut). ITS/TPC: merge only, full tris.
-          // Other layers: prune tiny CAD bits first. EMCal/DCal stay unmerged
-          // (SMOD_/DCSM_ names for energy bars). FIT GLB is pre-gltfpacked.
+          // Mild batched merge (≤20 source meshes / draw). ITS/TPC: merge only.
+          // Other layers: prune tiny CAD bits first. EMCal/DCal stay unmerged.
+          // FIT GLB is pre-gltfpacked.
           scene = optimizeStaticDetectorPart(scene, modelPath);
           EventDisplayComponent.freezeStaticTransforms(scene);
           this.setDetectorMaterialsWithPolygonOffset(scene, defaultPartOpacity, pathIndex);
