@@ -609,7 +609,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /** Separates nested detector shells in depth (log-depth ignores polygonOffset). */
   private static readonly DETECTOR_LAYER_RADIAL_INFLATE_STEP = 0.0009;
 
-  /** sessionStorage: multipart assembly completed for this tab session. */
+  /**
+   * Multipart assembly completion for this browser page load.
+   * Survives SPA module navigation; cleared on full refresh (unlike sessionStorage).
+   */
+  private static multipartDetectorAssemblyCompletedSignature: string | null = null;
+
+  /** Legacy sessionStorage key — cleared so old tabs do not skip the build after refresh. */
   static readonly DETECTOR_ASSEMBLY_DONE_STORAGE_KEY = 'alice_mc_visualAnalysis_detectorAssembledPaths_v1';
   /** sessionStorage: per-part visibility/opacity after assembly (survives refresh). */
   static readonly DETECTOR_PART_UI_STORAGE_KEY = 'alice_mc_visualAnalysis_detectorPartUi_v1';
@@ -618,17 +624,37 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     return paths.join('\u0000');
   }
 
-  /** True when VA can skip the assembly coach for this session. */
+  private static clearLegacyAssemblySessionStorage(): void {
+    try {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(EventDisplayComponent.DETECTOR_ASSEMBLY_DONE_STORAGE_KEY);
+      }
+    } catch {
+      /* private browsing / quota */
+    }
+  }
+
+  /** True when VA can skip the assembly coach for this page load (not across refresh). */
   static isMultipartDetectorStoredComplete(paths: string[]): boolean {
     if (!paths?.length || paths.length < 2) return true;
-    try {
-      const saved = typeof sessionStorage !== 'undefined'
-        ? sessionStorage.getItem(EventDisplayComponent.DETECTOR_ASSEMBLY_DONE_STORAGE_KEY)
-        : null;
-      return saved !== null && saved === EventDisplayComponent.detectorAssemblyPathsSignature(paths);
-    } catch {
-      return false;
-    }
+    EventDisplayComponent.clearLegacyAssemblySessionStorage();
+    return (
+      EventDisplayComponent.multipartDetectorAssemblyCompletedSignature ===
+      EventDisplayComponent.detectorAssemblyPathsSignature(paths)
+    );
+  }
+
+  /** Marks assembly complete for this page load (tests / callers). */
+  static markMultipartDetectorAssemblyCompleteForPage(paths: string[]): void {
+    EventDisplayComponent.multipartDetectorAssemblyCompletedSignature =
+      EventDisplayComponent.detectorAssemblyPathsSignature(paths);
+    EventDisplayComponent.clearLegacyAssemblySessionStorage();
+  }
+
+  /** Clears in-memory assembly completion (tests). */
+  static resetMultipartDetectorAssemblyPageState(): void {
+    EventDisplayComponent.multipartDetectorAssemblyCompletedSignature = null;
+    EventDisplayComponent.clearLegacyAssemblySessionStorage();
   }
 
   private isStoredDetectorAssemblyComplete(paths: string[]): boolean {
@@ -636,14 +662,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private persistDetectorAssemblyCompleted(paths: string[]): void {
-    try {
-      sessionStorage.setItem(
-        EventDisplayComponent.DETECTOR_ASSEMBLY_DONE_STORAGE_KEY,
-        EventDisplayComponent.detectorAssemblyPathsSignature(paths)
-      );
-    } catch {
-      /* private browsing / quota */
-    }
+    EventDisplayComponent.markMultipartDetectorAssemblyCompleteForPage(paths);
   }
 
   /**

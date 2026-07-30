@@ -77,7 +77,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
-  /** Guided coach while multipart detector assembly is still required this session. */
+  /** Guided coach while multipart detector assembly is still required this page load. */
   vaCoachOverlayVisible = false;
   vaCoachWelcomePhase = true;
   vaCoachVictoryPhase = false;
@@ -86,8 +86,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private vaCoachOpenScheduled = false;
   /** First real event loaded — avoids running the collision intro on the empty stub event. */
   private eventReadyForProtonIntro = false;
-  /** Collision intro finished (or skipped because assembly was already done). */
+  /** Collision intro finished (or skipped) for this component instance. */
   private protonCollisionIntroFinished = false;
+  /**
+   * Intro already played/skipped during this browser page load.
+   * Survives SPA module navigation; cleared on full refresh.
+   */
+  private static collisionIntroSeenThisPageLoad = false;
 
   /**
    * Proton–proton collision intro: template lists WebM then MP4 sources for codec coverage.
@@ -316,14 +321,15 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     return this.assemblyCoachSteps[this.vaCoachPieceHintIndex] ?? null;
   }
 
-  /** True until the multipart detector has been fully assembled this session. */
+  /** True until the multipart detector has been fully assembled this page load. */
   get isDetectorAssemblyInProgress(): boolean {
     return !EventDisplayComponent.isMultipartDetectorStoredComplete(this.ALICE_DETECTOR_MODEL);
   }
 
   /**
-   * Show the MP4 proton–proton collision intro before the detector assembly coach.
-   * Skipped when assembly was already completed in this browser tab session.
+   * Proton–proton collision intro before the detector assembly coach.
+   * Replays after a full page refresh; skipped when returning via SPA module navigation
+   * after the intro (or assembly) already ran this page load.
    */
   get showCollisionVideoIntro(): boolean {
     return (
@@ -420,14 +426,25 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
   }
 
-  /** Skip collision intro + detector assembly coach and unlock the analysis UI. */
-  onSkipDetectorAssembly(): void {
-    if (!this.isDetectorAssemblyInProgress) return;
+  /** Skip only the collision intro video; detector assembly continues. */
+  onSkipCollisionIntro(): void {
+    if (this.protonCollisionIntroFinished) {
+      return;
+    }
     const video = this.collisionVideoRef?.nativeElement;
     if (video) {
       video.pause();
     }
-    this.protonCollisionIntroFinished = true;
+    this.onProtonCollisionIntroFinished();
+  }
+
+  /** Skip detector assembly coach and unlock the analysis UI (intro must already be done). */
+  onSkipDetectorAssembly(): void {
+    if (!this.isDetectorAssemblyInProgress) return;
+    if (this.showCollisionVideoIntro) {
+      // Assembly skip is only available after the intro layer is gone.
+      return;
+    }
     this.vaCoachOverlayVisible = false;
     this.vaCoachWelcomePhase = false;
     this.vaCoachVictoryPhase = false;
@@ -452,6 +469,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   onProtonCollisionIntroFinished(): void {
     if (this.protonCollisionIntroFinished) return;
     this.protonCollisionIntroFinished = true;
+    StrangenessVisualAnalysisComponent.collisionIntroSeenThisPageLoad = true;
     this.tryScheduleVaCoach();
   }
 
@@ -527,8 +545,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
   ngOnInit(): void {
     this.maxEvents = this.dataService.getEventsInDataset(this.dataService.DEMO_DATASET_ID);
-    if (!this.isDetectorAssemblyInProgress) {
-      // Returning session: no collision intro before assembly.
+    if (
+      !this.isDetectorAssemblyInProgress ||
+      StrangenessVisualAnalysisComponent.collisionIntroSeenThisPageLoad
+    ) {
+      // Assembly already done this page load, or intro already seen (SPA remount).
       this.protonCollisionIntroFinished = true;
     }
     this.loadEvent().subscribe(

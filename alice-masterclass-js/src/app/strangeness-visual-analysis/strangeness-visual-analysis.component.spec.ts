@@ -33,11 +33,11 @@ describe('StrangenessVisualAnalysisComponent', () => {
   });
 
   beforeEach(() => {
+    EventDisplayComponent.resetMultipartDetectorAssemblyPageState();
     fixture = TestBed.createComponent(StrangenessVisualAnalysisComponent);
     component = fixture.componentInstance;
     sessionStorage.clear();
-    const assemblySig = component.ALICE_DETECTOR_MODEL.join('\u0000');
-    sessionStorage.setItem(EventDisplayComponent.DETECTOR_ASSEMBLY_DONE_STORAGE_KEY, assemblySig);
+    EventDisplayComponent.markMultipartDetectorAssemblyCompleteForPage(component.ALICE_DETECTOR_MODEL);
     fixture.detectChanges();
   });
 
