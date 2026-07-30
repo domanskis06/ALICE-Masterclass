@@ -22,11 +22,15 @@ mat-card-content {
   --ed-bg-panel-solid: #ffffff;
   --ed-border: rgba(0, 0, 0, 0.14);
   --ed-text: rgba(0, 0, 0, 0.82);
-  --ed-left-sidebar-width: 240px;
-  --ed-right-sidebar-width: 200px;
+  --ed-sidebar-width: 240px;
+  --ed-left-sidebar-width: var(--ed-sidebar-width);
+  --ed-right-sidebar-width: var(--ed-sidebar-width);
   --ed-sidebar-duration: 0.28s;
 
   position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -36,12 +40,14 @@ mat-card-content {
 
 .scene-area {
   position: relative;
-  width: 100%;
+  order: 2;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 100%;
   overflow: hidden;
 }
 
-// Tracks the sidebar edge so it stays visible while the panel slides.
+// Sit on the scene edge (scene already excludes open sidebars).
 .sidebar-toggle {
   position: absolute;
   top: 8px;
@@ -49,9 +55,6 @@ mat-card-content {
   color: var(--ed-text);
   background: color-mix(in srgb, var(--ed-bg-panel-solid) 82%, transparent);
   backdrop-filter: blur(6px);
-  transition:
-    left var(--ed-sidebar-duration) ease,
-    right var(--ed-sidebar-duration) ease;
 }
 
 .sidebar-toggle--right {
@@ -62,59 +65,64 @@ mat-card-content {
   left: 8px;
 }
 
-.event-display-host:not(.ed-sidebar-collapsed) .sidebar-toggle--right {
-  right: calc(var(--ed-right-sidebar-width) + 8px);
-}
-
-.event-display-host:not(.ed-left-sidebar-collapsed) .sidebar-toggle--left {
-  left: calc(var(--ed-left-sidebar-width) + 8px);
-}
-
-// Overlay drawers — scene keeps a fixed size so WebGL never flashes on toggle.
+// Side panels share a row with the scene — width animates so WebGL reflows smoothly.
 .controls-sidebar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
   z-index: 4;
+  flex: 0 0 auto;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
   background: var(--ed-bg-panel-solid);
   color: var(--ed-text);
-  transition: transform var(--ed-sidebar-duration) ease;
-  will-change: transform;
+  transition:
+    width var(--ed-sidebar-duration) ease,
+    min-width var(--ed-sidebar-duration) ease,
+    border-color var(--ed-sidebar-duration) ease;
+  will-change: width;
 }
 
 .controls-sidebar--right {
-  right: 0;
+  order: 3;
   width: var(--ed-right-sidebar-width);
-  max-width: var(--ed-right-sidebar-width);
+  min-width: var(--ed-right-sidebar-width);
   border-left: 1px solid var(--ed-border);
-  transform: translateX(0);
 }
 
 .controls-sidebar--left {
-  left: 0;
+  order: 1;
   width: var(--ed-left-sidebar-width);
-  max-width: var(--ed-left-sidebar-width);
+  min-width: var(--ed-left-sidebar-width);
   border-right: 1px solid var(--ed-border);
-  transform: translateX(0);
   // Keep detector parts fixed — no vertical rubber-band / drag scroll.
   overflow-y: hidden;
 }
 
 .event-display-host.ed-sidebar-collapsed .controls-sidebar--right {
-  transform: translateX(100%);
+  width: 0;
+  min-width: 0;
+  border-left-color: transparent;
   pointer-events: none;
 }
 
 .event-display-host.ed-left-sidebar-collapsed .controls-sidebar--left {
-  transform: translateX(-100%);
+  width: 0;
+  min-width: 0;
+  border-right-color: transparent;
   pointer-events: none;
 }
 
 .sidebar-body {
   min-width: 0;
+  box-sizing: border-box;
+}
+
+.controls-sidebar--left .sidebar-body {
+  width: var(--ed-left-sidebar-width);
+}
+
+.controls-sidebar--right .sidebar-body {
+  width: var(--ed-right-sidebar-width);
 }
 
 .left-sidebar {
@@ -224,8 +232,10 @@ mat-card-content {
 
 .theme-toggle-row {
   display: flex;
-  justify-content: flex-end;
-  margin: -6px 0 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
 }
 
 .assembly-palette {
@@ -314,7 +324,7 @@ mat-card-content {
   overflow: hidden;
 }
 
-// Overlay on the canvas (full-bleed render-area) — slide with open sidebars.
+// Overlay on the scene edge — scene already excludes open sidebars.
 // Distinct from .sidebar-toggle: taller capsule, skip icons, no frosted blur.
 .event-nav-btn {
   position: absolute;
@@ -330,8 +340,6 @@ mat-card-content {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
   transform: translateY(-50%);
   transition:
-    left var(--ed-sidebar-duration) ease,
-    right var(--ed-sidebar-duration) ease,
     background 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -373,14 +381,6 @@ mat-card-content {
   right: 8px;
 }
 
-.event-display-host:not(.ed-left-sidebar-collapsed) .event-nav-btn--prev {
-  left: calc(var(--ed-left-sidebar-width) + 8px);
-}
-
-.event-display-host:not(.ed-sidebar-collapsed) .event-nav-btn--next {
-  right: calc(var(--ed-right-sidebar-width) + 8px);
-}
-
 /* Above sidebar toggle (z=5) so LETS US is not covered by the chevron. */
 .event-display-corner-overlay {
   position: absolute;
@@ -389,11 +389,6 @@ mat-card-content {
   z-index: 6;
   pointer-events: none;
   max-width: min(300px, 42%);
-}
-
-.event-display-host:not(.ed-sidebar-collapsed) .event-display-corner-overlay {
-  /* Gap from the open assembly / options drawer. */
-  right: calc(var(--ed-right-sidebar-width) + 14px);
 }
 
 #spinner {
@@ -411,7 +406,7 @@ mat-card-content {
   padding: 12px 0 20px;
 
   > * {
-    padding: 0 16px;
+    padding: 0 14px;
   }
 
   h4 {
@@ -420,6 +415,19 @@ mat-card-content {
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+
+  // Match left-panel detector part label size.
+  mat-slide-toggle {
+    display: block;
+    white-space: normal;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  mat-radio-button {
+    font-size: 13px;
+    line-height: 1.35;
   }
 }
 

@@ -90,8 +90,14 @@
           @if (detectorInteractiveAssemblyDone && detectorPartsForUi.length > 0) {
             <div class="detector-parts-panel">
               <h4>{{ 'EVENT_DISPLAY.DETECTOR_PARTS' | translate }}</h4>
-              @if (showThemeToggle) {
-                <div class="theme-toggle-row">
+              <div class="theme-toggle-row">
+                <mat-slide-toggle
+                  [(ngModel)]="detectorShown"
+                  [ngModelOptions]="{ standalone: true }"
+                  aria-label="Toggle entire detector">
+                  {{ 'EVENT_DISPLAY.DETECTOR' | translate }}
+                </mat-slide-toggle>
+                @if (showThemeToggle) {
                   <mat-slide-toggle
                     [ngModel]="darkMode"
                     [ngModelOptions]="{ standalone: true }"
@@ -99,8 +105,8 @@
                     aria-label="Toggle dark visual theme">
                     <mat-icon aria-hidden="true">dark_mode</mat-icon>
                   </mat-slide-toggle>
-                </div>
-              }
+                }
+              </div>
               <div fxLayout="column" fxLayoutGap="8px">
                 @for (part of detectorPartsForUi; track part.assetPath) {
                   <div
@@ -170,7 +176,6 @@
                 <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
                 <div fxLayout="column" fxLayoutGap="8px">
                   <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
-                  <mat-slide-toggle [(ngModel)]="detectorShown">{{ 'EVENT_DISPLAY.DETECTOR' | translate }}</mat-slide-toggle>
                   @if (hasClusters) {
                     <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
                   }

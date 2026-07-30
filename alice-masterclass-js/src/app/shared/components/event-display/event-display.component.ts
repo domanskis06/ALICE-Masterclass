@@ -835,7 +835,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   loading: boolean = false;
   sidebarOpened: boolean = true;
-  /** Left overlay drawer: dataset/event meta + detector parts. */
+  /** Left panel: dataset/event meta + detector parts. */
   leftSidebarOpened: boolean = true;
   /** @deprecated Alias kept in sync for older call sites. */
   get detectorLayersPanelOpened(): boolean {
@@ -845,7 +845,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.leftSidebarOpened = value;
   }
 
-  /** Overlay sidebars use transform only — canvas size stays fixed. */
+  /** Side panels occupy layout width; the scene flexes between them. */
   toggleSidebar(): void {
     this.sidebarOpened = !this.sidebarOpened;
   }
@@ -940,6 +940,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private rafId: number | null = null;
   private viewDestroyed = false;
   private resizeObserver: ResizeObserver | null = null;
+  /** Last CSS size applied to the WebGL canvas (avoids DPR false positives). */
+  private lastDisplayWidth = 0;
+  private lastDisplayHeight = 0;
   private keysDown: { [key: string]: boolean } = {};
   private panVec = new THREE.Vector3();
   private panRight = new THREE.Vector3();
@@ -3227,6 +3230,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const parent = this.canvas.parentElement;
       const displayWidth = parent.clientWidth;
       const displayHeight = parent.clientHeight;
+      if (displayWidth <= 0 || displayHeight <= 0) {
+        return;
+      }
       const basePixelRatio = window.devicePixelRatio || 1;
       // Always full DPR — side views are cost-controlled by dirty-only full-res passes.
       if (Math.abs(this.renderer.getPixelRatio() - basePixelRatio) > 0.01) {
@@ -3234,7 +3240,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.composer?.setPixelRatio(basePixelRatio);
         force = true;
       }
-      if (force || this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
+      if (
+        force ||
+        this.lastDisplayWidth !== displayWidth ||
+        this.lastDisplayHeight !== displayHeight
+      ) {
+        this.lastDisplayWidth = displayWidth;
+        this.lastDisplayHeight = displayHeight;
         this.renderer.setSize(displayWidth, displayHeight);
         this.composer?.setSize(displayWidth, displayHeight);
         if (this.effectiveSideViewsShown) {
