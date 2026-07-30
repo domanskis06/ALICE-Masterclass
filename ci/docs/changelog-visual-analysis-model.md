@@ -72,6 +72,10 @@ values simplify more aggressively at the cost of surface detail. `0.5` was chose
 detector layers stay recognisable at the distances/zoom levels used in the app, while file size and
 GPU vertex load drop substantially.
 
+EventDisplay additionally merges **ITS** and **TPC** meshes by material at load time
+(`optimize-detector-part.ts`) to cut draw calls without changing triangle detail. A trial second
+`gltfpack` pass on TPC/FIT/ITS was reverted — close-up detail looked too soft.
+
 ### 4. Manual pruning
 
 After simplification, parts that are never visible to the student (or that add negligible visual value
