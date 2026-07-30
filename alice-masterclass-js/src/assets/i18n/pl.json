@@ -98,7 +98,7 @@
   "HOME": {
     "HOME_MENU": "Strona główna",
     "TITLE": "Witamy w ALICE Masterclass!",
-    "P1": "Kollaboracja ALICE zbudowała dedykowany detektor, by wykorzystać unikalny potencjał fizyczny zderzeń jądro–jądro przy energiach LHC. Naszym celem jest badanie fizyki silnie oddziałującej materii przy najwyższych gęstościach energii osiągniętych dotychczas w laboratorium. W takich warunkach powstaje ekstremalna faza materii — zwana plazmą kwarkowo-gluonową.",
+    "P1": "Kolaboracja ALICE zbudowała dedykowany detektor, by wykorzystać unikalny potencjał fizyczny zderzeń jądro–jądro przy energiach LHC. Naszym celem jest badanie fizyki silnie oddziałującej materii przy najwyższych gęstościach energii osiągniętych dotychczas w laboratorium. W takich warunkach powstaje ekstremalna faza materii — zwana plazmą kwarkowo-gluonową.",
     "P2": "Uważa się, że nasz Wszechświat był w takim pierwotnym stanie przez pierwsze milionowe części sekundy po Wielkim Wybuchu. Właściwości tej fazy są kluczowymi zagadnieniami chromodynamiki kwantowej, zrozumienia przejść fazowych uwięzienia–uwolnienia oraz chiralnych.",
     "P3": "W tym celu prowadzimy kompleksowe badania hadronów, elektronów, mionów i fotonów produkowanych w zderzeniach ciężkich jąder. ALICE bada także zderzenia proton–proton i proton–jądro — zarówno jako porównanie ze zderzeniami jądro–jądro, jak i same w sobie.",
     "DOWNLOAD": "Jeśli chcesz, możesz pobrać i używać wersji desktopowej Masterclass:",
@@ -133,7 +133,7 @@
     "CLUSTERS": "Klastry",
     "TRACKS": "Tory",
     "DECAYS": "Rozpady",
-    "DARK_LIGHT_MODE": "Tryb ciemny/jasny",
+    "DARK_LIGHT_MODE": "Tryb ciemny",
     "VISIBILITY": "Widoczność",
     "TRACK_WIDTH": "Grubość toru",
     "CLUSTER_SIZE": "Rozmiar klastra",

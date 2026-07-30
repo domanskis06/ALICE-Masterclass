@@ -646,7 +646,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       return;
     }
     this.eventID += 1;
-    
+
     this.loadEvent().subscribe(
       (data: Event) => {
         this.eventChanged();
