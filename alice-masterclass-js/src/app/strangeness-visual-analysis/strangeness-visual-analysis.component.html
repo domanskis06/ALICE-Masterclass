@@ -117,8 +117,6 @@
       }
       <app-event-display
         #eventDisplayHost
-        [decaysShown]="true"
-
         [backgroundColor]="visualDarkMode ? visualDarkBackgroundColor : visualLightBackgroundColor"
         [hasClusters]="event.clusters.length !== 0"
         [landscape]="(isLandscape$ | async)"

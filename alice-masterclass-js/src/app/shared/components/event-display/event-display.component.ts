@@ -2389,7 +2389,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private desiredTracksShown = true;
   private desiredClustersShown = true;
-  private desiredDecaysShown = true;
+  /** When false, V0/cascade tracks use the normal track color (still visible). */
+  private desiredDecaysShown = false;
 
   @Input()
   get tracksShown(): boolean { return this.desiredTracksShown; }
@@ -2414,6 +2415,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   get decaysShown(): boolean { return this.desiredDecaysShown; }
   set decaysShown(decaysShown: boolean) {
     this.desiredDecaysShown = decaysShown;
+    this.applyDecayTrackMaterials();
     this.applyDesiredPhysicsVisibility();
     this.requestRender(true);
   }
@@ -2470,7 +2472,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private applyDesiredPhysicsVisibility(): void {
     const show = !this.deferPhysicsUntilDetectorReveal;
     this.tracks.visible = this.desiredTracksShown && show;
-    this.decays.visible = this.desiredDecaysShown && show;
+    // Decay meshes stay visible with tracks (or alone when only the Decays
+    // highlight is on). The Decays toggle itself only recolors — see
+    // applyDecayTrackMaterials — it no longer hides V0/cascade tracks.
+    this.decays.visible =
+      show && (this.desiredTracksShown || this.desiredDecaysShown);
     this.clusters.visible = this.desiredClustersShown && this.assemblyAllowsClusters() && show;
     this.primaryVertexMarkers.visible =
       this.desiredTracksShown && this.primaryVertexMarkers.children.length > 0 && show;
@@ -2871,19 +2877,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         if (!resolved) {
           continue;
         }
-        let material: THREE.Material;
-        if (track.type === TrackType.CASCADE_BACHELOR) {
-          material = this.bachelorTrackMaterial;
-        } else if (track.sign < 0) {
-          material = this.negativeTrackMaterial;
-        } else if (track.sign > 0) {
-          material = this.postiveTrackMaterial;
-        } else {
-          material = this.trackMaterial;
-        }
-        const line = this.createLine(resolved.points, material, {
-          geometricStraight: resolved.geometricStraight
-        });
+        const line = this.createLine(
+          resolved.points,
+          this.materialForDecayTrack(track),
+          { geometricStraight: resolved.geometricStraight }
+        );
         (line as any).userData = {
           ...(line as any).userData,
           ...track,
@@ -4015,19 +4013,50 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Shared decay material for a track line (used if click restore data is corrupt). */
-  private sharedMaterialForDecayLine(line: Line2): THREE.Material {
-    const ud = (line as any).userData || {};
-    if (ud.type === TrackType.CASCADE_BACHELOR) {
+  /**
+   * Material for a V0/cascade daughter: decay colors when the Decays toggle is
+   * on, otherwise the same color as ordinary tracks.
+   */
+  private materialForDecayTrack(track: {
+    type?: TrackType | number;
+    sign?: number;
+  }): THREE.Material {
+    if (!this.desiredDecaysShown) {
+      return this.trackMaterial;
+    }
+    if (track.type === TrackType.CASCADE_BACHELOR) {
       return this.bachelorTrackMaterial;
     }
-    if (typeof ud.sign === 'number' && ud.sign < 0) {
+    if (typeof track.sign === 'number' && track.sign < 0) {
       return this.negativeTrackMaterial;
     }
-    if (typeof ud.sign === 'number' && ud.sign > 0) {
+    if (typeof track.sign === 'number' && track.sign > 0) {
       return this.postiveTrackMaterial;
     }
     return this.trackMaterial;
+  }
+
+  /** Shared decay material for a track line (used if click restore data is corrupt). */
+  private sharedMaterialForDecayLine(line: Line2): THREE.Material {
+    return this.materialForDecayTrack((line as any).userData || {});
+  }
+
+  /** Recolor existing decay lines when the Decays highlight toggle changes. */
+  private applyDecayTrackMaterials(): void {
+    for (const decayObject of this.decays.children) {
+      for (const child of decayObject.children) {
+        if (!(child as any).isLine2) {
+          continue;
+        }
+        const line = child as Line2;
+        const material = this.sharedMaterialForDecayLine(line) as LineMaterial;
+        if (line === this.clickHighlightLine) {
+          this.clickHighlightOrigMaterial = material;
+          continue;
+        }
+        line.material = material;
+      }
+    }
   }
 
   /** Shared track materials faded during cascade hover. */
