@@ -1,7 +1,9 @@
 {
   "LANGUAGES": {
     "en": "English",
-    "de": "Deutsch"
+    "pl": "Polski",
+    "de": "Deutsch",
+    "fr": "Français"
   },
   "GENERAL": {
     "MENU": "Menü",

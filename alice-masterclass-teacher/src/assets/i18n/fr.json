@@ -1,0 +1,130 @@
+{
+  "LANGUAGES": {
+    "en": "English",
+    "pl": "Polski",
+    "de": "Deutsch",
+    "fr": "Français"
+  },
+  "GENERAL": {
+    "MENU": "Menu",
+    "ALICE_MASTERCLASS_TEACHER": "ALICE Masterclass — enseignant",
+    "TOGGLE_SIDENAV": "Basculer le menu latéral",
+    "INSTRUCTIONS_BUTTON": "Bouton d’instructions",
+    "CHANGE_LANGUAGE": "Changer de langue",
+    "AND": "et"
+  },
+  "INSTRUCTIONS_DIALOG": {
+    "BUTTON_DISMISS": "Fermer"
+  },
+  "NAV": {
+    "SESSION": "Session",
+    "STRANGENESS": "Strangeness",
+    "VISUAL_ANALYSIS": "Analyse visuelle",
+    "LARGE_SCALE_ANALYSIS": "Analyse à grande échelle"
+  },
+  "SESSION": {
+    "TITLE": "Événements",
+    "ADD_EVENT": "Ajouter un événement",
+    "NO_EVENTS": "Aucun événement pour l’instant. Cliquez sur le bouton + pour en ajouter un.",
+    "SESSIONS_COUNT": "{{count}} session(s)",
+    "SESSION_NAME": "Nom de session",
+    "PASSWORD": "Mot de passe",
+    "MAX_STUDENTS": "Élèves max.",
+    "URL": "URL",
+    "CREATED": "Créé",
+    "DELETE": "Supprimer",
+    "NO_SESSIONS": "Aucune session pour cet événement.",
+    "ADD_SESSION": "Ajouter une session",
+    "URL_COPIED": "URL copiée dans le presse-papiers",
+    "ADD_EVENT_DIALOG": {
+      "EVENT_NAME": "Nom de l’événement",
+      "NAME_EXISTS": "Un événement portant ce nom existe déjà.",
+      "CREATE": "Créer l’événement",
+      "CANCEL": "Annuler"
+    },
+    "ADD_SESSION_DIALOG": {
+      "EVENT_NAME": "Nom de l’événement",
+      "SESSION_NAME": "Nom de session",
+      "PASSWORD": "Mot de passe",
+      "PASSWORD_EXISTS": "Une session avec ce mot de passe existe déjà.",
+      "MAX_STUDENTS": "Nombre maximal d’élèves",
+      "CREATE": "Créer la session",
+      "CANCEL": "Annuler"
+    },
+    "CONFIRM_DIALOG": {
+      "MESSAGE": "Êtes-vous sûr ?",
+      "YES": "Oui",
+      "NO": "Non"
+    }
+  },
+  "VISUAL_ANALYSIS": {
+    "SESSION": "Session",
+    "MASS_HISTOGRAMS": "Histogrammes de masse",
+    "INVARIANT_MASS": "Masse invariante",
+    "COUNTS": "Comptes",
+    "RESULTS": "Résultats",
+    "STUDENT": "Élève",
+    "DATASET": "Jeu de données",
+    "MASSES": "Masses",
+    "INSTRUCTIONS": {
+      "TITLE": "À propos de l’analyse visuelle",
+      "INTRO": "Ce module vous permet d’inspecter les résultats de masse invariante collectés par les élèves dans une session sélectionnée.",
+      "HOW_TO_USE": "Comment l’utiliser",
+      "STEP_1": "Choisissez une session dans la liste déroulante au-dessus du tableau Résultats.",
+      "STEP_2": "Les histogrammes de masse montrent la distribution combinée des masses de particules rapportées par les élèves sélectionnés.",
+      "STEP_3": "Dans le tableau Résultats, sélectionnez ou désélectionnez des élèves pour inclure ou exclure leurs données des histogrammes.",
+      "STEP_4": "Utilisez le bouton d’actualisation si de nouveaux résultats d’élèves deviennent disponibles.",
+      "HOW_TO_READ": "Comment lire les histogrammes",
+      "HOW_TO_READ_INTRO": "Chaque histogramme montre la masse invariante d’une particule candidate :",
+      "PEAK_KAON": "— typiquement un pic près de ~0,5 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_LAMBDA": "— typiquement un pic près de ~1,115 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_XI": "— typiquement un pic près de ~1,32 GeV/<em>c</em><sup>2</sup>",
+      "CLEAR_PEAK": "Un pic clair indique que les élèves ont correctement identifié cette particule.",
+      "BROAD_DISTRIBUTION": "Une distribution large ou plate peut signifier une mauvaise identification ou trop peu de candidats.",
+      "TIP_LABEL": "Astuce :",
+      "TIP": "Comparez les histogrammes entre élèves ou sessions pour voir avec quelle cohérence la classe a reconstruit chaque espèce de particule."
+    }
+  },
+  "LARGE_SCALE_ANALYSIS": {
+    "EVENT": "Événement",
+    "NO_PARTICIPANTS": "Nb. de participants",
+    "ENHANCEMENT": "Amélioration",
+    "RESULTS": "Résultats",
+    "CENTRALITY": "Centralité",
+    "NO_EVENTS": "Nb. d’événements",
+    "NO": "N°",
+    "EFFICIENCY": "Efficacité",
+    "YIELD": "Rendement",
+    "UNKNOWN": "inconnu",
+    "INSTRUCTIONS": {
+      "TITLE": "À propos de l’analyse à grande échelle",
+      "INTRO": "Ce module combine les résultats d’un événement masterclass pour étudier l’<strong>amélioration de l’étrangeté</strong> — comment la production de particules étranges augmente dans les collisions d’ions lourds Pb–Pb par rapport aux collisions proton–proton.",
+      "HOW_TO_USE": "Comment l’utiliser",
+      "STEP_1": "Choisissez un événement dans la liste déroulante au-dessus du graphique.",
+      "STEP_2": "Le graphique montre l’amélioration de l’étrangeté en fonction de la centralité de la collision, mesurée par le nombre de nucléons participants <em>N</em><sub>part</sub>.",
+      "STEP_3": "Le tableau Résultats liste les rendements et les valeurs d’amélioration pour chaque classe de centralité et espèce de particule.",
+      "STEP_4": "Utilisez le bouton d’actualisation si de nouveaux résultats deviennent disponibles.",
+      "HOW_TO_INTERPRET": "Comment interpréter les grandeurs",
+      "YIELD_DEF": "nombre de particules d’un type donné reconstruites dans cette classe de centralité",
+      "NPART_DEF": "nombre moyen de nucléons participant à la collision",
+      "ENHANCEMENT_DEF": "rendement par participant, normalisé à une référence pp :",
+      "WHERE_YPP": "où <em>Y</em><sub>pp</sub> est le rendement de référence dans les collisions pp.",
+      "FACTOR_TWO": "Le facteur 2 convertit le rendement pp à une échelle par participant, car une collision pp implique deux protons.",
+      "WHAT_TO_LOOK_FOR": "Que rechercher",
+      "LOOK_FOR": "L’amélioration est généralement plus grande pour les collisions plus centrales avec un <em>N</em><sub>part</sub> plus élevé et peut différer entre",
+      "LOOK_FOR_END": "Discutez avec les élèves pourquoi des collisions plus denses peuvent produire plus de quarks étranges.",
+      "TIP_LABEL": "Astuce :",
+      "TIP": "Utilisez les marqueurs colorés du tableau avec le graphique pour relier une classe de centralité spécifique à son point sur le graphique.",
+      "FORMULA_ENHANCEMENT": "Amélioration",
+      "FORMULA_YIELD": "Rendement"
+    }
+  },
+  "PAGINATOR": {
+    "ITEMS_PER_PAGE": "Éléments par page :",
+    "NEXT_PAGE": "Page suivante",
+    "PREVIOUS_PAGE": "Page précédente",
+    "FIRST_PAGE": "Première page",
+    "LAST_PAGE": "Dernière page",
+    "OF_LABEL": "sur"
+  }
+}

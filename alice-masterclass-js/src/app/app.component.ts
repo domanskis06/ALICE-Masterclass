@@ -28,7 +28,7 @@ export class AppComponent implements AfterViewInit {
 
   private player: AnimationPlayer | null = null;
 
-  readonly LANGUAGES: Array<string> = ['en', 'de']; // 'es' omitted: assets/i18n/es.json is empty
+  readonly LANGUAGES: Array<string> = ['en', 'pl', 'de', 'fr']; // 'es' omitted: assets/i18n/es.json is empty
   readonly languageKey: string = 'language';
 
   /** Exposed for template color binding while a flight is active. */

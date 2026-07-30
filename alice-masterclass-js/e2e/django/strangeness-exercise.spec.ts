@@ -15,7 +15,23 @@ test.describe('Django strangeness exercise', () => {
 
     await page.goto('/strangeness-visual-analysis');
     await expect(page.getByTestId('strangeness-visual-analysis-page')).toBeVisible();
-    await expect(page.getByTestId('va-dataset-select')).toBeVisible();
+
+    // Fresh sessions start in collision intro → detector assembly; dataset UI is hidden until then.
+    const introSkip = page.getByTestId('va-skip-collision-intro');
+    const assemblySkip = page.getByTestId('va-skip-detector-assembly');
+    const datasetSelect = page.getByTestId('va-dataset-select');
+
+    await expect(introSkip.or(assemblySkip).or(datasetSelect)).toBeVisible({ timeout: 15_000 });
+
+    if (await introSkip.isVisible()) {
+      await introSkip.click();
+      await expect(assemblySkip.or(datasetSelect)).toBeVisible({ timeout: 10_000 });
+    }
+    if (await assemblySkip.isVisible()) {
+      await assemblySkip.click();
+    }
+
+    await expect(datasetSelect).toBeVisible();
     await expect(page.getByTestId('cern-toolbar')).toBeVisible();
   });
 });

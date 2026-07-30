@@ -16,7 +16,7 @@ import { InstructionsDialogComponent } from '../instructions-dialog/instructions
 export class NavComponent {
 
   @Input()
-  languages: string[] = ['en', 'de'];
+  languages: string[] = ['en', 'pl', 'de', 'fr'];
 
   @ViewChild('drawer')
   drawerRef!: MatSidenavContainer;

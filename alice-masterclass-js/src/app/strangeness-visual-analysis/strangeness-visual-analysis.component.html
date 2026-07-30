@@ -26,7 +26,7 @@
         data-testid="va-skip-collision-intro"
         (click)="onSkipCollisionIntro()"
       >
-        skip
+        {{ 'GENERAL.SKIP' | translate }}
       </button>
     </div>
   }
@@ -125,17 +125,17 @@
         (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
         (trackClickedEvent)="onTrackClicked($event)"
         >
-        @if (isDetectorAssemblyInProgress && !showCollisionVideoIntro) {
-          <button
-            edSceneSkip
-            type="button"
-            class="va-skip-assembly-btn"
-            data-testid="va-skip-detector-assembly"
-            (click)="onSkipDetectorAssembly()"
-          >
-            skip
-          </button>
-        }
+        <!-- Always project: @if around ng-content slots breaks multi-slot projection. -->
+        <button
+          edSceneSkip
+          type="button"
+          class="va-skip-assembly-btn"
+          data-testid="va-skip-detector-assembly"
+          [hidden]="!(isDetectorAssemblyInProgress && !showCollisionVideoIntro)"
+          (click)="onSkipDetectorAssembly()"
+        >
+          {{ 'GENERAL.SKIP' | translate }}
+        </button>
         <div edSidebarMeta class="event-meta-panel">
           <div class="dataset-controls">
             <mat-form-field appearance="outline" class="dataset-select">
