@@ -8,7 +8,8 @@
 }
 
 .sidenav {
-  width: 280px;
+  // Fit longest i18n label (e.g. FR "Propagation des particules") with equal L/R padding.
+  width: 240px;
 }
 
 .sidenav .mat-toolbar {
