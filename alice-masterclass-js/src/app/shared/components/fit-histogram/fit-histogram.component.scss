@@ -1,13 +1,14 @@
 figure {
   position: relative;
   margin: 0;
-  // Extra CSS padding so the x-axis title is not clipped by the card edge.
+  // Top nudge; modest bottom padding keeps a small gap under “Invariant Mass”.
+  padding-top: 10px;
   padding-bottom: 18px;
   padding-left: 4px;
 }
 
 :host.histogram-x-ticks-rotated figure {
-  padding-bottom: 22px;
+  padding-bottom: 24px;
 }
 
 :host ::ng-deep svg {
@@ -44,6 +45,38 @@ figure {
 
   #background {
     stroke: var(--background-color);
+  }
+
+  .fit-ranges {
+    pointer-events: none;
+
+    .background-range {
+      .fit-range-band {
+        fill: var(--background-color);
+        fill-opacity: 0.035;
+      }
+
+      .fit-range-line {
+        stroke: var(--background-color);
+        stroke-width: 0.75;
+        stroke-opacity: 0.55;
+        stroke-dasharray: 2 2.5;
+      }
+    }
+
+    .signal-range {
+      .fit-range-band {
+        fill: var(--signal-color);
+        fill-opacity: 0.035;
+      }
+
+      .fit-range-line {
+        stroke: var(--signal-color);
+        stroke-width: 0.75;
+        stroke-opacity: 0.55;
+        stroke-dasharray: 2 2.5;
+      }
+    }
   }
 
   .hidden {

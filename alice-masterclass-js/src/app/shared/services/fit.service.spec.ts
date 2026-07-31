@@ -59,4 +59,32 @@ describe('FitService', () => {
     expect(service.result.p1Polynomial[1]).toBeCloseTo(9.112);
     expect(service.result.p1Polynomial[2]).toBeCloseTo(17.277);
   });
+
+  it('clampRangeToView clips a partially visible interval', () => {
+    expect(FitService.clampRangeToView([0.45, 0.55], [0.50, 0.60])).toEqual([0.50, 0.55]);
+    expect(FitService.clampRangeToView([0.45, 0.55], [0.40, 0.48])).toEqual([0.45, 0.48]);
+  });
+
+  it('clampRangeToView shifts an interval that lies entirely outside the view', () => {
+    expect(FitService.clampRangeToView([0.40, 0.45], [0.50, 0.60])).toEqual([0.50, 0.55]);
+    const shifted = FitService.clampRangeToView([0.70, 0.78], [0.50, 0.60]);
+    expect(shifted[0]).toBeCloseTo(0.52, 10);
+    expect(shifted[1]).toBeCloseTo(0.60, 10);
+  });
+
+  it('clearFit drops the current result and curve functions', () => {
+    service.data = pbpbp_k0;
+    service.backgroundFitRange = [0.4, 0.6];
+    service.signalFitRange = [0.48, 0.508];
+    service.aGaussHint = [10.730, 0.498, 0.004];
+    service.fit();
+    expect(service.result).not.toBeNull();
+
+    service.clearFit();
+
+    expect(service.result).toBeNull();
+    expect(service.signalFunction(0.5)).toBe(0);
+    expect(service.backgroundFunction(0.5)).toBe(0);
+    expect(service.data.data.length).toBeGreaterThan(0);
+  });
 });

@@ -102,4 +102,38 @@ describe('HistogramComponent', () => {
     expect(() => component.pulseBin(target!.binIndex)).not.toThrow();
     tick(500);
   }));
+
+  it('unzoom restores the full x domain and emits zoomEvent', () => {
+    const zoomSpy = spyOn(component.zoomEvent, 'emit');
+    component.xDomain = [0.4, 0.6];
+    component.data = [0.45, 0.5, 0.55];
+    fixture.detectChanges();
+
+    (component as unknown as { xDomainZoom: [number, number] }).xDomainZoom = [0.48, 0.52];
+    expect(component.isZoomed).toBeTrue();
+
+    component.unzoom();
+
+    expect(component.xDomainZoom).toEqual([0.4, 0.6]);
+    expect(component.isZoomed).toBeFalse();
+    expect(zoomSpy).toHaveBeenCalledWith([0.4, 0.6]);
+  });
+
+  it('returns denser x-tick budgets after zooming in', () => {
+    // Avoid a second detectChanges after bumping bins (HostBinding rotate flag).
+    component.bins = 100;
+    component.xDomain = [0, 1];
+
+    (component as unknown as { xDomainZoom: [number, number] }).xDomainZoom = [0.2, 0.35];
+    const zoomedTicks = (component as unknown as { getXTickValues(): number[] }).getXTickValues();
+
+    (component as unknown as { xDomainZoom: [number, number] }).xDomainZoom = [0, 1];
+    const fullTicks = (component as unknown as { getXTickValues(): number[] }).getXTickValues();
+
+    expect(zoomedTicks.length).toBeGreaterThan(0);
+    expect(fullTicks.length).toBeGreaterThan(0);
+    const zoomSpan = 0.15;
+    const fullSpan = 1;
+    expect(zoomedTicks.length / zoomSpan).toBeGreaterThan(fullTicks.length / fullSpan);
+  });
 });

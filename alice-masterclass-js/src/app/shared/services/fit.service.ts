@@ -32,6 +32,40 @@ export class FitService {
 
   result: FitResult = null;
 
+  /**
+   * Keep a fit interval after zoom: clip to the visible axis, or shift it into
+   * view (preserving width when possible) when it lies entirely outside.
+   */
+  static clampRangeToView(range: [number, number], view: [number, number]): [number, number] {
+    const [v0, v1] = view;
+    if (!(v1 > v0)) {
+      return range;
+    }
+
+    let [a, b] = range;
+    if (!(b > a)) {
+      const mid = 0.5 * (v0 + v1);
+      const half = Math.max((v1 - v0) * 0.01, Number.EPSILON);
+      return [Math.max(v0, mid - half), Math.min(v1, mid + half)];
+    }
+
+    const width = b - a;
+    if (b < v0) {
+      return [v0, Math.min(v1, v0 + width)];
+    }
+    if (a > v1) {
+      return [Math.max(v0, v1 - width), v1];
+    }
+    return [Math.max(a, v0), Math.min(b, v1)];
+  }
+
+  /** Drop the current fit curves/result without touching histogram data or accepted results. */
+  clearFit(): void {
+    this.result = null;
+    this.signalFunction = (x: number) => 0;
+    this.backgroundFunction = (x: number) => 0;
+  }
+
   get data(): LSAData { return this._data; }
   set data(data: LSAData) {
     this._data = data;

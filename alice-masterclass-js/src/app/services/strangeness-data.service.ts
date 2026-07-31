@@ -261,6 +261,14 @@ export class StrangenessDataService {
     this._lsaResults.set(key, value);
   }
 
+  removeLargeScaleAnalysisResult(key: string): void {
+    if (!this._lsaResults.has(key)) {
+      return;
+    }
+    this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>(this._lsaResults);
+    this._lsaResults.delete(key);
+  }
+
   clearLargeScaleAnalysisResults(): void {
     this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>();
   }

@@ -549,6 +549,18 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this.zoomEvent.emit(this.xDomain);
   }
 
+  /** Public unzoom — restores the default axis view without clearing app state. */
+  unzoom(): void {
+    this.resetZoom();
+  }
+
+  /** True when the brush zoom differs from the working (unzoomed) x domain. */
+  get isZoomed(): boolean {
+    const [z0, z1] = this.xDomainZoom;
+    const [x0, x1] = this.xDomain;
+    return z0 !== x0 || z1 !== x1;
+  }
+
   /**
    * Interior edges of `bins` equal-width intervals on `domain` (defaults to effective xDomain).
    * 2 bins → 1 tick (midpoint), 3 bins → 2 ticks, etc.
@@ -581,7 +593,11 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
     const visible = thresholds.filter((value) => value >= zoom0 && value <= zoom1);
     // Keep the axis readable when there are many bins (still land on bin edges).
-    const maxTicks = 25;
+    // Allow denser labels after zoom so the invariant-mass scale stays readable.
+    const span = zoom1 - zoom0;
+    const fullSpan = this.xDomain[1] - this.xDomain[0];
+    const zoomedIn = fullSpan > 0 && span < fullSpan * 0.999;
+    const maxTicks = zoomedIn ? 40 : 25;
     if (visible.length <= maxTicks) {
       return visible;
     }
