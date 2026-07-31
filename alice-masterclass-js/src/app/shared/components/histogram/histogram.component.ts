@@ -124,7 +124,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     return this.CONTENT_AREA.Y + this.CONTENT_AREA.H + this.MARGIN.BOTTOM + 12 + rotatedNudge;
   }
 
-  protected readonly ANIMATION_DURATION: number = 250;
+  /** Bar grow / axis transition (ms). Short so VA landing feels locked to the flight. */
+  protected readonly ANIMATION_DURATION: number = 200;
 
   @ViewChild('svg')
   private svgRef!: ElementRef;
