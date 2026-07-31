@@ -88,8 +88,14 @@ export class StrangenessDataService {
   private _vaResults: Map<string, VisualAnalysisResultsEntry[]> = new Map<string, VisualAnalysisResultsEntry[]>();
 
   /**
+   * Track keys claimed by each histogram entry, parallel to `_vaResults` arrays.
+   * Enables undo/remove without a page reload.
+   */
+  private _vaResultTrackKeys: Map<string, string[][]> = new Map<string, string[][]>();
+
+  /**
    * Individual decay-daughter track keys already used in a histogram add, keyed by event id.
-   * Keys are opaque strings built by the VA layer (e.g. `0:+`, `1:-`, `0:b`).
+   * Keys are opaque strings built by the VA layer (kinematics + charge role).
    * Mixing daughters across V0s is allowed; each physical track may be used only once.
    */
   private _analyzedTrackKeys: Map<string, Set<string>> = new Map<string, Set<string>>();
@@ -123,13 +129,102 @@ export class StrangenessDataService {
     return true;
   }
 
+  /** Release previously claimed track keys (used by undo / remove). */
+  releaseTracksForHistogram(key: string, trackKeys: string[]): void {
+    if (trackKeys.length === 0) {
+      return;
+    }
+    const analyzed = new Map(this._analyzedTrackKeys);
+    const set = new Set(analyzed.get(key) ?? []);
+    for (const trackKey of trackKeys) {
+      set.delete(trackKey);
+    }
+    if (set.size === 0) {
+      analyzed.delete(key);
+    } else {
+      analyzed.set(key, set);
+    }
+    this._analyzedTrackKeys = analyzed;
+  }
+
   addVisualAnalysisResult(key: string, value: VisualAnalysisResultsEntry, trackKeys: string[] = []): void {
     this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>(this._vaResults);
     const existing = this._vaResults.get(key) ?? [];
     this._vaResults.set(key, [...existing, value]);
 
+    this._vaResultTrackKeys = new Map(this._vaResultTrackKeys);
+    const keyLists = [...(this._vaResultTrackKeys.get(key) ?? [])];
+    keyLists.push([...trackKeys]);
+    this._vaResultTrackKeys.set(key, keyLists);
+
+    // Idempotent: tracks may already be claimed during the flight animation.
     if (trackKeys.length > 0) {
-      this.claimTracksForHistogram(key, trackKeys);
+      const unclaimed = [...new Set(trackKeys)].filter((tk) => !this.isTrackAnalyzed(key, tk));
+      if (unclaimed.length > 0) {
+        this.claimTracksForHistogram(key, unclaimed);
+      }
+    }
+  }
+
+  /** Histogram entries for one event (empty array if none). */
+  getVisualAnalysisResultsForEvent(key: string): VisualAnalysisResultsEntry[] {
+    return this._vaResults.get(key) ?? [];
+  }
+
+  /**
+   * Remove one histogram entry and free its tracks so they can be re-selected.
+   * Returns false if the index is out of range.
+   */
+  removeVisualAnalysisResultAt(key: string, index: number): boolean {
+    const entries = this._vaResults.get(key);
+    if (!entries || index < 0 || index >= entries.length) {
+      return false;
+    }
+    const keyLists = this._vaResultTrackKeys.get(key) ?? [];
+    const trackKeys = keyLists[index] ?? [];
+
+    const nextEntries = entries.filter((_, i) => i !== index);
+    const nextKeyLists = keyLists.filter((_, i) => i !== index);
+
+    this._vaResults = new Map(this._vaResults);
+    if (nextEntries.length === 0) {
+      this._vaResults.delete(key);
+    } else {
+      this._vaResults.set(key, nextEntries);
+    }
+
+    this._vaResultTrackKeys = new Map(this._vaResultTrackKeys);
+    if (nextKeyLists.length === 0) {
+      this._vaResultTrackKeys.delete(key);
+    } else {
+      this._vaResultTrackKeys.set(key, nextKeyLists);
+    }
+
+    this.releaseTracksForHistogram(key, trackKeys);
+    return true;
+  }
+
+  /** Undo the most recent histogram add for an event. */
+  undoLastVisualAnalysisResult(key: string): boolean {
+    const entries = this._vaResults.get(key);
+    if (!entries || entries.length === 0) {
+      return false;
+    }
+    return this.removeVisualAnalysisResultAt(key, entries.length - 1);
+  }
+
+  /** Remove all histogram entries and free all tracks for one event. */
+  clearVisualAnalysisResultsForEvent(key: string): void {
+    this._vaResults = new Map(this._vaResults);
+    this._vaResults.delete(key);
+
+    this._vaResultTrackKeys = new Map(this._vaResultTrackKeys);
+    this._vaResultTrackKeys.delete(key);
+
+    if (this._analyzedTrackKeys.has(key)) {
+      const analyzed = new Map(this._analyzedTrackKeys);
+      analyzed.delete(key);
+      this._analyzedTrackKeys = analyzed;
     }
   }
 
@@ -150,6 +245,7 @@ export class StrangenessDataService {
   clearVisualAnalysisResults(): void {
     // New Map instance so Angular @Input change detection updates histograms immediately.
     this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>();
+    this._vaResultTrackKeys = new Map<string, string[][]>();
     this._analyzedTrackKeys = new Map<string, Set<string>>();
   }
 
@@ -163,6 +259,14 @@ export class StrangenessDataService {
   addLargeScaleAnalysisResult(key: string, value: LargeScaleAnalysisResultsEntry) {
     this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>(this._lsaResults);
     this._lsaResults.set(key, value);
+  }
+
+  removeLargeScaleAnalysisResult(key: string): void {
+    if (!this._lsaResults.has(key)) {
+      return;
+    }
+    this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>(this._lsaResults);
+    this._lsaResults.delete(key);
   }
 
   clearLargeScaleAnalysisResults(): void {

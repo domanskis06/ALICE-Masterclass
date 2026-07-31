@@ -82,7 +82,7 @@
       "CLEAR_PEAK": "Wyraźny pik oznacza, że uczniowie poprawnie zidentyfikowali daną cząstkę.",
       "BROAD_DISTRIBUTION": "Szeroki lub płaski rozkład może oznaczać błędną identyfikację lub zbyt mało kandydatów.",
       "TIP_LABEL": "Wskazówka:",
-      "TIP": "Porównuj histogramy między uczniami lub sesjami, aby zobaczyć, jak spójnie klasa rekonstruowała każdy gatunek cząstek."
+      "TIP": "Porównuj histogramy między uczniami lub sesjami, aby zobaczyć, jak spójnie klasa rekonstruowała każdy typ cząstek."
     }
   },
   "LARGE_SCALE_ANALYSIS": {
@@ -93,8 +93,8 @@
     "CENTRALITY": "Centralność",
     "NO_EVENTS": "Liczba zdarzeń",
     "NO": "Nr",
-    "EFFICIENCY": "Wydajność",
-    "YIELD": "Wydajność (yield)",
+    "EFFICIENCY": "Efektywność",
+    "YIELD": "Krotność",
     "UNKNOWN": "nieznane",
     "INSTRUCTIONS": {
       "TITLE": "O analizie wielkoskalowej",
@@ -102,21 +102,21 @@
       "HOW_TO_USE": "Jak z niego korzystać",
       "STEP_1": "Wybierz wydarzenie z listy rozwijanej nad wykresem.",
       "STEP_2": "Wykres pokazuje wzmocnienie dziwności jako funkcję centralności zderzenia, mierzonej liczbą uczestniczących nukleonów <em>N</em><sub>part</sub>.",
-      "STEP_3": "Tabela Wyniki wypisuje wydajności (yield) i wartości wzmocnienia dla każdej klasy centralności i gatunku cząstek.",
+      "STEP_3": "Tabela Wyniki wypisuje krotności i wartości wzmocnienia dla każdej klasy centralności i typu cząstek.",
       "STEP_4": "Użyj przycisku odświeżania, jeśli pojawią się nowe wyniki.",
       "HOW_TO_INTERPRET": "Jak interpretować wielkości",
-      "YIELD_DEF": "liczba cząstek danego typu zrekonstruowanych w danej klasie centralności",
+      "YIELD_DEF": "skorygowana krotność na zdarzenie: liczba zrekonstruowanych cząstek podzielona przez (liczbę analizowanych zdarzeń × efektywność rekonstrukcji)",
       "NPART_DEF": "średnia liczba nukleonów uczestniczących w zderzeniu",
-      "ENHANCEMENT_DEF": "wydajność na uczestnika, znormalizowana do odniesienia pp:",
-      "WHERE_YPP": "gdzie <em>Y</em><sub>pp</sub> to referencyjna wydajność w zderzeniach pp.",
-      "FACTOR_TWO": "Czynnik 2 przelicza wydajność pp na skalę na uczestnika, ponieważ zderzenie pp obejmuje dwa protony.",
+      "ENHANCEMENT_DEF": "krotność na uczestnika, znormalizowana do odniesienia pp:",
+      "WHERE_YPP": "gdzie <em>Y</em><sub>pp</sub> to referencyjna krotność w zderzeniach pp.",
+      "FACTOR_TWO": "Czynnik 2 przelicza krotność pp na skalę na uczestnika, ponieważ zderzenie pp obejmuje dwa protony.",
       "WHAT_TO_LOOK_FOR": "Na co zwrócić uwagę",
       "LOOK_FOR": "Wzmocnienie jest zwykle większe dla bardziej centralnych zderzeń o wyższym <em>N</em><sub>part</sub> i może różnić się między",
       "LOOK_FOR_END": "Omów z uczniami, dlaczego gęstsze zderzenia mogą produkować więcej kwarków dziwnych.",
       "TIP_LABEL": "Wskazówka:",
       "TIP": "Użyj kolorowych znaczników w tabeli razem z wykresem, aby połączyć konkretną klasę centralności z jej punktem na wykresie.",
       "FORMULA_ENHANCEMENT": "Wzmocnienie",
-      "FORMULA_YIELD": "Wydajność"
+      "FORMULA_YIELD": "Krotność"
     }
   },
   "PAGINATOR": {

@@ -1,40 +1,71 @@
 <mat-card appearance="outlined" fxFill fxLayout="column" id="lsa-tour-histogram-display">
-  <mat-card-title class="title">{{ 'STRANGENESS.HISTOGRAM_DISPLAY.TITLE' | translate }}</mat-card-title>
+  <mat-card-title class="title">
+    <span class="title-text">{{ 'STRANGENESS.HISTOGRAM_DISPLAY.TITLE' | translate }}</span>
+    <div class="title-actions">
+      <button
+        type="button"
+        id="lsa-tour-reset-range-button"
+        mat-stroked-button
+        class="panel-action-button"
+        [disabled]="loading || fitService.data.data.length === 0"
+        (click)="onResetRangeClick()"
+      >
+        {{ 'STRANGENESS.HISTOGRAM_DISPLAY.RESET_RANGE' | translate }}
+      </button>
+      <button
+        type="button"
+        id="lsa-tour-unzoom-button"
+        mat-stroked-button
+        class="panel-action-button"
+        [disabled]="loading || !isZoomed"
+        (click)="onUnzoomClick()"
+      >
+        {{ 'STRANGENESS.HISTOGRAM_DISPLAY.RESET_ZOOM' | translate }}
+      </button>
+    </div>
+  </mat-card-title>
   <mat-card-content fxFlex="grow" fxLayout="column">
     <div id="anchor" fxFlex="grow">
       @if (loading) {
         <div id="spinner" fxLayout="column" fxLayoutAlign="center center"><mat-spinner></mat-spinner></div>
       }
-      <div id="content" fxLayout="row" fxLayoutAlign="center stretch" fxLayout.xs="column">
-        <app-fit-histogram fxFlex="grow" [class.disabled]="loading"
-          [xDomain]="[fitService.data.xmin, fitService.data.xmax]" [bins]="fitService.data.bins"
-          [data]="fitService.data.data" [enableZoom]="true"
-          signalColor="#FF4081" backgroundColor="#3F51B5" barColor="#A3A3A3"
-          [backgroundShown]="fitService.result !== null"
-          [signalShown]="fitService.result !== null"
-          [backgroundRange]="fitService.backgroundFitRange"
-          [signalRange]="fitService.signalFitRange"
-          [backgroundFunction]="fitService.backgroundFunction"
-          [signalFunction]="fitService.signalFunction"
-          (zoomEvent)="onZoom($event)"
-          >
-          <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
+      <div id="content">
+        <!--
+          Stage matches the fit-histogram viewBox aspect (400×224) so SVG
+          letterboxing does not leave empty side gutters that #info would sit in.
+        -->
+        <div class="plot-stage">
+          <app-fit-histogram #fitHistogram [class.disabled]="loading"
+            [xDomain]="[fitService.data.xmin, fitService.data.xmax]" [bins]="fitService.data.bins"
+            [data]="fitService.data.data" [enableZoom]="true"
+            signalColor="#FF4081" backgroundColor="#3F51B5" barColor="#A3A3A3"
+            [backgroundShown]="fitService.result !== null"
+            [signalShown]="fitService.result !== null"
+            [showFitRangeGuides]="fitService.data.data.length > 0"
+            [backgroundRange]="fitService.backgroundFitRange"
+            [signalRange]="fitService.signalFitRange"
+            [backgroundFunction]="fitService.backgroundFunction"
+            [signalFunction]="fitService.signalFunction"
+            (zoomEvent)="onZoom($event)"
+            >
+            <svg:text xAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
             <svg:text yAxisLabel>{{ 'STRANGENESS.HISTOGRAMS.COUNTS' | translate }}</svg:text>
-            </app-fit-histogram>
-            @if (fitService.result !== null) {
-              <div id="info" fxLayout="column">
-                <div fxLayout="column" fxLayout.xs="row" fxLayoutAlign.xs="space-around center">
-                  <p>{{ 'STRANGENESS.HISTOGRAMS.TOTAL' | translate }}: {{ fitService.result.total }}</p>
-                  <p>{{ 'STRANGENESS.HISTOGRAMS.SIGNAL' | translate }}: {{ fitService.result.signal }} ± {{ fitService.result.signalError }}</p>
-                  <p>{{ 'STRANGENESS.HISTOGRAMS.BACKGROUND' | translate }}: {{ fitService.result.background }}</p>
-                </div>
-                <div fxLayout="column" fxLayout.xs="row" fxLayoutAlign.xs="space-around center">
-                  <p>μ : {{ fitService.result.p1Gauss[1] | number : '1.4-4' }}</p>
-                  <p>σ : {{ fitService.result.p1Gauss[2] | number : '1.4-4' }}</p>
-                </div>
+          </app-fit-histogram>
+          @if (fitService.result !== null) {
+            <div id="info" fxLayout="column">
+              <div fxLayout="column" fxLayout.xs="row" fxLayoutAlign.xs="space-around center">
+                <p>{{ 'STRANGENESS.HISTOGRAMS.TOTAL' | translate }}: {{ fitService.result.total }}</p>
+                <p>{{ 'STRANGENESS.HISTOGRAMS.SIGNAL' | translate }}: {{ fitService.result.signal }} ± {{ fitService.result.signalError }}</p>
+                <p>{{ 'STRANGENESS.HISTOGRAMS.BACKGROUND' | translate }}: {{ fitService.result.background }}</p>
               </div>
-            }
-          </div>
+              <div fxLayout="column" fxLayout.xs="row" fxLayoutAlign.xs="space-around center">
+                <p>μ : {{ fitService.result.p1Gauss[1] | number : '1.4-4' }}</p>
+                <p>σ : {{ fitService.result.p1Gauss[2] | number : '1.4-4' }}</p>
+              </div>
+            </div>
+          }
         </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

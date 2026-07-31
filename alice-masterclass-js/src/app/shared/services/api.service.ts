@@ -1,13 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { shareReplay } from 'rxjs/operators';
 
 export interface Session {
   error: boolean
   name: string
+  reason?: 'password' | 'student_taken' | 'student_invalid' | ''
+  maxStudents?: number
+}
+
+export interface AuthStatus {
+  authenticated: boolean;
+  studentID: number | null;
+  sessionName: string | null;
 }
 
 export enum ParticleType {
@@ -69,6 +77,15 @@ export class ApiService {
 
   sessionName: string = null;
 
+  private readonly authStatusSubject = new BehaviorSubject<AuthStatus>({
+    authenticated: false,
+    studentID: null,
+    sessionName: null
+  });
+
+  /** Emits whenever student session login state changes (guest ↔ logged in). */
+  readonly authStatus$: Observable<AuthStatus> = this.authStatusSubject.asObservable();
+
   constructor(private http: HttpClient, private title: Title, private translateService: TranslateService) { }
 
   init(): void {
@@ -82,24 +99,49 @@ export class ApiService {
   }
 
   authenticate(password: string, studentID: number): Observable<Session> {
+    const storedId = sessionStorage.getItem(this.studentIDKey);
+    const allowExisting = storedId !== null && parseInt(storedId, 10) === studentID;
+
     // shareReplay() to only send the request once, regardless of how many
     // subscribers will read the result
-    const auth$ = this.put<Session>('check_session', { password: password }).pipe(shareReplay());
+    const auth$ = this.put<Session>('check_session', {
+      password,
+      student: studentID,
+      allow_existing: allowExisting
+    }).pipe(shareReplay());
 
     auth$.subscribe((data: Session) => {
       if (!data.error) {
         sessionStorage.setItem(this.passwordKey, password);
         sessionStorage.setItem(this.studentIDKey, studentID.toString());
 
-        this.sessionName = data.name;
-        this.password = password;
-        this.studentID = studentID;
-
-        this.updateTitle();
+        this.applyAuthenticatedSession(password, studentID, data.name);
       }
     },);
 
     return auth$;
+  }
+
+  /** Validates session password only (no student claim). Used to read maxStudents for the auth form. */
+  checkSessionPassword(password: string): Observable<Session> {
+    return this.put<Session>('check_session', { password });
+  }
+
+  /** Shared success path for real and mock auth so UI can react without refresh. */
+  protected applyAuthenticatedSession(password: string, studentID: number, sessionName: string): void {
+    this.password = password;
+    this.studentID = studentID;
+    this.sessionName = sessionName;
+    this.emitAuthStatus();
+    this.updateTitle();
+  }
+
+  private emitAuthStatus(): void {
+    this.authStatusSubject.next({
+      authenticated: this.isAuthenticated,
+      studentID: this.studentID,
+      sessionName: this.sessionName
+    });
   }
 
   updateTitle(): void {

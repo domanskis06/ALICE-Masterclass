@@ -155,9 +155,63 @@ class CheckSessionAPI(APIView):
     def put(self, request):
         try:
             session = sessionByPassword(request)
-
-            return Response({'error': False, 'name': session.name}, status=status.HTTP_200_OK)
         except BadRequest:
             return Response(status=status.HTTP_400_BAD_REQUEST)
         except ObjectDoesNotExist:
-            return Response({'error': True, 'name': ''}, status=status.HTTP_200_OK)
+            return Response(
+                {'error': True, 'reason': 'password', 'name': ''},
+                status=status.HTTP_200_OK
+            )
+
+        student = request.data.get('student', None)
+        allow_existing = bool(request.data.get('allow_existing', False))
+
+        if student is not None and student != '':
+            try:
+                student = int(student)
+            except (TypeError, ValueError):
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+
+            # Accept both 0-based and 1-based student numbering (same as result APIs).
+            student_idx = student
+            if 1 <= student <= session.maxStudents:
+                student_idx = student - 1
+
+            if student_idx < 0 or student_idx >= session.maxStudents:
+                return Response(
+                    {
+                        'error': True,
+                        'reason': 'student_invalid',
+                        'name': session.name,
+                        'maxStudents': session.maxStudents,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            if not allow_existing:
+                from strangeness.models import VisualAnalysisResult, LargeScaleAnalysisResult
+
+                taken = (
+                    VisualAnalysisResult.objects.filter(session=session, student=student_idx).exists()
+                    or LargeScaleAnalysisResult.objects.filter(session=session, student=student_idx).exists()
+                )
+                if taken:
+                    return Response(
+                        {
+                            'error': True,
+                            'reason': 'student_taken',
+                            'name': session.name,
+                            'maxStudents': session.maxStudents,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+        return Response(
+            {
+                'error': False,
+                'reason': '',
+                'name': session.name,
+                'maxStudents': session.maxStudents,
+            },
+            status=status.HTTP_200_OK,
+        )

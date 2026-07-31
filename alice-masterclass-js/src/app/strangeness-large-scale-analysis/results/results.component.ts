@@ -19,7 +19,7 @@ export interface FitResult {
 })
 export class ResultsComponent implements AfterViewInit {
 
-  readonly displayedColumns: string[] = ['type', 'collision', 'centrality', 'signal'];
+  readonly displayedColumns: string[] = ['type', 'collision', 'centrality', 'signal', 'actions'];
   readonly minRows: number = 5;
 
   @ViewChild(MatPaginator)
@@ -47,6 +47,9 @@ export class ResultsComponent implements AfterViewInit {
   @Output()
   uploadResultsEvent: EventEmitter<any> = new EventEmitter();
 
+  @Output()
+  removeResultEvent: EventEmitter<LargeScaleAnalysisResultsEntry> = new EventEmitter<LargeScaleAnalysisResultsEntry>();
+
   constructor(public apiService: ApiService) { }
 
   ngAfterViewInit(): void {
@@ -55,6 +58,15 @@ export class ResultsComponent implements AfterViewInit {
 
   onUploadButtonClicked(): void {
     this.uploadResultsEvent.emit();
+  }
+
+  onRemoveButtonClicked(element: FitResult): void {
+    this.removeResultEvent.emit({
+      particle: element.particle,
+      collision: element.collision,
+      centrality: element.centrality,
+      signal: element.signal,
+    });
   }
 
 }

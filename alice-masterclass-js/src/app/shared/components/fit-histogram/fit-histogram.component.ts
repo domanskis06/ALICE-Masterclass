@@ -13,6 +13,12 @@ import { HistogramComponent } from '../histogram/histogram.component';
 export class FitHistogramComponent extends HistogramComponent implements AfterViewInit, OnDestroy {
   readonly LINE_POINTS: number = 100;
 
+  /** ViewBox height — room for ticks + Invariant Mass without excess bottom chrome. */
+  override readonly SVG = {
+    W: 400,
+    H: 224
+  };
+
   @Input()
   @HostBinding("style.--signal-color")
   public signalColor: string = "#F00000";
@@ -43,11 +49,26 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
     return d3.select(this.background);
   }
 
+  @ViewChild('fitRanges')
+  private fitRangesRef!: ElementRef;
+
+  private get fitRanges(): SVGGElement {
+    return this.fitRangesRef.nativeElement;
+  }
+
+  private get fitRangesSelector(): d3.Selection<SVGGElement, unknown, null, undefined> {
+    return d3.select(this.fitRanges);
+  }
+
   @Input()
   signalShown: boolean = true;
 
   @Input()
   backgroundShown: boolean = true;
+
+  /** Draw vertical min/max guides for the selected signal/background intervals. */
+  @Input()
+  showFitRangeGuides: boolean = true;
 
   @Input()
   get signalFunction(): (x: number) => number { return this._signalFunction.getValue(); }
@@ -84,6 +105,13 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
   private signalPoints: Array<[number, number]> = [];
   private backgroundPoints: Array<[number, number]> = [];
 
+  /**
+   * X-span used to sample fit curves. Snapshotted when fit functions change so
+   * dragging the signal/background sliders only moves the range guides, not the curves.
+   */
+  private curveSignalRange: [number, number] = [0, 1];
+  private curveBackgroundRange: [number, number] = [0, 1];
+
   private lineGenerator: d3.Line<[number, number]> = d3.line();
 
   constructor() {
@@ -93,25 +121,31 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
   ngAfterViewInit(): void {
     super.ngAfterViewInit();
 
-    this.signalFunctionSubscription = this._signalFunction.subscribe((signalFunction) => {
+    this.signalFunctionSubscription = this._signalFunction.subscribe(() => {
+      this.snapshotCurveRanges();
       this.updatePoints();
       this.updateLines();
     });
 
-    this.backgroundFunctionSubscription = this._backgroundFunction.subscribe((backgroundFunction) => {
+    this.backgroundFunctionSubscription = this._backgroundFunction.subscribe(() => {
+      this.snapshotCurveRanges();
       this.updatePoints();
       this.updateLines();
     });
 
-    this.signalRangeSubscription = this._signalRange.subscribe((signalRange) => {
-      this.updatePoints();
-      this.updateLines();
+    this.signalRangeSubscription = this._signalRange.subscribe(() => {
+      // Live slider changes update guides only — curves wait for the next Fit.
+      this.updateFitRangeGuides();
     });
 
-    this.backgroundRangeSubscription = this._backgroundRange.subscribe((backgroundRange) => {
-      this.updatePoints();
-      this.updateLines();
+    this.backgroundRangeSubscription = this._backgroundRange.subscribe(() => {
+      this.updateFitRangeGuides();
     });
+  }
+
+  private snapshotCurveRanges(): void {
+    this.curveSignalRange = [this.signalRange[0], this.signalRange[1]];
+    this.curveBackgroundRange = [this.backgroundRange[0], this.backgroundRange[1]];
   }
 
   ngOnDestroy(): void {
@@ -126,18 +160,24 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
   private updatePoints(): void {
     this.backgroundPoints = [];
 
-    const intervalB = (this.backgroundRange[1] - this.backgroundRange[0]) / this.LINE_POINTS;
+    const [b0, b1] = this.curveBackgroundRange;
+    const intervalB = (b1 - b0) / this.LINE_POINTS;
 
-    for (let x = this.backgroundRange[0]; x < this.backgroundRange[1]; x += intervalB) {
-      this.backgroundPoints.push([x, this.backgroundFunction(x)]);
+    if (b1 > b0 && intervalB > 0) {
+      for (let x = b0; x < b1; x += intervalB) {
+        this.backgroundPoints.push([x, this.backgroundFunction(x)]);
+      }
     }
 
     this.signalPoints = [];
 
-    const intervalS = (this.signalRange[1] - this.signalRange[0]) / this.LINE_POINTS;
+    const [s0, s1] = this.curveSignalRange;
+    const intervalS = (s1 - s0) / this.LINE_POINTS;
 
-    for (let x = this.signalRange[0]; x < this.signalRange[1]; x += intervalS) {
-      this.signalPoints.push([x, this.signalFunction(x)]);
+    if (s1 > s0 && intervalS > 0) {
+      for (let x = s0; x < s1; x += intervalS) {
+        this.signalPoints.push([x, this.signalFunction(x)]);
+      }
     }
   }
 
@@ -153,6 +193,58 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
       .attr('d', this.lineGenerator(this.signalPoints));
   }
 
+  private updateFitRangeGuides(): void {
+    if (!this.fitRangesRef) {
+      return;
+    }
+
+    const root = this.fitRangesSelector;
+    root.selectAll('*').remove();
+
+    if (!this.showFitRangeGuides) {
+      return;
+    }
+
+    this.appendRangeGuide(root, this.backgroundRange, 'background-range');
+    this.appendRangeGuide(root, this.signalRange, 'signal-range');
+  }
+
+  private appendRangeGuide(
+    root: d3.Selection<SVGGElement, unknown, null, undefined>,
+    range: [number, number],
+    cssClass: string
+  ): void {
+    const [a, b] = range;
+    if (!(b > a)) {
+      return;
+    }
+
+    const x0 = this.xScale(a);
+    const x1 = this.xScale(b);
+    const group = root.append('g').attr('class', cssClass);
+
+    group.append('rect')
+      .attr('class', 'fit-range-band')
+      .attr('x', Math.min(x0, x1))
+      .attr('y', 0)
+      .attr('width', Math.max(0, Math.abs(x1 - x0)))
+      .attr('height', this.CONTENT_AREA.H);
+
+    group.append('line')
+      .attr('class', 'fit-range-line')
+      .attr('x1', x0)
+      .attr('x2', x0)
+      .attr('y1', 0)
+      .attr('y2', this.CONTENT_AREA.H);
+
+    group.append('line')
+      .attr('class', 'fit-range-line')
+      .attr('x1', x1)
+      .attr('x2', x1)
+      .attr('y1', 0)
+      .attr('y2', this.CONTENT_AREA.H);
+  }
+
   protected updateXDomain(): void {
     super.updateXDomain();
 
@@ -162,6 +254,7 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
         .y( (d) => { return this.yScale(d[1])} );
 
       this.updateLines();
+      this.updateFitRangeGuides();
     }
   }
 
@@ -177,27 +270,45 @@ export class FitHistogramComponent extends HistogramComponent implements AfterVi
     }
   }
 
-  /** Nice ticks every 0.04 within the visible zoom domain (LSA only). */
+  /**
+   * Adaptive nice ticks on the visible zoom domain (denser after zoom-in).
+   * Falls back to the shared bin-edge ticks when the span is invalid.
+   */
   protected getXTickValues(): number[] {
-    const step = 0.04;
     const [zoom0, zoom1] = this.xDomainZoom;
     if (!(zoom1 > zoom0)) {
       return super.getXTickValues();
     }
 
-    const first = Math.ceil((zoom0 - 1e-9) / step) * step;
+    const span = zoom1 - zoom0;
+    const targetTicks = 10;
+    const rawStep = span / targetTicks;
+    const niceSteps = [0.001, 0.002, 0.005, 0.01, 0.02, 0.025, 0.04, 0.05, 0.1, 0.2, 0.25, 0.5];
+    let step = niceSteps[niceSteps.length - 1];
+    for (const candidate of niceSteps) {
+      if (candidate >= rawStep) {
+        step = candidate;
+        break;
+      }
+    }
+
+    const first = Math.ceil((zoom0 - 1e-12) / step) * step;
     const ticks: number[] = [];
-    for (let value = first; value <= zoom1 + 1e-9; value += step) {
-      const rounded = Math.round(value / step) * step;
-      if (rounded >= zoom0 - 1e-9 && rounded <= zoom1 + 1e-9) {
-        ticks.push(Number(rounded.toFixed(2)));
+    const decimals = step < 0.01 ? 3 : 2;
+    for (let value = first; value <= zoom1 + 1e-12; value += step) {
+      const rounded = Number(value.toFixed(decimals + 1));
+      if (rounded >= zoom0 - 1e-12 && rounded <= zoom1 + 1e-12) {
+        ticks.push(Number(rounded.toFixed(decimals)));
       }
     }
     return ticks.length > 0 ? ticks : super.getXTickValues();
   }
 
   protected getXTickFormat(): (value: number) => string {
-    return (value: number) => value.toFixed(2);
+    const [zoom0, zoom1] = this.xDomainZoom;
+    const span = zoom1 - zoom0;
+    const decimals = span <= 0.05 ? 3 : 2;
+    return (value: number) => value.toFixed(decimals);
   }
 
 }

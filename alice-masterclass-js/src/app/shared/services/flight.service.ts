@@ -94,13 +94,27 @@ export class FlightService {
     });
   }
 
-  /** Called by the overlay host when AnimationBuilder `onDone` fires. */
+  /**
+   * Resolve `fly()` when the ball reaches the bin (landing keyframe), while the
+   * fade-out may still be playing. Does not clear `active` or dequeue the next flight.
+   */
+  notifyLanded(id: number): void {
+    if (this._active()?.id !== id) {
+      return;
+    }
+    const resolve = this.resolveActive;
+    this.resolveActive = null;
+    resolve?.();
+  }
+
+  /** Called by the overlay host when AnimationBuilder `onDone` fires (fade finished). */
   notifyDone(id: number): void {
     if (this._active()?.id !== id) {
       return;
     }
 
     this._active.set(null);
+    // If landing was never signalled (interrupted / short path), still resolve callers.
     const resolve = this.resolveActive;
     this.resolveActive = null;
     resolve?.();

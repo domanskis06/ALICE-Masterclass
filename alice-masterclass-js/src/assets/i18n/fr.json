@@ -29,8 +29,8 @@
         "LETS_US": "L’ITS nous permet de :",
         "B1": "Déterminer le vertex primaire avec une résolution meilleure que 100 micromètres",
         "B2": "Reconstruire les vertex secondaires nécessaires aux désintégrations de charm et d’hypérons",
-        "B3": "Suivre et identifier les particules de bas moment",
-        "B4": "Améliorer la résolution en moment et en angle pour les particules reconstruites par la chambre à projection temporelle (TPC)"
+        "B3": "Suivre et identifier les particules de basse impulsion",
+        "B4": "Améliorer la résolution en impulsion et en angle pour les particules reconstruites par la chambre à projection temporelle (TPC)"
       },
       "FIT": {
         "TITLE": "FIT (Fast Interaction Trigger)",
@@ -47,7 +47,7 @@
         "LETS_US": "La TPC nous permet de :",
         "B1": "Reconstruire les traces des particules et visualiser les trajectoires de milliers de particules créées dans une seule collision",
         "B2": "Identifier différents types de particules en mesurant comment elles perdent de l’énergie dans le gaz",
-        "B3": "Mesurer le moment des particules, aidant les scientifiques à comprendre leur mouvement et leurs interactions",
+        "B3": "Mesurer l’impulsion des particules, aidant les scientifiques à comprendre leur mouvement et leurs interactions",
         "B4": "Étudier les propriétés du plasma de quarks et de gluons créé dans les collisions d’ions lourds à haute énergie"
       },
       "TRD": {
@@ -61,10 +61,10 @@
       },
       "TOF": {
         "TITLE": "TOF (Time Of Flight)",
-        "BODY": "Le détecteur TOF mesure le temps que mettent les particules pour aller du point de collision au détecteur, avec une précision d’environ 50 picosecondes (50 × 10<sup>−12</sup> s). En combinant ce temps de vol avec la distance parcourue et le moment de la particule, on obtient sa vitesse, puis son identité. Ainsi le TOF peut distinguer pions, kaons et protons même lorsqu’ils se déplacent presque à la vitesse de la lumière. Un timing précis est particulièrement utile car de nombreuses particules produites dans les collisions ont des propriétés similaires et ont besoin de cette information supplémentaire pour l’identification.",
+        "BODY": "Le détecteur TOF mesure le temps que mettent les particules pour aller du point de collision au détecteur, avec une précision d’environ 50 picosecondes (50 × 10<sup>−12</sup> s). En combinant ce temps de vol avec la distance parcourue et l’impulsion de la particule, on obtient sa vitesse, puis son identité. Ainsi le TOF peut distinguer pions, kaons et protons même lorsqu’ils se déplacent presque à la vitesse de la lumière. Une mesure de temps précise est particulièrement utile car de nombreuses particules produites dans les collisions ont des propriétés similaires et ont besoin de cette information supplémentaire pour l’identification.",
         "LETS_US": "Le TOF nous permet de :",
         "B1": "Mesurer les vitesses des particules avec une précision extrêmement élevée.",
-        "B2": "Identifier différents types de particules en comparant leur temps de vol et leur moment.",
+        "B2": "Identifier différents types de particules en comparant leur temps de vol et leur impulsion.",
         "B3": "Distinguer les pions, kaons et protons produits dans les collisions.",
         "B4": "Améliorer la compréhension des interactions de particules dans les collisions à haute énergie."
       },
@@ -78,11 +78,11 @@
       },
       "L3": {
         "TITLE": "L3 (aimant solénoïdal)",
-        "BODY": "L’aimant L3 est le solénoïde monumental autour des détecteurs ALICE. Il crée un fort champ magnétique le long de l’axe du faisceau. Les particules chargées traversant ce champ voient leurs trajectoires courbées par la force de Lorentz. Le sens de la courbure indique le signe de la charge, et la courbure est liée au moment : les particules de plus haut moment se courbent moins. Sans l’aimant, les particules chargées voleraient en ligne droite. Avec L3 allumé, leurs trajectoires deviennent les courbes utilisées pour mesurer le moment.",
+        "BODY": "L’aimant L3 est le solénoïde monumental autour des détecteurs ALICE. Il crée un fort champ magnétique le long de l’axe du faisceau. Les particules chargées traversant ce champ voient leurs trajectoires courbées par la force de Lorentz. Le sens de la courbure indique le signe de la charge, et la courbure est liée à l’impulsion : les particules de plus haute impulsion se courbent moins. Sans l’aimant, les particules chargées voleraient en ligne droite. Avec L3 allumé, leurs trajectoires deviennent les courbes utilisées pour mesurer l’impulsion.",
         "LETS_US": "Le L3 nous permet de :",
         "B1": "Courber les trajectoires des particules chargées dans un champ magnétique.",
         "B2": "Déduire la charge de la particule à partir du sens de courbure de la trace.",
-        "B3": "Mesurer le moment de la particule d’après l’intensité de la courbure des traces.",
+        "B3": "Mesurer l’impulsion de la particule d’après l’intensité de la courbure des traces.",
         "B4": "Révéler la topologie complète et courbée de l’événement une fois le détecteur assemblé."
       },
       "CALORIMETERS": {
@@ -120,7 +120,16 @@
     "NO_TOKEN_TOOLTIP": "Pour activer l’envoi des données, fournissez le mot de passe via l’option Mot de passe du Menu.",
     "UPLOADING": "Envoi des données…",
     "COMPLETED": "Envoi terminé !",
-    "UPLOAD_DATA": "Envoyer les données"
+    "UPLOAD_DATA": "Envoyer les données",
+    "STUDENT_TAKEN": "Ce numéro d’élève est déjà utilisé dans cette session.",
+    "STUDENT_INVALID": "Numéro d’élève invalide pour cette session.",
+    "STUDENT_MIN": "Le numéro d’élève ne peut pas être inférieur à 0.",
+    "STUDENT_MAX": "Le numéro d’élève ne peut pas être supérieur à {{max}}.",
+    "CLOSE": "Fermer",
+    "ALREADY_LOGGED_IN": "Vous êtes déjà connecté en tant qu’élève n° {{studentID}} dans la session {{sessionName}}",
+    "ALREADY_LOGGED_IN_NO_SESSION": "Vous êtes déjà connecté en tant qu’élève n° {{studentID}}",
+    "LOGIN_SUCCESS": "Vous êtes connecté en tant qu’élève n° {{studentID}} dans la session {{sessionName}}",
+    "LOGIN_SUCCESS_NO_SESSION": "Vous êtes connecté en tant qu’élève n° {{studentID}}"
   },
   "EVENT_DISPLAY": {
     "VIEW_3D": "Vue 3D",
@@ -179,12 +188,25 @@
       "TITLE": "Production de particules étranges",
       "SUBTITLE": "Exercice 1 : Inspection visuelle",
       "P1": "Le but de l’exercice est de rechercher des particules étranges produites dans les collisions au LHC et enregistrées par l’expérience ALICE. Les particules étranges ne vivent pas longtemps ; elles se désintègrent peu après leur production. Elles vivent cependant assez longtemps pour parcourir une certaine distance (généralement quelques centimètres) depuis le point d’interaction (IP) où elles ont été produites (vertex primaire). Leur recherche repose donc sur l’identification de leurs produits de désintégration, qui doivent provenir d’un vertex secondaire commun. Les particules étranges neutres, telles que <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> et <span class=\"particle\">Λ&#773;</span>, se désintègrent en donnant un motif caractéristique, appelé V0. La particule mère disparaît à quelques centimètres du point d’interaction et deux particules de charges opposées apparaissent à sa place, courbées dans des directions opposées dans le champ magnétique du solénoïde ALICE. Dans les figures suivantes, les traces rouges indiquent des particules chargées positivement, les vertes des particules chargées négativement, et les bleues le pion bachelor dans les désintégrations en cascade. Les désintégrations que nous rechercherons sont :",
-      "P2": "On voit que pour un état final pion–pion le motif de désintégration est quasi symétrique, alors que dans l’état final pion–proton le rayon de courbure du proton est plus grand que celui du pion : en raison de sa masse plus élevée, le proton emporte la plus grande partie du moment initial.",
-      "P3": "Nous rechercherons aussi les désintégrations en cascade de particules étranges chargées. Le <span class=\"particle\">Ξ<sup>−</sup></span> se désintègre en <span class=\"particle\">π<sup>−</sup></span> et <span class=\"particle\">Λ</span> ; le <span class=\"particle\">Λ</span> se désintègre ensuite en un proton et <span class=\"particle\">π<sup>−</sup></span>. Son antiparticule, le <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, se désintègre en <span class=\"particle\">π<sup>+</sup></span> et <span class=\"particle\">Λ&#773;</span> ; le <span class=\"particle\">Λ&#773;</span> se désintègre ensuite en un antiproton et <span class=\"particle\">π<sup>+</sup></span>. Dans les deux cas, le premier pion est le bachelor (une seule trace chargée) et est montré en bleu. La recherche des V0 et des cascades repose sur la topologie de désintégration et l’identification des produits ; une confirmation supplémentaire de l’identité de la particule est le calcul de sa masse, à partir de la masse et du moment des produits de désintégration.",
-      "P4": "Dans cet exercice, vous déterminerez le nombre de particules étranges dans 15 collisions pp à une énergie de collision de 7 TeV. Les particules peuvent être identifiées grâce à la topologie de leurs désintégrations. Lorsque vous sélectionnez des traces d’un V0 ou d’une cascade, les nombres pertinents (moments sous la forme <em>(px,py,pz)</em> et masse) sont automatiquement envoyés à l’interface <strong>Calculateur</strong>, et la masse invariante des particules actuellement sélectionnées est calculée. Vous choisissez ensuite un type de particule et cliquez sur <strong>Ajouter</strong> pour inclure sa masse dans les graphiques ci-dessous."
+      "P2": "On voit que pour un état final pion–pion le motif de désintégration est quasi symétrique, alors que dans l’état final pion–proton le rayon de courbure du proton est plus grand que celui du pion : en raison de sa masse plus élevée, le proton emporte la plus grande partie de l’impulsion initiale.",
+      "P3": "Nous rechercherons aussi les désintégrations en cascade de particules étranges chargées. Le <span class=\"particle\">Ξ<sup>−</sup></span> se désintègre en <span class=\"particle\">π<sup>−</sup></span> et <span class=\"particle\">Λ</span> ; le <span class=\"particle\">Λ</span> se désintègre ensuite en un proton et <span class=\"particle\">π<sup>−</sup></span>. Son antiparticule, le <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, se désintègre en <span class=\"particle\">π<sup>+</sup></span> et <span class=\"particle\">Λ&#773;</span> ; le <span class=\"particle\">Λ&#773;</span> se désintègre ensuite en un antiproton et <span class=\"particle\">π<sup>+</sup></span>. Dans les deux cas, le premier pion est le bachelor (une seule trace chargée) et est montré en bleu. La recherche des V0 et des cascades repose sur la topologie de désintégration et l’identification des produits ; une confirmation supplémentaire de l’identité de la particule est le calcul de sa masse, à partir de la masse et de l’impulsion des produits de désintégration.",
+      "P4": "Dans cet exercice, vous déterminerez le nombre de particules étranges dans 15 collisions pp à une énergie de collision de 7 TeV. Les particules peuvent être identifiées grâce à la topologie de leurs désintégrations. Lorsque vous sélectionnez des traces d’un V0 ou d’une cascade, les nombres pertinents (impulsions sous la forme <em>(px,py,pz)</em> et masse) sont automatiquement envoyés à l’interface <strong>Calculateur</strong>, et la masse invariante des particules actuellement sélectionnées est calculée. Vous choisissez ensuite un type de particule et cliquez sur <strong>Ajouter</strong> pour inclure sa masse dans les graphiques ci-dessous."
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Analyse visuelle",
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Événement {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "Vous avez terminé cet événement !",
+      "EVENT_COMPLETE_BODY": "Vous avez identifié toutes les particules — choisissez l’événement suivant",
+      "DECAY_GUIDE": "Guide des désintégrations",
+      "HOW_TO_IDENTIFY": "Comment identifier une particule ?",
+      "ADD_HINT_SELECT_TYPE": "Sélectionnez un type de particule avant d’ajouter",
+      "IDENTIFIED_TITLE": "Identifiées dans cet événement",
+      "UNDO": "Annuler",
+      "RESET_EVENT": "Réinitialiser l’événement",
+      "REMOVE": "Supprimer",
+      "SCROLL_TO_ANALYSIS": "Aller au calculateur et aux histogrammes"
+    },
     "CALCULATOR": {
       "TITLE": "Calculateur",
       "TOTAL": "Total",
@@ -247,28 +269,32 @@
       "090_100": "90% - 100%"
     },
     "HISTOGRAM_DISPLAY": {
-      "TITLE": "Affichage de l’histogramme"
+      "TITLE": "Affichage de l’histogramme",
+      "RESET_ZOOM": "Réinitialiser le zoom",
+      "RESET_RANGE": "Réinitialiser la plage"
     },
     "RESULTS": {
       "TITLE": "Résultats",
       "TYPE": "Type",
       "COLLISION": "Collision",
       "CENTRALITY": "Centralité",
-      "SIGNAL": "Signal"
+      "SIGNAL": "Signal",
+      "DELETE": "Supprimer l’ajustement"
     },
     "FIT_SELECTOR": {
       "TITLE": "Sélecteur d’ajustement",
       "SIGNAL": "Signal",
       "BACKGROUND": "Fond",
       "FIT": "Ajuster",
-      "ACCEPT": "Accepter"
+      "ACCEPT": "Accepter",
+      "CLEAR_FIT": "Effacer l’ajustement"
     },
     "PARTICLE_PROPAGATION_MENU": "Propagation des particules",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
       "TITLE": "Comment les traces se courbent dans ALICE",
-      "P1": "Les particules chargées dans ALICE se déplacent dans un fort champ magnétique, et la force de Lorentz les pousse latéralement lorsque leur mouvement coupe ce champ. Leurs traces se courbent donc : un champ plus fort ou un moment plus bas donne une courbure plus serrée, tandis que les charges positives et négatives se courbent dans des sens opposés. Les particules neutres ne ressentent aucune force magnétique, elles vont donc tout droit. D’après l’acuité de la courbure d’une trace, les physiciens peuvent lire le moment de la particule.",
+      "P1": "Les particules chargées dans ALICE se déplacent dans un fort champ magnétique, et la force de Lorentz les pousse latéralement lorsque leur mouvement coupe ce champ. Leurs traces se courbent donc : un champ plus fort ou une impulsion plus basse donne une courbure plus serrée, tandis que les charges positives et négatives se courbent dans des sens opposés. Les particules neutres ne ressentent aucune force magnétique, elles vont donc tout droit. D’après l’acuité de la courbure d’une trace, les physiciens peuvent lire l’impulsion de la particule.",
       "P2": "Ce champ est façonné par un grand solénoïde autour du tonneau et un dipôle près des détecteurs à muons. Avant le début de l’animation, l’application suit chaque particule à travers ce champ mesuré et stocke les trajectoires. Une fois cela fait, la lecture et le curseur de temps ne font que révéler ce qui a été préparé, ce qui garde le mouvement fluide lorsque vous parcourez l’événement.",
-      "P3": "Sur la chronologie vous voyez d’abord les protons qui s’approchent, puis la collision, et enfin les particules qui s’envolent du centre. Si vous changez l’intensité du champ ou inversez le solénoïde, les courbures doivent changer avec ; appuyez ensuite sur Replay pour que les traces soient recalculées. Atténuer les couches du détecteur ou montrer les lignes de champ peut rendre la même histoire plus facile à suivre dans la scène."
+      "P3": "Sur la chronologie vous voyez d’abord les protons qui s’approchent, puis la collision, et enfin les particules qui s’envolent du centre. Si vous changez l’intensité du champ ou inversez le solénoïde, les courbures doivent changer avec ; appuyez ensuite sur Rejouer pour que les traces soient recalculées. Atténuer les couches du détecteur ou montrer les lignes de champ peut rendre la même histoire plus facile à suivre dans la scène."
     },
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Propagation des particules dans le champ magnétique",
@@ -299,7 +325,7 @@
       "FIELD_OPACITY": "Opacité du champ",
       "TIME_SCRUB_HINT": "Démarrez l’animation pour faire défiler le temps.",
       "TIME_READOUT_TITLE": "Temps de vol dans le détecteur, ralenti pour la visualisation",
-      "RECOMPUTE_HINT": "Appuyez sur Replay pour recalculer les traces avec le nouveau champ.",
+      "RECOMPUTE_HINT": "Appuyez sur Rejouer pour recalculer les traces avec le nouveau champ.",
       "REVERSED_L3_HINT": "L3 inversé : moins de lignes rejoignent le dipôle, car la majeure partie du flux du solénoïde revient à la sortie.",
       "ARIA_HIDE_DETECTOR_SIDEBAR": "Masquer le panneau des parties du détecteur",
       "ARIA_SHOW_DETECTOR_SIDEBAR": "Afficher le panneau des parties du détecteur",
@@ -343,7 +369,7 @@
       "STEP_OPEN_TITLE": "Charger le spectre",
       "STEP_OPEN_BODY": "Cliquez sur <strong>Ouvrir l’histogramme</strong> pour récupérer les données binnées — la visite avancera alors automatiquement. Vous pouvez aussi appuyer sur <strong>Suivant</strong> pour passer si un histogramme est déjà chargé.",
       "STEP_SPECTRUM_TITLE": "Ce que vous regardez",
-      "STEP_SPECTRUM_BODY": "L’axe horizontal est la <strong>masse invariante</strong> (GeV/c²). Vous devriez voir un <strong>large continuum</strong> plus d’éventuelles <strong>structures étroites</strong> (pics). La plupart des paires sont un <strong>fond combinatoire aléatoire</strong> (pions ne provenant pas de la même désintégration faible), donc leur masse peut tomber presque n’importe où — c’est pourquoi le fond ressemble à une distribution sous-jacente lisse, tandis qu’une vraie désintégration <strong>K<sub>S</sub><sup>0</sup></strong>, <strong>Λ</strong> ou <strong>Ξ</strong> donne un excès près de la masse connue.",
+      "STEP_SPECTRUM_BODY": "L’axe horizontal est la <strong>masse invariante</strong> (GeV/c²). Vous devriez voir un <strong>large continuum</strong> plus d’éventuelles <strong>structures étroites</strong> (pics). La plupart des paires sont un <strong>fond combinatoire aléatoire</strong> (pions ne provenant pas de la même désintégration faible), donc leur masse peut tomber presque n’importe où — c’est pourquoi le fond ressemble à une distribution sous-jacente lisse, tandis qu’une vraie désintégration <strong>K<sub>S</sub><sup>0</sup></strong> ou <strong>Λ</strong> donne un excès près de la masse connue.",
       "STEP_SIGNAL_TITLE": "Définir la région de signal (pic)",
       "STEP_SIGNAL_BODY": "Le contrôle de plage <strong>Signal</strong> sélectionne l’intervalle de masse où vous attendez le <strong>pic de signal</strong>. Une <strong>gaussienne</strong> sera ajustée dans cette fenêtre pour modéliser la résonance. Choisissez une fenêtre assez large pour capturer le pic, mais pas si large que des structures de fond non liées dominent l’ajustement.",
       "STEP_BACKGROUND_TITLE": "Définir les bandes latérales de fond",

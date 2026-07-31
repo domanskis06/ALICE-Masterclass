@@ -12,7 +12,7 @@
     "WELCOME_P3": "Sie bauen den Detektor Stück für Stück und lernen dabei die Rolle und Bedeutung jedes Detektorteils kennen. Bereit?",
     "WELCOME_CONTINUE": "Weiter",
     "DRAG_TITLE": "Nächstes Teil platzieren",
-    "DONE_TITLE": "Detector fertig montiert",
+    "DONE_TITLE": "Detektor fertig montiert",
     "DONE_BODY": "Alle Teile sind platziert. Sichtbarkeit und Bahneinstellungen finden Sie im rechten Panel.",
     "DONE_BUTTON": "Alles klar",
     "PART_DESC": {
@@ -89,10 +89,9 @@
     }
   },
   "HOME": {
-    "HOME": "Home",
     "HOME_MENU": "Home",
     "TITLE": "Herzlich Willkommen in der ALICE MasterClass!",
-    "P1": "Die ALICE Collaboration hat einen speziellen Detektor gebaut, um das einzigartige physikalische Potenzial von Kern-Kern-Kollisionen bei LHC-Energienenergien auszuschöpfen. Unser Ziel ist es, die Physik stark wechselwirkender Materie bei den höchsten bisher im Labor erreichten Energiedichten zu untersuchen. In einem solchen Zustand bildet sich eine extreme Phase der Materie - das sogenannte Quark-Gluon-Plasma.",
+    "P1": "Die ALICE Collaboration hat einen speziellen Detektor gebaut, um das einzigartige physikalische Potenzial von Kern-Kern-Kollisionen bei LHC-Energien auszuschöpfen. Unser Ziel ist es, die Physik stark wechselwirkender Materie bei den höchsten bisher im Labor erreichten Energiedichten zu untersuchen. In einem solchen Zustand bildet sich eine extreme Phase der Materie - das sogenannte Quark-Gluon-Plasma.",
     "P2": "Es wird angenommen, dass sich unser Universum in den ersten Millionstelsekunden nach dem Urknall in einem so ursprünglichen Zustand befunden hat. Die Eigenschaften einer solchen Phase sind Schlüsselthemen für Quantum Chromo Dynamics, das Verständnis von Confinement-Deconfinement und chiralen Phasenübergängen.",
     "P3": "Zu diesem Zweck führen wir eine umfassende Untersuchung der Hadronen, Elektronen, Myonen und Photonen durch, die bei Kollisionen schwerer Kerne entstehen. ALICE untersucht auch Protonen-Protonen- und Protonen-Kern-Kollisionen sowohl als Vergleich mit Kern-Kern-Kollisionen als auch für sich.",
     "DOWNLOAD": "Wenn Sie möchten, können Sie eine Desktop-Version der MasterClass herunterladen und verwenden:",
@@ -114,7 +113,16 @@
     "ERROR": "Das eingegebene Kennwort ist falsch.",
     "UPLOADING": "Daten werden hochgeladen...",
     "COMPLETED": "Upload abgeschlossen!",
-    "UPLOAD_DATA": "Daten hochladen"
+    "UPLOAD_DATA": "Daten hochladen",
+    "STUDENT_TAKEN": "Diese Schülernummer ist in dieser Sitzung bereits vergeben.",
+    "STUDENT_INVALID": "Schülernummer ist für diese Sitzung ungültig.",
+    "STUDENT_MIN": "Die Schülernummer darf nicht kleiner als 0 sein.",
+    "STUDENT_MAX": "Die Schülernummer darf nicht größer als {{max}} sein.",
+    "CLOSE": "Schließen",
+    "ALREADY_LOGGED_IN": "Sie sind bereits als Schüler Nr. {{studentID}} in der Sitzung {{sessionName}} angemeldet",
+    "ALREADY_LOGGED_IN_NO_SESSION": "Sie sind bereits als Schüler Nr. {{studentID}} angemeldet",
+    "LOGIN_SUCCESS": "Sie wurden als Schüler Nr. {{studentID}} in der Sitzung {{sessionName}} angemeldet",
+    "LOGIN_SUCCESS_NO_SESSION": "Sie wurden als Schüler Nr. {{studentID}} angemeldet"
   },
   "LANGUAGES": {
     "en": "English",
@@ -176,9 +184,37 @@
     "BUTTON_DISMISS": "Schließen"
   },
   "STRANGENESS": {
+    "INSTRUCTIONS_VISUAL_ANALYSIS": {
+      "TITLE": "Produktion seltsamer Teilchen",
+      "SUBTITLE": "Übung 1: Visuelle Analyse",
+      "P1": "Ziel der Übung ist die Suche nach seltsamen Teilchen, die bei Kollisionen am LHC erzeugt und vom ALICE-Experiment aufgezeichnet wurden. Seltsame Teilchen leben nicht lange; sie zerfallen bald nach ihrer Erzeugung. Sie leben jedoch lange genug, um eine gewisse Strecke (meist einige Zentimeter) vom Wechselwirkungspunkt (IP) zurückzulegen, an dem sie erzeugt wurden (primärer Vertex). Ihre Suche beruht daher auf der Identifikation ihrer Zerfallsprodukte, die von einem gemeinsamen sekundären Vertex stammen müssen. Neutrale seltsame Teilchen wie <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> und <span class=\"particle\">Λ&#773;</span> zerfallen in einem charakteristischen Zerfallsmuster, das V0 genannt wird. Das Mutterteilchen verschwindet einige Zentimeter vom Wechselwirkungspunkt, und an seiner Stelle erscheinen zwei entgegengesetzt geladene Teilchen, die im Magnetfeld des ALICE-Solenoids in entgegengesetzte Richtungen gekrümmt werden. In den folgenden Abbildungen kennzeichnen rote Spuren positiv geladene Teilchen, grüne Spuren negativ geladene Teilchen und blaue Spuren das Bachelor-Pion in Kaskadenzerfällen. Wir suchen nach folgenden Zerfällen:",
+      "P2": "Man sieht, dass das Zerfallsmuster für einen Pion–Pion-Endzustand quasi-symmetrisch ist, während im Pion–Proton-Endzustand der Krümmungsradius des Protons größer ist als der des Pions: Aufgrund seiner höheren Masse trägt das Proton den Großteil des Anfangsimpulses.",
+      "P3": "Wir suchen auch nach Kaskadenzerfällen geladener seltsamer Teilchen. Das <span class=\"particle\">Ξ<sup>−</sup></span> zerfällt in <span class=\"particle\">π<sup>−</sup></span> und <span class=\"particle\">Λ</span>; das <span class=\"particle\">Λ</span> zerfällt dann in ein Proton und <span class=\"particle\">π<sup>−</sup></span>. Sein Antiteilchen, das <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, zerfällt in <span class=\"particle\">π<sup>+</sup></span> und <span class=\"particle\">Λ&#773;</span>; das <span class=\"particle\">Λ&#773;</span> zerfällt dann in ein Antiproton und <span class=\"particle\">π<sup>+</sup></span>. In beiden Fällen ist das erste Pion das Bachelor-Pion (eine einzelne geladene Spur) und wird blau dargestellt. Die Suche nach V0s und Kaskaden beruht auf der Zerfallstopologie und der Identifikation der Zerfallsprodukte; eine zusätzliche Bestätigung der Teilchenidentität ist die Berechnung seiner Masse aus Masse und Impuls der Zerfallsprodukte.",
+      "P4": "In dieser Übung bestimmen Sie die Anzahl seltsamer Teilchen in 15 pp-Kollisionen bei einer Kollisionsenergie von 7 TeV. Teilchen können über die Topologie ihrer Zerfälle identifiziert werden. Wenn Sie Spuren eines V0 oder einer Kaskade auswählen, werden die relevanten Größen (Impuls in der Form <em>(px,py,pz)</em> und Masse) automatisch an die <strong>Rechner</strong>-Oberfläche gesendet, und die invariante Masse der aktuell ausgewählten Teilchen wird berechnet. Anschließend wählen Sie einen Teilchentyp und klicken auf <strong>Hinzufügen</strong>, um seine Masse in die Diagramme unten aufzunehmen."
+    },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Visuelle Analyse",
     "LARGE_SCALE_ANALYSIS_MENU": "Großskalige Analyse",
+    "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
+      "TITLE": "Produktion seltsamer Teilchen",
+      "SUBTITLE": "Übung 2: Großskalige Analyse",
+      "P1": "Die Ereignisanzeige ist ein leistungsfähiges Werkzeug, mit dem sich die Qualität der Daten und ihrer Rekonstruktion prüfen lässt und das ein „Gefühl“ dafür vermittelt, wie Ereignisse aussehen. In der Praxis wird die Datenanalyse jedoch nicht visuell durchgeführt — das wäre viel zu mühsam und zeitaufwendig. Um die Millionen von Ereignissen zu analysieren, die wir täglich am LHC sammeln, führen wir Programme aus — und genau das tun Sie hier, um V0s in einer größeren Ereignisstichprobe zu suchen.",
+      "P2": "Sie analysieren nun Aufzeichnungen von Hunderten von Ereignissen auf einmal. Sie sehen, dass die invariante Masse eine kontinuierliche Verteilung bildet — weil die kombinierten Pionpaare zufällig sind, nicht von einem gemeinsamen sekundären Vertex stammen und jeden Massenwert ergeben können. Die meisten davon sind Untergrund.",
+      "P3": "Um die Anzahl der Teilchen eines bestimmten Typs zu finden, zum Beispiel K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, müssen Sie die Anzahl der Einträge im Peak nach Untergrundsubtraktion bestimmen. Um eine Kurve (Polynom zweiten Grades) an den Untergrund anzupassen, wählen Sie zuerst mit dem Schieberegler den Fitbereich. Um eine Gauß-Verteilung an das Signal anzupassen, müssen Sie außerdem den Peakbereich wählen. Wenn Sie auf <strong>Fit</strong> klicken, werden die angepassten Funktionen über das Histogramm gelegt und Sie können visuell prüfen, ob der Fit vernünftig ist. Wenn die angepassten Funktionen gut zu den Daten passen, können Sie den Button <strong>Übernehmen</strong> drücken. Für die Untergrundsubtraktion werden die Koeffizienten des Polynoms zweiten Grades verwendet. Nach dem Klicken auf <strong>Übernehmen</strong> erhalten Sie im Histogramm die Gesamtzahl der Einträge im Peak, die Zahl der Untergrundeinträge und die des Signals."
+    },
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Ereignis {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "Sie haben dieses Ereignis abgeschlossen!",
+      "EVENT_COMPLETE_BODY": "Sie haben alle Teilchen identifiziert — wählen Sie das nächste Ereignis",
+      "DECAY_GUIDE": "Zerfallsleitfaden",
+      "HOW_TO_IDENTIFY": "Wie identifiziert man ein Teilchen?",
+      "ADD_HINT_SELECT_TYPE": "Wählen Sie vor dem Hinzufügen eine Teilchenart",
+      "IDENTIFIED_TITLE": "In diesem Ereignis identifiziert",
+      "UNDO": "Rückgängig",
+      "RESET_EVENT": "Ereignis zurücksetzen",
+      "REMOVE": "Entfernen",
+      "SCROLL_TO_ANALYSIS": "Zum Rechner und zu den Histogrammen scrollen"
+    },
     "CALCULATOR": {
       "TITLE": "Rechner",
       "TOTAL": "Gesamt",
@@ -233,21 +269,25 @@
       "090_100": "90% - 100%"
     },
     "HISTOGRAM_DISPLAY": {
-      "TITLE": "Histogrammanzeige"
+      "TITLE": "Histogrammanzeige",
+      "RESET_ZOOM": "Zoom zurücksetzen",
+      "RESET_RANGE": "Bereich zurücksetzen"
     },
     "RESULTS": {
       "TITLE": "Ergebnisse",
       "TYPE": "Typ",
       "COLLISION": "Kollision",
       "CENTRALITY": "Zentralität",
-      "SIGNAL": "Signal"
+      "SIGNAL": "Signal",
+      "DELETE": "Fit löschen"
     },
     "FIT_SELECTOR": {
       "TITLE": "Fit-Auswahl",
       "SIGNAL": "Signal",
       "BACKGROUND": "Untergrund",
       "FIT": "Fit",
-      "ACCEPT": "Übernehmen"
+      "ACCEPT": "Übernehmen",
+      "CLEAR_FIT": "Fit löschen"
     },
     "PARTICLE_PROPAGATION_MENU": "Teilchenausbreitung",
     "PARTICLE_PROPAGATION": {
@@ -276,7 +316,7 @@
       "DIPOLE_FIELD": "Dipolfeld",
       "DENSE_FIELD": "Dichtes Feld",
       "REVERSE_L3": "L3 umkehren",
-      "FIELD_OPACITY": "Feldtransparenz",
+      "FIELD_OPACITY": "Feldopazität",
       "TIME_SCRUB_HINT": "Starten Sie die Animation, um die Zeit zu steuern.",
       "TIME_READOUT_TITLE": "Flugzeit im Detektor, für die Darstellung verlangsamt",
       "RECOMPUTE_HINT": "Drücken Sie auf Wiederholen, um die Spuren mit dem neuen Feld neu zu berechnen.",
@@ -312,38 +352,38 @@
       "P3": "Auf der Zeitachse sehen Sie zuerst die sich nähernden Protonen, dann die Kollision und zuletzt die vom Zentrum wegfliegenden Teilchen. Wenn Sie die Feldstärke ändern oder den Solenoid umkehren, sollten sich die Krümmungen entsprechend ändern; drücken Sie danach auf Wiederholen, damit die Spuren neu berechnet werden. Das Ausblenden von Detektorschichten oder das Einblenden der Feldlinien kann dieselbe Geschichte in der Szene leichter nachvollziehbar machen."
     },
     "LSA_TUTORIAL": {
-      "WELCOME_TITLE": "Large-Scale-Analyse — kurzes Tutorial",
+      "WELCOME_TITLE": "Großskalige Analyse — kurze Anleitung",
       "WELCOME_P1": "Die Ereignisanzeige hilft, Intuition für einzelne Ereignisse aufzubauen, aber echte LHC-Analysen nutzen Programme über Millionen von Ereignissen.",
-      "WELCOME_P2": "Hier analysierst du <strong>hunderte Ereignisse auf einmal</strong>, indem du die <strong>invariante-Masse</strong>-Verteilung von V0-Kandidaten untersuchst und Signalausbeuten mit einem Fit extrahierst.",
-      "WELCOME_P3": "Du kannst diese Tour jederzeit mit dem <strong>×</strong>-Button <strong>überspringen</strong>. Zum erneuten Abspielen öffne später das <strong>Hilfe</strong>-Panel (das <strong>?</strong>-Symbol in der Toolbar) und klicke <strong>Tutorial wiederholen</strong>.",
+      "WELCOME_P2": "Hier analysieren Sie <strong>hunderte Ereignisse auf einmal</strong>, indem Sie die Verteilung der <strong>invarianten Masse</strong> von V0-Kandidaten untersuchen und Signalausbeuten mit einem Fit extrahieren.",
+      "WELCOME_P3": "Sie können diese Tour jederzeit mit dem <strong>×</strong>-Button <strong>überspringen</strong>. Zum erneuten Abspielen öffnen Sie später das <strong>Hilfe</strong>-Panel (das <strong>?</strong>-Symbol in der Toolbar) und klicken auf <strong>Anleitung wiederholen</strong>.",
       "SKIP": "Überspringen",
-      "START": "Tutorial starten",
-      "REPLAY": "Tutorial wiederholen",
+      "START": "Anleitung starten",
+      "REPLAY": "Anleitung wiederholen",
       "NEXT": "Weiter →",
       "PREVIOUS": "← Zurück",
       "DONE": "Fertig",
-      "STEP_PARTICLE_TITLE": "Teilchensorte wählen",
-      "STEP_PARTICLE_BODY": "Wähle das <strong>seltsame Teilchen</strong>, das du untersuchen möchtest: <strong>K<sub>S</sub><sup>0</sup></strong> (Kaon), <strong>Λ</strong> (Lambda) oder <strong>Λ̄</strong> (Anti-Lambda). Jede Sorte zerfällt in ein bestimmtes Tochterspur-Paar und ergibt eine charakteristische Peakposition im invarianten Massenspektrum.",
+      "STEP_PARTICLE_TITLE": "Teilchentyp wählen",
+      "STEP_PARTICLE_BODY": "Wählen Sie das <strong>seltsame Teilchen</strong>, das Sie untersuchen möchten: <strong>K<sub>S</sub><sup>0</sup></strong> (Kaon), <strong>Λ</strong> (Lambda) oder <strong>Λ̄</strong> (Anti-Lambda). Jeder Typ zerfällt in ein bestimmtes Tochterspur-Paar und ergibt eine charakteristische Peakposition im Spektrum der invarianten Masse.",
       "STEP_COLLISION_TITLE": "Kollisionssystem wählen",
-      "STEP_COLLISION_BODY": "Wähle das <strong>Kollisionssystem</strong>: <strong>pp</strong> (Proton–Proton) oder <strong>Pb–Pb</strong> (Blei–Blei). Bei Pb–Pb wählst du auch die <strong>Zentralitäts</strong>klasse, die beschreibt, wie zentral die Kerne kollidierten — 0% ist am zentralsten (größte Überlappung), 90–100% am periphersten.",
+      "STEP_COLLISION_BODY": "Wählen Sie das <strong>Kollisionssystem</strong>: <strong>pp</strong> (Proton–Proton) oder <strong>Pb–Pb</strong> (Blei–Blei). Bei Pb–Pb wählen Sie auch die <strong>Zentralitäts</strong>klasse, die beschreibt, wie zentral die Kerne kollidierten — 0% ist am zentralsten (größte Überlappung), 90–100% am periphersten.",
       "STEP_OPEN_TITLE": "Spektrum laden",
-      "STEP_OPEN_BODY": "Klicke <strong>Histogramm öffnen</strong>, um die gebundenen Daten zu laden — die Tour geht dann automatisch weiter. Du kannst auch <strong>Weiter</strong> drücken, wenn ein Histogramm bereits geladen ist.",
-      "STEP_SPECTRUM_TITLE": "Was du siehst",
-      "STEP_SPECTRUM_BODY": "Die horizontale Achse ist die <strong>invariante Masse</strong> (GeV/c²). Du solltest ein <strong>breites Kontinuum</strong> und mögliche <strong>schmale Strukturen</strong> (Peaks) sehen. Die meisten Paare sind <strong>zufälliger kombinatorischer Untergrund</strong> (Pionen nicht aus demselben schwachen Zerfall), daher kann ihre Masse fast überall liegen — deshalb sieht der Untergrund wie eine glatte Basisverteilung aus, während ein echter <strong>K<sub>S</sub><sup>0</sup></strong>-, <strong>Λ</strong>- oder <strong>Ξ</strong>-Zerfall einen Überschuss nahe der bekannten Masse gibt.",
+      "STEP_OPEN_BODY": "Klicken Sie auf <strong>Histogramm öffnen</strong>, um die in Bins aufgeteilten Daten zu laden — die Tour geht dann automatisch weiter. Sie können auch <strong>Weiter</strong> drücken, wenn ein Histogramm bereits geladen ist.",
+      "STEP_SPECTRUM_TITLE": "Was Sie sehen",
+      "STEP_SPECTRUM_BODY": "Die horizontale Achse ist die <strong>invariante Masse</strong> (GeV/c²). Sie sollten ein <strong>breites Kontinuum</strong> und mögliche <strong>schmale Strukturen</strong> (Peaks) sehen. Die meisten Paare sind <strong>zufälliger kombinatorischer Untergrund</strong> (Pionen nicht aus demselben schwachen Zerfall), daher kann ihre Masse fast überall liegen — deshalb sieht der Untergrund wie eine glatte Basisverteilung aus, während ein echter <strong>K<sub>S</sub><sup>0</sup></strong>- oder <strong>Λ</strong>-Zerfall einen Überschuss nahe der bekannten Masse ergibt.",
       "STEP_SIGNAL_TITLE": "Signal-(Peak-)Bereich festlegen",
-      "STEP_SIGNAL_BODY": "Die <strong>Signal</strong>-Bereichskontrolle wählt das Massenintervall, in dem du den <strong>Signalpeak</strong> erwartest. In diesem Fenster wird eine <strong>Gauß</strong>-Kurve an die Resonanz angepasst. Wähle ein Fenster breit genug für den Peak, aber nicht so breit, dass unrelated Untergrundstrukturen den Fit dominieren.",
+      "STEP_SIGNAL_BODY": "Die <strong>Signal</strong>-Bereichskontrolle wählt das Massenintervall, in dem Sie den <strong>Signalpeak</strong> erwarten. In diesem Fenster wird eine <strong>Gauß</strong>-Kurve an die Resonanz angepasst. Wählen Sie ein Fenster breit genug für den Peak, aber nicht so breit, dass unverwandte Untergrundstrukturen den Fit dominieren.",
       "STEP_BACKGROUND_TITLE": "Untergrund-Seitenbänder festlegen",
       "STEP_BACKGROUND_BODY": "Die <strong>Untergrund</strong>-Bereichskontrolle wählt das Massenintervall zum Fit des <strong>kombinatorischen Untergrunds</strong> als <strong>Polynom 2. Grades</strong>. Üblich sind <strong>Seitenbänder</strong> abseits des Peaks (oder ein von glattem Untergrund dominierter Bereich). Die Polynomkoeffizienten werden dann unter dem Peak zur <strong>Untergrundsubtraktion</strong> extrapoliert.",
       "STEP_FIT_TITLE": "Fit ausführen",
-      "STEP_FIT_BODY": "<strong>Fit</strong> führt das simultane Untergrund- (Polynom) und Signalmodell (Gauß) aus. Die Kurven werden auf das Histogramm gezeichnet, damit du optisch prüfen kannst, ob das Modell vernünftig ist — ein schneller <strong>Qualitätscheck</strong>, bevor du den Zahlen vertraust.",
+      "STEP_FIT_BODY": "<strong>Fit</strong> führt das simultane Untergrund- (Polynom) und Signalmodell (Gauß) aus. Die Kurven werden auf das Histogramm gezeichnet, damit Sie optisch prüfen können, ob das Modell vernünftig ist — eine schnelle <strong>Qualitätsprüfung</strong>, bevor Sie den Zahlen vertrauen.",
       "STEP_CHECK_TITLE": "Passt das Modell zu den Daten?",
-      "STEP_CHECK_BODY": "Prüfe, ob das <strong>Polynom</strong> dem Kontinuum abseits des Peaks folgt und die <strong>Gauß</strong>-Kurve auf dem Überschuss sitzt. Schlechte Bereichswahlen zeigen sich als offensichtliche Abweichungen. Wenn es falsch aussieht, passe die Bereiche an und klicke erneut <strong>Fit</strong>.",
+      "STEP_CHECK_BODY": "Prüfen Sie, ob das <strong>Polynom</strong> dem Kontinuum abseits des Peaks folgt und die <strong>Gauß</strong>-Kurve auf dem Überschuss sitzt. Schlechte Bereichswahlen zeigen sich als offensichtliche Abweichungen. Wenn es falsch aussieht, passen Sie die Bereiche an und klicken erneut auf <strong>Fit</strong>.",
       "STEP_ACCEPT_TITLE": "Signalausbeute speichern",
-      "STEP_ACCEPT_BODY": "Wenn du zufrieden bist, drücke <strong>Akzeptieren</strong>. Die App nutzt das Polynom zur Schätzung des <strong>Untergrunds unter dem Peak</strong> und meldet dann <strong>Gesamt</strong>zählungen im Peakbereich, <strong>geschätzten Untergrund</strong> und <strong>Signal</strong> (Überschuss über dem Untergrund) — die Größe, die du brauchst, um Produktionsraten zwischen Sorten und Kollisionssystemen zu vergleichen.",
-      "STEP_RESULTS_TITLE": "Deine eingereichten Messungen",
-      "STEP_RESULTS_BODY": "Jeder akzeptierte Fit fügt eine Zeile mit <strong>Teilchentyp</strong>, <strong>Kollision</strong>, <strong>Zentralität</strong> (falls zutreffend) und der <strong>Signal</strong>-Schätzung hinzu. Das spiegelt wider, wie man Ausbeuten in einem paper-ähnlichen Analyseablauf tabelliert.",
+      "STEP_ACCEPT_BODY": "Wenn Sie zufrieden sind, drücken Sie <strong>Übernehmen</strong>. Die App nutzt das Polynom zur Schätzung des <strong>Untergrunds unter dem Peak</strong> und meldet dann <strong>Gesamt</strong>zählungen im Peakbereich, <strong>geschätzten Untergrund</strong> und <strong>Signal</strong> (Überschuss über dem Untergrund) — die Größe, die Sie brauchen, um Produktionsraten zwischen Typen und Kollisionssystemen zu vergleichen.",
+      "STEP_RESULTS_TITLE": "Ihre eingereichten Messungen",
+      "STEP_RESULTS_BODY": "Jeder übernommene Fit fügt eine Zeile mit <strong>Teilchentyp</strong>, <strong>Kollision</strong>, <strong>Zentralität</strong> (falls zutreffend) und der <strong>Signal</strong>-Schätzung hinzu. Das spiegelt wider, wie man Ausbeuten in einem publikationsähnlichen Analyseablauf tabelliert.",
       "STEP_UPLOAD_TITLE": "Ergebnisse mit dem Lehrer teilen",
-      "STEP_UPLOAD_BODY": "Wenn du angemeldet bist, sendet <strong>Daten hochladen</strong> deine Tabelle an die Serversitzung (Sammeln der Klassenergebnisse). Wenn der Button deaktiviert ist, melde dich zuerst im Hauptablauf an."
+      "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung (Sammeln der Klassenergebnisse). Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
     }
   }
 }

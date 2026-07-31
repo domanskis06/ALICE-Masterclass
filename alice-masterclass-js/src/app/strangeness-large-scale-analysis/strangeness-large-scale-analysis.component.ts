@@ -6,6 +6,7 @@ import {
   OnDestroy,
   OnInit,
   Type,
+  ViewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
@@ -24,6 +25,7 @@ import { ParticleType, CollisionType, CentralityType, LargeScaleAnalysisResultsE
 import { FitService } from '../shared/services/fit.service';
 import { LsaTutorialService } from './lsa-tutorial/lsa-tutorial.service';
 import { LsaTutorialWelcomeDialogComponent } from './lsa-tutorial/lsa-tutorial-welcome-dialog.component';
+import { FitSelectorComponent } from './fit-selector/fit-selector.component';
 
 export interface OpenHistogramEntry {
   particle: ParticleType;
@@ -61,7 +63,13 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
 
   range: [number, number] = [0, 1];
 
+  /** Bumped on each successful histogram open so fit sliders re-init to the full domain. */
+  domainResetToken = 0;
+
   loading: boolean = false;
+
+  @ViewChild('fitSelector')
+  private fitSelector: FitSelectorComponent | undefined;
 
   constructor(
     public dataService: StrangenessDataService,
@@ -144,7 +152,10 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
     this.loadHistogram().subscribe(
       (data: LSAData) => {
         this.fitService.data = data;
+        this.domainResetToken += 1;
         this.range = [data.xmin, data.xmax];
+        this.fitService.signalFitRange = [data.xmin, data.xmax];
+        this.fitService.backgroundFitRange = [data.xmin, data.xmax];
 
         //Fitting Gauss function requires a sensible starting point
         if (this.particle == ParticleType.KAON) {
@@ -169,14 +180,16 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
     this.lsaTutorial.notifyFitClicked();
   }
 
-  onAddFitResult(): void {
-    let key;
+  onClearFit(): void {
+    this.fitService.clearFit();
+  }
 
-    if (this.collision == 'pp') {
-      key = `${this.particle}_${this.collision}`;
-    } else {
-      key = `${this.particle}_${this.collision}_${this.centrality}`;
-    }
+  onResetRange(): void {
+    this.fitSelector?.resetRangesToAxisExtremes();
+  }
+
+  onAddFitResult(): void {
+    const key = this.resultKey(this.particle, this.collision, this.centrality);
 
     const value: LargeScaleAnalysisResultsEntry = {particle: this.particle, collision: this.collision, centrality: this.centrality, signal: this.fitService.result.signal};
 
@@ -184,8 +197,21 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
     this.lsaTutorial.notifyAcceptClicked();
   }
 
+  onRemoveResult(entry: LargeScaleAnalysisResultsEntry): void {
+    const key = this.resultKey(entry.particle, entry.collision, entry.centrality);
+    this.dataService.removeLargeScaleAnalysisResult(key);
+  }
+
+  private resultKey(particle: ParticleType, collision: CollisionType, centrality: CentralityType): string {
+    if (collision == 'pp') {
+      return `${particle}_${collision}`;
+    }
+    return `${particle}_${collision}_${centrality}`;
+  }
+
   onRangeChange(event: [number, number]): void {
-    this.range = event;
+    // New tuple so the fit-selector @Input setter runs and clamps selections.
+    this.range = [event[0], event[1]];
   }
 
   onUploadResults() {

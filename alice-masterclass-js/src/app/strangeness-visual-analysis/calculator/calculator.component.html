@@ -1,11 +1,6 @@
 <mat-card appearance="outlined" fxFill fxLayout="column">
-  <mat-card-title fxLayout="row" fxLayoutAlign="space-between start">
+  <mat-card-title fxLayout="row" fxLayoutAlign="space-between start" class="calculator-title-row">
     <span class="title">{{ 'STRANGENESS.CALCULATOR.TITLE' | translate }}</span>
-    @if (false) {
-      <button mat-icon-button aria-label="Instructions button">
-        <mat-icon>help_outline</mat-icon>
-      </button>
-    }
   </mat-card-title>
   <mat-card-content fxFlex="grow">
     <div class="calculator-layout" fxFill>
@@ -53,46 +48,127 @@
         <tr mat-footer-row *matFooterRowDef="displayedColumns"></tr>
       </table>
       <mat-divider [vertical]="true" class="calculator-divider" fxHide.xs="true" fxHide.sm="true"></mat-divider>
-      <form [formGroup]="calculatorForm" (ngSubmit)="onSubmit()"
-        class="calculator-form"
-        fxLayout="column" fxLayout.xs="row" fxLayout.sm="row"
-        fxLayoutGap="20px" fxLayoutAlign="start stretch" fxLayoutAlign.xs="end center" fxLayoutAlign.sm="end center">
-        <mat-form-field class="calculator-particle-field" appearance="outline">
-          <mat-label>{{ 'STRANGENESS.CALCULATOR.SELECT_PARTICLE' | translate }}</mat-label>
-          <mat-select formControlName="type" [panelClass]="particleSelectPanelClass">
-            <mat-select-trigger>
-              @if (calculatorForm.controls.type.value; as selectedType) {
-                <span class="particle-option">
-                  @if (particleSymbolHtml(selectedType); as symbol) {
-                    <span class="particle" [innerHTML]="symbol"></span>
-                    ({{ particleTypeLabelKey(selectedType) | translate }})
-                  } @else {
-                    {{ particleTypeLabelKey(selectedType) | translate }}
-                  }
-                </span>
+      @if (eventComplete) {
+        <div class="calculator-complete" data-testid="va-event-complete" fxLayout="column" fxLayoutGap="16px" fxLayoutAlign="center stretch">
+          <p class="calculator-complete-title">{{ 'STRANGENESS.VISUAL_ANALYSIS.EVENT_COMPLETE_TITLE' | translate }}</p>
+          <button
+            type="button"
+            mat-stroked-button
+            class="calculator-complete-button"
+            data-testid="va-event-complete-reset"
+            (click)="onResetEvent()"
+          >
+            <mat-icon>restart_alt</mat-icon>
+            {{ 'STRANGENESS.VISUAL_ANALYSIS.RESET_EVENT' | translate }}
+          </button>
+          <button
+            type="button"
+            mat-flat-button
+            color="primary"
+            class="calculator-complete-button"
+            data-testid="va-event-complete-next"
+            [disabled]="nextEventDisabled"
+            (click)="onNextEvent()"
+          >
+            {{ 'EVENT_DISPLAY.NEXT_EVENT' | translate }}
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      } @else {
+        <form [formGroup]="calculatorForm" (ngSubmit)="onSubmit()"
+          class="calculator-form"
+          fxLayout="column"
+          fxLayoutGap="12px" fxLayoutAlign="start stretch">
+          <mat-form-field class="calculator-particle-field" appearance="outline">
+            <mat-label>{{ 'STRANGENESS.CALCULATOR.SELECT_PARTICLE' | translate }}</mat-label>
+            <mat-select formControlName="type" [panelClass]="particleSelectPanelClass">
+              <mat-select-trigger>
+                @if (calculatorForm.controls.type.value; as selectedType) {
+                  <span class="particle-option">
+                    @if (particleSymbolHtml(selectedType); as symbol) {
+                      <span class="particle" [innerHTML]="symbol"></span>
+                      ({{ particleTypeLabelKey(selectedType) | translate }})
+                    } @else {
+                      {{ particleTypeLabelKey(selectedType) | translate }}
+                    }
+                  </span>
+                }
+              </mat-select-trigger>
+              @for (type of particleTypes; track type) {
+                <mat-option [value]="type">
+                  <span class="particle-option">
+                    @if (particleSymbolHtml(type); as symbol) {
+                      <span class="particle" [innerHTML]="symbol"></span>
+                      ({{ particleTypeLabelKey(type) | translate }})
+                    } @else {
+                      {{ particleTypeLabelKey(type) | translate }}
+                    }
+                  </span>
+                </mat-option>
               }
-            </mat-select-trigger>
-            @for (type of particleTypes; track type) {
-              <mat-option [value]="type">
-                <span class="particle-option">
-                  @if (particleSymbolHtml(type); as symbol) {
-                    <span class="particle" [innerHTML]="symbol"></span>
-                    ({{ particleTypeLabelKey(type) | translate }})
-                  } @else {
-                    {{ particleTypeLabelKey(type) | translate }}
-                  }
-                </span>
-              </mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <input type="hidden" formControlName="mass"/>
-        <button
-          class="calculator-add-button"
-          [disabled]="calculatorForm.invalid || submitDisabled"
-          mat-raised-button
-          type="submit">{{ 'STRANGENESS.CALCULATOR.ADD' | translate }}</button>
-      </form>
+            </mat-select>
+          </mat-form-field>
+          <button
+            type="button"
+            class="how-to-identify-link"
+            data-testid="va-how-to-identify"
+            (click)="onOpenInstructions()"
+          >
+            {{ 'STRANGENESS.VISUAL_ANALYSIS.HOW_TO_IDENTIFY' | translate }}
+          </button>
+          <input type="hidden" formControlName="mass"/>
+          <button
+            class="calculator-add-button"
+            [disabled]="!canAdd"
+            mat-raised-button
+            color="primary"
+            type="submit">{{ 'STRANGENESS.CALCULATOR.ADD' | translate }}</button>
+          <button
+            type="button"
+            class="calculator-undo-button"
+            mat-stroked-button
+            data-testid="va-undo"
+            [disabled]="!canUndo"
+            (click)="onUndo()"
+          >
+            <mat-icon>undo</mat-icon>
+            {{ 'STRANGENESS.VISUAL_ANALYSIS.UNDO' | translate }}
+          </button>
+        </form>
+      }
     </div>
+
+    @if (identifiedEntries.length > 0) {
+      <div class="identified-panel" data-testid="va-identified-list">
+        <div class="identified-header">
+          <span class="identified-title">{{ 'STRANGENESS.VISUAL_ANALYSIS.IDENTIFIED_TITLE' | translate }}</span>
+        </div>
+        <ul class="identified-list">
+          @for (entry of identifiedEntries; track $index; let i = $index) {
+            <li class="identified-item">
+              <span class="identified-label">
+                @if (particleSymbolHtml(entry.particle); as symbol) {
+                  <span class="particle" [innerHTML]="symbol"></span>
+                  ({{ particleTypeLabelKey(entry.particle) | translate }})
+                } @else {
+                  {{ particleTypeLabelKey(entry.particle) | translate }}
+                }
+                — {{ entry.mass | number: '1.3-3' }} GeV/<em>c</em><sup>2</sup>
+              </span>
+              <button
+                type="button"
+                mat-button
+                class="identified-remove"
+                [attr.data-testid]="'va-remove-identified-' + i"
+                (click)="onRemoveIdentified(i)"
+              >
+                <mat-icon>close</mat-icon>
+                {{ 'STRANGENESS.VISUAL_ANALYSIS.REMOVE' | translate }}
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
   </mat-card-content>
 </mat-card>

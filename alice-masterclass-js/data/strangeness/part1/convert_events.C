@@ -151,6 +151,19 @@ void load_v0s(TEveVSD *fVSD, json &j) {
         v0.push_back(j_track_n);
         v0.push_back(j_track_p);
 
+        // Some AliVSD demo events list the same V0 twice; skip exact kinematic dupes.
+        bool duplicate = false;
+        for (const auto &existing : *decays) {
+            if (existing == v0) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (duplicate) {
+            std::cerr << "Skipping duplicate V0 at tree index " << n << std::endl;
+            continue;
+        }
+
         std::cout << v0 << std::endl;
 
         decays->push_back(v0);

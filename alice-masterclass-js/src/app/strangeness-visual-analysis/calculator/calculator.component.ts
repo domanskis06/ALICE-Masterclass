@@ -4,7 +4,7 @@ import { Track, TrackType } from '../../shared/models';
 import { positiveTrackColor, negativeTrackColor, bachelorTrackColor } from '../../shared/globals';
 
 import { SubmitHistogramEntry } from '../strangeness-visual-analysis.component';
-import { ParticleType } from '../../shared/services/api.service';
+import { ParticleType, VisualAnalysisResultsEntry } from '../../shared/services/api.service';
 
 export interface Particle {
   color: string;
@@ -65,6 +65,20 @@ export class CalculatorComponent implements OnInit {
   @Input()
   darkMode = false;
 
+  @Input()
+  identifiedEntries: VisualAnalysisResultsEntry[] = [];
+
+  /** True when an in-flight histogram add can still be cancelled via Undo. */
+  @Input()
+  hasPendingAdd = false;
+
+  /** All required tracks in the current event have been added to histograms. */
+  @Input()
+  eventComplete = false;
+
+  @Input()
+  nextEventDisabled = false;
+
   @HostBinding('class.calculator-dark-mode')
   get calculatorDarkModeClass(): boolean {
     return this.darkMode;
@@ -100,13 +114,66 @@ export class CalculatorComponent implements OnInit {
   @Output()
   addToHistogramEvent: EventEmitter<SubmitHistogramEntry> = new EventEmitter<SubmitHistogramEntry>();
 
+  @Output()
+  removeIdentifiedEvent: EventEmitter<number> = new EventEmitter<number>();
+
+  @Output()
+  undoEvent: EventEmitter<'selection' | 'histogram'> = new EventEmitter<'selection' | 'histogram'>();
+
+  @Output()
+  openInstructionsEvent: EventEmitter<void> = new EventEmitter<void>();
+
+  @Output()
+  resetEvent: EventEmitter<void> = new EventEmitter<void>();
+
+  @Output()
+  nextEvent: EventEmitter<void> = new EventEmitter<void>();
+
   totalMass: number = null;
 
   calculatorForm: FormGroup;
 
+  get hasParticleType(): boolean {
+    const value = this.calculatorForm?.controls?.type?.value;
+    return value != null && value !== '';
+  }
+
+  get hasTracksForAdd(): boolean {
+    return this.totalMass != null && Number.isFinite(this.totalMass);
+  }
+
+  get hasCalculatorSelection(): boolean {
+    return this.particlePos != null || this.particleNeg != null || this.particleBac != null || this.hasParticleType;
+  }
+
+  get canAdd(): boolean {
+    return !this.submitDisabled
+      && this.hasParticleType
+      && this.hasTracksForAdd
+      && this.calculatorForm.valid;
+  }
+
+  get canUndo(): boolean {
+    return this.hasCalculatorSelection
+      || this.hasPendingAdd
+      || this.identifiedEntries.length > 0;
+  }
+
   private resetTypeField(): void {
     this.calculatorForm.controls.type.reset();
     this.calculatorForm.controls.type.setErrors(null);
+  }
+
+  /** Clear tracks / mass locally so mat-table refreshes immediately. */
+  private clearLocalSelection(): void {
+    this.tableRows = [
+      { color: positiveTrackColor, type: '(+)', track: null },
+      { color: negativeTrackColor, type: '(-)', track: null },
+      { color: bachelorTrackColor, type: '(b)', track: null },
+    ];
+    this.totalMass = null;
+    this.calculatorForm.controls.mass.setValue(null);
+    this.resetTypeField();
   }
 
   private calcTotalMass(): void {
@@ -148,12 +215,48 @@ export class CalculatorComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (!this.canAdd) {
+      return;
+    }
+    const type = this.calculatorForm.controls.type.value as ParticleType;
+    if (type == null || type === ('' as unknown as ParticleType)) {
+      return;
+    }
     this.addToHistogramEvent.emit({
-      type: this.calculatorForm.controls.type.value,
+      type,
       mass: this.calculatorForm.controls.mass.value,
     });
     // Reset after emit so the parent still receives the chosen particle type.
     this.resetTypeField();
+  }
+
+  onRemoveIdentified(index: number): void {
+    this.removeIdentifiedEvent.emit(index);
+  }
+
+  /**
+   * Clear calculator selection first; otherwise ask the parent to undo the last
+   * histogram add / pending flight (re-enables decay clicks).
+   */
+  onUndo(): void {
+    if (this.hasCalculatorSelection) {
+      this.clearLocalSelection();
+      this.undoEvent.emit('selection');
+      return;
+    }
+    this.undoEvent.emit('histogram');
+  }
+
+  onOpenInstructions(): void {
+    this.openInstructionsEvent.emit();
+  }
+
+  onResetEvent(): void {
+    this.resetEvent.emit();
+  }
+
+  onNextEvent(): void {
+    this.nextEvent.emit();
   }
 
 }
