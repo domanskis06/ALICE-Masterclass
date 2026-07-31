@@ -1,0 +1,21 @@
+<div class="login-success-dialog" data-testid="login-success-dialog">
+  <button
+    type="button"
+    mat-icon-button
+    class="login-success-dialog__close"
+    data-testid="login-success-close"
+    [attr.aria-label]="'PASSWORD.CLOSE' | translate"
+    (click)="onClose()">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <mat-icon class="login-success-dialog__icon" aria-hidden="true">check_circle</mat-icon>
+
+  <p class="login-success-dialog__text">
+    @if (data.sessionName) {
+      {{ 'PASSWORD.LOGIN_SUCCESS' | translate:{ studentID: data.studentID, sessionName: data.sessionName } }}
+    } @else {
+      {{ 'PASSWORD.LOGIN_SUCCESS_NO_SESSION' | translate:{ studentID: data.studentID } }}
+    }
+  </p>
+</div>

@@ -83,7 +83,7 @@ export class HomeComponent implements OnInit {
 
       const dialogRef = this.dialog.open(AuthDialogComponent, dialogConfig);
 
-      dialogRef.afterClosed().subscribe(result => {
+      dialogRef.afterClosed().subscribe(() => {
         sessionStorage.setItem(this.passwordDialogDismissedKey, 'true');
       });
     }

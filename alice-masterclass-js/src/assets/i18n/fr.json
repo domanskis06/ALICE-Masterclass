@@ -120,7 +120,16 @@
     "NO_TOKEN_TOOLTIP": "Pour activer l’envoi des données, fournissez le mot de passe via l’option Mot de passe du Menu.",
     "UPLOADING": "Envoi des données…",
     "COMPLETED": "Envoi terminé !",
-    "UPLOAD_DATA": "Envoyer les données"
+    "UPLOAD_DATA": "Envoyer les données",
+    "STUDENT_TAKEN": "Ce numéro d’élève est déjà utilisé dans cette session.",
+    "STUDENT_INVALID": "Numéro d’élève invalide pour cette session.",
+    "STUDENT_MIN": "Le numéro d’élève ne peut pas être inférieur à 0.",
+    "STUDENT_MAX": "Le numéro d’élève ne peut pas être supérieur à {{max}}.",
+    "CLOSE": "Fermer",
+    "ALREADY_LOGGED_IN": "Vous êtes déjà connecté en tant qu’élève n° {{studentID}} dans la session {{sessionName}}",
+    "ALREADY_LOGGED_IN_NO_SESSION": "Vous êtes déjà connecté en tant qu’élève n° {{studentID}}",
+    "LOGIN_SUCCESS": "Vous êtes connecté en tant qu’élève n° {{studentID}} dans la session {{sessionName}}",
+    "LOGIN_SUCCESS_NO_SESSION": "Vous êtes connecté en tant qu’élève n° {{studentID}}"
   },
   "EVENT_DISPLAY": {
     "VIEW_3D": "Vue 3D",
@@ -185,6 +194,16 @@
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Analyse visuelle",
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Événement {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "Vous avez terminé cet événement",
+      "EVENT_COMPLETE_BODY": "Vous avez identifié toutes les particules — choisissez l’événement suivant",
+      "DECAY_GUIDE": "Guide des désintégrations",
+      "ADD_HINT_SELECT_TYPE": "Sélectionnez un type de particule avant d’ajouter",
+      "IDENTIFIED_TITLE": "Identifiées dans cet événement",
+      "UNDO": "Annuler",
+      "REMOVE": "Supprimer"
+    },
     "CALCULATOR": {
       "TITLE": "Calculateur",
       "TOTAL": "Total",

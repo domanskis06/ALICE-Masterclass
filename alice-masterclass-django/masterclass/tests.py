@@ -248,6 +248,7 @@ class CheckSessionAPITestCase(APITestCase):
 		response = self.client.put('/api/v1/check_session/', dataAuthIncorrect, format='json')
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['error'], True)
+		self.assertEqual(response.data['reason'], 'password')
 		self.assertEqual(response.data['name'], '')
 
 	def test_access_correct_session(self):

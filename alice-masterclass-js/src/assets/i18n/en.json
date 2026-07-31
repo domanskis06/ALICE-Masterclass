@@ -120,7 +120,16 @@
     "NO_TOKEN_TOOLTIP": "To enable data upload, provide the password using Password option from the Menu.",
     "UPLOADING": "Uploading data...",
     "COMPLETED": "Upload completed!",
-    "UPLOAD_DATA": "Upload data"
+    "UPLOAD_DATA": "Upload data",
+    "STUDENT_TAKEN": "This student number is already used in this session.",
+    "STUDENT_INVALID": "Student number is not valid for this session.",
+    "STUDENT_MIN": "Student number cannot be less than 0.",
+    "STUDENT_MAX": "Student number cannot be greater than {{max}}.",
+    "CLOSE": "Close",
+    "ALREADY_LOGGED_IN": "You are already logged in as Student #{{studentID}} in session {{sessionName}}",
+    "ALREADY_LOGGED_IN_NO_SESSION": "You are already logged in as Student #{{studentID}}",
+    "LOGIN_SUCCESS": "You have been logged in as Student #{{studentID}} in session {{sessionName}}",
+    "LOGIN_SUCCESS_NO_SESSION": "You have been logged in as Student #{{studentID}}"
   },
   "EVENT_DISPLAY": {
     "VIEW_3D": "3D View",
@@ -185,6 +194,16 @@
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Visual Analysis",
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Event {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "You completed this event",
+      "EVENT_COMPLETE_BODY": "You identified all particles — choose next event",
+      "DECAY_GUIDE": "Decay guide",
+      "ADD_HINT_SELECT_TYPE": "Select a particle type before adding",
+      "IDENTIFIED_TITLE": "Identified in this event",
+      "UNDO": "Undo",
+      "REMOVE": "Remove"
+    },
     "CALCULATOR": {
       "TITLE": "Calculator",
       "TOTAL": "Total",

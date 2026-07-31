@@ -120,7 +120,16 @@
     "NO_TOKEN_TOOLTIP": "Aby włączyć przesyłanie danych, podaj hasło w opcji Hasło w menu.",
     "UPLOADING": "Przesyłanie danych...",
     "COMPLETED": "Przesyłanie zakończone!",
-    "UPLOAD_DATA": "Prześlij dane"
+    "UPLOAD_DATA": "Prześlij dane",
+    "STUDENT_TAKEN": "Ten numer ucznia jest już zajęty w tej sesji.",
+    "STUDENT_INVALID": "Numer ucznia jest nieprawidłowy dla tej sesji.",
+    "STUDENT_MIN": "Numer ucznia nie może być mniejszy niż 0.",
+    "STUDENT_MAX": "Numer ucznia nie może być większy niż {{max}}.",
+    "CLOSE": "Zamknij",
+    "ALREADY_LOGGED_IN": "Jesteś już zalogowany jako student #{{studentID}} w sesji {{sessionName}}",
+    "ALREADY_LOGGED_IN_NO_SESSION": "Jesteś już zalogowany jako student #{{studentID}}",
+    "LOGIN_SUCCESS": "Zostałeś zalogowany jako student #{{studentID}} w sesji {{sessionName}}",
+    "LOGIN_SUCCESS_NO_SESSION": "Zostałeś zalogowany jako student #{{studentID}}"
   },
   "EVENT_DISPLAY": {
     "VIEW_3D": "Widok 3D",
@@ -185,6 +194,16 @@
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Analiza wizualna",
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Zdarzenie {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "Ukończyłeś to zdarzenie",
+      "EVENT_COMPLETE_BODY": "Zidentyfikowałeś wszystkie cząstki — wybierz następne zdarzenie",
+      "DECAY_GUIDE": "Przewodnik rozpadów",
+      "ADD_HINT_SELECT_TYPE": "Wybierz typ cząstki przed dodaniem",
+      "IDENTIFIED_TITLE": "Zidentyfikowane w tym zdarzeniu",
+      "UNDO": "Cofnij",
+      "REMOVE": "Usuń"
+    },
     "CALCULATOR": {
       "TITLE": "Kalkulator",
       "TOTAL": "Suma",

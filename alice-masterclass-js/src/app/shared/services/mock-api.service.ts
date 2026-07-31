@@ -16,12 +16,13 @@ export class MockApiService extends ApiService {
 
   authenticate(password: string, studentID: number): Observable<Session> {
     // Zawsze zwracaj sukces w trybie mock (dla teachera)
-    const session: Session = { error: false, name: `Teacher (mock)` };
-    // Ustaw lokalne pola tak, żeby reszta aplikacji działała
-    this.password = password;
-    this.studentID = studentID;
-    this.sessionName = session.name;
+    const session: Session = { error: false, name: `Teacher (mock)`, maxStudents: 15 };
+    this.applyAuthenticatedSession(password, studentID, session.name);
     return of(session);
+  }
+
+  checkSessionPassword(password: string): Observable<Session> {
+    return of({ error: false, name: `Teacher (mock)`, maxStudents: 15 });
   }
 
   // Pozostałe metody, które frontend może wywołać, zwracają sukces bez efektu

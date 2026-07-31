@@ -114,7 +114,16 @@
     "ERROR": "Das eingegebene Kennwort ist falsch.",
     "UPLOADING": "Daten werden hochgeladen...",
     "COMPLETED": "Upload abgeschlossen!",
-    "UPLOAD_DATA": "Daten hochladen"
+    "UPLOAD_DATA": "Daten hochladen",
+    "STUDENT_TAKEN": "Diese Schülernummer ist in dieser Sitzung bereits vergeben.",
+    "STUDENT_INVALID": "Schülernummer ist für diese Sitzung ungültig.",
+    "STUDENT_MIN": "Die Schülernummer darf nicht kleiner als 0 sein.",
+    "STUDENT_MAX": "Die Schülernummer darf nicht größer als {{max}} sein.",
+    "CLOSE": "Schließen",
+    "ALREADY_LOGGED_IN": "Sie sind bereits als Schüler Nr. {{studentID}} in der Sitzung {{sessionName}} angemeldet",
+    "ALREADY_LOGGED_IN_NO_SESSION": "Sie sind bereits als Schüler Nr. {{studentID}} angemeldet",
+    "LOGIN_SUCCESS": "Sie wurden als Schüler Nr. {{studentID}} in der Sitzung {{sessionName}} angemeldet",
+    "LOGIN_SUCCESS_NO_SESSION": "Sie wurden als Schüler Nr. {{studentID}} angemeldet"
   },
   "LANGUAGES": {
     "en": "English",
@@ -179,6 +188,16 @@
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Visuelle Analyse",
     "LARGE_SCALE_ANALYSIS_MENU": "Großskalige Analyse",
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Ereignis {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "Sie haben dieses Ereignis abgeschlossen",
+      "EVENT_COMPLETE_BODY": "Sie haben alle Teilchen identifiziert — wählen Sie das nächste Ereignis",
+      "DECAY_GUIDE": "Zerfallsleitfaden",
+      "ADD_HINT_SELECT_TYPE": "Wählen Sie vor dem Hinzufügen eine Teilchenart",
+      "IDENTIFIED_TITLE": "In diesem Ereignis identifiziert",
+      "UNDO": "Rückgängig",
+      "REMOVE": "Entfernen"
+    },
     "CALCULATOR": {
       "TITLE": "Rechner",
       "TOTAL": "Gesamt",
