@@ -98,7 +98,7 @@
   "HOME": {
     "HOME_MENU": "Home",
     "TITLE": "Welcome to the ALICE Masterclass!",
-    "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such condition, an extreme phase of matter - called the quark-gluon plasma - is formed.",
+    "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such conditions, an extreme phase of matter - called the quark-gluon plasma - is formed.",
     "P2": "Our universe is thought to have been in such a primordial state for the first few millionths of a second after the Big Bang. The properties of such a phase are key issues for Quantum Chromo Dynamics, the understanding of confinement-deconfinement and chiral phase transitions.",
     "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right.",
     "DOWNLOAD": "If you wish, you can download and use a desktop version of the Masterclass:",
@@ -199,7 +199,7 @@
       "EVENT_COMPLETE_TITLE": "You completed this event!",
       "EVENT_COMPLETE_BODY": "You identified all particles — choose next event",
       "DECAY_GUIDE": "Decay guide",
-      "HOW_TO_IDENTIFY": "How to identify particle?",
+      "HOW_TO_IDENTIFY": "How to identify a particle?",
       "ADD_HINT_SELECT_TYPE": "Select a particle type before adding",
       "IDENTIFIED_TITLE": "Identified in this event",
       "UNDO": "Undo",
@@ -242,9 +242,9 @@
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
       "TITLE": "Strange Particle Production",
       "SUBTITLE": "Exercise 2: Large Scale Analysis",
-      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However,in real life data analysis is not done visually — that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
+      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However, in real life data analysis is not done visually — that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
       "P2": "You will now analyse recordings from hundreds of events at once. You can see that the invariant mass is a continuous distribution – this is because the pairs of pions combined are random, not coming from a common secondary vertex and can give any value of mass. Most of them are background.",
-      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a curve (second degree polynomial) to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable.If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second degree polynomial are used; on the histogram; after clicking the <strong>Accept</strong> button you will get the total number of events in the peak, the number of background events and those which are signal."
+      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a curve (second degree polynomial) to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable. If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second degree polynomial are used. After clicking the <strong>Accept</strong> button you will get, on the histogram, the total number of counts in the peak, the number of background counts and those which are signal."
     },
     "HISTOGRAM_SELECTOR": {
       "TITLE": "Histogram Selector",
@@ -269,21 +269,25 @@
       "090_100": "90% - 100%"
     },
     "HISTOGRAM_DISPLAY": {
-      "TITLE": "Histogram Display"
+      "TITLE": "Histogram Display",
+      "RESET_ZOOM": "Reset zoom",
+      "RESET_RANGE": "Reset range"
     },
     "RESULTS": {
       "TITLE": "Results",
       "TYPE": "Type",
       "COLLISION": "Collision",
       "CENTRALITY": "Centrality",
-      "SIGNAL": "Signal"
+      "SIGNAL": "Signal",
+      "DELETE": "Delete fit"
     },
     "FIT_SELECTOR": {
       "TITLE": "Fit Selector",
       "SIGNAL": "Signal",
       "BACKGROUND": "Background",
       "FIT": "Fit",
-      "ACCEPT": "Accept"
+      "ACCEPT": "Accept",
+      "CLEAR_FIT": "Clear fit"
     },
     "PARTICLE_PROPAGATION_MENU": "Particle Propagation",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -365,7 +369,7 @@
       "STEP_OPEN_TITLE": "Load the spectrum",
       "STEP_OPEN_BODY": "Click <strong>Open histogram</strong> to fetch the binned data — the tour will then advance automatically. You can also press <strong>Next</strong> to skip ahead if a histogram is already loaded.",
       "STEP_SPECTRUM_TITLE": "What you are looking at",
-      "STEP_SPECTRUM_BODY": "The horizontal axis is <strong>invariant mass</strong> (GeV/c²). You should see a <strong>broad continuum</strong> plus possible <strong>narrow structures</strong> (peaks). Most pairs are <strong>random combinatorial background</strong> (pions not from the same weak decay), so their mass can fall almost anywhere — that is why the background looks like a smooth underlying distribution, while a real <strong>K<sub>S</sub><sup>0</sup></strong>, <strong>Λ</strong>, or <strong>Ξ</strong> decay gives an excess near the known mass.",
+      "STEP_SPECTRUM_BODY": "The horizontal axis is <strong>invariant mass</strong> (GeV/c²). You should see a <strong>broad continuum</strong> plus possible <strong>narrow structures</strong> (peaks). Most pairs are <strong>random combinatorial background</strong> (pions not from the same weak decay), so their mass can fall almost anywhere — that is why the background looks like a smooth underlying distribution, while a real <strong>K<sub>S</sub><sup>0</sup></strong> or <strong>Λ</strong> decay gives an excess near the known mass.",
       "STEP_SIGNAL_TITLE": "Define the signal (peak) region",
       "STEP_SIGNAL_BODY": "The <strong>Signal</strong> range control selects the mass interval where you expect the <strong>signal peak</strong>. A <strong>Gaussian</strong> will be fitted in this window to model the resonance. Choose a window wide enough to capture the peak, but not so wide that unrelated background structure dominates the fit.",
       "STEP_BACKGROUND_TITLE": "Define the background sidebands",
