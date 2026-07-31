@@ -190,13 +190,16 @@
     "LARGE_SCALE_ANALYSIS_MENU": "Großskalige Analyse",
     "VISUAL_ANALYSIS": {
       "EVENT_OF": "Ereignis {{current}} / {{total}}",
-      "EVENT_COMPLETE_TITLE": "Sie haben dieses Ereignis abgeschlossen",
+      "EVENT_COMPLETE_TITLE": "Sie haben dieses Ereignis abgeschlossen!",
       "EVENT_COMPLETE_BODY": "Sie haben alle Teilchen identifiziert — wählen Sie das nächste Ereignis",
       "DECAY_GUIDE": "Zerfallsleitfaden",
+      "HOW_TO_IDENTIFY": "Wie identifiziert man ein Teilchen?",
       "ADD_HINT_SELECT_TYPE": "Wählen Sie vor dem Hinzufügen eine Teilchenart",
       "IDENTIFIED_TITLE": "In diesem Ereignis identifiziert",
       "UNDO": "Rückgängig",
-      "REMOVE": "Entfernen"
+      "RESET_EVENT": "Ereignis zurücksetzen",
+      "REMOVE": "Entfernen",
+      "SCROLL_TO_ANALYSIS": "Zum Rechner und zu den Histogrammen scrollen"
     },
     "CALCULATOR": {
       "TITLE": "Rechner",

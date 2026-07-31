@@ -196,13 +196,16 @@
     "VISUAL_ANALYSIS_MENU": "Analiza wizualna",
     "VISUAL_ANALYSIS": {
       "EVENT_OF": "Zdarzenie {{current}} / {{total}}",
-      "EVENT_COMPLETE_TITLE": "Ukończyłeś to zdarzenie",
+      "EVENT_COMPLETE_TITLE": "Ukończyłeś to zdarzenie!",
       "EVENT_COMPLETE_BODY": "Zidentyfikowałeś wszystkie cząstki — wybierz następne zdarzenie",
       "DECAY_GUIDE": "Przewodnik rozpadów",
+      "HOW_TO_IDENTIFY": "Jak zidentyfikować cząstkę?",
       "ADD_HINT_SELECT_TYPE": "Wybierz typ cząstki przed dodaniem",
       "IDENTIFIED_TITLE": "Zidentyfikowane w tym zdarzeniu",
       "UNDO": "Cofnij",
-      "REMOVE": "Usuń"
+      "RESET_EVENT": "Resetuj zdarzenie",
+      "REMOVE": "Usuń",
+      "SCROLL_TO_ANALYSIS": "Przejdź do kalkulatora i histogramów"
     },
     "CALCULATOR": {
       "TITLE": "Kalkulator",

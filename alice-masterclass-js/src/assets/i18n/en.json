@@ -196,13 +196,16 @@
     "VISUAL_ANALYSIS_MENU": "Visual Analysis",
     "VISUAL_ANALYSIS": {
       "EVENT_OF": "Event {{current}} / {{total}}",
-      "EVENT_COMPLETE_TITLE": "You completed this event",
+      "EVENT_COMPLETE_TITLE": "You completed this event!",
       "EVENT_COMPLETE_BODY": "You identified all particles — choose next event",
       "DECAY_GUIDE": "Decay guide",
+      "HOW_TO_IDENTIFY": "How to identify particle?",
       "ADD_HINT_SELECT_TYPE": "Select a particle type before adding",
       "IDENTIFIED_TITLE": "Identified in this event",
       "UNDO": "Undo",
-      "REMOVE": "Remove"
+      "RESET_EVENT": "Reset event",
+      "REMOVE": "Remove",
+      "SCROLL_TO_ANALYSIS": "Scroll to calculator and histograms"
     },
     "CALCULATOR": {
       "TITLE": "Calculator",

@@ -196,13 +196,16 @@
     "VISUAL_ANALYSIS_MENU": "Analyse visuelle",
     "VISUAL_ANALYSIS": {
       "EVENT_OF": "Événement {{current}} / {{total}}",
-      "EVENT_COMPLETE_TITLE": "Vous avez terminé cet événement",
+      "EVENT_COMPLETE_TITLE": "Vous avez terminé cet événement !",
       "EVENT_COMPLETE_BODY": "Vous avez identifié toutes les particules — choisissez l’événement suivant",
       "DECAY_GUIDE": "Guide des désintégrations",
+      "HOW_TO_IDENTIFY": "Comment identifier une particule ?",
       "ADD_HINT_SELECT_TYPE": "Sélectionnez un type de particule avant d’ajouter",
       "IDENTIFIED_TITLE": "Identifiées dans cet événement",
       "UNDO": "Annuler",
-      "REMOVE": "Supprimer"
+      "RESET_EVENT": "Réinitialiser l’événement",
+      "REMOVE": "Supprimer",
+      "SCROLL_TO_ANALYSIS": "Aller au calculateur et aux histogrammes"
     },
     "CALCULATOR": {
       "TITLE": "Calculateur",

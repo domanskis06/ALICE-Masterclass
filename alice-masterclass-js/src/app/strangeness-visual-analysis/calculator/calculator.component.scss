@@ -3,6 +3,37 @@
   padding-left: 16px;
 }
 
+.calculator-title-row {
+  width: 100%;
+  gap: 8px;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
+.how-to-identify-link {
+  align-self: flex-start;
+  // Pull up into the form-field's empty subscript area (no hint).
+  margin: -18px 0 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #b71c1c;
+  font-size: 13px;
+  line-height: 1.3;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    color: #8e0000;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #b71c1c;
+    outline-offset: 2px;
+  }
+}
+
 .particle-option {
   display: inline-flex;
   align-items: baseline;
@@ -24,18 +55,108 @@ mat-card {
   min-width: 0;
 }
 
-.calculator-form {
+.calculator-form,
+.calculator-complete {
   flex: 1 0 240px;
   min-width: 240px;
+}
+
+.calculator-complete {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.calculator-complete-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.calculator-complete-button {
+  width: 100%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  mat-icon {
+    margin: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .calculator-divider {
   align-self: stretch;
 }
 
+.calculator-undo-button {
+  width: 100%;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  mat-icon {
+    margin: 0;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
 mat-form-field {
   width: 100%;
   min-width: 220px;
+}
+
+.identified-panel {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.identified-header {
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.identified-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.identified-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.identified-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.identified-label {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.identified-remove mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  margin-right: 2px;
 }
 
 /* Dark mode: match VA panel controls (light mode keeps Material defaults). */
@@ -87,5 +208,17 @@ mat-form-field {
     background-color: rgba(15, 23, 42, 0.45);
     color: var(--va-muted);
     border: 1px solid var(--va-border);
+  }
+
+  .how-to-identify-link {
+    color: #fca5a5;
+
+    &:hover {
+      color: #fecaca;
+    }
+  }
+
+  .identified-panel {
+    border-top-color: var(--va-border);
   }
 }
