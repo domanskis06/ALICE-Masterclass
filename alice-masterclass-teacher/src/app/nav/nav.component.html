@@ -1,13 +1,13 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #drawer class="sidenav" fixedInViewport role="dialog">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport role="dialog" [autoFocus]="false">
     <div fxFill fxLayout="column">
       <mat-toolbar>{{ 'GENERAL.MENU' | translate }}</mat-toolbar>
       <mat-nav-list fxFlex="grow" fxLayout="column">
-        <a mat-list-item routerLink="/session">{{ 'NAV.SESSION' | translate }}</a>
+        <a mat-list-item routerLink="/session" routerLinkActive #rlaSession="routerLinkActive" [activated]="rlaSession.isActive">{{ 'NAV.SESSION' | translate }}</a>
         <h1 matSubheader>{{ 'NAV.STRANGENESS' | translate }}</h1>
         <mat-divider></mat-divider>
-        <a mat-list-item routerLink="/strangeness-visual-analysis">{{ 'NAV.VISUAL_ANALYSIS' | translate }}</a>
-        <a mat-list-item routerLink="/strangeness-large-scale-analysis">{{ 'NAV.LARGE_SCALE_ANALYSIS' | translate }}</a>
+        <a mat-list-item routerLink="/strangeness-visual-analysis" routerLinkActive #rlaVisual="routerLinkActive" [activated]="rlaVisual.isActive">{{ 'NAV.VISUAL_ANALYSIS' | translate }}</a>
+        <a mat-list-item routerLink="/strangeness-large-scale-analysis" routerLinkActive #rlaLsa="routerLinkActive" [activated]="rlaLsa.isActive">{{ 'NAV.LARGE_SCALE_ANALYSIS' | translate }}</a>
       </mat-nav-list>
     </div>
   </mat-sidenav>
