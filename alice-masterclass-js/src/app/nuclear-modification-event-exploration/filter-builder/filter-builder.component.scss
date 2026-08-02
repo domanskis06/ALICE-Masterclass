@@ -1,0 +1,92 @@
+:host {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.nmf-filter-builder {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 96vw);
+  height: min(560px, 88vh);
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.nmf-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.nmf-filter-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.nmf-filter-hint {
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.nmf-filter-blockly {
+  flex: 1 1 auto;
+  min-height: 280px;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  pointer-events: auto;
+  /* Blockly inject needs a non-zero box; flex + explicit height avoids a collapsed SVG. */
+  touch-action: none;
+}
+
+.nmf-filter-msg {
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.nmf-filter-msg--error {
+  color: #b71c1c;
+}
+
+.nmf-filter-msg--ok {
+  color: #15803d;
+}
+
+.nmf-filter-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.nmf-filter-submit {
+  appearance: none;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #b71c1c;
+  cursor: pointer;
+}
+
+.nmf-filter-submit:hover {
+  background: #a31616;
+}

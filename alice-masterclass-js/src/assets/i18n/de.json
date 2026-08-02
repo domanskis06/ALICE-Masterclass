@@ -170,7 +170,8 @@
     "TOF_READING": "TOF-Auslesung",
     "DETECTOR_CALORIMETERS": "Kalorimeter",
     "PREVIOUS_EVENT": "Vorheriges",
-    "NEXT_EVENT": "Nächstes"
+    "NEXT_EVENT": "Nächstes",
+    "SECONDARY_TRACKS": "Sekundärspuren"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Bitte wählen Sie den Datensatz:",
@@ -384,6 +385,87 @@
       "STEP_RESULTS_BODY": "Jeder übernommene Fit fügt eine Zeile mit <strong>Teilchentyp</strong>, <strong>Kollision</strong>, <strong>Zentralität</strong> (falls zutreffend) und der <strong>Signal</strong>-Schätzung hinzu. Das spiegelt wider, wie man Ausbeuten in einem publikationsähnlichen Analyseablauf tabelliert.",
       "STEP_UPLOAD_TITLE": "Ergebnisse mit dem Lehrer teilen",
       "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung (Sammeln der Klassenergebnisse). Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
+    }
+  },
+  "NUCLEAR_MODIFICATION": {
+    "TITLE": "Nuklearer Modifikationsfaktor",
+    "EVENT_EXPLORATION_MENU": "Ereignis-Exploration",
+    "SPECTRUM_ANALYSIS_MENU": "Spektrum-Analyse",
+    "COLLISION": {
+      "PP": "Proton–Proton",
+      "PERIPHERAL": "Peripheres Pb–Pb",
+      "SEMI_CENTRAL": "Semi-zentrales Pb–Pb",
+      "CENTRAL": "Zentrales Pb–Pb"
+    },
+    "EVENT_EXPLORATION": {
+      "EVENT": "Ereignis",
+      "EVENT_OF": "{{current}} / {{total}}",
+      "TYPE_PP_7TEV": "pp, 7 TeV, B=0 T",
+      "TYPE_PP_276TEV": "pp, 2.76 TeV, B=0.5 T",
+      "TYPE_PBPB_PERIPHERAL": "PbPb, Peripheral",
+      "TYPE_PBPB_SEMI_CENTRAL": "PbPb, Semi-zentral",
+      "TYPE_PBPB_CENTRAL": "PbPb, Zentral",
+      "SUMMARY_TITLE": "Ereigniszusammenfassung",
+      "SUMMARY_HINT": "Drücke „Ereignis analysieren“ — Spuren werden automatisch gezählt.",
+      "MULTIPLICITY": "Multiplizität",
+      "HIGH_PT": "Spuren mit pT > 1 GeV/c",
+      "MEAN_PT": "Mittleres pT",
+      "ANALYZE": "Ereignis analysieren",
+      "QUICK_RAA_TITLE": "Schnelles R_AA",
+      "QUICK_RAA_HINT": "Analysiere die pp-Baseline und die drei Pb–Pb-Ereignisse, um R_AA freizuschalten.",
+      "CLASS": "Klasse",
+      "GO_SPECTRUM": "Weiter zur Spektrum-Analyse",
+      "CHARACTERISTICS_TITLE": "Ereignis-Charakteristika",
+      "HIST_MULTIPLICITY_TITLE": "Multiplizitätsverteilung",
+      "HIST_MULTIPLICITY_MIN_PT_TITLE": "Multiplizität, p_T > 1 GeV/c",
+      "HIST_SECONDARIES_TITLE": "Multiplizität der Sekundären",
+      "HIST_PT_TITLE": "p_T-Verteilung",
+      "HIST_CHARGE_TITLE": "Ladungsverteilung",
+      "HIST_PHI_TITLE": "Normierte φ-Projektion",
+      "AXIS_MULTIPLICITY": "Multiplizität",
+      "AXIS_PT": "p_T (GeV/c)",
+      "AXIS_CHARGE": "Ladung",
+      "AXIS_PHI": "φ",
+      "AXIS_EVENTS": "Ereignisse",
+      "STATS_ENTRIES": "Einträge",
+      "STATS_MEAN": "Mittelwert",
+      "CHARACTERISTICS_SHOW": "Ereignis-Charakteristika zeigen",
+      "CHARACTERISTICS_HIDE": "Ereignis-Charakteristika verbergen",
+      "CHARACTERISTICS_FULLSCREEN": "Vollbild",
+      "CHARACTERISTICS_EXIT_FULLSCREEN": "Vollbild beenden",
+      "ANALYZE_BUTTON": "Analysieren",
+      "AXIS_TPC_TRACKS": "#TPC Spuren"
+    },
+    "SPECTRUM_ANALYSIS": {
+      "PIPELINE_TITLE": "Analyse-Pipeline (Blöcke)",
+      "PLOTS_TITLE": "Ergebnisse",
+      "RUN": "Start",
+      "CLEAR": "Blöcke löschen",
+      "STATUS_OK": "Pipeline sieht vollständig aus",
+      "STATUS_WARN": "Pipeline unvollständig — Warnungen prüfen",
+      "EXTRACT_TITLE": "R_AA-Werte auslesen",
+      "EXTRACT_EMPTY": "Noch keine Werte — zuerst eine vollständige Pipeline ausführen.",
+      "CENTRALITY": "Zentralität",
+      "PT_BIN": "pT-Bin"
+    },
+    "INSTRUCTIONS_EVENT_EXPLORATION": {
+      "TITLE": "Ereignis-Exploration",
+      "P1": "Untersuche mit dem Event Display pp- und Pb–Pb-Kollisionen und bestimme die Multiplizität geladener Teilchen.",
+      "STEP1": "Blättere durch die Ereignisse. Das erste ist eine pp-Kollision bei 7 TeV mit B = 0 T — nur zur Orientierung, nicht zählen.",
+      "STEP2": "Für die folgenden 30 pp-Kollisionen bei 2.76 TeV die Spuren inspizieren und die Multiplizität notieren.",
+      "STEP3": "Die letzten drei Ereignisse sind Pb–Pb (peripher, semi-zentral, zentral). Hier Auto-Count verwenden.",
+      "STEP4": "Ausbeuten vergleichen und den integrierten nuklearen Modifikationsfaktor R_AA berechnen."
+    },
+    "INSTRUCTIONS_SPECTRUM_ANALYSIS": {
+      "TITLE": "Spektrum-Analyse",
+      "P1": "Baue eine Analyse-Pipeline, um R_AA als Funktion des Transversalimpulses zu berechnen.",
+      "STEP1": "Pb–Pb-Daten laden und eine Zentralitätsklasse wählen.",
+      "STEP2": "pT-Spektrum bilden und durch Ereigniszahl sowie ⟨N_coll⟩ normalisieren.",
+      "STEP3": "Durch das pp-Referenzspektrum teilen, um R_AA zu erhalten.",
+      "STEP4": "Ergebnis plotten und Werte für die Diskussion auslesen."
+    },
+    "DESKTOP": {
+      "HINT": "Basierend auf der ALICE-MasterClass-Desktopübung."
     }
   }
 }

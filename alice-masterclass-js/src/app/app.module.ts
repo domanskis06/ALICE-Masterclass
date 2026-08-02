@@ -16,6 +16,8 @@ import { NavModule } from './nav/nav.module';
 import { StrangenessVisualAnalysisModule } from './strangeness-visual-analysis/strangeness-visual-analysis.module';
 import { StrangenessLargeScaleAnalysisModule } from './strangeness-large-scale-analysis/strangeness-large-scale-analysis.module';
 import { ParticlePropagationModule } from './particle-propagation/particle-propagation.module';
+import { NuclearModificationEventExplorationModule } from './nuclear-modification-event-exploration/nuclear-modification-event-exploration.module';
+import { NuclearModificationSpectrumAnalysisModule } from './nuclear-modification-spectrum-analysis/nuclear-modification-spectrum-analysis.module';
 import { AboutModule } from './about/about.module';
 
 import { AppComponent } from './app.component';
@@ -49,7 +51,9 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     AboutModule,
     StrangenessVisualAnalysisModule,
     StrangenessLargeScaleAnalysisModule,
-    ParticlePropagationModule
+    ParticlePropagationModule,
+    NuclearModificationEventExplorationModule,
+    NuclearModificationSpectrumAnalysisModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

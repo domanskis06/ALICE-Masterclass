@@ -1,0 +1,44 @@
+<mat-card appearance="outlined" class="nmf-panel">
+  <mat-card-header>
+    <mat-card-title>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_TITLE' | translate }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (entries.length === 0) {
+      <p class="muted">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_HINT' | translate }}</p>
+    } @else {
+      <table class="raa-table">
+        <thead>
+          <tr>
+            <th>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CLASS' | translate }}</th>
+            <th>⟨N<sub>coll</sub>⟩</th>
+            <th>R<sub>AA</sub></th>
+            <th>R<sub>AA</sub> (p<sub>T</sub>&gt;1)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of entries; track e.collision + (e.centrality || '')) {
+            <tr>
+              <td>{{ e.centrality || e.collision }}</td>
+              <td>{{ e.nColl | number: '1.0-2' }}</td>
+              <td>{{ e.raaAll !== null ? (e.raaAll | number: '1.2-3') : '—' }}</td>
+              <td>{{ e.raaHighPt !== null ? (e.raaHighPt | number: '1.2-3') : '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+    @if (!checkpointDone) {
+      <p class="muted hint">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_HINT' | translate }}</p>
+    }
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button
+      mat-stroked-button
+      type="button"
+      data-testid="nmf-go-spectrum"
+      (click)="goSpectrum.emit()"
+    >
+      {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.GO_SPECTRUM' | translate }}
+    </button>
+  </mat-card-actions>
+</mat-card>

@@ -1,0 +1,29 @@
+<div class="run-bar" data-testid="nmf-pipeline-run-bar">
+  <div class="actions">
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      data-testid="nmf-run-pipeline"
+      [disabled]="running"
+      (click)="run.emit()"
+    >
+      {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RUN' | translate }}
+    </button>
+    <button mat-stroked-button type="button" (click)="clear.emit()">
+      {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLEAR' | translate }}
+    </button>
+    @if (valid === true) {
+      <span class="status ok">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.STATUS_OK' | translate }}</span>
+    } @else if (valid === false) {
+      <span class="status warn">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.STATUS_WARN' | translate }}</span>
+    }
+  </div>
+  @if (warnings.length) {
+    <ul class="warnings">
+      @for (w of warnings; track w) {
+        <li>{{ w }}</li>
+      }
+    </ul>
+  }
+</div>

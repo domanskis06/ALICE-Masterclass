@@ -1,0 +1,31 @@
+:host {
+  display: block;
+}
+
+.run-bar {
+  padding: 8px 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.status.ok {
+  color: #4ade80;
+  font-size: 13px;
+}
+
+.status.warn {
+  color: #fbbf24;
+  font-size: 13px;
+}
+
+.warnings {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #fbbf24;
+  font-size: 12px;
+}

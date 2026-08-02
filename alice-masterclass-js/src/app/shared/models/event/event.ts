@@ -4,7 +4,9 @@ export enum TrackType {
   STANDARD = 0,
   V0 = 1,
   CASCADE = 2,
-  CASCADE_BACHELOR = 3
+  CASCADE_BACHELOR = 3,
+  /** RAA non-primary track (failed desktop DCA primary cut). */
+  SECONDARY = 4,
 }
 
 export interface Track {
@@ -18,6 +20,12 @@ export interface Track {
   py: number;
   pz: number;
   trajectory: number[][];
+  /**
+   * Desktop `Utility::IsPrimary` (TEveTrack bit 1<<14). Set by the RAA VSD
+   * converter from the same DCA cut as `VSDReader::handleTrack`
+   * (|dcaXY| < 0.5 cm && |dcaZ| < 1.0 cm). Absent on older Strangeness JSONs.
+   */
+  isPrimary?: boolean;
 }
 
 export interface Event {
