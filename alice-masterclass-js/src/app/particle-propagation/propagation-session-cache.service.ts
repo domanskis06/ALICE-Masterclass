@@ -7,7 +7,7 @@
  * light/dark theme, detector-part visibility, Show field / Dense field /
  * Reverse L3 / Free camera are intentionally NOT restored — each visit
  * opens with those controls at their defaults (all parts on, field shown,
- * sparse +z, centered camera, dark mode).
+ * sparse +z, centered camera, dark mode, Event 1 selected).
  */
 
 import { Injectable } from '@angular/core';

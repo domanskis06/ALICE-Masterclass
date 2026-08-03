@@ -281,12 +281,17 @@ describe('ParticlePropagationComponent', () => {
     expect(component.phase).toBe('ready');
     expect(precomputeSpy).toHaveBeenCalledTimes(1);
 
+    component.onEventChange(1);
+    await flushAsyncChain();
+    expect(component.selectedEventIndex).toBe(1);
+
     const cache = TestBed.inject(PropagationSessionCacheService);
     fixture.destroy();
 
     expect(cache.hasSceneAssets).toBe(true);
     expect(cache.hasStarted).toBe(false);
     expect(cache.tracks.length).toBe(0);
+    expect(cache.ui?.selectedEventIndex).toBe(1);
 
     dialogOpenSpy.calls.reset();
     fixture = TestBed.createComponent(ParticlePropagationComponent);
@@ -297,12 +302,13 @@ describe('ParticlePropagationComponent', () => {
     expect(component.showDetectorSplash).toBe(false);
     expect(component.phase).toBe('idle');
     expect(component.hasStarted).toBe(false);
+    expect(component.selectedEventIndex).toBe(0);
     expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
-    expect(precomputeSpy).toHaveBeenCalledTimes(1); // no auto-start / no restore of tracks
+    expect(precomputeSpy).toHaveBeenCalledTimes(2); // prior visit only; no auto-start / no restore of tracks
 
     component.onStartAnimation();
     await flushAsyncChain();
-    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(precomputeSpy).toHaveBeenCalledTimes(3);
     expect(component.phase).toBe('ready');
   }, 15000);
 });

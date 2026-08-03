@@ -766,7 +766,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     const ui = cache.ui;
 
     if (ui) {
-      this.selectedEventIndex = ui.selectedEventIndex;
+      // Event selection always restarts at Event 1 (index 0) on revisit / refresh.
+      this.selectedEventIndex = 0;
       // Camera / field toggles always restart at defaults (see below).
       this.fieldDipoleTransitionVisible = ui.fieldDipoleTransitionVisible;
       // Opacity always restarts at defaults — do not restore last-visit slider values.
@@ -775,6 +776,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.fieldStrengthT = ui.fieldStrengthT;
       this.playbackSpeed = ui.playbackSpeed;
       this.magneticField.setFieldStrengthT(ui.fieldStrengthT);
+    } else {
+      this.selectedEventIndex = 0;
     }
 
     // Visibility / camera / sparse field / nominal polarity — reset every visit.
@@ -833,7 +836,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       }
     }
 
-    // Intro is (re)attached in ensureCollisionIntro() for the selected event's beam kind.
+    // Always show the Event 1 beam (protons) at intro t₀ on revisit.
+    void this.swapBeamIntroForSelectedEvent();
 
     this.showDetectorSplash = false;
 
