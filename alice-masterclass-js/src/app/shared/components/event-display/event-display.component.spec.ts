@@ -354,4 +354,41 @@ describe('EventDisplayComponent side-view layers', () => {
     expect(root.layers.test(mainCam)).toBe(true);
     expect(child.layers.test(mainCam)).toBe(true);
   });
+
+  it('sideViewAllowsPart: side ρz = ITS+TRD; front Rφ = ITS+TPC+TRD+TOF', () => {
+    const its = 'assets/models/alice components/ITS.glb';
+    const fit = 'assets/models/alice components/FIT.glb';
+    const tpc = 'assets/models/alice components/TPC.glb';
+    const trd = 'assets/models/alice components/TRD.glb';
+    const tof = 'assets/models/alice components/TOF.glb';
+    const rphi = EventDisplayComponent.SIDE_VIEW_RPHI;
+    const rhoz = EventDisplayComponent.SIDE_VIEW_RHOZ;
+
+    // View 1 (side / ρz): no TPC, no TOF, no FIT
+    expect(EventDisplayComponent.sideViewAllowsPart(its, rhoz)).toBe(true);
+    expect(EventDisplayComponent.sideViewAllowsPart(trd, rhoz)).toBe(true);
+    expect(EventDisplayComponent.sideViewAllowsPart(tpc, rhoz)).toBe(false);
+    expect(EventDisplayComponent.sideViewAllowsPart(tof, rhoz)).toBe(false);
+    expect(EventDisplayComponent.sideViewAllowsPart(fit, rhoz)).toBe(false);
+
+    // View 2 (front / Rφ): ITS + TPC + TRD + TOF
+    expect(EventDisplayComponent.sideViewAllowsPart(its, rphi)).toBe(true);
+    expect(EventDisplayComponent.sideViewAllowsPart(tpc, rphi)).toBe(true);
+    expect(EventDisplayComponent.sideViewAllowsPart(trd, rphi)).toBe(true);
+    expect(EventDisplayComponent.sideViewAllowsPart(tof, rphi)).toBe(true);
+    expect(EventDisplayComponent.sideViewAllowsPart(fit, rphi)).toBe(false);
+  });
+
+  it('computeSideViewZoomFromDistance matches overview framing and zooms in when closer', () => {
+    const overviewZ = EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+    const atOverview = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ);
+    expect(atOverview).toBeCloseTo(EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM, 5);
+
+    const closer = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ / 2);
+    expect(closer).toBeGreaterThan(atOverview);
+    expect(closer).toBeCloseTo(atOverview * 2, 5);
+
+    expect(EventDisplayComponent.computeSideViewZoomFromDistance(Number.NaN))
+      .toBe(EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM);
+  });
 });
