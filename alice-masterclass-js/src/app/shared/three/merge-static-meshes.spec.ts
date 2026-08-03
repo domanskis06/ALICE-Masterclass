@@ -79,6 +79,20 @@ describe('mergeStaticMeshesByMaterial', () => {
     expect(countMeshes(merged)).toBe(0);
   });
 
+  it('respects maxGeometriesPerBatch for a milder merge', () => {
+    const root = new THREE.Group();
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+    for (let i = 0; i < 50; i++) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(i, 0, 0);
+      root.add(mesh);
+    }
+
+    const merged = mergeStaticMeshesByMaterial(root, { maxGeometriesPerBatch: 20 });
+    expect(countMeshes(merged)).toBe(3); // ceil(50/20)
+  });
+
   it('deinterleaves gltfpack-style attributes so mergeGeometries can batch them', () => {
     const root = new THREE.Group();
     const material = new THREE.MeshBasicMaterial({ color: 0x2b6cff });

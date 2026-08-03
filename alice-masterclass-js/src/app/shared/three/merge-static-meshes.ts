@@ -69,6 +69,15 @@ export function toNonInterleavedGeometry(source: THREE.BufferGeometry): THREE.Bu
   return out;
 }
 
+export interface MergeStaticMeshesOptions {
+  /**
+   * Max source geometries collapsed into one Mesh (per material).
+   * Omit / `Infinity` → one draw call per material (Particle Propagation default).
+   * Smaller values = milder merge (more draw calls, finer polygonOffset / z-order).
+   */
+  maxGeometriesPerBatch?: number;
+}
+
 /**
  * Returns a new `Object3D` visually equivalent to `root` (same world-space
  * appearance, assuming it's re-parented where `root` would have been), but
@@ -76,9 +85,13 @@ export function toNonInterleavedGeometry(source: THREE.BufferGeometry): THREE.Bu
  * discarded by the caller — its geometries are cloned, not reused, and it is
  * never added to the scene.
  */
-export function mergeStaticMeshesByMaterial(root: THREE.Object3D): THREE.Object3D {
+export function mergeStaticMeshesByMaterial(
+  root: THREE.Object3D,
+  options?: MergeStaticMeshesOptions
+): THREE.Object3D {
   root.updateMatrixWorld(true);
 
+  const batchSize = Math.max(1, options?.maxGeometriesPerBatch ?? Number.POSITIVE_INFINITY);
   const geometriesByMaterial = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const passthrough: THREE.Mesh[] = [];
 
@@ -104,11 +117,14 @@ export function mergeStaticMeshesByMaterial(root: THREE.Object3D): THREE.Object3
   merged.userData = { ...root.userData };
 
   for (const [material, geometries] of geometriesByMaterial) {
-    const mergedGeometry = geometries.length > 1 ? mergeGeometries(geometries) : geometries[0];
-    if (!mergedGeometry) continue;
-    merged.add(new THREE.Mesh(mergedGeometry, material));
-    if (geometries.length > 1) {
-      geometries.forEach((geometry) => geometry.dispose());
+    for (let i = 0; i < geometries.length; i += batchSize) {
+      const slice = geometries.slice(i, i + batchSize);
+      const mergedGeometry = slice.length > 1 ? mergeGeometries(slice) : slice[0];
+      if (!mergedGeometry) continue;
+      merged.add(new THREE.Mesh(mergedGeometry, material));
+      if (slice.length > 1) {
+        slice.forEach((geometry) => geometry.dispose());
+      }
     }
   }
 

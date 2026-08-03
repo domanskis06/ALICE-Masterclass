@@ -15,6 +15,7 @@ Detector L3: Visual Analysis and Particle Propagation both load the octagon magn
 - `three` + `OrbitControls`, `Line2` / `LineGeometry` / `LineMaterial`
 - `GLTFLoader` for detector and proton models under `assets/models/`
 - `EffectComposer` + `UnrealBloomPass` for post-processing
+- Detector load helpers under [`shared/three/`](../alice-masterclass-js/src/app/shared/three/) (`optimize-detector-part.ts`, `merge-static-meshes.ts`)
 
 ## Data model
 
@@ -33,23 +34,62 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 | Zone | Key symbols | Notes |
 | --- | --- | --- |
 | Scene / camera / render | `createScene`, `render`, `resize`, `updateCameraMode` | Core WebGL loop |
-| Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop | GLB layers (ITS, TPC, `L3.glb`, …) |
+| Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop; load calls `optimizeStaticDetectorPart` | GLB layers (ITS, TPC, `L3.glb`, …) — see § Detector load optimisation |
 | Physics visibility / intro | `applyDesiredPhysicsVisibility`, proton collision intro helpers | Show/hide tracks around intro |
 | Interaction | `onPointer*`, vertex panel, cascade hover / proximity helpers | Picking UI |
 | Legacy math in component | `invariantMass` | **Do not grow** — new math → Service |
+
+## Detector load optimisation (Visual Analysis)
+
+After each multipart GLB loads, EventDisplay runs
+[`optimizeStaticDetectorPart`](../alice-masterclass-js/src/app/shared/three/optimize-detector-part.ts)
+(before materials / polygonOffset). Goal: fewer draw calls without softening ITS/TPC close-ups.
+Particle Propagation does **not** use this helper — it has its own full merge + `InstancedMesh` / Melax path
+([`particle-propagation.md`](particle-propagation.md)).
+
+### Asset vs runtime
+
+| Layer | On disk (GLB) | At EventDisplay load |
+| --- | --- | --- |
+| **ITS / TPC** | Full triangle detail (no extra VA decimate) | Batched merge by material only |
+| **FIT** | Extra `gltfpack -si 0.5` pass on the shared file | Prune tiny CAD fragments, then batched merge |
+| **TRD / TOF / PHOS / L3 / …** | Original slim pipeline (no second VA decimate) | Prune tiny fragments, then batched merge |
+| **EMCal / DCal** | Unchanged | **No** merge / prune — keep `SMOD_` / `DCSM_` nodes for energy bars |
+
+Pipeline history for regenerating GLBs from O2: [`changelog-visual-analysis-model.md`](changelog-visual-analysis-model.md).
+
+### Tunables (`optimize-detector-part.ts`)
+
+| Constant | Role | Typical effect |
+| --- | --- | --- |
+| `VA_MERGE_MAX_GEOMETRIES_PER_BATCH` | Max source meshes collapsed into one draw call (per material) | **Lower** → more draw calls, finer z-order / closer to raw GLB; **higher** → fewer draws, more aggressive flatten |
+| `TINY_DETECTOR_MESH_MAX_DIM_CM` | Prune threshold (authored cm): drop meshes whose AABB max dim is below this | **Lower** → keep more micro-detail; **higher** → strip more screws / microfacets. **Not applied to ITS/TPC** |
+
+Batched merge implementation: `mergeStaticMeshesByMaterial(root, { maxGeometriesPerBatch })` in
+[`merge-static-meshes.ts`](../alice-masterclass-js/src/app/shared/three/merge-static-meshes.ts).
+Omitting the batch size (Particle Propagation) collapses to ~one mesh per material.
+
+### Visual impact (what students see)
+
+- Silhouette, colours, opacity sliders, and calorimeter bars: same as before optimisation.
+- FIT: slightly softer surfaces at strong zoom (fewer triangles in the GLB).
+- Non–ITS/TPC layers: sub-threshold CAD fragments may be missing after prune.
+- ITS / TPC: full geometry; only draw-call batching changes.
 
 ## Hard rules
 
 1. **No heavy physics/math** in `EventDisplayComponent` (Lorentz force, RK4, new invariant-mass pipelines, track fitting, etc.).
 2. New math → dedicated Angular `*.service.ts`; EventDisplay gets at most inject + a thin call (prefer calling from the parent analysis component).
 3. Prefer this responsibility map + targeted / ranged reads of the component. Do **not** dump the full ~4000-line file into an AI chat unless you already know the methods to change (or the user asks for a whole-file review).
+4. Do **not** merge EMCal / DCal in EventDisplay — energy readout depends on named panel nodes.
 
 ## How to extend
 
 1. Orient with this doc — identify the zone above; then open only the relevant methods / related services.
 2. Add or extend a service under `alice-masterclass-js/src/app/` (shared or feature folder).
 3. Wire from Visual Analysis (or other parent); touch EventDisplay only for rendering hooks if unavoidable.
-4. `npm run build` (or targeted test).
+4. Detector perf knobs → `optimize-detector-part.ts` (or shared `merge-static-meshes.ts`); do not re-implement merge inside the god component.
+5. `npm run build` (or targeted test).
 
 ## Testing
 
@@ -58,6 +98,13 @@ UI changes affecting Visual Analysis / display:
 ```bash
 cd alice-masterclass-js
 npm run e2e:smoke
+```
+
+Unit coverage for the load path:
+
+```bash
+cd alice-masterclass-js
+npx ng test --include='**/optimize-detector-part.spec.ts' --include='**/merge-static-meshes.spec.ts' --browsers=ChromeHeadless --watch=false
 ```
 
 See also [E2E.md](E2E.md).

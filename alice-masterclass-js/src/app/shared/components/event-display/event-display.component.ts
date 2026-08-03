@@ -20,6 +20,7 @@ import {
   neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
 import { detectorPartAccentColor } from '../../three/detector-part-accent';
+import { optimizeStaticDetectorPart } from '../../three/optimize-detector-part';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -1158,7 +1159,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.loaderGLTF.load(
         modelPathWithReload,
         (gltf: GLTF) => {
-          const scene = gltf.scene;
+          let scene: THREE.Object3D = gltf.scene;
           const radialInflate = 1 + pathIndex * EventDisplayComponent.DETECTOR_LAYER_RADIAL_INFLATE_STEP;
           scene.scale.setScalar(EventDisplayComponent.detectorModelScale * radialInflate);
           EventDisplayComponent.alignDetectorPartToBeamAxis(scene, modelPath);
@@ -1168,10 +1169,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             detectorAssetPath: modelPath,
             detectorLayerIndex: pathIndex
           };
+          // Mild batched merge (≤20 source meshes / draw). ITS/TPC: merge only.
+          // Other layers: prune tiny CAD bits first. EMCal/DCal stay unmerged.
+          // FIT GLB is pre-gltfpacked.
+          scene = optimizeStaticDetectorPart(scene, modelPath);
+          EventDisplayComponent.freezeStaticTransforms(scene);
           this.setDetectorMaterialsWithPolygonOffset(scene, defaultPartOpacity, pathIndex);
-          // Keep the original GLB scene graph (SMOD_/DCSM_ node names, etc.).
-          // Mesh merging belongs in particle-propagation only — flattening here
-          // breaks calorimeter cylindrical coverage / energy readout bars.
           loadedByPath.set(modelPath, scene);
           finishOne();
         },

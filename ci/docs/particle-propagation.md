@@ -193,7 +193,7 @@ Streamlines in the spirit of Fig. 19 of the 2022 distributed-field paper — den
 
 ### Detector rendering (short)
 
-`detector-loader` → `DetectorModel` with ITS-centred recentering (~+30 cm Y offset fix). Most shells merge via `mergeStaticMeshesByMaterial`; TPC / MCH use `InstancedMesh` families; L3 is a lightweight stand-in (below). Materials use `depthWrite` + `polygonOffset` like Visual Analysis; DPR capped while orbiting. Camera opens in a fixed 3/4 “down the barrel” pose.
+`detector-loader` → `DetectorModel` with ITS-centred recentering (~+30 cm Y offset fix). Most shells merge via `mergeStaticMeshesByMaterial` **without** a batch limit (~one draw call per material); TPC / MCH use `InstancedMesh` families; L3 is a lightweight stand-in (below). That is separate from Visual Analysis EventDisplay’s milder batched merge / prune path (`optimize-detector-part.ts` — see [`event-display.md`](event-display.md) § “Detector load optimisation”). Materials use `depthWrite` + `polygonOffset` like Visual Analysis; DPR capped while orbiting. Camera opens in a fixed 3/4 “down the barrel” pose.
 
 ### L3 magnet
 
