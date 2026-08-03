@@ -294,11 +294,11 @@
       "TITLE": "How tracks curve through ALICE",
       "P1": "Charged particles in ALICE travel through a strong magnetic field, and the Lorentz force pushes them sideways whenever their motion cuts across that field. Their tracks therefore curve: a stronger field or a lower momentum gives a tighter bend, while positive and negative charges curve opposite ways. Neutral particles feel no magnetic force, so they go straight. From how sharply a track bends, physicists can read the particle’s momentum.",
       "P2": "That field is shaped by a large solenoid around the barrel and a dipole near the muon detectors. Before the animation begins, the app follows every particle through this measured field and stores the paths. Once that is done, play and the time slider only reveal what was prepared, which keeps the motion smooth as you move through the event.",
-      "P3": "Along the timeline you first see the protons approaching, then the collision, and finally the particles flying outward from the centre. If you change the field strength or reverse the solenoid, the bends should change with it; press Replay afterwards so the tracks are recalculated. Fading the detector layers or showing the field lines can make the same story easier to follow in the scene."
+      "P3": "Along the timeline you first see the beams approaching (protons, or lead nuclei in the Pb–Pb event), then the collision, and finally the particles flying outward from the centre. If you change the field strength or reverse the solenoid, the bends should change with it; press Replay afterwards so the tracks are recalculated. Fading the detector layers or showing the field lines can make the same story easier to follow in the scene."
     },
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Particle Propagation in the Magnetic Field",
-      "WELCOME_BODY_1": "Two protons collide at the centre of ALICE. New particles fly outward, and the detector’s magnetic field bends the paths of those that carry electric charge.",
+      "WELCOME_BODY_1": "In most events two protons collide at the centre of ALICE; in the Pb-Pb event two lead nuclei collide instead. Both are shown in the visualisation. New particles fly outward, and the detector’s magnetic field bends the paths of those that carry electric charge.",
       "WELCOME_BODY_2": "Press Start and the app prepares each trajectory through the real magnetic field of ALICE. Events with many particles may need a short moment to load.",
       "WELCOME_BODY_3": "Afterwards, use the time slider to move from the approaching protons, through the collision, to the particles leaving the centre. Explore freely: the side panels let you change the field and look through the detector layers.",
       "START_BUTTON": "Start animation",
@@ -310,6 +310,7 @@
       "RETRY": "Retry",
       "LOADING_DETECTOR": "Loading detector model…",
       "EVENT_N": "Event {{n}}",
+      "EVENT_PBPB_N": "Pb-Pb event",
       "SIDEBAR_DETECTOR_PARTS": "Detector parts",
       "SIDEBAR_EVENT": "Event",
       "SIDEBAR_PLAYBACK": "Playback",

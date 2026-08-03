@@ -48,11 +48,11 @@ describe('ParticleDataService (real curated event fixture)', () => {
     }
   });
 
-  it('loads dense curated event 9 with ~50–60 tracks', async () => {
+  it('loads dense curated event 9 with a large charged-track subsample (Pb–Pb)', async () => {
     // PARTICLE_EVENT_COUNT=10 → event_0…event_9; only event_9 is the dense fixture.
     const particles = await firstValueFrom(service.loadEvent(9));
-    expect(particles.length).toBeGreaterThanOrEqual(50);
-    expect(particles.length).toBeLessThanOrEqual(60);
+    expect(particles.length).toBeGreaterThanOrEqual(200);
+    expect(particles.length).toBeLessThanOrEqual(MAX_TRACKED_PARTICLES);
     expect(particles.every((p) => p.charge === 1 || p.charge === -1)).toBe(true);
     expect(particles.some((p) => p.charge > 0)).toBe(true);
     expect(particles.some((p) => p.charge < 0)).toBe(true);

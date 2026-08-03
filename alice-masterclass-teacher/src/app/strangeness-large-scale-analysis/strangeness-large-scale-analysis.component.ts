@@ -30,6 +30,31 @@ export interface StrangenessEnhancementPlotEntry {
   particle: ParticleType;
   nParticipants: number;
   enhancement: number;
+  centrality: string;
+}
+
+/** Display label for a centrality bin (matches the results table). */
+export function centralityDisplayName(key: string): string | null {
+  switch (key) {
+    case CentralityType.C000_010:
+      return '0 - 10%';
+    case CentralityType.C010_020:
+      return '10 - 20%';
+    case CentralityType.C020_030:
+      return '20 - 30%';
+    case CentralityType.C030_040:
+      return '30 - 40%';
+    case CentralityType.C040_050:
+      return '40 - 50%';
+    case CentralityType.C050_060:
+      return '50 - 60%';
+    case CentralityType.C060_070:
+      return '60 - 70%';
+    case CentralityType.C070_080:
+      return '70 - 80%';
+    default:
+      return null;
+  }
 }
 
 @Pipe({
@@ -40,26 +65,8 @@ export class CentralityNamePipe implements PipeTransform {
   constructor(private translate: TranslateService) {}
 
   transform(key: string): string {
-    switch(key) {
-      case CentralityType.C000_010:
-        return '0 - 10%';
-      case CentralityType.C010_020:
-        return '10 - 20%';
-      case CentralityType.C020_030:
-        return '20 - 30%';
-      case CentralityType.C030_040:
-        return '30 - 40%';
-      case CentralityType.C040_050:
-        return '40 - 50%';
-      case CentralityType.C050_060:
-        return '50 - 60%';
-      case CentralityType.C060_070:
-        return '60 - 70%';
-      case CentralityType.C070_080:
-        return '70 - 80%';
-      default:
-        return this.translate.instant('LARGE_SCALE_ANALYSIS.UNKNOWN');
-    }
+    return centralityDisplayName(key)
+      ?? this.translate.instant('LARGE_SCALE_ANALYSIS.UNKNOWN');
   }
 }
 
@@ -176,9 +183,9 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, OnDestroy
       elm.yieldAntiLambdas = elm.nAntiLambdas / (elm.nEvents * elm.effAntiLambdas);
       elm.enhAntiLambdas = elm.yieldAntiLambdas / elm.nParticipants / (0.0617 / 2);
 
-      plotData.push({ particle: ParticleType.KAON, nParticipants: elm.nParticipants, enhancement:  elm.enhKaons });
-      plotData.push({ particle: ParticleType.LAMBDA, nParticipants: elm.nParticipants, enhancement: elm.enhLambdas });
-      plotData.push({ particle: ParticleType.ANTI_LAMBDA, nParticipants: elm.nParticipants, enhancement: elm.enhAntiLambdas });
+      plotData.push({ particle: ParticleType.KAON, nParticipants: elm.nParticipants, enhancement: elm.enhKaons, centrality: elm.centrality });
+      plotData.push({ particle: ParticleType.LAMBDA, nParticipants: elm.nParticipants, enhancement: elm.enhLambdas, centrality: elm.centrality });
+      plotData.push({ particle: ParticleType.ANTI_LAMBDA, nParticipants: elm.nParticipants, enhancement: elm.enhAntiLambdas, centrality: elm.centrality });
     }
 
     this.plotData = plotData;

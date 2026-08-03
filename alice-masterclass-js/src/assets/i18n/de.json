@@ -292,7 +292,7 @@
     "PARTICLE_PROPAGATION_MENU": "Teilchenausbreitung",
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Teilchenausbreitung im Magnetfeld",
-      "WELCOME_BODY_1": "Zwei Protonen kollidieren im Zentrum von ALICE. Neue Teilchen fliegen nach außen, und das Magnetfeld des Detektors krümmt die Bahnen der elektrisch geladenen Teilchen.",
+      "WELCOME_BODY_1": "In den meisten Ereignissen kollidieren im Zentrum von ALICE zwei Protonen; im Pb-Pb-Ereignis kollidieren stattdessen zwei Bleikerne. Beide Fälle werden in der Visualisierung gezeigt. Neue Teilchen fliegen nach außen, und das Magnetfeld des Detektors krümmt die Bahnen der elektrisch geladenen Teilchen.",
       "WELCOME_BODY_2": "Mit Start berechnet die App jede Bahn durch das echte Magnetfeld von ALICE. Ereignisse mit vielen Teilchen können einen kurzen Moment zum Laden brauchen.",
       "WELCOME_BODY_3": "Anschließend können Sie mit dem Zeitschieberegler von den sich nähernden Protonen über die Kollision bis zu den vom Zentrum wegfliegenden Teilchen navigieren. Entdecken Sie frei: In den Seitenleisten können Sie das Feld ändern und durch die Detektorschichten blicken.",
       "START_BUTTON": "Animation starten",
@@ -304,6 +304,7 @@
       "RETRY": "Erneut versuchen",
       "LOADING_DETECTOR": "Detektormodell wird geladen…",
       "EVENT_N": "Ereignis {{n}}",
+      "EVENT_PBPB_N": "Pb-Pb-Ereignis",
       "SIDEBAR_DETECTOR_PARTS": "Detektorteile",
       "SIDEBAR_EVENT": "Ereignis",
       "SIDEBAR_PLAYBACK": "Wiedergabe",
@@ -349,7 +350,7 @@
       "TITLE": "Wie Spuren durch ALICE gekrümmt werden",
       "P1": "Geladene Teilchen in ALICE bewegen sich durch ein starkes Magnetfeld, und die Lorentzkraft drückt sie seitwärts, sobald ihre Bewegung das Feld quert. Ihre Spuren krümmen sich daher: Ein stärkeres Feld oder ein kleinerer Impuls ergibt eine engere Krümmung, während positive und negative Ladungen entgegengesetzt abbiegen. Neutrale Teilchen spüren keine magnetische Kraft und fliegen geradeaus. An der Schärfe der Krümmung lässt sich der Impuls des Teilchens ablesen.",
       "P2": "Dieses Feld wird von einem großen Solenoid um das Barrel und einem Dipol nahe den Myonendetektoren geformt. Bevor die Animation startet, verfolgt die App jedes Teilchen durch dieses gemessene Feld und speichert die Bahnen. Danach zeigen Wiedergabe und Zeitschieberegler nur noch die vorbereiteten Spuren, sodass das Bewegen durch das Ereignis flüssig bleibt.",
-      "P3": "Auf der Zeitachse sehen Sie zuerst die sich nähernden Protonen, dann die Kollision und zuletzt die vom Zentrum wegfliegenden Teilchen. Wenn Sie die Feldstärke ändern oder den Solenoid umkehren, sollten sich die Krümmungen entsprechend ändern; drücken Sie danach auf Wiederholen, damit die Spuren neu berechnet werden. Das Ausblenden von Detektorschichten oder das Einblenden der Feldlinien kann dieselbe Geschichte in der Szene leichter nachvollziehbar machen."
+      "P3": "Auf der Zeitachse sehen Sie zuerst die sich nähernden Strahlen (Protonen, oder Bleikerne im Pb–Pb-Ereignis), dann die Kollision und zuletzt die vom Zentrum wegfliegenden Teilchen. Wenn Sie die Feldstärke ändern oder den Solenoid umkehren, sollten sich die Krümmungen entsprechend ändern; drücken Sie danach auf Wiederholen, damit die Spuren neu berechnet werden. Das Ausblenden von Detektorschichten oder das Einblenden der Feldlinien kann dieselbe Geschichte in der Szene leichter nachvollziehbar machen."
     },
     "LSA_TUTORIAL": {
       "WELCOME_TITLE": "Großskalige Analyse — kurze Anleitung",

@@ -8,7 +8,7 @@
  *   - Intro (`t < 0`): option A — linear map
  *     `[-INTRO_DURATION_MS, 0]` → `[-INTRO_APPROACH_DURATION_NS, 0]`,
  *     where the approach duration is light-travel time over
- *     {@link PROTON_HALF_SEPARATION_START}.
+ *     {@link BEAM_HALF_SEPARATION_START}.
  *   - Propagation (`t ≥ 0`): `t_ns = t_ms * nsPerMs` (same scale the timeline
  *     already uses to index track TOF buffers).
  */
@@ -18,18 +18,18 @@ import { PropagationScene } from './propagation-scene';
 import {
   DEFAULT_NS_PER_MS,
   INTRO_DURATION_MS,
-  PROTON_HALF_SEPARATION_START,
+  BEAM_HALF_SEPARATION_START,
 } from './timeline-constants';
 
 /** cm per Three.js world unit (`1 / PropagationScene.objectScale`). */
 const CM_PER_WORLD_UNIT = 1 / PropagationScene.objectScale;
 
 /**
- * Physical duration of the proton approach shown in the intro: half-separation
+ * Physical duration of the nucleus approach shown in the intro: half-separation
  * along the beam axis divided by c (≈ 19 ns for the default start distance).
  */
 export const INTRO_APPROACH_DURATION_NS =
-  (PROTON_HALF_SEPARATION_START * CM_PER_WORLD_UNIT) / SPEED_OF_LIGHT_CM_PER_NS;
+  (BEAM_HALF_SEPARATION_START * CM_PER_WORLD_UNIT) / SPEED_OF_LIGHT_CM_PER_NS;
 
 export interface PhysicalTimelineScale {
   /** Presentation intro length in ms (default {@link INTRO_DURATION_MS}). */

@@ -5,8 +5,8 @@
  * `applyTime(globalTimeMs)` — it never touches `CollisionIntro` or the track
  * lines directly. `globalTimeMs` spans three phases (KRYTYCZNE, patrz plan):
  *
- *   - `t < 0`  (intro):        protons fly in, tracks hidden.
- *   - `t = 0`  (collision):    one-shot flash callback, protons vanish.
+ *   - `t < 0`  (intro):        Pb nuclei fly in, tracks hidden.
+ *   - `t = 0`  (collision):    one-shot flash callback, nuclei vanish.
  *   - `t > 0`  (propagation):  tracks revealed via `setDrawRange` (Faza 9).
  *
  * No physics or Chebyshev evaluation happens here — only visibility toggles
@@ -68,7 +68,7 @@ export class PropagationTimeline {
       this.options.onCollisionMoment?.();
     }
 
-    // CollisionIntro.update() already hides the protons for t >= 0 and
+    // CollisionIntro.update() already hides the nuclei for t >= 0 and
     // repositions them for t < 0 — safe to call unconditionally.
     this.collisionIntro.update(globalTimeMs);
 

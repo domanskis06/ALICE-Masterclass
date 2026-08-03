@@ -12,7 +12,7 @@ import {
 } from './timeline-constants';
 
 describe('physical-timeline', () => {
-  it('defines INTRO_APPROACH_DURATION_NS as light-travel time over the proton half-separation', () => {
+  it('defines INTRO_APPROACH_DURATION_NS as light-travel time over the beam half-separation', () => {
     const expected =
       (PROTON_HALF_SEPARATION_START / PropagationScene.objectScale) / SPEED_OF_LIGHT_CM_PER_NS;
     expect(INTRO_APPROACH_DURATION_NS).toBeCloseTo(expected, 10);

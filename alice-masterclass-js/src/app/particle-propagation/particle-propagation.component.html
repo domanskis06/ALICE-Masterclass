@@ -131,7 +131,7 @@
         <h4>{{ 'STRANGENESS.PARTICLE_PROPAGATION.SIDEBAR_EVENT' | translate }}</h4>
         <mat-form-field appearance="outline" class="full-width event-select-field" floatLabel="never">
           <mat-select
-            [(ngModel)]="selectedEventIndex"
+            [ngModel]="selectedEventIndex"
             [ngModelOptions]="{ standalone: true }"
             (ngModelChange)="onEventChange($event)"
             [panelClass]="eventSelectPanelClass"

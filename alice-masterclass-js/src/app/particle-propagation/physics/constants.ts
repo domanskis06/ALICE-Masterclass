@@ -92,8 +92,9 @@ export const RK4_STEP_CM = 1.5;
 export const MAX_RK4_STEPS = 500;
 
 /** Hard cap on the number of particles propagated per event (perf/UX guard).
- * Curated events ship ~15–40 tracks; dense demos (event_9) up to ~60. */
-export const MAX_TRACKED_PARTICLES = 60;
+ * Curated events ship ~15–40 tracks; dense Pb–Pb demo (event_9) uses all
+ * charged tracks from the densest gpu_propagator source (typically ~250–270). */
+export const MAX_TRACKED_PARTICLES = 500;
 
 /** Chebyshev field-map dimensionality (x/y/z or r/phi/z components). */
 export const DIMENSIONS = 3;
@@ -141,7 +142,10 @@ export const FIELD_MAX_Z = SOL_MAX_Z;
 // ---------------------------------------------------------------------------
 export const FIELD_DATA_BASE_PATH = 'assets/field';
 export const DETECTOR_MODEL_BASE_PATH = 'assets/models/alice components';
+/** Proton GLB used by the collision intro for standard (non–Pb–Pb) events. */
 export const PROTON_MODEL_PATH = 'assets/models/proton.glb';
+/** Index of the denser curated demo event (`event_9.json`, up to {@link MAX_TRACKED_PARTICLES} tracks). */
+export const DENSE_PROPAGATION_EVENT_INDEX = 9;
 /** Curated Particle Propagation events from gpu_propagator (see scripts/curate-propagation-events.mjs). */
 export const PARTICLE_EVENT_DATA_BASE_PATH = 'assets/exercises/particle-propagation';
 /** Number of curated `event_<n>.json` files shipped under the base path above (event_0 … event_9). */
