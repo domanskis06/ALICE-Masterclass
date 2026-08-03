@@ -2,7 +2,13 @@ import { Component, AfterViewInit, ViewChild, ElementRef, Input, HostBinding, On
 import { BehaviorSubject, Subscription } from 'rxjs';
 import * as d3 from 'd3';
 
-import { StrangenessEnhancementPlotEntry, KAON_COLOR, LAMBDA_COLOR, ANTILAMBDA_COLOR } from '../strangeness-large-scale-analysis.component';
+import {
+  StrangenessEnhancementPlotEntry,
+  KAON_COLOR,
+  LAMBDA_COLOR,
+  ANTILAMBDA_COLOR,
+  centralityDisplayName,
+} from '../strangeness-large-scale-analysis.component';
 import { ParticleType } from '../../shared/services/api.service';
 
 @Component({
@@ -162,7 +168,7 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
       this.updateYDomain();
     });
 
-    this.dataSubscription = this._data.subscribe((data) => {
+    this.dataSubscription = this._data.subscribe(() => {
       this.updateDots();
     });
   }
@@ -269,6 +275,10 @@ export class StrangenessEnhancementPlotComponent implements AfterViewInit, OnDes
 
   protected tooltipParticleSymbol(particle: ParticleType): string {
     return particle === ParticleType.KAON ? 'K0S' : 'Λ';
+  }
+
+  protected tooltipCentrality(centrality: string): string {
+    return centralityDisplayName(centrality) ?? centrality;
   }
 
 }

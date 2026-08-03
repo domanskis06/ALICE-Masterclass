@@ -28,7 +28,7 @@
 
         <ng-container matColumnDef="nKaons">
           <th mat-header-cell *matHeaderCellDef>{{ 'LARGE_SCALE_ANALYSIS.NO' | translate }} <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span></th>
-          <td mat-cell *matCellDef="let element;"> <em>{{ element.nKaons | number:'1.1-1' }}</em> </td>
+          <td mat-cell *matCellDef="let element;"> <strong>{{ element.nKaons | number:'1.1-1' }}</strong> </td>
         </ng-container>
 
         <ng-container matColumnDef="effKaons">
@@ -48,7 +48,7 @@
 
         <ng-container matColumnDef="nLambdas">
           <th mat-header-cell *matHeaderCellDef>{{ 'LARGE_SCALE_ANALYSIS.NO' | translate }} <span class="particle">Λ</span></th>
-          <td mat-cell *matCellDef="let element;"> <em>{{ element.nLambdas | number:'1.1-1' }}</em> </td>
+          <td mat-cell *matCellDef="let element;"> <strong>{{ element.nLambdas | number:'1.1-1' }}</strong> </td>
         </ng-container>
 
         <ng-container matColumnDef="effLambdas">
@@ -68,7 +68,7 @@
 
         <ng-container matColumnDef="nAntiLambdas">
           <th mat-header-cell *matHeaderCellDef>{{ 'LARGE_SCALE_ANALYSIS.NO' | translate }} <span class="particle particle-anti">Λ</span></th>
-          <td mat-cell *matCellDef="let element;"> <em>{{ element.nAntiLambdas | number:'1.1-1' }}</em> </td>
+          <td mat-cell *matCellDef="let element;"> <strong>{{ element.nAntiLambdas | number:'1.1-1' }}</strong> </td>
         </ng-container>
 
         <ng-container matColumnDef="effAntiLambdas">
