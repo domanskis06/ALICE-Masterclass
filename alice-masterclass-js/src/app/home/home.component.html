@@ -12,20 +12,6 @@
       <p [innerHtml]="'HOME.P1' | translate"></p>
       <p [innerHtml]="'HOME.P2' | translate"></p>
       <p [innerHtml]="'HOME.P3' | translate"></p>
-      <div id="download">
-        <p>{{ 'HOME.DOWNLOAD' | translate }}</p>
-        <div fxLayout="row" fxLayoutAlign="space-around center">
-          <a [href]="appPathWindows" download class="system-icon">
-            <mat-icon svgIcon="windows"></mat-icon>
-          </a>
-          <a [href]="appPathLinux" download class="system-icon" >
-            <mat-icon svgIcon="linux"></mat-icon>
-          </a>
-          <a class="system-icon" [matTooltip]="'HOME.COMING_SOON' | translate" matTooltipPosition="after">
-            <mat-icon svgIcon="apple"></mat-icon>
-          </a>
-        </div>
-      </div>
     </div>
     <div fxFlex="grow"><img fxFlex="grow" src="assets/home/alice-detector.png"></div>
   </div>
