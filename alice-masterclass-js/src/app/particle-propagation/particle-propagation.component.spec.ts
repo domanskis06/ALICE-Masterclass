@@ -45,10 +45,15 @@ const fakeParticle: PropagationParticle = {
   energy: 1.2,
 };
 
+/**
+ * Long enough that the live RAF loop cannot finish the timeline during
+ * `flushAsyncChain` / `waitForBoot` on a loaded CI runner (~maxTimeNs /
+ * DEFAULT_NS_PER_MS ≈ 20s of presentation time plus the intro).
+ */
 const fakeTrack: BufferedTrack = {
   particleId: 'track-0',
   positions: new Float32Array([0, 0, 0, 0, 0, 1]),
-  times: new Float32Array([0, 1]),
+  times: new Float32Array([0, 100]),
   pointCount: 2,
   charge: 1,
   origin: 'primary',
@@ -90,7 +95,7 @@ describe('ParticlePropagationComponent', () => {
       loadEvent: jasmine.createSpy('loadEvent').and.returnValue(of([fakeParticle])),
     };
     const progressEvent: PrecomputeEvent = { type: 'progress', done: 0, total: 1 };
-    const resultEvent: PrecomputeEvent = { type: 'result', result: { tracks: [fakeTrack], maxTimeNs: 1 } };
+    const resultEvent: PrecomputeEvent = { type: 'result', result: { tracks: [fakeTrack], maxTimeNs: 100 } };
     precomputeSpy = jasmine.createSpy('precompute').and.returnValue(of(progressEvent, resultEvent));
     const fakeRk4 = { precompute: precomputeSpy };
     // Real GLTF fetches for the detector parts are orthogonal to this component-level spec
