@@ -1,20 +1,19 @@
 /**
- * Pre-collision animation: two protons flying in from opposite ends of the
- * beam axis along `z` — starting just inside the beam pipe's end
- * (`PROTON_HALF_SEPARATION_START`, see that constant's doc for why the pipe
- * — `BP.glb`, part of the detector model loaded separately by
- * `detector-loader.ts` — is asymmetric) — through the pipe, meeting at the
- * origin at `t = 0`.
+ * Pre-collision animation: two beam particles flying in from opposite ends of
+ * the beam axis along `z` — starting just inside the beam pipe's end
+ * (`BEAM_HALF_SEPARATION_START`) — meeting at the origin at `t = 0`.
+ *
+ * Beam species:
+ *   - `'proton'`     — cloned `proton.glb` (standard events)
+ *   - `'pb-nucleus'` — procedural Pb nuclei (dense Pb–Pb demo event)
  *
  * `update(tIntroMs)` is a pure function of the *global* intro time (always in
  * `[-INTRO_DURATION_MS, 0]`), not an accumulated per-frame delta — this is what
  * lets `PropagationTimeline` scrub the slider backward/forward through the intro
- * without drift. See `ci/docs/event-display.md` for the delta-time-driven variant
- * this intentionally does not reuse (god-node isolation,
- * `.cursor/rules/architecture.mdc`).
+ * without drift.
  *
  * No beam-pipe mesh is drawn here — the real `BP.glb` already lives on the
- * beam axis as part of the detector shell; the protons just travel through it.
+ * beam axis as part of the detector shell.
  */
 
 import * as THREE from 'three';
@@ -22,9 +21,18 @@ import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import {
   INTRO_DURATION_MS,
   INTRO_EASE_IN_POWER,
-  PROTON_HALF_SEPARATION_START,
-  PROTON_TARGET_DIAMETER_WORLD,
+  BEAM_HALF_SEPARATION_START,
+  NUCLEUS_TARGET_DIAMETER_WORLD,
 } from './timeline-constants';
+import {
+  createLeadNucleusMesh,
+  disposeLeadNucleusMesh,
+  LEAD_NUCLEUS_KIND,
+  LEAD_NUCLEUS_LOCAL_DIAMETER,
+} from './lead-nucleus-mesh';
+
+/** Which projectile pair the intro shows. */
+export type CollisionIntroBeamKind = 'proton' | 'pb-nucleus';
 
 function clamp01(x: number): number {
   return Math.min(1, Math.max(0, x));
@@ -42,7 +50,6 @@ function easeIn(t: number): number {
 /** Lower score → more likely the translucent proton shell (vs RGB quarks). */
 function shellLikelihood(mat: THREE.Material): number {
   const named = mat.name || '';
-  // Authored names in proton.glb: Material.002 = shell, .003/.004/.005 = R/B/G.
   if (/material\.002/i.test(named)) return 0;
   if (/material\.00[345]/i.test(named)) return 1;
   const opacity = (mat as THREE.Material & { opacity?: number }).opacity;
@@ -50,26 +57,16 @@ function shellLikelihood(mat: THREE.Material): number {
 }
 
 /**
- * `proton.glb` is one multi-material sphere: a translucent shell (lowest alpha)
- * wrapping three RGB quark blobs. Forcing `depthWrite` on the shell fills the
- * depth buffer with the envelope and depth-tests away any quark that sits
- * inside / behind it (the blue one was the usual casualty). Treat the shell
- * as glass (`depthWrite = false`); leave the more-opaque quarks writing depth
- * so they still sort against each other.
- *
- * Shell detection is global across the whole proton (lowest likelihood score),
- * not per-mesh — so a loader that splits primitives into separate meshes still
- * only marks the true envelope as glass. Quarks also get a lower `renderOrder`
- * than the shell: all four meshes share the same world position, so Three's
- * transparent distance-sort cannot break ties — without an explicit order the
- * shell sometimes paints over the blue quark.
+ * `proton.glb` is one multi-material sphere: a translucent shell wrapping three
+ * RGB quark blobs. Treat the shell as glass (`depthWrite = false`); leave quarks
+ * writing depth. Shell gets a higher `renderOrder` so it does not bury quarks.
  */
 function configureProtonAppearance(root: THREE.Object3D): void {
   const materials = new Set<THREE.Material>();
   const meshes: THREE.Mesh[] = [];
   root.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
-    if (!(mesh as any).isMesh) return;
+    if (!(mesh as THREE.Mesh & { isMesh?: boolean }).isMesh) return;
     meshes.push(mesh);
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     for (const mat of list) {
@@ -101,82 +98,116 @@ function configureProtonAppearance(root: THREE.Object3D): void {
   }
 }
 
+function scaleToTargetDiameter(root: THREE.Object3D, localDiameter: number): void {
+  const uniformScale = NUCLEUS_TARGET_DIAMETER_WORLD / Math.max(localDiameter, 1e-6);
+  root.scale.setScalar(uniformScale);
+}
+
+function disposeObjectTree(root: THREE.Object3D): void {
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    mesh.geometry?.dispose?.();
+    const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
+    if (Array.isArray(material)) material.forEach((m) => m.dispose());
+    else material?.dispose();
+  });
+}
+
+async function loadProtonPair(protonModelUrl: string): Promise<[THREE.Object3D, THREE.Object3D]> {
+  const loader = new GLTFLoader();
+  const gltf = await new Promise<GLTF>((resolve, reject) => {
+    loader.load(protonModelUrl, resolve, undefined, reject);
+  });
+
+  const template = gltf.scene;
+  const plusZ = template.clone(true);
+  const minusZ = template.clone(true);
+
+  const bbox = new THREE.Box3().setFromObject(template);
+  const size = bbox.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
+  plusZ.scale.setScalar(NUCLEUS_TARGET_DIAMETER_WORLD / maxDim);
+  minusZ.scale.setScalar(NUCLEUS_TARGET_DIAMETER_WORLD / maxDim);
+  configureProtonAppearance(plusZ);
+  configureProtonAppearance(minusZ);
+  plusZ.userData['kind'] = 'proton';
+  minusZ.userData['kind'] = 'proton';
+  return [plusZ, minusZ];
+}
+
+function createPbPair(): [THREE.Object3D, THREE.Object3D] {
+  const plusZ = createLeadNucleusMesh();
+  const minusZ = createLeadNucleusMesh();
+  scaleToTargetDiameter(plusZ, LEAD_NUCLEUS_LOCAL_DIAMETER);
+  scaleToTargetDiameter(minusZ, LEAD_NUCLEUS_LOCAL_DIAMETER);
+  return [plusZ, minusZ];
+}
+
 export class CollisionIntro {
   readonly group = new THREE.Group();
+  readonly beamKind: CollisionIntroBeamKind;
 
   private constructor(
-    private readonly protonPlusZ: THREE.Object3D,
-    private readonly protonMinusZ: THREE.Object3D,
+    beamKind: CollisionIntroBeamKind,
+    private readonly beamPlusZ: THREE.Object3D,
+    private readonly beamMinusZ: THREE.Object3D,
     private readonly halfSeparationStart: number
   ) {
-    this.group.add(protonMinusZ, protonPlusZ);
+    this.beamKind = beamKind;
+    this.group.add(beamMinusZ, beamPlusZ);
   }
 
   /**
-   * Loads `proton.glb`, clones it for the two incoming beams, and rescales
-   * both clones to a fixed on-screen size (mirrors
-   * `EventDisplayComponent`'s `targetDiameter = objectScale * 10` sizing).
+   * Builds two incoming beam projectiles for `beamKind`.
+   * - `'proton'`: loads `protonModelUrl` (default {@link PROTON_MODEL_PATH} via caller)
+   * - `'pb-nucleus'`: procedural lead nuclei (no fetch)
    */
-  static async create(protonModelUrl: string): Promise<CollisionIntro> {
-    const loader = new GLTFLoader();
-    const gltf = await new Promise<GLTF>((resolve, reject) => {
-      loader.load(protonModelUrl, resolve, undefined, reject);
-    });
+  static async create(
+    beamKind: CollisionIntroBeamKind = 'proton',
+    protonModelUrl = 'assets/models/proton.glb'
+  ): Promise<CollisionIntro> {
+    const [plusZ, minusZ] =
+      beamKind === 'pb-nucleus' ? createPbPair() : await loadProtonPair(protonModelUrl);
 
-    const template = gltf.scene;
-    const plusZ = template.clone(true);
-    const minusZ = template.clone(true);
-
-    const bbox = new THREE.Box3().setFromObject(template);
-    const size = bbox.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 1e-6);
-    const uniformScale = PROTON_TARGET_DIAMETER_WORLD / maxDim;
-    plusZ.scale.setScalar(uniformScale);
-    minusZ.scale.setScalar(uniformScale);
-    configureProtonAppearance(plusZ);
-    configureProtonAppearance(minusZ);
-
-    const intro = new CollisionIntro(plusZ, minusZ, PROTON_HALF_SEPARATION_START);
+    const intro = new CollisionIntro(beamKind, plusZ, minusZ, BEAM_HALF_SEPARATION_START);
     intro.reset();
     return intro;
   }
 
   /**
-   * Positions the protons for intro time `tIntroMs` (expected range
-   * `[-INTRO_DURATION_MS, 0]`); for `tIntroMs >= 0` (collision has happened)
-   * both protons are hidden — the caller (`PropagationTimeline`) is
-   * responsible for showing the track group instead.
+   * Positions the beams for intro time `tIntroMs` (expected range
+   * `[-INTRO_DURATION_MS, 0]`); for `tIntroMs >= 0` both are hidden.
    */
   update(tIntroMs: number): void {
     if (tIntroMs >= 0) {
-      this.protonPlusZ.visible = false;
-      this.protonMinusZ.visible = false;
+      this.beamPlusZ.visible = false;
+      this.beamMinusZ.visible = false;
       return;
     }
-    this.protonPlusZ.visible = true;
-    this.protonMinusZ.visible = true;
+    this.beamPlusZ.visible = true;
+    this.beamMinusZ.visible = true;
 
     const progress = clamp01((tIntroMs + INTRO_DURATION_MS) / INTRO_DURATION_MS);
     const halfSep = lerp(this.halfSeparationStart, 0, easeIn(progress));
-    this.protonPlusZ.position.set(0, 0, halfSep);
-    this.protonMinusZ.position.set(0, 0, -halfSep);
+    this.beamPlusZ.position.set(0, 0, halfSep);
+    this.beamMinusZ.position.set(0, 0, -halfSep);
   }
 
-  /** Rewinds to the start of the intro (`t = -INTRO_DURATION_MS`), e.g. when the slider jumps back. */
+  /** Rewinds to the start of the intro (`t = -INTRO_DURATION_MS`). */
   reset(): void {
     this.update(-INTRO_DURATION_MS);
   }
 
   dispose(): void {
-    for (const root of [this.protonPlusZ, this.protonMinusZ]) {
-      root.traverse((obj) => {
-        const mesh = obj as THREE.Mesh;
-        mesh.geometry?.dispose?.();
-        const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
-        if (Array.isArray(material)) material.forEach((m) => m.dispose());
-        else material?.dispose();
-      });
+    for (const root of [this.beamPlusZ, this.beamMinusZ]) {
+      if (root.userData['kind'] === LEAD_NUCLEUS_KIND) {
+        disposeLeadNucleusMesh(root);
+      } else {
+        disposeObjectTree(root);
+      }
     }
     this.group.clear();
   }
 }
+
+export { LEAD_NUCLEUS_KIND };

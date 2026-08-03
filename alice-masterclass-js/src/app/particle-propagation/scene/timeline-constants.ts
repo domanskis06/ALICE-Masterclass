@@ -11,14 +11,14 @@
  * internal animation clock.
  */
 
-/** Duration, in ms, of the pre-collision proton approach (`t` in `[-INTRO_DURATION_MS, 0]`). */
+/** Duration, in ms, of the pre-collision nucleus approach (`t` in `[-INTRO_DURATION_MS, 0]`). */
 export const INTRO_DURATION_MS = 900;
 
 /**
- * Half-distance (world units) between the two protons at `t = -INTRO_DURATION_MS`
+ * Half-distance (world units) between the two nuclei at `t = -INTRO_DURATION_MS`
  * — i.e. how far out on the beam axis they start their approach.
  *
- * Set so the protons visually originate from *inside* the beam pipe
+ * Set so the nuclei visually originate from *inside* the beam pipe
  * (`BP.glb`), just shy of its end, rather than floating in empty space
  * beyond it. `BP.glb` is authored asymmetrically about the interaction
  * point — after the same ITS-based recenter `detector-loader.ts` applies to
@@ -29,26 +29,35 @@ export const INTRO_DURATION_MS = 900;
  * which deliberately ignores BP itself as the recenter reference for this
  * exact reason). Using a *symmetric* start distance means only the shorter
  * (`+z`, ≈5.81) side bounds the value — a larger distance would start the
- * `+z` proton past the pipe's cut end again. `5.7` leaves a small margin
+ * `+z` nucleus past the pipe's cut end again. `5.7` leaves a small margin
  * inside that shorter end on both sides. Kept as a static constant rather
  * than measured at runtime — `CollisionIntro` loads independently of (in
  * parallel with) the detector model, so there is no guaranteed-ready `BP`
  * root to measure from at intro-creation time. Re-measure and update this
  * constant if `BP.glb` or `objectScale` ever change.
  */
-export const PROTON_HALF_SEPARATION_START = 5.7;
+export const BEAM_HALF_SEPARATION_START = 5.7;
+
+/** @deprecated Use {@link BEAM_HALF_SEPARATION_START}. */
+export const PROTON_HALF_SEPARATION_START = BEAM_HALF_SEPARATION_START;
 
 /**
  * Exponent for the ease-in curve applied to intro progress (see
  * `collision-intro.ts`): `easedProgress = progress ** INTRO_EASE_IN_POWER`.
- * `1` = linear. Values `> 1` keep the protons slow while still far down the
+ * `1` = linear. Values `> 1` keep the nuclei slow while still far down the
  * beam pipe and let them accelerate sharply into the collision, which reads
  * as "fast" despite the much longer travel distance from L3.
  */
 export const INTRO_EASE_IN_POWER = 2.4;
 
-/** Target on-screen diameter (world units) each proton model is rescaled to. */
-export const PROTON_TARGET_DIAMETER_WORLD = 0.1;
+/**
+ * Target on-screen diameter (world units) each Pb nucleus is rescaled to.
+ * Kept equal to the former proton diameter so the beams still fit the pipe.
+ */
+export const NUCLEUS_TARGET_DIAMETER_WORLD = 0.1;
+
+/** @deprecated Use {@link NUCLEUS_TARGET_DIAMETER_WORLD}. */
+export const PROTON_TARGET_DIAMETER_WORLD = NUCLEUS_TARGET_DIAMETER_WORLD;
 
 /**
  * Physics-ns of trajectory time-of-flight mapped to 1ms of `globalTime`

@@ -90,7 +90,7 @@ export class PropagationScene {
   readonly fieldGroup = new THREE.Group();
   /** Pre-computed particle tracks (Faza 9). Hidden until `t > 0` (Faza 10). */
   readonly tracksGroup = new THREE.Group();
-  /** Incoming-proton intro animation (Faza 8). Hidden once `t >= 0`. */
+  /** Incoming Pb-nucleus intro animation (Faza 8). Hidden once `t >= 0`. */
   readonly introGroup = new THREE.Group();
 
   private readonly lights = new THREE.Group();

@@ -17,7 +17,7 @@ import { InstructionsComponent } from './instructions/instructions.component';
 import { ParticlePropagationComponent } from './particle-propagation.component';
 import { PropagationSessionCacheService } from './propagation-session-cache.service';
 
-/** Real fetch of `proton.glb` is orthogonal to what this component-level spec is testing. */
+/** Procedural Pb nuclei are orthogonal to what this component-level spec is testing. */
 function stubCollisionIntro(): CollisionIntro {
   return {
     group: new THREE.Group(),
@@ -175,13 +175,16 @@ describe('ParticlePropagationComponent', () => {
     expect(component.phase).toBe('ready');
   }, 15000);
 
-  it('does not restart an already in-flight precompute pipeline', async () => {
+  it('does not re-kick RK4 when Start is pressed again while the pipeline is in-flight', async () => {
     await waitForBoot();
     component.onStartAnimation();
     expect(component.phase).toBe('loading-event');
+    const callsBefore = precomputeSpy.calls.count();
     component.onStartAnimation();
-    expect(precomputeSpy).not.toHaveBeenCalled(); // still in-flight; second call is a no-op.
-  });
+    expect(precomputeSpy.calls.count()).toBe(callsBefore);
+    await flushAsyncChain();
+    expect(component.phase).toBe('ready');
+  }, 15000);
 
   it('onFieldStrengthChange() updates the field but defers RK4 until Replay', async () => {
     await waitForBoot();
@@ -237,6 +240,33 @@ describe('ParticlePropagationComponent', () => {
     expect(precomputeSpy).toHaveBeenCalledTimes(2);
     expect(component.phase).toBe('ready');
     expect(component.tracksNeedRecompute).toBe(false);
+  }, 15000);
+
+  it('onEventChange() swaps beam prep without auto-play and restores the Start button', async () => {
+    await waitForBoot();
+    component.onStartAnimation();
+    await flushAsyncChain();
+    expect(component.phase).toBe('ready');
+    expect(component.hasStarted).toBe(true);
+    expect(component.isPlaying).toBe(true);
+    expect(precomputeSpy).toHaveBeenCalledTimes(1);
+
+    component.onEventChange(1);
+    expect(component.hasStarted).toBe(false);
+    expect(component.isPlaying).toBe(false);
+    expect(component.phase).toBe('loading-event');
+
+    await flushAsyncChain();
+    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(component.phase).toBe('ready');
+    expect(component.hasStarted).toBe(false);
+    expect(component.isPlaying).toBe(false);
+    expect(component.controlsEnabled).toBe(false);
+
+    component.onStartAnimation();
+    expect(component.hasStarted).toBe(true);
+    expect(component.isPlaying).toBe(true);
+    expect(precomputeSpy).toHaveBeenCalledTimes(2); // tracks already warm
   }, 15000);
 
   it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', async () => {

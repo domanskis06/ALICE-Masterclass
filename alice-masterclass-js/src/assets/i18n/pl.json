@@ -294,11 +294,11 @@
       "TITLE": "Jak tory wyginają się w ALICE",
       "P1": "Naładowane cząstki w ALICE poruszają się w silnym polu magnetycznym, a siła Lorentza odpycha je na bok, gdy ich ruch przecina to pole. Ich tory się więc wyginają: silniejsze pole lub niższy pęd daje ciaśniejsze wygięcie, a ładunki dodatnie i ujemne wyginają się w przeciwne strony. Cząstki obojętne nie odczuwają siły magnetycznej, więc lecą prosto. Z ostrości wygięcia toru fizycy odczytują pęd cząstki.",
       "P2": "To pole kształtuje duży solenoid wokół beczki oraz dipol przy detektorach mionowych. Zanim zacznie się animacja, aplikacja przeprowadza każdą cząstkę przez to zmierzone pole i zapisuje ścieżki. Potem odtwarzanie i suwak czasu tylko ujawniają to, co zostało przygotowane, dzięki czemu ruch pozostaje płynny podczas przeglądania zdarzenia.",
-      "P3": "Na osi czasu najpierw widać zbliżające się protony, potem zderzenie, a na końcu cząstki wylatujące ze środka. Jeśli zmienisz natężenie pola lub odwrócisz solenoid, wygięcia powinny się zmienić; potem naciśnij Powtórz, aby tory zostały przeliczone. Przygaszenie warstw detektora lub pokazanie linii pola może ułatwić śledzenie tej samej historii w scenie."
+      "P3": "Na osi czasu najpierw widać zbliżające się wiązki (protony, albo jądra ołowiu w zdarzeniu Pb–Pb), potem zderzenie, a na końcu cząstki wylatujące ze środka. Jeśli zmienisz natężenie pola lub odwrócisz solenoid, wygięcia powinny się zmienić; potem naciśnij Powtórz, aby tory zostały przeliczone. Przygaszenie warstw detektora lub pokazanie linii pola może ułatwić śledzenie tej samej historii w scenie."
     },
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Propagacja cząstek w polu magnetycznym",
-      "WELCOME_BODY_1": "Dwa protony zderzają się w centrum ALICE. Nowe cząstki wylatują na zewnątrz, a pole magnetyczne detektora wygina tory tych, które mają ładunek elektryczny.",
+      "WELCOME_BODY_1": "W większości zdarzeń w centrum ALICE zderzają się dwa protony, a w zdarzeniu Pb-Pb dwa jądra ołowiu. Oba przypadki są pokazywane w wizualizacji. Nowe cząstki wylatują na zewnątrz, a pole magnetyczne detektora wygina tory tych, które mają ładunek elektryczny.",
       "WELCOME_BODY_2": "Naciśnij Start, a aplikacja przygotuje każdą trajektorię w rzeczywistym polu magnetycznym ALICE. Zdarzenia z wieloma cząstkami mogą potrzebować chwili na wczytanie.",
       "WELCOME_BODY_3": "Potem użyj suwaka czasu, by przejść od zbliżających się protonów, przez zderzenie, aż do cząstek opuszczających centrum. Eksploruj swobodnie: panele boczne pozwalają zmieniać pole i przeglądać warstwy detektora.",
       "START_BUTTON": "Uruchom animację",
@@ -310,6 +310,7 @@
       "RETRY": "Ponów",
       "LOADING_DETECTOR": "Wczytywanie modelu detektora…",
       "EVENT_N": "Zdarzenie {{n}}",
+      "EVENT_PBPB_N": "Zdarzenie Pb-Pb",
       "SIDEBAR_DETECTOR_PARTS": "Części detektora",
       "SIDEBAR_EVENT": "Zdarzenie",
       "SIDEBAR_PLAYBACK": "Odtwarzanie",

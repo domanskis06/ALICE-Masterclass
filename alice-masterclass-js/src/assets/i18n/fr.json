@@ -294,11 +294,11 @@
       "TITLE": "Comment les traces se courbent dans ALICE",
       "P1": "Les particules chargées dans ALICE se déplacent dans un fort champ magnétique, et la force de Lorentz les pousse latéralement lorsque leur mouvement coupe ce champ. Leurs traces se courbent donc : un champ plus fort ou une impulsion plus basse donne une courbure plus serrée, tandis que les charges positives et négatives se courbent dans des sens opposés. Les particules neutres ne ressentent aucune force magnétique, elles vont donc tout droit. D’après l’acuité de la courbure d’une trace, les physiciens peuvent lire l’impulsion de la particule.",
       "P2": "Ce champ est façonné par un grand solénoïde autour du tonneau et un dipôle près des détecteurs à muons. Avant le début de l’animation, l’application suit chaque particule à travers ce champ mesuré et stocke les trajectoires. Une fois cela fait, la lecture et le curseur de temps ne font que révéler ce qui a été préparé, ce qui garde le mouvement fluide lorsque vous parcourez l’événement.",
-      "P3": "Sur la chronologie vous voyez d’abord les protons qui s’approchent, puis la collision, et enfin les particules qui s’envolent du centre. Si vous changez l’intensité du champ ou inversez le solénoïde, les courbures doivent changer avec ; appuyez ensuite sur Rejouer pour que les traces soient recalculées. Atténuer les couches du détecteur ou montrer les lignes de champ peut rendre la même histoire plus facile à suivre dans la scène."
+      "P3": "Sur la chronologie vous voyez d’abord les faisceaux qui s’approchent (protons, ou noyaux de plomb dans l’événement Pb–Pb), puis la collision, et enfin les particules qui s’envolent du centre. Si vous changez l’intensité du champ ou inversez le solénoïde, les courbures doivent changer avec ; appuyez ensuite sur Rejouer pour que les traces soient recalculées. Atténuer les couches du détecteur ou montrer les lignes de champ peut rendre la même histoire plus facile à suivre dans la scène."
     },
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Propagation des particules dans le champ magnétique",
-      "WELCOME_BODY_1": "Deux protons entrent en collision au centre d’ALICE. De nouvelles particules s’envolent vers l’extérieur, et le champ magnétique du détecteur courbe les trajectoires de celles qui portent une charge électrique.",
+      "WELCOME_BODY_1": "Dans la plupart des événements, deux protons entrent en collision au centre d’ALICE ; dans l’événement Pb-Pb, ce sont deux noyaux de plomb. Les deux cas sont montrés dans la visualisation. De nouvelles particules s’envolent vers l’extérieur, et le champ magnétique du détecteur courbe les trajectoires de celles qui portent une charge électrique.",
       "WELCOME_BODY_2": "Appuyez sur Démarrer et l’application prépare chaque trajectoire à travers le vrai champ magnétique d’ALICE. Les événements avec de nombreuses particules peuvent nécessiter un court instant de chargement.",
       "WELCOME_BODY_3": "Ensuite, utilisez le curseur de temps pour passer des protons qui s’approchent, à travers la collision, jusqu’aux particules quittant le centre. Explorez librement : les panneaux latéraux vous permettent de changer le champ et de regarder à travers les couches du détecteur.",
       "START_BUTTON": "Démarrer l’animation",
@@ -310,6 +310,7 @@
       "RETRY": "Réessayer",
       "LOADING_DETECTOR": "Chargement du modèle du détecteur…",
       "EVENT_N": "Événement {{n}}",
+      "EVENT_PBPB_N": "Événement Pb-Pb",
       "SIDEBAR_DETECTOR_PARTS": "Parties du détecteur",
       "SIDEBAR_EVENT": "Événement",
       "SIDEBAR_PLAYBACK": "Lecture",

@@ -17,7 +17,7 @@ import { BufferedTrack } from './physics/propagation-types';
 import { FIELD_STRENGTH_DEFAULT_T } from './physics/constants';
 import { FieldLineDensity } from './physics/field-line-tracer';
 import { DetectorModel } from './scene/detector-loader';
-import { CollisionIntro } from './scene/collision-intro';
+import { CollisionIntro, CollisionIntroBeamKind } from './scene/collision-intro';
 import { PropagationCameraMode } from './scene/propagation-scene';
 
 export interface DetectorPartUiSnapshot {
@@ -52,6 +52,9 @@ export class PropagationSessionCacheService {
   fieldLines: THREE.Object3D | null = null;
   fieldLinesBuiltAtStrengthT = FIELD_STRENGTH_DEFAULT_T;
 
+  /** Cached intro per beam species (proton for standard events, Pb for dense demo). */
+  collisionIntros: Partial<Record<CollisionIntroBeamKind, CollisionIntro>> = {};
+  /** @deprecated Prefer {@link collisionIntros}; kept as the currently attached intro. */
   collisionIntro: CollisionIntro | null = null;
 
   /**
@@ -88,6 +91,7 @@ export class PropagationSessionCacheService {
     this.fieldLines = null;
     this.fieldLinesBuiltAtStrengthT = FIELD_STRENGTH_DEFAULT_T;
     this.collisionIntro = null;
+    this.collisionIntros = {};
     this.ui = null;
     this.clearTracksOnly();
   }
