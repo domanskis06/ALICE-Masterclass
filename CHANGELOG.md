@@ -7,7 +7,12 @@ compared against the upstream repository
 
 Version tags follow the existing `v*-dev` release flow (see [`ci/docs/dev-deployment.md`](ci/docs/dev-deployment.md)).
 
-## [0.2.0] - 2026-07-22
+## [0.2.0] - 2026-08-03
+
+Summary of student-app work in this fork versus upstream `0.0.6`. Detail docs under `ci/docs/changelog-*.md`
+were refreshed for side-view sync/masks, detector load optimisation, LSA fit UX, and Particle Propagation
+Pb–Pb intro (see also [`ci/docs/event-display.md`](ci/docs/event-display.md),
+[`ci/docs/particle-propagation.md`](ci/docs/particle-propagation.md)).
 
 ### **Visual Analysis**
 
@@ -25,9 +30,12 @@ The Django backend and API payload were updated to accept multiple mother partic
 ##### Visualisation
 
 Light/dark scene mode, a calorimeter energy-bar readout, tuned bloom/opacity/camera constants, a
-proton–proton collision intro video, and a corner-overlay panel describing the highlighted detector part.
+proton–proton collision intro video, a corner-overlay panel describing the highlighted detector part,
+and **linked Rφ/ρz side views**: per-pane detector masks (View 1 / side: ITS+TRD; View 2 / front:
+ITS+TPC+TRD+TOF) at opacity 0.5, zoom synced to the main 3D orbit distance with throttled RT refresh.
 
 → Details, affected files: [`ci/docs/changelog-visual-analysis-visualisation.md`](ci/docs/changelog-visual-analysis-visualisation.md)
+→ Live guide: [`ci/docs/event-display.md`](ci/docs/event-display.md) § “Side views (Rφ / ρz)”
 
 ##### Construction mode
 
@@ -52,7 +60,9 @@ layers; FIT gets an extra `gltfpack` pass) — see the model changelog § 3b.
 Interactive onboarding tour (driver.js) that walks through histogram selection, opening a histogram,
 fitting signal + background, and accepting a result — advancing itself when the student performs the
 expected action instead of only on "Next". Dismiss state is persisted so returning students are not
-forced through it again.
+forced through it again. Fit UX: brush-zoom on the histogram with a visible range indicator, signal /
+background slider restyle, Unzoom / Reset-range controls, and `FitService.clampRangeToView` /
+`clearFit` so fit intervals stay coherent when the axis zooms.
 
 → Details, affected files: [`ci/docs/changelog-large-scale-analysis.md`](ci/docs/changelog-large-scale-analysis.md)
 
@@ -60,6 +70,13 @@ forced through it again.
 
 Brand-new exercise (no upstream equivalent at all): live RK4 propagation of collision products through
 the exact ALICE magnetic field (Chebyshev field model), rendered in its own Three.js scene with a
-field-line overlay, time scrubber, and curated teaching events.
+field-line overlay, time scrubber, and curated teaching events. Collision intro supports **proton**
+beams and a **Pb–Pb** dense-demo event (procedural lead nuclei); each event change resets to an
+independent **Start** (no auto-play across events).
 
 → Details, architecture, file layout: [`ci/docs/particle-propagation.md`](ci/docs/particle-propagation.md)
+
+### **Home / app shell**
+
+Desktop-app download CTA removed from the home screen; intro copy typography tightened for the web-only
+entry path.

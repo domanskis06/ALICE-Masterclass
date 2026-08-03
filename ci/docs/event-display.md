@@ -39,6 +39,31 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 | Interaction | `onPointer*`, vertex panel, cascade hover / proximity helpers | Picking UI |
 | Legacy math in component | `invariantMass` | **Do not grow** — new math → Service |
 
+## Side views (Rφ / ρz)
+
+Optional right-hand panes (toggle in the EventDisplay sidebar; only after multipart assembly completes —
+`effectiveSideViewsShown`). One WebGL canvas, three cameras (`camera3D`, `cameraRphi`, `cameraRhoz`),
+dirty full-res `WebGLRenderTarget` caches, blit after the main pass. Picking stays on the main 3D viewport.
+
+| Pane | Camera | Detector shells (forced visible) | Opacity |
+| --- | --- | --- | --- |
+| **View 1** (top in landscape — side / ρz) | `cameraRhoz` at (−10, 0, 0) | ITS + TRD | `SIDE_VIEW_DETECTOR_OPACITY` = 0.5 |
+| **View 2** (bottom in landscape — front / Rφ) | `cameraRphi` at (0, 0, 10) | ITS + TPC + TRD + TOF | same 0.5 |
+
+Masking is temporary per RT pass (`applySideViewDetectorMask` → render → `restoreDetectorPartRenderState`
+in `try/finally`) so the main 3D view keeps the student’s slider visibility/opacity. Tracks, decays,
+clusters, and markers stay shared (`LAYER_SHARED`); helper grids stay `LAYER_MAIN_ONLY`; calorimeter
+readouts are hidden during side passes.
+
+**Zoom sync:** side `PerspectiveCamera.zoom` = `computeSideViewZoomFromDistance(controls.getDistance())`
+(`10 / distance`, fallback `SIDE_VIEW_FIXED_ZOOM` at overview). While the student orbits/zooms,
+side RT refreshes are throttled (`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end`
+always does a full refresh. Rotation without a distance change does **not** invalidate the caches.
+
+Helpers/tests: `sideViewAllowsPart`, `computeSideViewZoomFromDistance` in
+`event-display.component.spec.ts`. Changelog detail:
+[`changelog-visual-analysis-visualisation.md`](changelog-visual-analysis-visualisation.md) § “Linked side views”.
+
 ## Detector load optimisation (Visual Analysis)
 
 After each multipart GLB loads, EventDisplay runs
@@ -100,11 +125,11 @@ cd alice-masterclass-js
 npm run e2e:smoke
 ```
 
-Unit coverage for the load path:
+Unit coverage for the load path and side-view helpers:
 
 ```bash
 cd alice-masterclass-js
-npx ng test --include='**/optimize-detector-part.spec.ts' --include='**/merge-static-meshes.spec.ts' --browsers=ChromeHeadless --watch=false
+npx ng test --include='**/optimize-detector-part.spec.ts' --include='**/merge-static-meshes.spec.ts' --include='**/event-display.component.spec.ts' --browsers=ChromeHeadlessCI --watch=false
 ```
 
 See also [E2E.md](E2E.md).

@@ -103,4 +103,6 @@ in EventDisplay (above) is a second, automatic pass for tiny leftover fragments 
 
 The upstream repository ships static, hand-curated GLB assets with no documented sourcing pipeline. This
 O2-sim → `root2cad` → `gltfpack` → manual-prune pipeline (and the resulting Run 3–accurate geometry) is
-new to this fork.
+new to this fork. The Visual Analysis runtime path (`optimize-detector-part.ts` + batched
+`mergeStaticMeshesByMaterial`) is also fork-only — upstream EventDisplay does not run this load-time
+merge/prune step. Live knobs: [`event-display.md`](event-display.md) § “Detector load optimisation”.

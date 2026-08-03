@@ -3,7 +3,8 @@
 [← Back to CHANGELOG](../../CHANGELOG.md)
 
 Rendering/UX rework of the 3D event display: light/dark mode, calorimeter readouts, performance tuning,
-the proton–proton collision intro, and the corner-overlay detector-part panel.
+the proton–proton collision intro, the corner-overlay detector-part panel, and linked Rφ/ρz side views
+with per-pane detector masks and zoom sync.
 
 
 |                   |                                                                                                                                                 |
@@ -86,12 +87,24 @@ bare detector.
 
 
 
+### Linked side views (Rφ / ρz)
+
+
+| File                              | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `event-display.component.ts`      | Side panes share one scene + dirty `WebGLRenderTarget` cache + blit (unchanged layout). **Per-view detector masks** before each RT pass (`applySideViewDetectorMask` / `captureDetectorPartRenderState` / `restore…` in `try/finally`): View 1 (ρz / side, `cameraRhoz`) = ITS+TRD; View 2 (Rφ / front, `cameraRphi`) = ITS+TPC+TRD+TOF; shells forced to `SIDE_VIEW_DETECTOR_OPACITY` (0.5); calorimeter readouts hidden during side passes. Tracks/markers stay on `LAYER_SHARED`. **Zoom sync:** `computeSideViewZoomFromDistance(controls.getDistance())` instead of a fixed overview zoom; `SIDE_VIEW_ZOOM_THROTTLE_MS` (100) + `SIDE_VIEW_ZOOM_EPS` while gesturing; full invalidate on `controls.end`. Pure orbit (distance unchanged) does not dirty side RTs. |
+| `event-display.component.spec.ts` | Specs for `sideViewAllowsPart` (mask sets) and `computeSideViewZoomFromDistance` (overview framing + closer → larger zoom).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+
+Live behaviour notes: [`event-display.md`](event-display.md) § “Side views (Rφ / ρz)”.
+
+
 ### Camera / interaction tuning
 
 
-| File                         | Change                                                                                                                                                                                                                                                                                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `event-display.component.ts` | `SIDE_VIEW_PIXEL_RATIO_FACTOR` / `SIDE_VIEW_MIN_PIXEL_RATIO` / `SIDE_VIEW_RENDER_INTERVAL` throttle the side-view render loop; `PAN_SPEED_FACTOR`, `WHEEL_PAN_FACTOR`, `MOUSE_DRAG_PAN_FACTOR`, `MARKER_PROXIMITY_PX` (vertex/cascade marker hit-testing), `STRAIGHT_TRACK_EPS`, `DECAY_BG_MOMENTUM_COS_MIN` / `DECAY_BG_MOMENTUM_ABS_DP` (background-track classification near a decay vertex). |
+| File                         | Change                                                                                                                                                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `event-display.component.ts` | `PAN_SPEED_FACTOR`, `WHEEL_PAN_FACTOR`, `MOUSE_DRAG_PAN_FACTOR`, `MARKER_PROXIMITY_PX` (vertex/cascade marker hit-testing), `STRAIGHT_TRACK_EPS`, `DECAY_BG_MOMENTUM_COS_MIN` / `DECAY_BG_MOMENTUM_ABS_DP` (background-track classification near a decay vertex). Side-view cost control is the dirty RT + zoom throttle above (older pixel-ratio interval constants were removed). |
 
 
 ### Detector mesh load (draw-call cut)
@@ -112,4 +125,6 @@ Runtime optimisation of multipart detector GLBs for Visual Analysis (batched mer
 
 ## Not present upstream
 
-Light/dark mode, the calorimeter bar readout, the collision intro video, and `lets-us-panel/` do not exist in the upstream repository — `EventDisplayComponent` there renders a single static-theme scene with no calorimeter visualisation.
+Light/dark mode, the calorimeter bar readout, the collision intro video, `lets-us-panel/`, and the
+masked/zoom-synced side-view pipeline do not exist upstream in this form — upstream `EventDisplayComponent`
+renders a single static-theme scene without calorimeter visualisation or per-pane detector masks.

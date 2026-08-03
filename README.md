@@ -52,6 +52,7 @@ npm start
 
 ## Documentation
 
-See [`ci/docs/README.md`](ci/docs/README.md) for the full index (E2E, EventDisplay, Particle Propagation, deployment, database).
+See [`ci/docs/README.md`](ci/docs/README.md) for the full index (E2E, EventDisplay, Particle Propagation, changelogs, deployment, database).
+Product summary vs upstream: [`CHANGELOG.md`](CHANGELOG.md).
 
 Dev redeploy (tag → CI → OpenShift): [`ci/docs/dev-deployment.md`](ci/docs/dev-deployment.md) §7.1.
