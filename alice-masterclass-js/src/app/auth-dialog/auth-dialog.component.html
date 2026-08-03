@@ -1,22 +1,59 @@
 <mat-dialog-content>
+	@if (alreadyAuthenticated) {
+		<p class="auth-already-logged-in" data-testid="auth-current-status" role="status">
+			<mat-icon class="auth-already-logged-in__icon" aria-hidden="true">check_circle</mat-icon>
+			@if (currentSessionName) {
+				{{ 'PASSWORD.ALREADY_LOGGED_IN' | translate:{ studentID: currentStudentID, sessionName: currentSessionName } }}
+			} @else {
+				{{ 'PASSWORD.ALREADY_LOGGED_IN_NO_SESSION' | translate:{ studentID: currentStudentID } }}
+			}
+		</p>
+	}
 	<p [innerHtml]="'PASSWORD.P1' | translate"></p>
 	<p [innerHtml]="'PASSWORD.P2' | translate"></p>
 	<p [innerHtml]="'PASSWORD.P3' | translate"></p>
-	<form [formGroup]="tokenForm">
+	<form [formGroup]="tokenForm" autocomplete="off">
 		<div>
-			<mat-form-field>
+			<mat-form-field fxFlex="60">
 				<mat-label>{{ 'PASSWORD.STUDENT_NUMBER' | translate }}</mat-label>
-				<input matInput type="number" data-testid="auth-student-id" [formControl]="tokenForm.controls.id" required>
+				<input
+					matInput
+					type="number"
+					min="0"
+					step="1"
+					[attr.max]="maxStudents"
+					name="alice-student-number"
+					autocomplete="off"
+					data-testid="auth-student-id"
+					[formControl]="tokenForm.controls.id"
+					required>
+				@if (tokenForm.controls.id.hasError('min')) {
+					<mat-error data-testid="auth-student-min-error">{{ 'PASSWORD.STUDENT_MIN' | translate }}</mat-error>
+				} @else if (tokenForm.controls.id.hasError('max')) {
+					<mat-error data-testid="auth-student-max-error">{{ 'PASSWORD.STUDENT_MAX' | translate:{ max: maxStudents } }}</mat-error>
+				} @else if (authErrorField === 'id') {
+					<mat-error data-testid="auth-student-error">{{ authErrorKey | translate }}</mat-error>
+				}
 			</mat-form-field>
 		</div>
 		<div>
 			<mat-form-field fxFlex="60">
 				<mat-label>{{ 'PASSWORD.SESSION_PASSWORD' | translate }}</mat-label>
-				<input matInput data-testid="auth-session-password" [type]="hide ? 'password' : 'text'" [formControl]="tokenForm.controls.password" required>
+				<input
+					matInput
+					name="alice-session-password"
+					autocomplete="new-password"
+					data-testid="auth-session-password"
+					[type]="hide ? 'password' : 'text'"
+					[formControl]="tokenForm.controls.password"
+					required
+					(blur)="onPasswordBlur()">
 				<button mat-icon-button matSuffix (click)="hide = !hide" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide">
 					<mat-icon>{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
 				</button>
-				<mat-error>{{ 'PASSWORD.ERROR' | translate }}</mat-error>
+				@if (authErrorField === 'password') {
+					<mat-error data-testid="auth-password-error">{{ authErrorKey | translate }}</mat-error>
+				}
 			</mat-form-field>
 		</div>
 	</form>

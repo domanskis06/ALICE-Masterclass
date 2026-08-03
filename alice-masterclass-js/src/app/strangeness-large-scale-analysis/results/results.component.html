@@ -19,7 +19,7 @@
         } @else {
           <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
         }
-        <span class="upload-data-button__text">upload data</span>
+        <span class="upload-data-button__text">{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
       </button>
     </span>
   </mat-card-title>
@@ -47,6 +47,23 @@
         <ng-container matColumnDef="signal">
           <th mat-header-cell *matHeaderCellDef> {{ 'STRANGENESS.RESULTS.SIGNAL' | translate }} </th>
           <td mat-cell *matCellDef="let element;">{{ element.signal }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let element;">
+            <button
+              type="button"
+              mat-icon-button
+              color="warn"
+              class="remove-result-button"
+              [attr.aria-label]="'STRANGENESS.RESULTS.DELETE' | translate"
+              [matTooltip]="'STRANGENESS.RESULTS.DELETE' | translate"
+              (click)="onRemoveButtonClicked(element)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>

@@ -2,19 +2,30 @@
   <mat-card-title class="title">{{ 'STRANGENESS.FIT_SELECTOR.TITLE' | translate }}</mat-card-title>
   <mat-card-content>
     <div fxLayout="row" fxLayoutGap="10px">
-      <div fxFlex="grow" fxLayout="column">
-        <div id="lsa-tour-signal-group" fxLayout="column">
+      <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px">
+        <div id="lsa-tour-signal-group" class="lsa-slider-group lsa-slider-group--signal" fxLayout="column">
           <span class="lsa-slider-label">{{ 'STRANGENESS.FIT_SELECTOR.SIGNAL' | translate }}</span>
-          <ngx-slider [(value)]="signal.start" [(highValue)]="signal.end" [options]="signal.options"></ngx-slider>
+          <ngx-slider
+            [(value)]="signal.start"
+            [(highValue)]="signal.end"
+            [options]="signal.options"
+            (userChange)="onSliderUserChange()"
+          ></ngx-slider>
         </div>
-        <div id="lsa-tour-background-group" fxLayout="column">
+        <div id="lsa-tour-background-group" class="lsa-slider-group lsa-slider-group--background" fxLayout="column">
           <span class="lsa-slider-label">{{ 'STRANGENESS.FIT_SELECTOR.BACKGROUND' | translate }}</span>
-          <ngx-slider [(value)]="background.start" [(highValue)]="background.end" [options]="background.options"></ngx-slider>
+          <ngx-slider
+            [(value)]="background.start"
+            [(highValue)]="background.end"
+            [options]="background.options"
+            (userChange)="onSliderUserChange()"
+          ></ngx-slider>
         </div>
       </div>
       <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px">
         <button id="lsa-tour-fit-button" mat-raised-button color="primary" [disabled]="fitService.data.data.length === 0" (click)="onFitButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.FIT' | translate }}</button>
         <button id="lsa-tour-accept-button" mat-raised-button color="primary" [disabled]="fitService.result === null" (click)="onAcceptButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.ACCEPT' | translate }}</button>
+        <button id="lsa-tour-clear-fit-button" mat-stroked-button [disabled]="fitService.result === null" (click)="onClearFitButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.CLEAR_FIT' | translate }}</button>
       </div>
     </div>
   </mat-card-content>

@@ -37,6 +37,43 @@ describe('StrangenessDataService', () => {
     expect(service.claimTracksForHistogram(key, ['0:-', '1:+'])).toBeTrue();
   });
 
+  it('stores results and frees tracks on undo / remove', () => {
+    const key = '0';
+    expect(service.claimTracksForHistogram(key, ['0:+', '0:-'])).toBeTrue();
+    service.addVisualAnalysisResult(key, { particle: ParticleType.LAMBDA, mass: 1.11 }, ['0:+', '0:-']);
+    expect(service.getVisualAnalysisResultsForEvent(key).length).toBe(1);
+    expect(service.isTrackAnalyzed(key, '0:+')).toBeTrue();
+
+    expect(service.undoLastVisualAnalysisResult(key)).toBeTrue();
+    expect(service.getVisualAnalysisResultsForEvent(key).length).toBe(0);
+    expect(service.isTrackAnalyzed(key, '0:+')).toBeFalse();
+    expect(service.isTrackAnalyzed(key, '0:-')).toBeFalse();
+    expect(service.claimTracksForHistogram(key, ['0:+', '0:-'])).toBeTrue();
+  });
+
+  it('removes a specific entry and only releases its tracks', () => {
+    const key = '1';
+    service.addVisualAnalysisResult(key, { particle: ParticleType.KAON, mass: 0.5 }, ['0:+', '0:-']);
+    service.addVisualAnalysisResult(key, { particle: ParticleType.ANTI_LAMBDA, mass: 1.12 }, ['1:+', '1:-']);
+    expect(service.removeVisualAnalysisResultAt(key, 0)).toBeTrue();
+    expect(service.getVisualAnalysisResultsForEvent(key)).toEqual([
+      { particle: ParticleType.ANTI_LAMBDA, mass: 1.12 },
+    ]);
+    expect(service.isTrackAnalyzed(key, '0:+')).toBeFalse();
+    expect(service.isTrackAnalyzed(key, '1:+')).toBeTrue();
+  });
+
+  it('clears all results and claims for one event', () => {
+    const key = '2';
+    service.addVisualAnalysisResult(key, { particle: ParticleType.KAON, mass: 0.5 }, ['0:+', '0:-']);
+    service.addVisualAnalysisResult(key, { particle: ParticleType.LAMBDA, mass: 1.1 }, ['1:+', '1:-']);
+    service.claimTracksForHistogram('3', ['0:+', '0:-']);
+    service.clearVisualAnalysisResultsForEvent(key);
+    expect(service.getVisualAnalysisResultsForEvent(key).length).toBe(0);
+    expect(service.isTrackAnalyzed(key, '0:+')).toBeFalse();
+    expect(service.isTrackAnalyzed('3', '0:+')).toBeTrue();
+  });
+
   it('reports workshop and full-dataset event counts', () => {
     expect(service.getEventsInDataset(0)).toBe(4);
     expect(service.getEventsInDataset(1)).toBe(15);

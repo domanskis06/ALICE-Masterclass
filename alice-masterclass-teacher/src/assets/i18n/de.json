@@ -1,7 +1,9 @@
 {
   "LANGUAGES": {
     "en": "English",
-    "de": "Deutsch"
+    "pl": "Polski",
+    "de": "Deutsch",
+    "fr": "Français"
   },
   "GENERAL": {
     "MENU": "Menü",
@@ -96,21 +98,21 @@
     "UNKNOWN": "unbekannt",
     "INSTRUCTIONS": {
       "TITLE": "Über die Großskalige Analyse",
-      "INTRO": "Dieses Modul kombiniert die Ergebnisse eines Masterclass-Ereignisses zur Untersuchung der <strong>Strangeheitsverstärkung</strong> — also wie die Produktion seltsamer Teilchen in Schwerionenkollisionen Pb–Pb im Vergleich zu Proton–Proton-Kollisionen zunimmt.",
+      "INTRO": "Dieses Modul kombiniert die Ergebnisse eines Masterclass-Ereignisses zur Untersuchung der <strong>Strangeness-Erhöhung</strong> — also wie die Produktion von Strange-Teilchen in Schwerionenkollisionen Pb–Pb im Vergleich zu Proton–Proton-Kollisionen zunimmt.",
       "HOW_TO_USE": "So funktioniert es",
       "STEP_1": "Wählen Sie ein Ereignis aus dem Dropdown-Menü oberhalb des Diagramms.",
-      "STEP_2": "Das Diagramm zeigt die Strangeheitsverstärkung als Funktion der Kollisionszentralität, gemessen über die Anzahl der teilnehmenden Nukleonen <em>N</em><sub>part</sub>.",
+      "STEP_2": "Das Diagramm zeigt die Strangeness-Erhöhung als Funktion der Kollisionszentralität, gemessen über die Anzahl der teilnehmenden Nukleonen <em>N</em><sub>part</sub>.",
       "STEP_3": "Die Ergebnistabelle listet Ausbeuten und Verstärkungswerte für jede Zentralitätsklasse und Teilchenart.",
       "STEP_4": "Nutzen Sie den Aktualisieren-Button, wenn neue Ergebnisse verfügbar werden.",
       "HOW_TO_INTERPRET": "So interpretiert man die Größen",
-      "YIELD_DEF": "Anzahl der Teilchen einer bestimmten Art, die in dieser Zentralitätsklasse rekonstruiert wurden",
+      "YIELD_DEF": "effizienzkorrigierte Ausbeute pro Ereignis: Anzahl rekonstruierter Teilchen geteilt durch (Anzahl analysierter Ereignisse × Rekonstruktionseffizienz)",
       "NPART_DEF": "durchschnittliche Anzahl der an der Kollision beteiligten Nukleonen",
       "ENHANCEMENT_DEF": "Ausbeute pro Teilnehmer, normiert auf eine pp-Referenz:",
       "WHERE_YPP": "wobei <em>Y</em><sub>pp</sub> die Referenzausbeute in pp-Kollisionen ist.",
       "FACTOR_TWO": "Der Faktor 2 rechnet die pp-Ausbeute auf eine Skala pro Teilnehmer um, da an einer pp-Kollision zwei Protonen beteiligt sind.",
       "WHAT_TO_LOOK_FOR": "Worauf Sie achten sollten",
-      "LOOK_FOR": "Die Verstärkung ist meist größer für zentralere Kollisionen mit höherem <em>N</em><sub>part</sub> und kann sich zwischen",
-      "LOOK_FOR_END": "unterscheiden. Diskutieren Sie mit den Schülern, warum dichtere Kollisionen mehr seltsame Quarks erzeugen können.",
+      "LOOK_FOR": "Die Verstärkung ist meist größer für zentralere Kollisionen mit höherem <em>N</em><sub>part</sub> und kann sich unterscheiden zwischen",
+      "LOOK_FOR_END": "Diskutieren Sie mit den Schülern, warum dichtere Kollisionen mehr seltsame Quarks erzeugen können.",
       "TIP_LABEL": "Tipp:",
       "TIP": "Nutzen Sie die farbigen Markierungen in der Tabelle zusammen mit dem Diagramm, um eine bestimmte Zentralitätsklasse mit ihrem Punkt im Graphen zu verbinden.",
       "FORMULA_ENHANCEMENT": "Verstärkung",

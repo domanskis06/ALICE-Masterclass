@@ -3796,16 +3796,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.lastMousePanX = event.clientX;
       this.lastMousePanY = event.clientY;
       this.applyMousePan(deltaX, deltaY);
+      this.setDecayHoverCursor(false);
       return;
     }
     // Click flash owns the material briefly — skip hover bookkeeping.
     if (this.clickHighlightLine !== null) {
       this.vertexMarkerTooltip = null;
+      this.setDecayHoverCursor(false);
       return;
     }
     if (performance.now() < this.cascadeHoverLockedUntil) {
       this.vertexMarkerTooltip = null;
       this.scheduleCascadeHoverClear();
+      this.setDecayHoverCursor(false);
       return;
     }
     const intersects = this.findIntersect(event);
@@ -3825,6 +3828,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         y: event.clientY
       };
       this.scheduleCascadeHoverClear();
+      this.setDecayHoverCursor(false);
     } else if (isDecayTrackHit) {
       this.vertexMarkerTooltip = null;
       const obj = intersects[0]?.object as THREE.Object3D & { userData?: { isDecayTrack?: boolean } };
@@ -3837,12 +3841,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         obj.parent?.parent === this.decays;
       if (isDecayLine) {
         this.applyCascadeHover();
+        this.setDecayHoverCursor(true);
       } else {
         this.scheduleCascadeHoverClear();
+        this.setDecayHoverCursor(false);
       }
     } else {
       this.vertexMarkerTooltip = null;
       this.scheduleCascadeHoverClear();
+      this.setDecayHoverCursor(false);
     }
   }
 
@@ -3850,6 +3857,16 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.isMousePanning = false;
     this.vertexMarkerTooltip = null;
     this.scheduleCascadeHoverClear();
+    this.setDecayHoverCursor(false);
+  }
+
+  /** Pointer cursor on clickable decay tracks (CSS `grab` otherwise). */
+  private setDecayHoverCursor(active: boolean): void {
+    const el = this.canvas ?? this.renderer?.domElement;
+    if (!el) {
+      return;
+    }
+    el.style.cursor = active ? 'pointer' : '';
   }
 
   private findDecayGroupByIndex(decayIndex: number | undefined | null): THREE.Object3D | null {

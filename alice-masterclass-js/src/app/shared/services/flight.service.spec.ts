@@ -33,6 +33,24 @@ describe('FlightService', () => {
     expect(service.active()).toBeNull();
   });
 
+  it('resolves fly() on notifyLanded while keeping the flight active until notifyDone', async () => {
+    const promise = service.fly({ x: 0, y: 0 }, { x: 10, y: 10 });
+    const id = service.active()!.id;
+
+    let resolved = false;
+    void promise.then(() => {
+      resolved = true;
+    });
+
+    service.notifyLanded(id);
+    await promise;
+    expect(resolved).toBeTrue();
+    expect(service.active()?.id).toBe(id);
+
+    service.notifyDone(id);
+    expect(service.active()).toBeNull();
+  });
+
   it('should queue a second flight until the first completes', async () => {
     const parent = getFlightOverlayParent();
     const first = service.fly({ x: 0, y: 0 }, { x: 1, y: 1 });
@@ -45,8 +63,14 @@ describe('FlightService', () => {
 
     expect(service.active()!.id).toBe(firstId);
 
-    service.notifyDone(firstId);
+    // Landing resolves the caller but must not start the queued flight yet.
+    service.notifyLanded(firstId);
     await first;
+    await Promise.resolve();
+    expect(service.active()!.id).toBe(firstId);
+    expect(secondResolved).toBeFalse();
+
+    service.notifyDone(firstId);
     await Promise.resolve();
 
     const secondActive = service.active();

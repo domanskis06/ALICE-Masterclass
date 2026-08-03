@@ -2,64 +2,131 @@
   line-height: 40px;
 }
 
-.lsa-slider-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: rgba(0, 0, 0, 0.7);
+.lsa-slider-group {
+  flex: 0 0 auto;
 }
 
-$accent: #ff4081;
-$background: #b9b9b9;
-$background-focus: #9b9b9b;
+.lsa-slider-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.2;
+  margin: 0;
+}
 
-:host ::ng-deep .ngx-slider {
+$signal-accent: #ff4081;
+// Match the navy background fit curve on the LSA histogram (#3F51B5).
+$background-accent: #3f51b5;
+$track: #b9b9b9;
+$track-focus: #9b9b9b;
+
+// Sized like Material `mat-slider` handles used for detector opacity in
+// particle-propagation (≈20px thumb, ≈4px track).
+$thumb-size: 20px;
+$dot-size: 8px;
+$track-height: 4px;
+
+@mixin lsa-slider-theme($accent) {
+  // ngx-slider default uses ~35px top margin so floor/ceil + thumb value
+  // bubbles sit above the 4px track without colliding with our title.
+  margin: 36px 0 8px;
+  padding-top: 0;
+  cursor: pointer;
+
+  .ngx-slider-bar-wrapper,
+  .ngx-slider-full-bar,
+  .ngx-slider-selection-bar,
+  .ngx-slider-bar,
+  .ngx-slider-draggable {
+    cursor: pointer !important;
+  }
+
   .ngx-slider-bar {
-    background: $background;
-    height: 2px;
+    background: $track;
+    height: $track-height;
+    border-radius: $track-height;
   }
 
   &:focus-within .ngx-slider-full-bar > .ngx-slider-bar {
-    background: $background-focus;
+    background: $track-focus;
   }
-  
-  .ngx-slider-selection-bar > .ngx-slider-bar  {
+
+  .ngx-slider-selection-bar > .ngx-slider-bar {
     background: $accent;
   }
 
   &.animate .ngx-slider-pointer {
-    transition: transform 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: transform 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 
   &.animate .ngx-slider-bar {
-    transition: background-color 400ms cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: background-color 200ms cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 
   .ngx-slider-pointer {
-    width: 14px;
-    height: 14px;
-    top: -7px;
-
+    width: $thumb-size;
+    height: $thumb-size;
+    // Center the thumb on the thicker track.
+    top: -8px;
     background-color: $accent;
+    border-radius: 50%;
+    cursor: pointer !important;
 
     &:focus {
       outline: 0 !important;
     }
-  }
 
-  &:focus-within {
-    .ngx-slider-pointer {
-      transform: scale(1.5);
-      transform-origin: center;
+    // Permanent centered white dot (not only while dragging / :active).
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: $dot-size;
+      height: $dot-size;
+      margin: 0;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #ffffff !important;
+    }
+
+    &:hover::after,
+    &.ngx-slider-active::after {
+      background: #ffffff !important;
     }
   }
 
-  .ngx-slider-pointer.ngx-slider-active::after {
-    background: white;
-    top: 4px;
-    left: 4px;
-    width: 6px;
-    height: 6px;
+  // Keep a light press feedback without relocating the inner dot.
+  &:focus-within .ngx-slider-pointer {
+    transform: scale(1.08);
+    transform-origin: center;
+  }
+
+  .ngx-slider-bubble {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 1px 4px;
+  }
+}
+
+.lsa-slider-group--signal ::ng-deep .ngx-slider {
+  @include lsa-slider-theme($signal-accent);
+}
+
+.lsa-slider-group--background ::ng-deep .ngx-slider {
+  @include lsa-slider-theme($background-accent);
+}
+
+/* Same red outlined look as Reset zoom / Reset range; keep raised-button size. */
+#lsa-tour-clear-fit-button {
+  color: #c62828 !important;
+  border: 1px solid rgba(198, 40, 40, 0.55) !important;
+  background: transparent !important;
+
+  &:disabled {
+    color: rgba(198, 40, 40, 0.38) !important;
+    border-color: rgba(198, 40, 40, 0.2) !important;
   }
 }

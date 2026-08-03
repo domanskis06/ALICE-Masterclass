@@ -12,7 +12,7 @@ import { environment } from '../environments/environment';
 export class AppComponent {
   title = 'alice-masterclass-teacher';
 
-  readonly LANGUAGES: string[] = ['en', 'de'];
+  readonly LANGUAGES: string[] = ['en', 'pl', 'de', 'fr'];
   readonly languageKey = 'language';
 
   constructor(

@@ -1,14 +1,14 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #drawer class="sidenav" fixedInViewport role="dialog">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport role="dialog" [autoFocus]="false">
     <div fxFill fxLayout="column">
       <mat-toolbar>{{ 'GENERAL.MENU' | translate }}</mat-toolbar>
       <mat-nav-list fxFlex="grow" fxLayout="column">
-        <a mat-list-item routerLink="/home">{{ 'HOME.HOME_MENU' | translate }}</a>
+        <a mat-list-item routerLink="/home" routerLinkActive #rlaHome="routerLinkActive" [activated]="rlaHome.isActive">{{ 'HOME.HOME_MENU' | translate }}</a>
         <h1 matSubheader>{{ 'STRANGENESS.TITLE' | translate }}</h1>
         <mat-divider></mat-divider>
-        <a mat-list-item routerLink="/strangeness-visual-analysis" data-testid="nav-link-visual-analysis">{{ 'STRANGENESS.VISUAL_ANALYSIS_MENU' | translate }}</a>
-        <a mat-list-item routerLink="/strangeness-large-scale-analysis">{{ 'STRANGENESS.LARGE_SCALE_ANALYSIS_MENU' | translate }}</a>
-        <a mat-list-item routerLink="/particle-propagation" data-testid="nav-link-particle-propagation">{{ 'STRANGENESS.PARTICLE_PROPAGATION_MENU' | translate }}</a>
+        <a mat-list-item routerLink="/strangeness-visual-analysis" routerLinkActive #rlaVisual="routerLinkActive" [activated]="rlaVisual.isActive" data-testid="nav-link-visual-analysis">{{ 'STRANGENESS.VISUAL_ANALYSIS_MENU' | translate }}</a>
+        <a mat-list-item routerLink="/strangeness-large-scale-analysis" routerLinkActive #rlaLsa="routerLinkActive" [activated]="rlaLsa.isActive">{{ 'STRANGENESS.LARGE_SCALE_ANALYSIS_MENU' | translate }}</a>
+        <a mat-list-item routerLink="/particle-propagation" routerLinkActive #rlaProp="routerLinkActive" [activated]="rlaProp.isActive" data-testid="nav-link-particle-propagation">{{ 'STRANGENESS.PARTICLE_PROPAGATION_MENU' | translate }}</a>
         <div fxFlex="grow"></div>
         <a mat-list-item (click)="onPasswordButtonClicked()">{{ 'PASSWORD.PASSWORD_MENU' | translate }}</a>
         <!-- <a mat-list-item routerLink="/about">{{ 'ABOUT.ABOUT_MENU' | translate }}</a> -->

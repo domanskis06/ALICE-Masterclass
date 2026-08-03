@@ -26,7 +26,7 @@
         data-testid="va-skip-collision-intro"
         (click)="onSkipCollisionIntro()"
       >
-        skip
+        {{ 'GENERAL.SKIP' | translate }}
       </button>
     </div>
   }
@@ -104,7 +104,7 @@
   }
 
   <div class="container" [class.va-dark-mode]="visualDarkMode" fxFlex="grow" fxLayout="column">
-    <div class="va-event-display-wrap">
+    <div #detectorSection class="va-event-display-wrap">
       <app-event-display
         #eventDisplayHost
         [backgroundColor]="visualDarkMode ? visualDarkBackgroundColor : visualLightBackgroundColor"
@@ -125,17 +125,17 @@
         (detectorAssemblyPiecePlaced)="onDetectorAssemblyPiecePlaced($event)"
         (trackClickedEvent)="onTrackClicked($event)"
         >
-        @if (isDetectorAssemblyInProgress && !showCollisionVideoIntro) {
-          <button
-            edSceneSkip
-            type="button"
-            class="va-skip-assembly-btn"
-            data-testid="va-skip-detector-assembly"
-            (click)="onSkipDetectorAssembly()"
-          >
-            skip
-          </button>
-        }
+        <!-- Always project: @if around ng-content slots breaks multi-slot projection. -->
+        <button
+          edSceneSkip
+          type="button"
+          class="va-skip-assembly-btn"
+          data-testid="va-skip-detector-assembly"
+          [hidden]="!(isDetectorAssemblyInProgress && !showCollisionVideoIntro)"
+          (click)="onSkipDetectorAssembly()"
+        >
+          {{ 'GENERAL.SKIP' | translate }}
+        </button>
         <div edSidebarMeta class="event-meta-panel">
           <div class="dataset-controls">
             <mat-form-field appearance="outline" class="dataset-select">
@@ -152,7 +152,7 @@
                   } @else if (datasetID === -2) {
                     {{ 'SELECT_DATASET_DIALOG.FULL_EVENT' | translate }}
                   } @else {
-                    <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: datasetID - 1}"></span>
+                    <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: datasetID}"></span>
                   }
                 </mat-select-trigger>
                 @if (dataService.VA_DATASET.hasDemo) {
@@ -160,7 +160,7 @@
                 }
                 @for (ds of dataService.VA_DATASET.dataset; track ds) {
                   <mat-option [value]="ds">
-                    <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: ds - 1}"></span>
+                    <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{dataset: ds}"></span>
                   </mat-option>
                 }
                 @if (dataService.VA_DATASET.hasFull) {
@@ -170,10 +170,38 @@
             </mat-form-field>
           </div>
           <div class="event-label-row">
-            <span class="event-label">{{ 'EVENT_DISPLAY.EVENT' | translate }} {{ eventID }}</span>
+            <span class="event-label">
+              {{ 'STRANGENESS.VISUAL_ANALYSIS.EVENT_OF' | translate:{ current: displayEventNumber, total: maxEvents } }}
+            </span>
             @if (isCurrentEventDone) {
-              <mat-icon id="done">done</mat-icon>
+              <mat-icon id="done" aria-hidden="true">done</mat-icon>
             }
+          </div>
+          <div class="event-nav-controls" role="group" [attr.aria-label]="'EVENT_DISPLAY.EVENT' | translate">
+            <button
+              type="button"
+              mat-stroked-button
+              class="event-nav-control event-nav-control--prev"
+              data-testid="va-previous-event"
+              [disabled]="isDetectorAssemblyInProgress || (eventID - 1) < 0"
+              (click)="onPreviousEvent()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+              <span>{{ 'EVENT_DISPLAY.PREVIOUS_EVENT' | translate }}</span>
+            </button>
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              class="event-nav-control event-nav-control--next"
+              [class.event-nav-control--cta]="isCurrentEventDone"
+              data-testid="va-next-event"
+              [disabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
+              (click)="onNextEvent()"
+            >
+              <span>{{ 'EVENT_DISPLAY.NEXT_EVENT' | translate }}</span>
+              <mat-icon>chevron_right</mat-icon>
+            </button>
           </div>
         </div>
       </app-event-display>
@@ -185,13 +213,29 @@
         [bulletKeys]="vaCoachCurrentPartBulletKeys"
       ></app-lets-us-panel>
     </ng-template>
-    <div class="va-lower-panels" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
+    <div
+      #analysisSection
+      class="va-lower-panels"
+      fxLayout="row"
+      fxLayout.xs="column"
+      fxLayout.sm="column"
+      fxLayoutGap="10px"
+    >
       <app-calculator fxFlex="grow"
         [darkMode]="visualDarkMode"
         [particlePos]="particlePos"
         [particleNeg]="particleNeg"
         [particleBac]="particleBac"
+        [identifiedEntries]="currentEventResults"
+        [hasPendingAdd]="hasPendingAddForCurrentEvent"
+        [eventComplete]="isCurrentEventDone"
+        [nextEventDisabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"
         (addToHistogramEvent)="onAddToHistogram($event)"
+        (removeIdentifiedEvent)="onRemoveIdentified($event)"
+        (undoEvent)="onUndo($event)"
+        (openInstructionsEvent)="onOpenInstructions()"
+        (resetEvent)="onResetEvent()"
+        (nextEvent)="onNextEvent()"
       ></app-calculator>
       <app-particle-mass fxFlex="grow"></app-particle-mass>
     </div>
@@ -202,5 +246,18 @@
       [results]="dataService.visualAnalysisResults"
       (uploadResultsEvent)="onUploadResults()"
     ></app-mass-histograms>
+
   </div>
+
+  @if (showScrollToAnalysisButton) {
+    <button
+      type="button"
+      class="va-scroll-to-analysis"
+      data-testid="va-scroll-to-analysis"
+      [attr.aria-label]="'STRANGENESS.VISUAL_ANALYSIS.SCROLL_TO_ANALYSIS' | translate"
+      (click)="scrollToAnalysis()"
+    >
+      <mat-icon>keyboard_arrow_down</mat-icon>
+    </button>
+  }
 </div>

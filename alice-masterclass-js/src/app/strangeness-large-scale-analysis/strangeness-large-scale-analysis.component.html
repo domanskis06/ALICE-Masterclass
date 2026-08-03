@@ -2,9 +2,26 @@
   <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
     <app-histogram-selector [datasets]="dataService.LSA_DATASET" (openHistogramEvent)="onOpenHistogram($event)"></app-histogram-selector>
     <div id="histograms" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
-      <app-histogram-display [loading]="loading" fxFlex="grow" (rangeChangeEvent)="onRangeChange($event)"></app-histogram-display>
-      <app-results [data]="dataService.largeScaleAnalysisResults" (uploadResultsEvent)="onUploadResults()" fxFlex="grow"></app-results>
+      <app-histogram-display
+        [loading]="loading"
+        fxFlex="grow"
+        (rangeChangeEvent)="onRangeChange($event)"
+        (resetRangeEvent)="onResetRange()"
+      ></app-histogram-display>
+      <app-results
+        [data]="dataService.largeScaleAnalysisResults"
+        (uploadResultsEvent)="onUploadResults()"
+        (removeResultEvent)="onRemoveResult($event)"
+        fxFlex="grow"
+      ></app-results>
     </div>
-    <app-fit-selector [signalRange]="range" [backgroundRange]="range" (tryFitEvent)="onTryFit($event)" (addFitResultEvent)="onAddFitResult()"></app-fit-selector>
+    <app-fit-selector
+      #fitSelector
+      [domainResetToken]="domainResetToken"
+      [axisRange]="range"
+      (tryFitEvent)="onTryFit($event)"
+      (addFitResultEvent)="onAddFitResult()"
+      (clearFitEvent)="onClearFit()"
+    ></app-fit-selector>
   </div>
 </div>

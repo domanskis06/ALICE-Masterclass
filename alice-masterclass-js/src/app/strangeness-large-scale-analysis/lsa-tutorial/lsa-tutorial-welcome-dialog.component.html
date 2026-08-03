@@ -1,10 +1,10 @@
-<h2 mat-dialog-title>Large scale analysis — short tutorial</h2>
+<h2 mat-dialog-title>{{ 'STRANGENESS.LSA_TUTORIAL.WELCOME_TITLE' | translate }}</h2>
 <mat-dialog-content class="welcome-body">
-  <p>The event display helps you build intuition about single events, but real LHC analysis uses programs over millions of events.</p>
-  <p>Here you analyse <strong>hundreds of events at once</strong> by studying the <strong>invariant-mass</strong> distribution of V0 candidates and extracting signal yields with a fit.</p>
-  <p>You can <strong>skip</strong> this tour anytime using the <strong>×</strong> button. To replay it later, open the <strong>Help</strong> panel (the <strong>?</strong> icon in the toolbar) and click <strong>Replay tutorial</strong>.</p>
+  <p>{{ 'STRANGENESS.LSA_TUTORIAL.WELCOME_P1' | translate }}</p>
+  <p [innerHTML]="'STRANGENESS.LSA_TUTORIAL.WELCOME_P2' | translate"></p>
+  <p [innerHTML]="'STRANGENESS.LSA_TUTORIAL.WELCOME_P3' | translate"></p>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button type="button" (click)="skip()">Skip</button>
-  <button mat-raised-button color="primary" type="button" (click)="start()">Start tutorial</button>
+  <button mat-button type="button" (click)="skip()">{{ 'STRANGENESS.LSA_TUTORIAL.SKIP' | translate }}</button>
+  <button mat-raised-button color="primary" type="button" (click)="start()">{{ 'STRANGENESS.LSA_TUTORIAL.START' | translate }}</button>
 </mat-dialog-actions>

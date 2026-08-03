@@ -20,6 +20,7 @@ import { AboutModule } from './about/about.module';
 
 import { AppComponent } from './app.component';
 import { AuthDialogComponent } from './auth-dialog/auth-dialog.component';
+import { LoginSuccessDialogComponent } from './auth-dialog/login-success-dialog.component';
 import { InstructionsDialogComponent } from './instructions-dialog/instructions-dialog.component';
 
 // AoT requires an exported function for factories
@@ -28,7 +29,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 }
 
 @NgModule({
-  declarations: [AppComponent, AuthDialogComponent, InstructionsDialogComponent],
+  declarations: [AppComponent, AuthDialogComponent, LoginSuccessDialogComponent, InstructionsDialogComponent],
   imports: [
     BrowserModule,
     HttpClientModule,

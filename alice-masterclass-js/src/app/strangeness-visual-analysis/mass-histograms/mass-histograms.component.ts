@@ -10,6 +10,24 @@ import {
   xiHistogramColor,
 } from '../../shared/globals';
 
+/** PDG rest masses (GeV/c²) — same values as the VA particle-mass table. */
+export const KAON_MASS_GEV = 0.4976;
+export const LAMBDA_MASS_GEV = 1.1157;
+export const XI_MASS_GEV = 1.3217;
+
+/**
+ * Default half-widths (GeV/c²) for VA histogram X windows.
+ * Keep spans close to the previous hard-coded domains so bin width stays readable.
+ */
+export const KAON_MASS_HALF_WIDTH = 0.1;
+export const LAMBDA_MASS_HALF_WIDTH = 0.2;
+export const XI_MASS_HALF_WIDTH = 0.2;
+
+/** Visible X domain centered on a nominal particle mass: `[center − halfWidth, center + halfWidth]`. */
+export function massCenteredXDomain(center: number, halfWidth: number): [number, number] {
+  return [center - halfWidth, center + halfWidth];
+}
+
 @Component({
     selector: 'app-mass-histograms',
     templateUrl: './mass-histograms.component.html',
@@ -24,6 +42,13 @@ export class MassHistogramsComponent implements OnInit {
   readonly antiLambdaBarColor = antiLambdaHistogramColor;
   readonly xiBarColor = xiHistogramColor;
   readonly antiXiBarColor = antiXiHistogramColor;
+
+  /** Default X windows centered on each particle’s nominal mass. */
+  readonly kaonXDomain = massCenteredXDomain(KAON_MASS_GEV, KAON_MASS_HALF_WIDTH);
+  readonly lambdaXDomain = massCenteredXDomain(LAMBDA_MASS_GEV, LAMBDA_MASS_HALF_WIDTH);
+  readonly antiLambdaXDomain = massCenteredXDomain(LAMBDA_MASS_GEV, LAMBDA_MASS_HALF_WIDTH);
+  readonly xiXDomain = massCenteredXDomain(XI_MASS_GEV, XI_MASS_HALF_WIDTH);
+  readonly antiXiXDomain = massCenteredXDomain(XI_MASS_GEV, XI_MASS_HALF_WIDTH);
 
   readonly binMin = 1;
   readonly binMax = 25;

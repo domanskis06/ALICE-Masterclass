@@ -1,0 +1,130 @@
+{
+  "LANGUAGES": {
+    "en": "English",
+    "pl": "Polski",
+    "de": "Deutsch",
+    "fr": "Français"
+  },
+  "GENERAL": {
+    "MENU": "Menu",
+    "ALICE_MASTERCLASS_TEACHER": "ALICE Masterclass — nauczyciel",
+    "TOGGLE_SIDENAV": "Przełącz menu boczne",
+    "INSTRUCTIONS_BUTTON": "Przycisk instrukcji",
+    "CHANGE_LANGUAGE": "Zmień język",
+    "AND": "i"
+  },
+  "INSTRUCTIONS_DIALOG": {
+    "BUTTON_DISMISS": "Zamknij"
+  },
+  "NAV": {
+    "SESSION": "Sesja",
+    "STRANGENESS": "Strangeness",
+    "VISUAL_ANALYSIS": "Analiza wizualna",
+    "LARGE_SCALE_ANALYSIS": "Analiza wielkoskalowa"
+  },
+  "SESSION": {
+    "TITLE": "Wydarzenia",
+    "ADD_EVENT": "Dodaj wydarzenie",
+    "NO_EVENTS": "Brak wydarzeń. Kliknij przycisk +, aby dodać wydarzenie.",
+    "SESSIONS_COUNT": "{{count}} sesji",
+    "SESSION_NAME": "Nazwa sesji",
+    "PASSWORD": "Hasło",
+    "MAX_STUDENTS": "Maks. uczniów",
+    "URL": "URL",
+    "CREATED": "Utworzono",
+    "DELETE": "Usuń",
+    "NO_SESSIONS": "Brak sesji dla tego wydarzenia.",
+    "ADD_SESSION": "Dodaj sesję",
+    "URL_COPIED": "URL skopiowany do schowka",
+    "ADD_EVENT_DIALOG": {
+      "EVENT_NAME": "Nazwa wydarzenia",
+      "NAME_EXISTS": "Wydarzenie o tej nazwie już istnieje.",
+      "CREATE": "Utwórz wydarzenie",
+      "CANCEL": "Anuluj"
+    },
+    "ADD_SESSION_DIALOG": {
+      "EVENT_NAME": "Nazwa wydarzenia",
+      "SESSION_NAME": "Nazwa sesji",
+      "PASSWORD": "Hasło",
+      "PASSWORD_EXISTS": "Sesja z tym hasłem już istnieje.",
+      "MAX_STUDENTS": "Maksymalna liczba uczniów",
+      "CREATE": "Utwórz sesję",
+      "CANCEL": "Anuluj"
+    },
+    "CONFIRM_DIALOG": {
+      "MESSAGE": "Czy na pewno?",
+      "YES": "Tak",
+      "NO": "Nie"
+    }
+  },
+  "VISUAL_ANALYSIS": {
+    "SESSION": "Sesja",
+    "MASS_HISTOGRAMS": "Histogramy mas",
+    "INVARIANT_MASS": "Masa niezmiennicza",
+    "COUNTS": "Liczba zliczeń",
+    "RESULTS": "Wyniki",
+    "STUDENT": "Uczeń",
+    "DATASET": "Zestaw danych",
+    "MASSES": "Masy",
+    "INSTRUCTIONS": {
+      "TITLE": "O analizie wizualnej",
+      "INTRO": "Ten moduł pozwala przeglądać wyniki mas niezmienniczych zebrane przez uczniów w wybranej sesji.",
+      "HOW_TO_USE": "Jak z niego korzystać",
+      "STEP_1": "Wybierz sesję z listy rozwijanej nad tabelą Wyniki.",
+      "STEP_2": "Histogramy mas pokazują łączny rozkład mas cząstek zgłoszonych przez wybranych uczniów.",
+      "STEP_3": "W tabeli Wyniki zaznaczaj lub odznaczaj uczniów, aby włączać lub wyłączać ich dane z histogramów.",
+      "STEP_4": "Użyj przycisku odświeżania, jeśli pojawią się nowe wyniki uczniów.",
+      "HOW_TO_READ": "Jak czytać histogramy",
+      "HOW_TO_READ_INTRO": "Każdy histogram pokazuje masę niezmienniczą kandydata na cząstkę:",
+      "PEAK_KAON": "— zwykle pik w okolicy ~0,5 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_LAMBDA": "— zwykle pik w okolicy ~1,115 GeV/<em>c</em><sup>2</sup>",
+      "PEAK_XI": "— zwykle pik w okolicy ~1,32 GeV/<em>c</em><sup>2</sup>",
+      "CLEAR_PEAK": "Wyraźny pik oznacza, że uczniowie poprawnie zidentyfikowali daną cząstkę.",
+      "BROAD_DISTRIBUTION": "Szeroki lub płaski rozkład może oznaczać błędną identyfikację lub zbyt mało kandydatów.",
+      "TIP_LABEL": "Wskazówka:",
+      "TIP": "Porównuj histogramy między uczniami lub sesjami, aby zobaczyć, jak spójnie klasa rekonstruowała każdy typ cząstek."
+    }
+  },
+  "LARGE_SCALE_ANALYSIS": {
+    "EVENT": "Wydarzenie",
+    "NO_PARTICIPANTS": "Liczba uczestników",
+    "ENHANCEMENT": "Wzmocnienie",
+    "RESULTS": "Wyniki",
+    "CENTRALITY": "Centralność",
+    "NO_EVENTS": "Liczba zdarzeń",
+    "NO": "Nr",
+    "EFFICIENCY": "Efektywność",
+    "YIELD": "Krotność",
+    "UNKNOWN": "nieznane",
+    "INSTRUCTIONS": {
+      "TITLE": "O analizie wielkoskalowej",
+      "INTRO": "Ten moduł łączy wyniki z wydarzenia masterclass, by zbadać <strong>wzmocnienie dziwności</strong> — jak produkcja cząstek dziwnych rośnie w zderzeniach ciężkich jonów Pb–Pb względem zderzeń proton–proton.",
+      "HOW_TO_USE": "Jak z niego korzystać",
+      "STEP_1": "Wybierz wydarzenie z listy rozwijanej nad wykresem.",
+      "STEP_2": "Wykres pokazuje wzmocnienie dziwności jako funkcję centralności zderzenia, mierzonej liczbą uczestniczących nukleonów <em>N</em><sub>part</sub>.",
+      "STEP_3": "Tabela Wyniki wypisuje krotności i wartości wzmocnienia dla każdej klasy centralności i typu cząstek.",
+      "STEP_4": "Użyj przycisku odświeżania, jeśli pojawią się nowe wyniki.",
+      "HOW_TO_INTERPRET": "Jak interpretować wielkości",
+      "YIELD_DEF": "skorygowana krotność na zdarzenie: liczba zrekonstruowanych cząstek podzielona przez (liczbę analizowanych zdarzeń × efektywność rekonstrukcji)",
+      "NPART_DEF": "średnia liczba nukleonów uczestniczących w zderzeniu",
+      "ENHANCEMENT_DEF": "krotność na uczestnika, znormalizowana do odniesienia pp:",
+      "WHERE_YPP": "gdzie <em>Y</em><sub>pp</sub> to referencyjna krotność w zderzeniach pp.",
+      "FACTOR_TWO": "Czynnik 2 przelicza krotność pp na skalę na uczestnika, ponieważ zderzenie pp obejmuje dwa protony.",
+      "WHAT_TO_LOOK_FOR": "Na co zwrócić uwagę",
+      "LOOK_FOR": "Wzmocnienie jest zwykle większe dla bardziej centralnych zderzeń o wyższym <em>N</em><sub>part</sub> i może różnić się między",
+      "LOOK_FOR_END": "Omów z uczniami, dlaczego gęstsze zderzenia mogą produkować więcej kwarków dziwnych.",
+      "TIP_LABEL": "Wskazówka:",
+      "TIP": "Użyj kolorowych znaczników w tabeli razem z wykresem, aby połączyć konkretną klasę centralności z jej punktem na wykresie.",
+      "FORMULA_ENHANCEMENT": "Wzmocnienie",
+      "FORMULA_YIELD": "Krotność"
+    }
+  },
+  "PAGINATOR": {
+    "ITEMS_PER_PAGE": "Elementów na stronę:",
+    "NEXT_PAGE": "Następna strona",
+    "PREVIOUS_PAGE": "Poprzednia strona",
+    "FIRST_PAGE": "Pierwsza strona",
+    "LAST_PAGE": "Ostatnia strona",
+    "OF_LABEL": "z"
+  }
+}

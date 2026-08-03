@@ -47,7 +47,7 @@
           } @else {
             <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
           }
-          <span class="upload-data-button__text">upload data</span>
+          <span class="upload-data-button__text">{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
         </button>
       </span>
     </div>
@@ -60,7 +60,7 @@
           #kaonHistogram
           class="histogram-va"
           [data]="kaonMasses"
-          [xDomain]="[0.4, 0.6]"
+          [xDomain]="kaonXDomain"
           [bins]="bins"
           [barColor]="kaonBarColor"
           [expandDomainToData]="true"
@@ -77,7 +77,7 @@
           #lambdaHistogram
           class="histogram-va"
           [data]="lambdaMasses"
-          [xDomain]="[1.0, 1.4]"
+          [xDomain]="lambdaXDomain"
           [bins]="bins"
           [barColor]="lambdaBarColor"
           [expandDomainToData]="true"
@@ -94,7 +94,7 @@
           #antiLambdaHistogram
           class="histogram-va"
           [data]="antiLambdaMasses"
-          [xDomain]="[1.0, 1.4]"
+          [xDomain]="antiLambdaXDomain"
           [bins]="bins"
           [barColor]="antiLambdaBarColor"
           [expandDomainToData]="true"
@@ -111,7 +111,7 @@
           #xiHistogram
           class="histogram-va"
           [data]="xiMasses"
-          [xDomain]="[1.0, 1.4]"
+          [xDomain]="xiXDomain"
           [bins]="bins"
           [barColor]="xiBarColor"
           [expandDomainToData]="true"
@@ -128,7 +128,7 @@
           #antiXiHistogram
           class="histogram-va"
           [data]="antiXiMasses"
-          [xDomain]="[1.0, 1.4]"
+          [xDomain]="antiXiXDomain"
           [bins]="bins"
           [barColor]="antiXiBarColor"
           [expandDomainToData]="true"

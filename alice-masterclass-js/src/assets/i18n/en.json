@@ -1,13 +1,16 @@
 {
   "LANGUAGES": {
     "en": "English",
+    "pl": "Polski",
     "de": "Deutsch",
+    "fr": "Français",
     "es": "Español"
   },
   "GENERAL": {
     "MENU": "Menu",
     "ALICE_MASTERCLASS": "ALICE Masterclass",
-    "PASSWORD": "Password"
+    "PASSWORD": "Password",
+    "SKIP": "Skip"
   },
   "VA_COACH": {
     "WELCOME_TITLE": "Welcome, young apprentice of physics!",
@@ -24,10 +27,10 @@
         "TITLE": "ITS (Inner Tracking System)",
         "BODY": "The ITS is the innermost particle tracking detector, located closest to the point where protons or heavy ions collide. It is built from extremely thin silicon sensors that record the passage of charged particles with a precision of just a few micrometres - less than the thickness of a human hair. This allows physicists to determine the exact point where particles are produced and to detect particles that decay almost immediately after their creation, before they can reach the outer detectors.",
         "LETS_US": "ITS lets us:",
-        "B1": "determine the primary vertex with a resolution better than 100 micrometres",
-        "B2": "reconstruct secondary vertices needed for charm and hyperon decays",
-        "B3": "track and identify low-momentum particles",
-        "B4": "improve the momentum and angle resolution for particles reconstructed by the Time Projection Chamber (TPC)"
+        "B1": "Determine the primary vertex with a resolution better than 100 micrometres",
+        "B2": "Reconstruct secondary vertices needed for charm and hyperon decays",
+        "B3": "Track and identify low-momentum particles",
+        "B4": "Improve the momentum and angle resolution for particles reconstructed by the Time Projection Chamber (TPC)"
       },
       "FIT": {
         "TITLE": "FIT (Fast Interaction Trigger)",
@@ -42,10 +45,10 @@
         "TITLE": "TPC (Time Projection Chamber)",
         "BODY": "The TPC is the largest tracking detector in ALICE and one of the largest gas detectors ever built for particle physics. Charged particles ionize the gas as they pass through, leaving trails of free electrons that drift in an electric field to the readout chambers. From these signals, physicists reconstruct three-dimensional tracks with high precision, even when a single heavy-ion collision produces tens of thousands of particles. The TPC also helps identify particles by measuring how much energy they lose in the gas.",
         "LETS_US": "TPC lets us:",
-        "B1": "reconstruct particle tracks and visualize the paths of thousands of particles created in a single collision",
-        "B2": "identify different types of particles by measuring how they lose energy while passing through the gas",
-        "B3": "measure particle momentum, helping scientists understand their motion and interactions",
-        "B4": "study the properties of the quark–gluon plasma created in high-energy heavy-ion collisions"
+        "B1": "Reconstruct particle tracks and visualize the paths of thousands of particles created in a single collision",
+        "B2": "Identify different types of particles by measuring how they lose energy while passing through the gas",
+        "B3": "Measure particle momentum, helping scientists understand their motion and interactions",
+        "B4": "Study the properties of the quark–gluon plasma created in high-energy heavy-ion collisions"
       },
       "TRD": {
         "TITLE": "TRD (Transition Radiation Detector)",
@@ -95,7 +98,7 @@
   "HOME": {
     "HOME_MENU": "Home",
     "TITLE": "Welcome to the ALICE Masterclass!",
-    "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such condition, an extreme phase of matter - called the quark-gluon plasma - is formed.",
+    "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such conditions, an extreme phase of matter - called the quark-gluon plasma - is formed.",
     "P2": "Our universe is thought to have been in such a primordial state for the first few millionths of a second after the Big Bang. The properties of such a phase are key issues for Quantum Chromo Dynamics, the understanding of confinement-deconfinement and chiral phase transitions.",
     "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right."
   },
@@ -114,7 +117,17 @@
     "BUTTON_CANCEL": "Cancel",
     "NO_TOKEN_TOOLTIP": "To enable data upload, provide the password using Password option from the Menu.",
     "UPLOADING": "Uploading data...",
-    "COMPLETED": "Upload completed!"
+    "COMPLETED": "Upload completed!",
+    "UPLOAD_DATA": "Upload data",
+    "STUDENT_TAKEN": "This student number is already used in this session.",
+    "STUDENT_INVALID": "Student number is not valid for this session.",
+    "STUDENT_MIN": "Student number cannot be less than 0.",
+    "STUDENT_MAX": "Student number cannot be greater than {{max}}.",
+    "CLOSE": "Close",
+    "ALREADY_LOGGED_IN": "You are already logged in as Student #{{studentID}} in session {{sessionName}}",
+    "ALREADY_LOGGED_IN_NO_SESSION": "You are already logged in as Student #{{studentID}}",
+    "LOGIN_SUCCESS": "You have been logged in as Student #{{studentID}} in session {{sessionName}}",
+    "LOGIN_SUCCESS_NO_SESSION": "You have been logged in as Student #{{studentID}}"
   },
   "EVENT_DISPLAY": {
     "VIEW_3D": "3D View",
@@ -127,7 +140,7 @@
     "CLUSTERS": "Clusters",
     "TRACKS": "Tracks",
     "DECAYS": "Decays",
-    "DARK_LIGHT_MODE": "Dark/light mode",
+    "DARK_LIGHT_MODE": "Dark mode",
     "VISIBILITY": "Visibility",
     "TRACK_WIDTH": "Track Width",
     "CLUSTER_SIZE": "Cluster Size",
@@ -179,6 +192,19 @@
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Visual Analysis",
+    "VISUAL_ANALYSIS": {
+      "EVENT_OF": "Event {{current}} / {{total}}",
+      "EVENT_COMPLETE_TITLE": "You completed this event!",
+      "EVENT_COMPLETE_BODY": "You identified all particles — choose next event",
+      "DECAY_GUIDE": "Decay guide",
+      "HOW_TO_IDENTIFY": "How to identify a particle?",
+      "ADD_HINT_SELECT_TYPE": "Select a particle type before adding",
+      "IDENTIFIED_TITLE": "Identified in this event",
+      "UNDO": "Undo",
+      "RESET_EVENT": "Reset event",
+      "REMOVE": "Remove",
+      "SCROLL_TO_ANALYSIS": "Scroll to calculator and histograms"
+    },
     "CALCULATOR": {
       "TITLE": "Calculator",
       "TOTAL": "Total",
@@ -214,9 +240,9 @@
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
       "TITLE": "Strange Particle Production",
       "SUBTITLE": "Exercise 2: Large Scale Analysis",
-      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However,in real life data analysis is not done visually — that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
+      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However, in real life data analysis is not done visually — that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
       "P2": "You will now analyse recordings from hundreds of events at once. You can see that the invariant mass is a continuous distribution – this is because the pairs of pions combined are random, not coming from a common secondary vertex and can give any value of mass. Most of them are background.",
-      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a curve (second degree polynomial) to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable.If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second degree polynomial are used; on the histogram; after clicking the <strong>Accept</strong> button you will get the total number of events in the peak, the number of background events and those which are signal."
+      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a curve (second degree polynomial) to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable. If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second degree polynomial are used. After clicking the <strong>Accept</strong> button you will get, on the histogram, the total number of counts in the peak, the number of background counts and those which are signal."
     },
     "HISTOGRAM_SELECTOR": {
       "TITLE": "Histogram Selector",
@@ -241,21 +267,25 @@
       "090_100": "90% - 100%"
     },
     "HISTOGRAM_DISPLAY": {
-      "TITLE": "Histogram Display"
+      "TITLE": "Histogram Display",
+      "RESET_ZOOM": "Reset zoom",
+      "RESET_RANGE": "Reset range"
     },
     "RESULTS": {
       "TITLE": "Results",
       "TYPE": "Type",
       "COLLISION": "Collision",
       "CENTRALITY": "Centrality",
-      "SIGNAL": "Signal"
+      "SIGNAL": "Signal",
+      "DELETE": "Delete fit"
     },
     "FIT_SELECTOR": {
       "TITLE": "Fit Selector",
       "SIGNAL": "Signal",
       "BACKGROUND": "Background",
       "FIT": "Fit",
-      "ACCEPT": "Accept"
+      "ACCEPT": "Accept",
+      "CLEAR_FIT": "Clear fit"
     },
     "PARTICLE_PROPAGATION_MENU": "Particle Propagation",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -318,6 +348,40 @@
       "PART_DIPO_MAGNET": "DIPO-Magnet",
       "PART_MCH": "MCH",
       "PART_ABSO": "ABSO"
+    },
+    "LSA_TUTORIAL": {
+      "WELCOME_TITLE": "Large scale analysis — short tutorial",
+      "WELCOME_P1": "The event display helps you build intuition about single events, but real LHC analysis uses programs over millions of events.",
+      "WELCOME_P2": "Here you analyse <strong>hundreds of events at once</strong> by studying the <strong>invariant-mass</strong> distribution of V0 candidates and extracting signal yields with a fit.",
+      "WELCOME_P3": "You can <strong>skip</strong> this tour anytime using the <strong>×</strong> button. To replay it later, open the <strong>Help</strong> panel (the <strong>?</strong> icon in the toolbar) and click <strong>Replay tutorial</strong>.",
+      "SKIP": "Skip",
+      "START": "Start tutorial",
+      "REPLAY": "Replay tutorial",
+      "NEXT": "Next →",
+      "PREVIOUS": "← Previous",
+      "DONE": "Done",
+      "STEP_PARTICLE_TITLE": "Select the particle species",
+      "STEP_PARTICLE_BODY": "Choose the <strong>strange particle</strong> you want to study: <strong>K<sub>S</sub><sup>0</sup></strong> (Kaon), <strong>Λ</strong> (Lambda), or <strong>Λ̄</strong> (Anti-Lambda). Each species decays into a specific pair of daughter tracks, giving a distinct peak position in the invariant-mass spectrum.",
+      "STEP_COLLISION_TITLE": "Select the collision system",
+      "STEP_COLLISION_BODY": "Choose the <strong>collision system</strong>: <strong>pp</strong> (proton–proton) or <strong>Pb–Pb</strong> (lead–lead). For Pb–Pb you also select the <strong>centrality</strong> class, which characterises how head-on the two nuclei collided — 0% is the most central (largest overlap), 90–100% is the most peripheral.",
+      "STEP_OPEN_TITLE": "Load the spectrum",
+      "STEP_OPEN_BODY": "Click <strong>Open histogram</strong> to fetch the binned data — the tour will then advance automatically. You can also press <strong>Next</strong> to skip ahead if a histogram is already loaded.",
+      "STEP_SPECTRUM_TITLE": "What you are looking at",
+      "STEP_SPECTRUM_BODY": "The horizontal axis is <strong>invariant mass</strong> (GeV/c²). You should see a <strong>broad continuum</strong> plus possible <strong>narrow structures</strong> (peaks). Most pairs are <strong>random combinatorial background</strong> (pions not from the same weak decay), so their mass can fall almost anywhere — that is why the background looks like a smooth underlying distribution, while a real <strong>K<sub>S</sub><sup>0</sup></strong> or <strong>Λ</strong> decay gives an excess near the known mass.",
+      "STEP_SIGNAL_TITLE": "Define the signal (peak) region",
+      "STEP_SIGNAL_BODY": "The <strong>Signal</strong> range control selects the mass interval where you expect the <strong>signal peak</strong>. A <strong>Gaussian</strong> will be fitted in this window to model the resonance. Choose a window wide enough to capture the peak, but not so wide that unrelated background structure dominates the fit.",
+      "STEP_BACKGROUND_TITLE": "Define the background sidebands",
+      "STEP_BACKGROUND_BODY": "The <strong>Background</strong> range control picks the mass interval used to fit the <strong>combinatorial background</strong> as a <strong>2nd-order polynomial</strong>. Typical practice is to use <strong>sidebands</strong> away from the peak (or a region dominated by smooth background). The polynomial coefficients are then extrapolated under the peak for <strong>background subtraction</strong>.",
+      "STEP_FIT_TITLE": "Run the fit",
+      "STEP_FIT_BODY": "<strong>Fit</strong> runs the simultaneous background (polynomial) and signal (Gaussian) model. The curves are drawn on top of the histogram so you can judge by eye whether the model is reasonable — a quick <strong>quality check</strong> before you trust the numbers.",
+      "STEP_CHECK_TITLE": "Does the model match the data?",
+      "STEP_CHECK_BODY": "Check that the <strong>polynomial</strong> follows the continuum away from the peak and that the <strong>Gaussian</strong> sits on top of the excess. Poor range choices show up as obvious mismatches. If it looks wrong, adjust the ranges and <strong>Fit</strong> again.",
+      "STEP_ACCEPT_TITLE": "Record the signal yield",
+      "STEP_ACCEPT_BODY": "If you are satisfied, press <strong>Accept</strong>. The app uses the polynomial to estimate <strong>background under the peak</strong>, then reports <strong>total</strong> counts in the peak region, <strong>estimated background</strong>, and <strong>signal</strong> (excess over background) — the quantity you need to compare production rates between species and collision systems.",
+      "STEP_RESULTS_TITLE": "Your submitted measurements",
+      "STEP_RESULTS_BODY": "Each accepted fit adds a row with the <strong>particle type</strong>, <strong>collision</strong>, <strong>centrality</strong> (if applicable), and the <strong>signal</strong> estimate. This mirrors how you would tabulate yields in a paper-style analysis workflow.",
+      "STEP_UPLOAD_TITLE": "Share results with your teacher",
+      "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session (pooling class results). If the button is disabled, sign in from the main flow first."
     }
   }
 }
