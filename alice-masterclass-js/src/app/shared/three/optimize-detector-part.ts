@@ -36,7 +36,7 @@ export function isMergeOnlyDetectorPart(assetPath: string): boolean {
  * smaller than this along every axis are usually screws / microfacets that do
  * not read at the VA camera distance.
  */
-export const TINY_DETECTOR_MESH_MAX_DIM_CM = 1.5;
+export const TINY_DETECTOR_MESH_MAX_DIM_CM = 0.5;
 
 /**
  * Removes leaf meshes whose world-space AABB max dimension is below
