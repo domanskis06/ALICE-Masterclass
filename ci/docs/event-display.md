@@ -33,7 +33,7 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 
 | Zone | Key symbols | Notes |
 | --- | --- | --- |
-| Scene / camera / render | `createScene`, `render`, `resize`, `updateCameraMode` | Core WebGL loop |
+| Scene / camera / render | `createScene`, `render`, `resize`, `updateCameraMode`; side views via RT cache + blit (`SIDE_VIEW_*`, `sideViewAllowsPart`, `applySideViewDetectorMask`) | Core WebGL loop. View1 ρz (side): ITS+TRD @ 0.5; View2 Rφ (front): ITS+TPC+TRD+TOF @ 0.5; zoom follows main orbit distance with throttle |
 | Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop; load calls `optimizeStaticDetectorPart` | GLB layers (ITS, TPC, `L3.glb`, …) — see § Detector load optimisation |
 | Physics visibility / intro | `applyDesiredPhysicsVisibility`, proton collision intro helpers | Show/hide tracks around intro |
 | Interaction | `onPointer*`, vertex panel, cascade hover / proximity helpers | Picking UI |
