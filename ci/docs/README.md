@@ -15,7 +15,8 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 
 | Doc | Topic |
 | --- | --- |
-| [`event-display.md`](event-display.md) | Three.js EventDisplay (god component) and Services |
+| [`event-display.md`](event-display.md) | Three.js EventDisplay (god component), Services, VA detector load optimisation (merge / prune) |
+| [`changelog-visual-analysis-model.md`](changelog-visual-analysis-model.md) | O2 → GLB pipeline + EventDisplay runtime optimisations for detector layers |
 | [`particle-propagation.md`](particle-propagation.md) | Particle Propagation module — origins, field/event data, architecture, L3 magnet stand-in |
 | [`../../alice-masterclass-js/data/strangeness/part1_Xi/README.md`](../../alice-masterclass-js/data/strangeness/part1_Xi/README.md) | Ξ / Ξ̅ cascade VA data — FemtoUniverse dump, helix converter, merge into host events, regenerate |
 

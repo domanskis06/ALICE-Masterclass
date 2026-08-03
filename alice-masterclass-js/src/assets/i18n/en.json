@@ -100,9 +100,7 @@
     "TITLE": "Welcome to the ALICE Masterclass!",
     "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such conditions, an extreme phase of matter - called the quark-gluon plasma - is formed.",
     "P2": "Our universe is thought to have been in such a primordial state for the first few millionths of a second after the Big Bang. The properties of such a phase are key issues for Quantum Chromo Dynamics, the understanding of confinement-deconfinement and chiral phase transitions.",
-    "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right.",
-    "DOWNLOAD": "If you wish, you can download and use a desktop version of the Masterclass:",
-    "COMING_SOON": "Coming soon!"
+    "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right."
   },
   "ABOUT": {
     "ABOUT_MENU": "About ALICE"

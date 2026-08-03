@@ -72,11 +72,32 @@ values simplify more aggressively at the cost of surface detail. `0.5` was chose
 detector layers stay recognisable at the distances/zoom levels used in the app, while file size and
 GPU vertex load drop substantially.
 
+### 3b. EventDisplay runtime path (Visual Analysis only)
+
+After `GLTFLoader` finishes each multipart part, EventDisplay calls
+[`optimizeStaticDetectorPart`](../../alice-masterclass-js/src/app/shared/three/optimize-detector-part.ts)
+(see also [`event-display.md`](event-display.md) § “Detector load optimisation”).
+
+| Layer | Asset | Runtime |
+| --- | --- | --- |
+| **ITS / TPC** | No extra VA `gltfpack` (full close-up detail) | Batched merge by material only (`VA_MERGE_MAX_GEOMETRIES_PER_BATCH`) |
+| **FIT** | Additional shared-file `gltfpack -si 0.5` | Prune meshes with AABB max dim &lt; `TINY_DETECTOR_MESH_MAX_DIM_CM`, then batched merge |
+| **TRD / TOF / PHOS / L3 / …** | No second VA decimate | Same prune + batched merge as FIT |
+| **EMCal / DCal** | Unchanged | Preserved scene graph (`SMOD_` / `DCSM_` for energy bars) |
+
+Tunables live in `optimize-detector-part.ts`. Merge batching is implemented by
+`mergeStaticMeshesByMaterial(..., { maxGeometriesPerBatch })` in
+[`merge-static-meshes.ts`](../../alice-masterclass-js/src/app/shared/three/merge-static-meshes.ts).
+Particle Propagation still calls merge **without** a batch limit and uses `InstancedMesh` / Melax LOD
+for TPC/MCH/L3 — do not assume VA knobs apply there.
+
 ### 4. Manual pruning
 
 After simplification, parts that are never visible to the student (or that add negligible visual value
 relative to their rendering cost) were removed by hand from each GLB — e.g. internal support structure,
-occluded sub-components — to further cut draw calls and triangle count in the live scene.
+occluded sub-components — to further cut draw calls and triangle count in the live scene. Runtime prune
+in EventDisplay (above) is a second, automatic pass for tiny leftover fragments on non–ITS/TPC layers.
+
 
 ## Not present upstream
 
