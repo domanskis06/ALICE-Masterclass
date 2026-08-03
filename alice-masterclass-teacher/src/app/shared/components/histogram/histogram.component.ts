@@ -2,6 +2,11 @@ import { Component, AfterViewInit, ViewChild, ElementRef, Input, HostBinding, Ou
 import { BehaviorSubject, Subscription } from 'rxjs';
 import * as d3 from 'd3';
 
+/** From this bin count, x-axis tick labels are drawn at -45°. */
+const X_TICK_LABEL_ROTATE_BINS = 15;
+/** Half-length of X-axis tick marks (same distance above and below the axis). */
+const X_TICK_SIZE = 6;
+
 @Component({
     selector: 'app-histogram',
     templateUrl: './histogram.component.html',
@@ -13,6 +18,11 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @HostBinding("style.--bar-color")
   public barColor: string = "#4169E1";
 
+  @HostBinding('class.histogram-x-ticks-rotated')
+  get xTicksRotated(): boolean {
+    return this.shouldRotateXTickLabels();
+  }
+
   /**
    * When true, SVG stretches to the cell (no letterboxing). Used by VA mass-histograms
    * so the 80%-scaled panel is filled by plots instead of empty bands.
@@ -20,14 +30,21 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Input()
   stretchToFit = false;
 
-  public readonly SVG = {
+  /**
+   * Expand the nominal x domain to cover all data and draw mirrored tick marks
+   * (same behaviour as student VA mass-histograms).
+   */
+  @Input()
+  expandDomainToData = false;
+
+  readonly SVG = {
     W: 400,
     // Extra height vs original 200: room under Invariant Mass for glyph descenders
     // (), ²) that would otherwise clip at the viewBox edge.
     H: 216
   }
 
-  public readonly MARGIN = {
+  readonly MARGIN = {
     TOP: 5,
     RIGHT: 10,
     BOTTOM: 20,
@@ -39,21 +56,31 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     LEFT_YLABEL: 10
   };
 
-  public readonly CONTENT_AREA = {
-    X: this.MARGIN.LEFT + this.MARGIN.LEFT_YLABEL,
-    Y: this.MARGIN.TOP,
-    W: this.SVG.W - this.MARGIN.LEFT - this.MARGIN.LEFT_YLABEL - this.MARGIN.RIGHT,
-    H: this.SVG.H - this.MARGIN.TOP - this.MARGIN.BOTTOM - this.MARGIN.BOTTOM_XLABEL
-  };
-
-  public readonly ANIMATION_DURATION: number = 500;
-
-  @ViewChild('svg')
-  private svgRef!: ElementRef;
-
-  private get svg(): SVGElement {
-    return this.svgRef.nativeElement;
+  get CONTENT_AREA() {
+    const m = this.MARGIN;
+    return {
+      X: m.LEFT + m.LEFT_YLABEL,
+      Y: m.TOP,
+      W: this.SVG.W - m.LEFT - m.LEFT_YLABEL - m.RIGHT,
+      H: this.SVG.H - m.TOP - m.BOTTOM - m.BOTTOM_XLABEL
+    };
   }
+
+  /**
+   * Extra SVG y nudge for the axis title while x-tick labels are at -45°
+   * (they hang lower than upright numbers and would otherwise collide).
+   */
+  private static readonly X_AXIS_LABEL_ROTATED_NUDGE = 14;
+
+  /** Baseline y for the horizontal axis title. */
+  get xAxisLabelY(): number {
+    const rotatedNudge = this.shouldRotateXTickLabels()
+      ? HistogramComponent.X_AXIS_LABEL_ROTATED_NUDGE
+      : 0;
+    return this.SVG.H - this.MARGIN.BOTTOM_TEXT + rotatedNudge;
+  }
+
+  protected readonly ANIMATION_DURATION: number = 200;
 
   @ViewChild('xAxis')
   private xAxisRef!: ElementRef;
@@ -105,20 +132,25 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   private brushX: d3.BrushBehavior<number> = d3.brushX()
 
   @Input()
-  get xDomain(): [number, number] { return this._xDomain; }
+  get xDomain(): [number, number] { return this._effectiveXDomain; }
   set xDomain(domain: [number, number]) {
-    this._xDomain = domain;
-
-    this.xDomainZoom = domain;
+    this._baseXDomain = domain;
+    this.applyEffectiveDomain(this.data);
   }
-  private _xDomain: [number, number] = [0, 1];
+  /** Nominal axis range from the parent (e.g. Kaon [0.4, 0.6]). */
+  private _baseXDomain: [number, number] = [0, 1];
+  /**
+   * Working axis range: equals `_baseXDomain`, or expanded to cover data when
+   * `expandDomainToData` is enabled.
+   */
+  private _effectiveXDomain: [number, number] = [0, 1];
 
   get xDomainZoom(): [number, number] { return this._xDomainZoom.getValue(); }
   set xDomainZoom(domainZoom: [number, number]) {
     this._xDomainZoom.next(domainZoom);
   }
   private _xDomainZoom: BehaviorSubject<[number, number]> = new BehaviorSubject([0, 1]);
-  private xDomainZoomSubscription: Subscription = new Subscription;
+  private xDomainZoomSubscription: Subscription | null = null;
 
   @Input()
   get yDomain(): [number, number] { return this._yDomain.getValue(); }
@@ -126,7 +158,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this._yDomain.next(domain);
   }
   private _yDomain: BehaviorSubject<[number, number]> = new BehaviorSubject([0, 1]);
-  private yDomainSubscription: Subscription = new Subscription;
+  private yDomainSubscription: Subscription | null = null;
 
   @Input()
   get bins(): number { return this._bins.getValue(); }
@@ -134,12 +166,14 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this._bins.next(bins);
   }
   private _bins: BehaviorSubject<number> = new BehaviorSubject(1);
-  private binsSubscription: Subscription = new Subscription;
+  private binsSubscription: Subscription | null = null;
 
   @Input()
   get data(): Array<number> { return this._data.getValue(); }
   set data(data: Array<number>) {
-    this.binGenerator.domain(this.xDomain).thresholds(this.bins);
+    this.applyEffectiveDomain(data);
+
+    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
 
     const bins = this.binGenerator(data);
 
@@ -153,8 +187,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
     this._data.next(data);
   }
-  private _data: BehaviorSubject<Array<number>> = new BehaviorSubject<Array<number>>([]);
-  private dataSubscription: Subscription = new Subscription;
+  private _data: BehaviorSubject<Array<number>> = new BehaviorSubject<number[]>([]);
+  private dataSubscription: Subscription | null = null;
 
   @Input()
   get enableZoom(): boolean { return this._enableZoom.getValue(); }
@@ -162,13 +196,51 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this._enableZoom.next(enableZoom);
   }
   private _enableZoom: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private enableZoomSubscription: Subscription = new Subscription;
+  private enableZoomSubscription: Subscription | null = null;
 
   @Output()
   zoomEvent: EventEmitter<[number, number]> = new EventEmitter<[number, number]>();
 
   protected binCenter(bin: d3.Bin<number, number>) {
-    return (bin.x1! - bin.x0!) / 2 + bin.x0!;
+    const x0 = bin.x0 ?? 0;
+    const x1 = bin.x1 ?? x0;
+    return (x1 - x0) / 2 + x0;
+  }
+
+  /**
+   * Expand the nominal domain so every finite sample is inside when
+   * `expandDomainToData` is on; otherwise keep the parent xmin/xmax.
+   */
+  private domainCovering(values: Iterable<number>): [number, number] {
+    let lo = this._baseXDomain[0];
+    let hi = this._baseXDomain[1];
+    if (!this.expandDomainToData) {
+      return [lo, hi];
+    }
+    for (const value of values) {
+      if (!Number.isFinite(value)) {
+        continue;
+      }
+      if (value < lo) {
+        lo = value;
+      }
+      if (value > hi) {
+        hi = value;
+      }
+    }
+    if (!(hi > lo)) {
+      hi = lo + Number.EPSILON;
+    }
+    return [lo, hi];
+  }
+
+  private applyEffectiveDomain(values: Iterable<number>): void {
+    const next = this.domainCovering(values);
+    const prev = this._effectiveXDomain;
+    this._effectiveXDomain = next;
+    if (prev[0] !== next[0] || prev[1] !== next[1] || this.xDomainZoom[0] !== next[0] || this.xDomainZoom[1] !== next[1]) {
+      this.xDomainZoom = next;
+    }
   }
 
   constructor() { }
@@ -190,11 +262,12 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       this.updateYDomain();
     });
 
-    this.binsSubscription = this._bins.subscribe((bins) => {
+    this.binsSubscription = this._bins.subscribe(() => {
       this.updateBars();
-    })
+      this.updateXDomain();
+    });
 
-    this.dataSubscription = this._data.subscribe((data) => {
+    this.dataSubscription = this._data.subscribe(() => {
       this.updateBars();
 
       this.resetZoom();
@@ -215,40 +288,55 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.xDomainZoomSubscription.unsubscribe();
-    this.yDomainSubscription.unsubscribe();
-    this.binsSubscription.unsubscribe();
-    this.dataSubscription.unsubscribe();
-    this.enableZoomSubscription.unsubscribe();
+    this.xDomainZoomSubscription?.unsubscribe();
+    this.yDomainSubscription?.unsubscribe();
+    this.binsSubscription?.unsubscribe();
+    this.dataSubscription?.unsubscribe();
+    this.enableZoomSubscription?.unsubscribe();
   }
 
   private updateBars(): void {
-    this.binGenerator.domain(this.xDomain).thresholds(this.bins);
+    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
 
     const bins = this.binGenerator(this.data);
 
-    let barWidth = 0;
+    const fullBarWidth = (bin: d3.Bin<number, number>) => {
+      const x0 = bin.x0 ?? this.xDomain[0];
+      const x1 = bin.x1 ?? x0;
+      return Math.max(0, this.xScale(x1) - this.xScale(x0));
+    };
 
-    // One pixel wider to cover any floating point errors that definetely will happen
-    if (bins.length > 0) {
-      barWidth = (this.xScale(bins[0].x1!) - this.xScale(bins[0].x0!)) + 1;
-    }
+    // Sample width in SVG units: when bars are ~1px on screen, light greys wash out
+    // against white (anti-aliasing). Use a darker fill until the user zooms in.
+    const sampleW = bins.length > 0 ? fullBarWidth(bins[0]) : 10;
+    const dense = sampleW < 2.5;
+    const fillColor = dense ? '#6E6E6E' : this.barColor;
 
-    const barsSelection = this.barsSelector.selectAll('rect').data(bins);
+    const barX = (bin: d3.Bin<number, number>) => {
+      const w = fullBarWidth(bin);
+      const gap = w >= 3 ? 1 : 0;
+      return this.xScale(bin.x0 ?? this.xDomain[0]) + gap / 2;
+    };
+    const barWidth = (bin: d3.Bin<number, number>) => {
+      const w = fullBarWidth(bin);
+      const gap = w >= 3 ? 1 : 0;
+      return Math.max(0, w - gap);
+    };
 
-    // If a new bar is needed, prematurely place it on the X axis with zero height
-    // to avoid an awkward animation from the upper left corner of the image (SVG origin point)
-    // If a bar has to be removed, remove it.
-    // Animate both the newly added and already existing bars to their final height
+    const barsSelection = this.barsSelector.selectAll<SVGRectElement, d3.Bin<number, number>>('rect').data(bins);
+
+    // Bars span [x0, x1] so they sit *between* axis tick labels (bin edges),
+    // not centered on them.
     barsSelection
       .join(
         (enter) => {
           return enter
             .append('rect')
             .attr('transform', (d) => {
-              return `translate(${this.xScale(this.binCenter(d))}, ${this.CONTENT_AREA.H})`;
+              return `translate(${barX(d)}, ${this.CONTENT_AREA.H})`;
             })
             .attr('width', barWidth)
+            .attr('height', 0);
         },
         (update) => {
           return update;
@@ -257,10 +345,12 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
           return exit.remove();
         }
       )
+      .attr('data-bin-index', (_d, i) => i)
+      .style('fill', fillColor)
       .transition().duration(this.ANIMATION_DURATION)
       .attr('width', barWidth)
       .attr('transform', (d) => {
-        return `translate(${this.xScale(this.binCenter(d))}, ${this.yScale(d.length)})`;
+        return `translate(${barX(d)}, ${this.yScale(d.length)})`;
       })
       .attr('height', (d) => {
         return this.CONTENT_AREA.H - this.yScale(d.length);
@@ -286,16 +376,140 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     this.zoomEvent.emit(this.xDomain);
   }
 
+  /**
+   * Interior edges of `bins` equal-width intervals on `domain` (defaults to effective xDomain).
+   * 2 bins → 1 tick (midpoint), 3 bins → 2 ticks, etc.
+   */
+  protected getBinThresholds(): number[] {
+    return this.getBinThresholdsFor(this.xDomain);
+  }
+
+  protected getBinThresholdsFor(domain: [number, number]): number[] {
+    const n = Math.max(1, Math.round(this.bins));
+    const [x0, x1] = domain;
+    if (!(x1 > x0) || n <= 1) {
+      return [];
+    }
+
+    // Default 30 bins on a 0.3-wide *.xx0 domain → exact 0.01 edges (avoid FP drift).
+    const snapToHundredths = n === 30;
+    const thresholds: number[] = [];
+    for (let i = 1; i < n; i++) {
+      let value = x0 + ((x1 - x0) * i) / n;
+      if (snapToHundredths) {
+        value = Math.round(value * 100) / 100;
+      }
+      thresholds.push(value);
+    }
+    return thresholds;
+  }
+
+  protected getXTickValues(): number[] {
+    const [zoom0, zoom1] = this.xDomainZoom;
+    const thresholds = this.getBinThresholds();
+    if (thresholds.length === 0) {
+      const [x0, x1] = this.xDomain;
+      return [(x0 + x1) / 2];
+    }
+
+    const visible = thresholds.filter((value) => value >= zoom0 && value <= zoom1);
+    // Keep the axis readable when there are many bins (still land on bin edges).
+    const span = zoom1 - zoom0;
+    const fullSpan = this.xDomain[1] - this.xDomain[0];
+    const zoomedIn = fullSpan > 0 && span < fullSpan * 0.999;
+    const maxTicks = zoomedIn ? 40 : 25;
+    if (visible.length <= maxTicks) {
+      return visible;
+    }
+
+    const step = Math.ceil(visible.length / maxTicks);
+    return visible.filter((_, index) => index % step === 0);
+  }
+
+  protected getXTickFormat(): (value: number) => string {
+    return (value: number) => {
+      // At 30 bins edges are *.xx0 — two decimals are exact; otherwise keep three.
+      const decimals = Math.round(this.bins) === 30 ? 2 : 3;
+      return value.toFixed(decimals).replace(/\.?0+$/, '');
+    };
+  }
+
+  protected shouldRotateXTickLabels(): boolean {
+    return Math.round(this.bins) >= X_TICK_LABEL_ROTATE_BINS;
+  }
+
   protected updateXDomain(): void {
-    if (this.xAxisRef) {
-      this.xAxisSelector.transition().duration(this.ANIMATION_DURATION).call(d3.axisBottom(this.xScale));
+    const axis = d3.axisBottom(this.xScale)
+      .tickValues(this.getXTickValues())
+      .tickFormat((d) => this.getXTickFormat()(d as number));
+
+    if (this.expandDomainToData) {
+      axis.tickSizeInner(X_TICK_SIZE);
+    }
+
+    this.xAxisSelector
+      .transition()
+      .duration(this.ANIMATION_DURATION)
+      .call(axis)
+      .end()
+      .then(() => this.applyXTickStyle())
+      .catch(() => this.applyXTickStyle());
+  }
+
+  private applyXTickStyle(): void {
+    if (this.expandDomainToData) {
+      this.xAxisSelector
+        .selectAll<SVGLineElement, unknown>('.tick line')
+        .attr('y1', -X_TICK_SIZE)
+        .attr('y2', X_TICK_SIZE);
+    }
+
+    const tickLabels = this.xAxisSelector.selectAll<SVGTextElement, unknown>('text');
+    if (this.shouldRotateXTickLabels()) {
+      tickLabels
+        .attr('transform', 'rotate(-45)')
+        .style('text-anchor', 'end')
+        .attr('dx', '-0.55em')
+        .attr('dy', '0.32em');
+    } else {
+      tickLabels
+        .attr('transform', null)
+        .style('text-anchor', null)
+        .attr('dx', null)
+        .attr('dy', '0.71em');
     }
   }
 
   protected updateYDomain(): void {
-    if (this.yAxisRef) {
-      this.yAxisSelector.transition().duration(this.ANIMATION_DURATION).call(d3.axisLeft(this.yScale));
+    const yMax = Math.max(0, Math.round(this.yScale.domain()[1]));
+    const tickValues = this.getIntegerYTickValues(yMax, 11);
+
+    this.yAxisSelector
+      .transition()
+      .duration(this.ANIMATION_DURATION)
+      .call(
+        d3.axisLeft(this.yScale)
+          .tickValues(tickValues)
+          .tickFormat((d) => String(d as number))
+      );
+  }
+
+  /**
+   * Integer-only Y ticks on a uniform step, at most `maxTicks` marks.
+   * Does not force-label `yMax` when it breaks the step (same as upstream d3 axis):
+   * e.g. yMax=41 → step 5 → labels 0…40, bar may still reach 41.
+   */
+  private getIntegerYTickValues(yMax: number, maxTicks: number): number[] {
+    if (yMax <= 0) {
+      return [0];
     }
+
+    const step = Math.max(1, Math.ceil(yMax / (maxTicks - 1)));
+    const ticks: number[] = [];
+    for (let value = 0; value <= yMax; value += step) {
+      ticks.push(value);
+    }
+    return ticks;
   }
 
 }

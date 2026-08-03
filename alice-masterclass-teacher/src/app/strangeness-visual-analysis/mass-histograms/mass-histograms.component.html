@@ -1,40 +1,98 @@
 <mat-card fxFill fxLayout="column">
   <mat-card-content fxFlex="grow" fxLayout="column" class="histograms-body">
-    <div class="histograms-header">
+    <div class="histograms-header" fxLayout="row" fxLayoutAlign="space-between center">
       <span class="title">{{ 'VISUAL_ANALYSIS.MASS_HISTOGRAMS' | translate }}</span>
+      <div class="bin-control" role="group" [attr.aria-label]="'VISUAL_ANALYSIS.BINS' | translate">
+        <span class="bin-control__caption">{{ 'VISUAL_ANALYSIS.BINS' | translate }}</span>
+        <input
+          id="bins-all"
+          class="bin-control__slider"
+          type="range"
+          [min]="binMin"
+          [max]="binMax"
+          step="1"
+          [(ngModel)]="bins"
+          [ngModelOptions]="{ standalone: true }"
+          [style.--bin-fill]="binFillPercent"
+          (ngModelChange)="clampBins()"
+          aria-label="Bin count slider"
+        />
+        <input
+          class="bin-control__input"
+          type="number"
+          [min]="binMin"
+          [max]="binMax"
+          step="1"
+          [ngModel]="bins"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onBinsInput($event)"
+          (blur)="clampBins()"
+          aria-label="Bin count"
+        />
+      </div>
     </div>
     <!-- 2 rows: K⁰ Λ Λ̅ on top (full width), Ξ Ξ̅ below (centered) — same layout as student VA -->
     <div class="hist-grid">
       <div class="hist-item hist-item--kaon">
-        <app-histogram [data]="kaonMasses" [xDomain]="[0.4, 0.6]" [bins]="40" barColor="#3F51B5" [stretchToFit]="true">
+        <app-histogram
+          [data]="kaonMasses"
+          [xDomain]="kaonXDomain"
+          [bins]="bins"
+          [barColor]="kaonBarColor"
+          [stretchToFit]="true"
+        >
           <svg:text xAxisLabel>{{ 'VISUAL_ANALYSIS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'VISUAL_ANALYSIS.COUNTS' | translate }}</svg:text>
           <span title class="particle hist-title">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span>
         </app-histogram>
       </div>
       <div class="hist-item hist-item--lambda">
-        <app-histogram [data]="lambdaMasses" [xDomain]="[1.0, 1.4]" [bins]="40" barColor="#3F51B5" [stretchToFit]="true">
+        <app-histogram
+          [data]="lambdaMasses"
+          [xDomain]="lambdaXDomain"
+          [bins]="bins"
+          [barColor]="lambdaBarColor"
+          [stretchToFit]="true"
+        >
           <svg:text xAxisLabel>{{ 'VISUAL_ANALYSIS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'VISUAL_ANALYSIS.COUNTS' | translate }}</svg:text>
           <span title class="particle hist-title">Λ</span>
         </app-histogram>
       </div>
       <div class="hist-item hist-item--antilambda">
-        <app-histogram [data]="antiLambdaMasses" [xDomain]="[1.0, 1.4]" [bins]="40" barColor="#3F51B5" [stretchToFit]="true">
+        <app-histogram
+          [data]="antiLambdaMasses"
+          [xDomain]="antiLambdaXDomain"
+          [bins]="bins"
+          [barColor]="antiLambdaBarColor"
+          [stretchToFit]="true"
+        >
           <svg:text xAxisLabel>{{ 'VISUAL_ANALYSIS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'VISUAL_ANALYSIS.COUNTS' | translate }}</svg:text>
           <span title class="particle particle-anti hist-title">Λ</span>
         </app-histogram>
       </div>
       <div class="hist-item hist-item--xi">
-        <app-histogram [data]="xiMasses" [xDomain]="[1.0, 1.4]" [bins]="40" barColor="#3F51B5" [stretchToFit]="true">
+        <app-histogram
+          [data]="xiMasses"
+          [xDomain]="xiXDomain"
+          [bins]="bins"
+          [barColor]="xiBarColor"
+          [stretchToFit]="true"
+        >
           <svg:text xAxisLabel>{{ 'VISUAL_ANALYSIS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'VISUAL_ANALYSIS.COUNTS' | translate }}</svg:text>
           <span title class="particle hist-title">Ξ</span>
         </app-histogram>
       </div>
       <div class="hist-item hist-item--antixi">
-        <app-histogram [data]="antiXiMasses" [xDomain]="[1.0, 1.4]" [bins]="40" barColor="#3F51B5" [stretchToFit]="true">
+        <app-histogram
+          [data]="antiXiMasses"
+          [xDomain]="antiXiXDomain"
+          [bins]="bins"
+          [barColor]="antiXiBarColor"
+          [stretchToFit]="true"
+        >
           <svg:text xAxisLabel>{{ 'VISUAL_ANALYSIS.INVARIANT_MASS' | translate }} (GeV/<svg:tspan class="em">c</svg:tspan>²)</svg:text>
           <svg:text yAxisLabel>{{ 'VISUAL_ANALYSIS.COUNTS' | translate }}</svg:text>
           <span title class="particle particle-anti hist-title">Ξ</span>

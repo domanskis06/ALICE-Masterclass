@@ -62,6 +62,7 @@
     "MASS_HISTOGRAMS": "Mass Histograms",
     "INVARIANT_MASS": "Invariant Mass",
     "COUNTS": "Counts",
+    "BINS": "Bins",
     "RESULTS": "Results",
     "STUDENT": "Student",
     "DATASET": "Dataset",
