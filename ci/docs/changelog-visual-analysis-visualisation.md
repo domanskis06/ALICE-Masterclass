@@ -94,6 +94,14 @@ bare detector.
 | `event-display.component.ts` | `SIDE_VIEW_PIXEL_RATIO_FACTOR` / `SIDE_VIEW_MIN_PIXEL_RATIO` / `SIDE_VIEW_RENDER_INTERVAL` throttle the side-view render loop; `PAN_SPEED_FACTOR`, `WHEEL_PAN_FACTOR`, `MOUSE_DRAG_PAN_FACTOR`, `MARKER_PROXIMITY_PX` (vertex/cascade marker hit-testing), `STRAIGHT_TRACK_EPS`, `DECAY_BG_MOMENTUM_COS_MIN` / `DECAY_BG_MOMENTUM_ABS_DP` (background-track classification near a decay vertex). |
 
 
+### Detector mesh load (draw-call cut)
+
+Runtime optimisation of multipart detector GLBs for Visual Analysis (batched merge / prune; FIT extra
+`gltfpack`) lives outside this visualisation changelog — see
+[`event-display.md`](event-display.md) § “Detector load optimisation” and
+[`changelog-visual-analysis-model.md`](changelog-visual-analysis-model.md) § 3b.
+
+
 
 
 ### Cleanup

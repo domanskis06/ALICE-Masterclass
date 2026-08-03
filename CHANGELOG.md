@@ -40,9 +40,12 @@ piece) before a student can analyse events, with a per-session skip and a persis
 
 Detector geometry regenerated from the actual ALICE Run 3 (O2) simulation geometry via `o2-sim` instead
 of legacy/approximated assets, converted to GLB with `root2cad`, simplified for the browser with
-`gltfpack`, and manually pruned of invisible/low-value elements to keep the scene fast.
+`gltfpack`, and manually pruned of invisible/low-value elements to keep the scene fast. Visual Analysis
+EventDisplay further batches mesh merges at load time (and prunes tiny CAD fragments on non–ITS/TPC
+layers; FIT gets an extra `gltfpack` pass) — see the model changelog § 3b.
 
 → Details, affected files: [`ci/docs/changelog-visual-analysis-model.md`](ci/docs/changelog-visual-analysis-model.md)
+→ Live EventDisplay guide: [`ci/docs/event-display.md`](ci/docs/event-display.md) § “Detector load optimisation”
 
 ### **Large Scale Analysis**
 
