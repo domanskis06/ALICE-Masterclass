@@ -40,6 +40,7 @@ mat-card-content {
 
 .scene-area {
   position: relative;
+  z-index: 1;
   order: 2;
   flex: 1 1 auto;
   min-width: 0;
@@ -87,6 +88,14 @@ mat-card-content {
   width: var(--ed-right-sidebar-width);
   min-width: var(--ed-right-sidebar-width);
   border-left: 1px solid var(--ed-border);
+}
+
+// Palette cards use in-place cdkDrag transforms (no body-level preview). While
+// dragging, stop clipping at the sidebar edge and stack above the WebGL scene,
+// but below .event-display-corner-overlay (LET'S US tip).
+.controls-sidebar--right:has(.cdk-drag-dragging) {
+  overflow: visible;
+  z-index: 50;
 }
 
 .controls-sidebar--left {
@@ -314,6 +323,8 @@ mat-card-content {
 }
 
 .palette-part-card.cdk-drag-dragging {
+  position: relative;
+  z-index: 1000;
   opacity: 0.92;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
@@ -397,14 +408,19 @@ mat-card-content {
   right: 8px;
 }
 
-/* Above sidebar toggle (z=5) so LETS US is not covered by the chevron. */
+/* Anchored to the scene's top-right (host-level so it stays above palette drags). */
 .event-display-corner-overlay {
   position: absolute;
   top: 12px;
-  right: 12px;
-  z-index: 6;
+  right: calc(var(--ed-right-sidebar-width) + 12px);
+  z-index: 200;
   pointer-events: none;
   max-width: min(300px, 42%);
+  transition: right var(--ed-sidebar-duration) ease;
+}
+
+.event-display-host.ed-sidebar-collapsed .event-display-corner-overlay {
+  right: 12px;
 }
 
 #spinner {

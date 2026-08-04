@@ -13,16 +13,22 @@
 <h2>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.HOW_TO_INTERPRET' | translate }}</h2>
 <ul>
   <li>
-    <strong>{{ 'LARGE_SCALE_ANALYSIS.YIELD' | translate }}</strong>
-    — {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.YIELD_DEF' | translate }}
+    <strong>{{ 'LARGE_SCALE_ANALYSIS.NO_PARTICIPANTS' | translate }}</strong>
+    - {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.NPART_DEF' | translate }}
   </li>
   <li>
-    <strong><em>N</em><sub>part</sub></strong>
-    — {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.NPART_DEF' | translate }}
+    <strong>{{ 'LARGE_SCALE_ANALYSIS.NO' | translate }}</strong>&nbsp;<span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span> /
+    <span class="particle">Λ</span> /
+    <span class="particle particle-anti">Λ</span>
+    - {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.NO_PARTICLE_DEF' | translate }}
+  </li>
+  <li>
+    <strong>{{ 'LARGE_SCALE_ANALYSIS.YIELD' | translate }}</strong>
+    - {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.YIELD_DEF' | translate }}
   </li>
   <li>
     <strong>{{ 'LARGE_SCALE_ANALYSIS.ENHANCEMENT' | translate }}</strong>
-    — {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.ENHANCEMENT_DEF' | translate }}
+    - {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.ENHANCEMENT_DEF' | translate }}
     <div #enhancementFormula class="formula"></div>
     <span [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.WHERE_YPP' | translate"></span>
     {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.FACTOR_TWO' | translate }}
@@ -31,8 +37,7 @@
 
 <h2>{{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.WHAT_TO_LOOK_FOR' | translate }}</h2>
 <p>
-  <span [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.LOOK_FOR' | translate"></span>
-  <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span>,
+  <span [innerHtml]="'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.LOOK_FOR' | translate"></span>&nbsp;<span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span>,
   <span class="particle">Λ</span> {{ 'GENERAL.AND' | translate }}
   <span class="particle particle-anti">Λ</span>.
   {{ 'LARGE_SCALE_ANALYSIS.INSTRUCTIONS.LOOK_FOR_END' | translate }}

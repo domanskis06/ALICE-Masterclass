@@ -29,12 +29,6 @@
           </button>
         }
 
-        <aside class="event-display-corner-overlay">
-          @if (cornerOverlayTemplate) {
-            <ng-container *ngTemplateOutlet="cornerOverlayTemplate"></ng-container>
-          }
-        </aside>
-
         <div id="content" [class.disabled]="loading">
           @if (showControls) {
             <button
@@ -230,6 +224,13 @@
           </div>
         </aside>
       }
+
+      <!-- Host-level so LET'S US stays above in-place palette drags (sidebar stacking). -->
+      <aside class="event-display-corner-overlay">
+        @if (cornerOverlayTemplate) {
+          <ng-container *ngTemplateOutlet="cornerOverlayTemplate"></ng-container>
+        }
+      </aside>
     </div>
   </mat-card-content>
 </mat-card>

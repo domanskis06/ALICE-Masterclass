@@ -34,8 +34,9 @@ export class InstructionsComponent implements AfterViewInit, OnDestroy {
 
     const enhancement = this.translate.instant('LARGE_SCALE_ANALYSIS.INSTRUCTIONS.FORMULA_ENHANCEMENT');
     const yieldLabel = this.translate.instant('LARGE_SCALE_ANALYSIS.INSTRUCTIONS.FORMULA_YIELD');
+    const nParticipants = this.translate.instant('LARGE_SCALE_ANALYSIS.NO_PARTICIPANTS');
     const formula =
-      String.raw`\text{${enhancement}} = \dfrac{\text{${yieldLabel}}/N_{\mathrm{part}}}{Y_{\mathrm{pp}}/2}`;
+      String.raw`\text{${enhancement}} = \dfrac{\text{${yieldLabel}}/\text{${nParticipants}}}{Y_{\mathrm{pp}}/2}`;
 
     katex.render(formula, this.enhancementFormula.nativeElement, {
       displayMode: true,

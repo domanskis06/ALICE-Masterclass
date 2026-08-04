@@ -17,6 +17,16 @@
   font-size: 0.75em;
 }
 
+/*
+ * Real controls under the transparent expanding-stage proxy (LSA steps 5–6).
+ * The proxy is the driver.js target (pointer-events: none); these regions must
+ * accept slider interaction while the overlay is active.
+ */
+.driver-active .lsa-driver-range-interactive,
+.driver-active .lsa-driver-range-interactive * {
+  pointer-events: auto !important;
+}
+
 html, body {
   margin: 0;
   padding: 0;
