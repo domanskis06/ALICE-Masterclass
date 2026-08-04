@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Type, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, Type, ViewChild, inject } from '@angular/core';
 import { MatSidenavContainer } from '@angular/material/sidenav';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
@@ -7,8 +7,10 @@ import { map, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { InstructionsDialogComponent } from '../instructions-dialog/instructions-dialog.component';
 import { AuthDialogComponent } from '../auth-dialog/auth-dialog.component';
+import { DemoInfoDialogComponent } from '../demo-info-dialog/demo-info-dialog.component';
 import { InstructionsProvider } from '../shared/interfaces';
 import { ApiService } from '../shared/services/api.service';
+import { DemoConfig } from '../shared/demo/demo-config.service';
 
 @Component({
     selector: 'app-nav',
@@ -26,6 +28,8 @@ export class NavComponent implements OnInit {
   drawerRef: MatSidenavContainer;
 
   instructionsComponent: Type<any> = null;
+
+  protected readonly demo = inject(DemoConfig).enabled;
 
   constructor(
     private apiService: ApiService,
@@ -59,6 +63,11 @@ export class NavComponent implements OnInit {
   }
 
   onPasswordButtonClicked(): void {
+    if (this.demo) {
+      this.dialog.open(DemoInfoDialogComponent, { width: '560px', autoFocus: true });
+      return;
+    }
+
     const dialogConfig = new MatDialogConfig();
 
     dialogConfig.data = {

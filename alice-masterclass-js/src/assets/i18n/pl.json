@@ -107,6 +107,14 @@
   "ABOUT": {
     "ABOUT_MENU": "O ALICE"
   },
+  "APP_INFO": {
+    "MENU": "O tej aplikacji",
+    "TITLE": "Witamy w ALICE MasterClass",
+    "P1": "To internetowa wersja ćwiczeń ALICE MasterClass, dostępna dla wszystkich. Możesz analizować prawdziwe dane ALICE dokładnie tak, jak uczniowie podczas warsztatów: identyfikować cząstki dziwne w wizualizacji zderzeń, dopasowywać widma masy niezmienniczej i obserwować ruch cząstek w detektorze.",
+    "P2": "Twoje wyniki są zapisywane tylko w tej przeglądarce — nic nie jest nikąd wysyłane i nie potrzebujesz konta. Możesz zamknąć stronę i wrócić później na tym samym urządzeniu; zatwierdzone pomiary pozostaną w tabelach i na wykresach.",
+    "P3": "To okno możesz otworzyć ponownie w dowolnym momencie z <strong>Menu</strong>.",
+    "BUTTON_START": "Rozpocznij"
+  },
   "PASSWORD": {
     "PASSWORD_MENU": "Hasło",
     "P1": "Wpisz numer ucznia oraz hasło sesji (oba powinny zostać podane przez opiekuna).",
@@ -287,7 +295,19 @@
       "BACKGROUND": "Tło",
       "FIT": "Dopasuj",
       "ACCEPT": "Zaakceptuj",
-      "CLEAR_FIT": "Wyczyść dopasowanie"
+      "CLEAR_FIT": "Wyczyść dopasowanie",
+      "UNDO": "Cofnij"
+    },
+    "ENHANCEMENT": {
+      "TITLE": "Krotności i wzmocnienie dziwności",
+      "PLOT_TITLE": "Wzmocnienie a liczba uczestników",
+      "CENTRALITY": "Centralność",
+      "NO_PARTICIPANTS": "Liczba uczestników",
+      "NO_EVENTS": "Liczba zdarzeń",
+      "NO": "Liczba",
+      "EFFICIENCY": "Efektywność",
+      "YIELD": "Krotność",
+      "ENHANCEMENT": "Wzmocnienie"
     },
     "PARTICLE_PROPAGATION_MENU": "Propagacja cząstek",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -383,6 +403,7 @@
       "STEP_ACCEPT_BODY": "Jeśli jesteś zadowolony, naciśnij <strong>Zaakceptuj</strong>. Aplikacja używa wielomianu do oszacowania <strong>tła pod pikiem</strong>, a potem podaje <strong>całkowitą</strong> liczbę zliczeń w obszarze piku, <strong>oszacowane tło</strong> oraz <strong>sygnał</strong> jako nadmiar nad tłem - wielkość potrzebną do porównania tempa produkcji między typami i układami zderzeń.",
       "STEP_RESULTS_TITLE": "Twoje zgłoszone pomiary",
       "STEP_RESULTS_BODY": "Każde zaakceptowane dopasowanie dodaje wiersz z <strong>typem cząstki</strong>, <strong>zderzeniem</strong>, <strong>centralnością</strong> gdy dotyczy oraz oszacowaniem <strong>sygnału</strong>. To odzwierciedla sposób tabelowania krotności w analizie w stylu publikacji.",
+      "STEP_RESULTS_SUMMARY_BODY": "Każde zaakceptowane dopasowanie trafia do tego podsumowania: zmierzone liczby są poprawiane o <strong>efektywność rekonstrukcji</strong> i liczbę zdarzeń, dając <strong>krotność</strong>, którą następnie porównujemy z odniesieniem proton-proton, otrzymując <strong>wzmocnienie</strong> w każdym przedziale centralności. Wykres obok widma pokazuje te same wartości w funkcji liczby nukleonów uczestniczących.",
       "STEP_UPLOAD_TITLE": "Udostępnij wyniki nauczycielowi",
       "STEP_UPLOAD_BODY": "Po zalogowaniu <strong>Prześlij dane</strong> wysyła Twoją tabelę do sesji na serwerze, zbierając wyniki klasy. Jeśli przycisk jest wyłączony, najpierw zaloguj się z głównego przepływu."
     }

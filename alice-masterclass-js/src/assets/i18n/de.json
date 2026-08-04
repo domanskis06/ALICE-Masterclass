@@ -98,6 +98,14 @@
   "ABOUT": {
     "ABOUT_MENU": "Über ALICE"
   },
+  "APP_INFO": {
+    "MENU": "Über diese App",
+    "TITLE": "Willkommen bei der ALICE MasterClass",
+    "P1": "Dies ist die Online-Version der ALICE-MasterClass-Übungen, offen für alle. Du kannst echte ALICE-Daten genauso analysieren wie Schülerinnen und Schüler an einem MasterClass-Tag: seltsame Teilchen in der Ereignisanzeige identifizieren, Spektren der invarianten Masse fitten und die Teilchen durch den Detektor fliegen sehen.",
+    "P2": "Deine Ergebnisse bleiben ausschließlich in diesem Browser — es wird nichts übertragen und kein Konto benötigt. Du kannst die Seite schließen und später auf demselben Gerät weitermachen; übernommene Messungen bleiben in den Tabellen und Diagrammen erhalten.",
+    "P3": "Dieses Fenster kannst du jederzeit über das <strong>Menü</strong> erneut öffnen.",
+    "BUTTON_START": "Los geht's"
+  },
   "PASSWORD": {
     "PASSWORD_MENU": "Kennwort",
     "P1": "Bitte geben Sie Ihre Schülernummer und das Sitzungskennwort ein (beide sollten Ihnen von Ihrem Vorgesetzten mitgeteilt werden).",
@@ -285,7 +293,19 @@
       "BACKGROUND": "Untergrund",
       "FIT": "Fit",
       "ACCEPT": "Übernehmen",
-      "CLEAR_FIT": "Fit löschen"
+      "CLEAR_FIT": "Fit löschen",
+      "UNDO": "Rückgängig"
+    },
+    "ENHANCEMENT": {
+      "TITLE": "Ausbeuten und Seltsamkeitsverstärkung",
+      "PLOT_TITLE": "Verstärkung vs. Anzahl der Teilnehmer",
+      "CENTRALITY": "Zentralität",
+      "NO_PARTICIPANTS": "Anz. Teilnehmer",
+      "NO_EVENTS": "Anz. Ereignisse",
+      "NO": "Anz.",
+      "EFFICIENCY": "Effizienz",
+      "YIELD": "Ausbeute",
+      "ENHANCEMENT": "Verstärkung"
     },
     "PARTICLE_PROPAGATION_MENU": "Teilchenausbreitung",
     "PARTICLE_PROPAGATION": {
@@ -381,6 +401,7 @@
       "STEP_ACCEPT_BODY": "Wenn Sie zufrieden sind, drücken Sie <strong>Übernehmen</strong>. Die App nutzt das Polynom zur Schätzung des <strong>Untergrunds unter dem Peak</strong> und meldet dann <strong>Gesamt</strong>zählungen im Peakbereich, <strong>geschätzten Untergrund</strong> und <strong>Signal</strong> als Überschuss über dem Untergrund - die Größe, die Sie brauchen, um Produktionsraten zwischen Typen und Kollisionssystemen zu vergleichen.",
       "STEP_RESULTS_TITLE": "Ihre eingereichten Messungen",
       "STEP_RESULTS_BODY": "Jeder übernommene Fit fügt eine Zeile mit <strong>Teilchentyp</strong>, <strong>Kollision</strong>, <strong>Zentralität</strong> falls zutreffend und der <strong>Signal</strong>-Schätzung hinzu. Das spiegelt wider, wie man Ausbeuten in einem publikationsähnlichen Analyseablauf tabelliert.",
+      "STEP_RESULTS_SUMMARY_BODY": "Jeder übernommene Fit geht in diese Zusammenfassung ein: die gemessenen Zahlen werden um die <strong>Rekonstruktionseffizienz</strong> und die Anzahl der Ereignisse korrigiert und ergeben eine <strong>Ausbeute</strong>, die dann mit der Proton-Proton-Referenz verglichen wird und die <strong>Verstärkung</strong> pro Zentralitätsklasse liefert. Das Diagramm neben dem Spektrum zeigt dieselben Werte gegen die Anzahl der teilnehmenden Nukleonen.",
       "STEP_UPLOAD_TITLE": "Ergebnisse mit dem Lehrer teilen",
       "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung und sammelt die Klassenergebnisse. Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
     }

@@ -107,6 +107,14 @@
   "ABOUT": {
     "ABOUT_MENU": "À propos d’ALICE"
   },
+  "APP_INFO": {
+    "MENU": "À propos de cette application",
+    "TITLE": "Bienvenue à l’ALICE MasterClass",
+    "P1": "Voici la version en ligne des exercices de l’ALICE MasterClass, ouverte à tous. Vous pouvez analyser de vraies données d’ALICE exactement comme les élèves lors d’une journée MasterClass : identifier des particules étranges dans l’affichage des événements, ajuster des spectres de masse invariante et observer la propagation des particules dans le détecteur.",
+    "P2": "Vos résultats restent uniquement dans ce navigateur — rien n’est envoyé et aucun compte n’est nécessaire. Vous pouvez fermer la page et continuer plus tard sur le même appareil ; les mesures acceptées restent dans les tableaux et les graphiques.",
+    "P3": "Vous pouvez réouvrir cette fenêtre à tout moment depuis le <strong>Menu</strong>.",
+    "BUTTON_START": "Commencer"
+  },
   "PASSWORD": {
     "PASSWORD_MENU": "Mot de passe",
     "P1": "Veuillez saisir votre numéro d’élève et le mot de passe de session (tous deux fournis par votre encadrant).",
@@ -287,7 +295,19 @@
       "BACKGROUND": "Fond",
       "FIT": "Ajuster",
       "ACCEPT": "Accepter",
-      "CLEAR_FIT": "Effacer l’ajustement"
+      "CLEAR_FIT": "Effacer l’ajustement",
+      "UNDO": "Annuler"
+    },
+    "ENHANCEMENT": {
+      "TITLE": "Taux de production et augmentation de l’étrangeté",
+      "PLOT_TITLE": "Augmentation en fonction du nombre de participants",
+      "CENTRALITY": "Centralité",
+      "NO_PARTICIPANTS": "Nb. de participants",
+      "NO_EVENTS": "Nb. d’événements",
+      "NO": "Nb.",
+      "EFFICIENCY": "Efficacité",
+      "YIELD": "Taux de production",
+      "ENHANCEMENT": "Augmentation"
     },
     "PARTICLE_PROPAGATION_MENU": "Propagation des particules",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -383,6 +403,7 @@
       "STEP_ACCEPT_BODY": "Si vous êtes satisfait, appuyez sur <strong>Accepter</strong>. L’application utilise le polynôme pour estimer le <strong>fond sous le pic</strong>, puis rapporte le nombre <strong>total</strong> de comptes dans la région du pic, le <strong>fond estimé</strong> et le <strong>signal</strong> comme excès au-dessus du fond - la grandeur dont vous avez besoin pour comparer les taux de production entre espèces et systèmes de collision.",
       "STEP_RESULTS_TITLE": "Vos mesures soumises",
       "STEP_RESULTS_BODY": "Chaque ajustement accepté ajoute une ligne avec le <strong>type de particule</strong>, la <strong>collision</strong>, la <strong>centralité</strong> le cas échéant et l’estimation du <strong>signal</strong>. Cela reflète la façon dont vous tabulerez les rendements dans un flux d’analyse de type publication.",
+      "STEP_RESULTS_SUMMARY_BODY": "Chaque ajustement accepté alimente ce résumé : les nombres mesurés sont corrigés de l’<strong>efficacité de reconstruction</strong> et du nombre d’événements pour donner un <strong>taux de production</strong>, ensuite comparé à la référence proton-proton pour obtenir l’<strong>augmentation</strong> par classe de centralité. Le graphique à côté du spectre montre les mêmes valeurs en fonction du nombre de nucléons participants.",
       "STEP_UPLOAD_TITLE": "Partager les résultats avec votre enseignant",
       "STEP_UPLOAD_BODY": "Une fois connecté, <strong>Envoyer les données</strong> envoie votre tableau à la session serveur, en regroupant les résultats de la classe. Si le bouton est désactivé, connectez-vous d’abord depuis le flux principal."
     }

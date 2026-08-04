@@ -1,27 +1,55 @@
 <div fxFlex="grow">
-  <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
+  <div class="container" [class.demo-layout]="demo" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
     <app-histogram-selector [datasets]="dataService.LSA_DATASET" (openHistogramEvent)="onOpenHistogram($event)"></app-histogram-selector>
-    <div id="histograms" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
-      <app-histogram-display
-        [loading]="loading"
-        fxFlex="grow"
-        (rangeChangeEvent)="onRangeChange($event)"
-        (resetRangeEvent)="onResetRange()"
-      ></app-histogram-display>
-      <app-results
-        [data]="dataService.largeScaleAnalysisResults"
-        (uploadResultsEvent)="onUploadResults()"
-        (removeResultEvent)="onRemoveResult($event)"
-        fxFlex="grow"
-      ></app-results>
-    </div>
-    <app-fit-selector
-      #fitSelector
-      [domainResetToken]="domainResetToken"
-      [axisRange]="range"
-      (tryFitEvent)="onTryFit($event)"
-      (addFitResultEvent)="onAddFitResult()"
-      (clearFitEvent)="onClearFit()"
-    ></app-fit-selector>
+    @if (demo) {
+      <!-- Spectrum and enhancement plot side by side, summary table full width below. -->
+      <div id="histograms" class="demo-charts" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
+        <app-histogram-display
+          [loading]="loading"
+          fxFlex="50"
+          (rangeChangeEvent)="onRangeChange($event)"
+          (resetRangeEvent)="onResetRange()"
+        ></app-histogram-display>
+        <app-enhancement-plot
+          fxFlex="50"
+          [xDomain]="enhancementXDomain"
+          [data]="enhancementPlotData"
+        ></app-enhancement-plot>
+      </div>
+      <app-fit-selector
+        #fitSelector
+        [domainResetToken]="domainResetToken"
+        [axisRange]="range"
+        [undoDisabled]="!canUndoFitResult"
+        (tryFitEvent)="onTryFit($event)"
+        (addFitResultEvent)="onAddFitResult()"
+        (clearFitEvent)="onClearFit()"
+        (undoFitResultEvent)="onUndoFitResult()"
+      ></app-fit-selector>
+      <app-enhancement-results [rows]="enhancementRows"></app-enhancement-results>
+    } @else {
+      <div id="histograms" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="10px">
+        <app-histogram-display
+          [loading]="loading"
+          fxFlex="grow"
+          (rangeChangeEvent)="onRangeChange($event)"
+          (resetRangeEvent)="onResetRange()"
+        ></app-histogram-display>
+        <app-results
+          [data]="dataService.largeScaleAnalysisResults"
+          (uploadResultsEvent)="onUploadResults()"
+          (removeResultEvent)="onRemoveResult($event)"
+          fxFlex="grow"
+        ></app-results>
+      </div>
+      <app-fit-selector
+        #fitSelector
+        [domainResetToken]="domainResetToken"
+        [axisRange]="range"
+        (tryFitEvent)="onTryFit($event)"
+        (addFitResultEvent)="onAddFitResult()"
+        (clearFitEvent)="onClearFit()"
+      ></app-fit-selector>
+    }
   </div>
 </div>

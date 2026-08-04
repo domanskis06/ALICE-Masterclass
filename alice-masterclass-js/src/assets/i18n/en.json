@@ -105,6 +105,14 @@
   "ABOUT": {
     "ABOUT_MENU": "About ALICE"
   },
+  "APP_INFO": {
+    "MENU": "About this app",
+    "TITLE": "Welcome to the ALICE MasterClass",
+    "P1": "This is the online version of the ALICE MasterClass exercises, open to everyone. You can analyse real ALICE data exactly like students do during a MasterClass day: identify strange particles in the event display, fit invariant-mass spectra and watch particles propagate through the detector.",
+    "P2": "Your results are kept in this browser only — nothing is sent anywhere and no account is needed. You can close the page and continue later on the same device; measurements you accept stay in the tables and plots.",
+    "P3": "You can reopen this window at any time from the <strong>Menu</strong>.",
+    "BUTTON_START": "Start exploring"
+  },
   "PASSWORD": {
     "PASSWORD_MENU": "Password",
     "P1": "Please fill in your Student Number and the Session Password (both should be given to you by your supervisor).",
@@ -285,7 +293,19 @@
       "BACKGROUND": "Background",
       "FIT": "Fit",
       "ACCEPT": "Accept",
-      "CLEAR_FIT": "Clear fit"
+      "CLEAR_FIT": "Clear fit",
+      "UNDO": "Undo"
+    },
+    "ENHANCEMENT": {
+      "TITLE": "Yields and strangeness enhancement",
+      "PLOT_TITLE": "Enhancement vs. number of participants",
+      "CENTRALITY": "Centrality",
+      "NO_PARTICIPANTS": "No. participants",
+      "NO_EVENTS": "No. events",
+      "NO": "No.",
+      "EFFICIENCY": "Efficiency",
+      "YIELD": "Yield",
+      "ENHANCEMENT": "Enhancement"
     },
     "PARTICLE_PROPAGATION_MENU": "Particle Propagation",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -381,6 +401,7 @@
       "STEP_ACCEPT_BODY": "If you are satisfied, press <strong>Accept</strong>. The app uses the polynomial to estimate <strong>background under the peak</strong>, then reports <strong>total</strong> counts in the peak region, <strong>estimated background</strong>, and <strong>signal</strong> as the excess over background - the quantity you need to compare production rates between species and collision systems.",
       "STEP_RESULTS_TITLE": "Your submitted measurements",
       "STEP_RESULTS_BODY": "Each accepted fit adds a row with the <strong>particle type</strong>, <strong>collision</strong>, <strong>centrality</strong> when applicable, and the <strong>signal</strong> estimate. This mirrors how you would tabulate yields in a paper-style analysis workflow.",
+      "STEP_RESULTS_SUMMARY_BODY": "Each accepted fit feeds this summary: the raw counts are corrected for <strong>reconstruction efficiency</strong> and the number of events to give a <strong>yield</strong>, which is then compared with the proton-proton reference to give the <strong>enhancement</strong> per centrality bin. The plot next to the spectrum shows the same numbers against the number of participating nucleons.",
       "STEP_UPLOAD_TITLE": "Share results with your teacher",
       "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session, pooling class results. If the button is disabled, sign in from the main flow first."
     }

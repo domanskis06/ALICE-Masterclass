@@ -85,6 +85,22 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ]
+            },
+            "demo": {
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.demo.ts"
+                }
+              ]
             }
           }
         },
@@ -102,6 +118,9 @@
             },
             "production": {
               "buildTarget": "alice-masterclass-web:build:production"
+            },
+            "demo": {
+              "buildTarget": "alice-masterclass-web:build:demo"
             }
           }
         },

@@ -15,6 +15,7 @@ import {
   StrangenessDataService,
 } from '../services/strangeness-data.service';
 import { ParticleType, VisualAnalysisResultsEntry } from '../shared/services/api.service';
+import { DemoConfig } from '../shared/demo/demo-config.service';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DetectorPartToggleModel, EventDisplayComponent } from '../shared/components/event-display/event-display.component';
@@ -133,6 +134,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     'assets/models/alice components/L3.glb',
   ];
 
+  private readonly demo = inject(DemoConfig).enabled;
+
   datasetID: number = DATASET_PICKER_DEMO;
   /** 0-based index into the dataset; UI shows `displayEventNumber` (1-based). */
   eventID: number = 0;
@@ -148,9 +151,19 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     return this.eventID + 1;
   }
 
+  /**
+   * Storage key for one event's histogram entries.
+   *
+   * The demo keeps all datasets in the same histograms, so the key is namespaced
+   * by dataset; the workshop keeps the bare event id it has always used.
+   */
+  private eventKeyFor(eventId: number = this.eventID): string {
+    return this.demo ? `${this.datasetID}:${eventId}` : String(eventId);
+  }
+
   /** Histogram entries already added for the current event (for undo / remove UI). */
   get currentEventResults(): VisualAnalysisResultsEntry[] {
-    return this.dataService.getVisualAnalysisResultsForEvent(String(this.eventID));
+    return this.dataService.getVisualAnalysisResultsForEvent(this.eventKeyFor());
   }
 
   /** True while a mass-to-histogram flight for this event has claimed tracks but not committed yet. */
@@ -203,7 +216,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (required.size === 0) {
       return false;
     }
-    return this.dataService.areAllTracksAnalyzed(String(this.eventID), required);
+    return this.dataService.areAllTracksAnalyzed(this.eventKeyFor(), required);
   }
 
   /**
@@ -696,9 +709,12 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.isDetectorAssemblyInProgress) {
       return;
     }
-    // Dataset wipe — discard in-flight adds (do not commit into a dataset about to be cleared).
+    // Discard in-flight adds: they belong to the dataset being left.
     this.discardInFlightHistogramAdds();
-    this.dataService.clearVisualAnalysisResults();
+    // Demo accumulates every dataset in the same histograms, so nothing is wiped.
+    if (!this.demo) {
+      this.dataService.clearVisualAnalysisResults();
+    }
     this.datasetID = newDatasetID;
     this.maxEvents = this.dataService.getEventsInDataset(
       this.dataService.resolveDatasetNum(this.datasetID)
@@ -762,7 +778,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     // Each physical daughter may enter the calculator / histogram only once.
     if (
       trackKey != null &&
-      this.dataService.isTrackAnalyzed(String(this.eventID), trackKey)
+      this.dataService.isTrackAnalyzed(this.eventKeyFor(), trackKey)
     ) {
       return;
     }
@@ -786,7 +802,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (trackKeys == null) {
       return;
     }
-    const eventKey = String(this.eventID);
+    const eventKey = this.eventKeyFor();
 
     // Claim immediately so a second submit (or re-select during flight) cannot duplicate.
     // Cross-decay mixes are fine — we claim the concrete daughters, not whole V0 groups.
@@ -859,14 +875,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private commitHistogramEntry(
     value: VisualAnalysisResultsEntry,
     trackKeys: string[],
-    eventKey: string = String(this.eventID),
+    eventKey: string = this.eventKeyFor(),
   ): void {
     // Tracks were already claimed in onAddToHistogram; this only appends the histogram entry.
     this.dataService.addVisualAnalysisResult(eventKey, value, trackKeys);
   }
 
   onRemoveIdentified(index: number): void {
-    this.dataService.removeVisualAnalysisResultAt(String(this.eventID), index);
+    this.dataService.removeVisualAnalysisResultAt(this.eventKeyFor(), index);
   }
 
   /**
@@ -881,13 +897,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.cancelLatestPendingFlight()) {
       return;
     }
-    this.dataService.undoLastVisualAnalysisResult(String(this.eventID));
+    this.dataService.undoLastVisualAnalysisResult(this.eventKeyFor());
   }
 
   /** Wipe all identification for the current event and reopen the calculator. */
   onResetEvent(): void {
     this.cancelAllPendingFlights();
-    this.dataService.clearVisualAnalysisResultsForEvent(String(this.eventID));
+    this.dataService.clearVisualAnalysisResultsForEvent(this.eventKeyFor());
     this.clearCalculatorSelection();
   }
 

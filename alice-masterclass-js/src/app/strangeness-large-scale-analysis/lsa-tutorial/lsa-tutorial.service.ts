@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { driver, type DriveStep, type Driver } from 'driver.js';
 
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { FitService } from '../../shared/services/fit.service';
 import {
   LSA_TUTORIAL_STEP_INDEX_ACCEPT,
@@ -18,6 +19,11 @@ export class LsaTutorialService {
   private static readonly SELECTOR_HISTOGRAM = '#lsa-tour-histogram-display';
   private static readonly SELECTOR_SIGNAL = '#lsa-tour-signal-group';
   private static readonly SELECTOR_BACKGROUND = '#lsa-tour-background-group';
+  private static readonly SELECTOR_RESULTS = '#lsa-tour-results-table';
+  /** Demo shows the enhancement summary instead of the per-fit results table. */
+  private static readonly SELECTOR_RESULTS_DEMO = '#lsa-demo-results-table';
+
+  private readonly demo = inject(DemoConfig).enabled;
 
   private driverInstance: Driver | null = null;
   private suppressDismissOnDestroy = false;
@@ -151,7 +157,7 @@ export class LsaTutorialService {
 
   private buildSteps(): DriveStep[] {
     const t = (key: string) => this.translate.instant(`STRANGENESS.LSA_TUTORIAL.${key}`);
-    return [
+    const steps: DriveStep[] = [
       {
         element: '#lsa-tour-particle-field',
         disableActiveInteraction: false,
@@ -262,22 +268,30 @@ export class LsaTutorialService {
         },
       },
       {
-        element: '#lsa-tour-results-table',
+        element: this.demo
+          ? LsaTutorialService.SELECTOR_RESULTS_DEMO
+          : LsaTutorialService.SELECTOR_RESULTS,
         popover: {
           title: t('STEP_RESULTS_TITLE'),
-          description: t('STEP_RESULTS_BODY'),
+          description: this.demo ? t('STEP_RESULTS_SUMMARY_BODY') : t('STEP_RESULTS_BODY'),
           side: 'top',
         },
       },
-      {
+    ];
+
+    // Uploading to a teacher session exists in the workshop build only.
+    if (!this.demo) {
+      steps.push({
         element: '#lsa-tour-upload-button',
         popover: {
           title: t('STEP_UPLOAD_TITLE'),
           description: t('STEP_UPLOAD_BODY'),
           side: 'left',
         },
-      },
-    ];
+      });
+    }
+
+    return steps;
   }
 
   /**

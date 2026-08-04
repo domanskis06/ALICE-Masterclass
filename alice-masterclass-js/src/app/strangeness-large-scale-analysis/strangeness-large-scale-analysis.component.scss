@@ -6,3 +6,38 @@
   padding-left: 16px;
   padding-right: 16px;
 }
+
+/*
+ * Demo layout: two charts share the row, so they must be allowed to shrink,
+ * and the selector strip is kept thin to leave room for the summary table.
+ */
+.demo-layout {
+  // Both plots letterbox inside this height, so the fit selector and the first
+  // rows of the summary table stay above the fold on a laptop screen.
+  --demo-plot-h: max(260px, 34vh);
+
+  .demo-charts > * {
+    min-width: 0;
+  }
+
+  ::ng-deep app-histogram-selector {
+    .title {
+      line-height: 28px;
+    }
+
+    mat-card-content {
+      padding-bottom: 4px;
+    }
+  }
+
+  ::ng-deep app-histogram-display .plot-stage {
+    --plot-h: var(--demo-plot-h);
+  }
+
+  // Width drives height through the 600×300 viewBox; capping it matches the
+  // histogram, whose stage is capped the same way.
+  ::ng-deep app-enhancement-plot .plot-frame {
+    width: min(100%, calc(var(--demo-plot-h) * 600 / 300));
+    margin: 0 auto;
+  }
+}
