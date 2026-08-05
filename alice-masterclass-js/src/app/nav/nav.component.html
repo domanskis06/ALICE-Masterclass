@@ -10,7 +10,13 @@
         <a mat-list-item routerLink="/strangeness-large-scale-analysis" routerLinkActive #rlaLsa="routerLinkActive" [activated]="rlaLsa.isActive">{{ 'STRANGENESS.LARGE_SCALE_ANALYSIS_MENU' | translate }}</a>
         <a mat-list-item routerLink="/particle-propagation" routerLinkActive #rlaProp="routerLinkActive" [activated]="rlaProp.isActive" data-testid="nav-link-particle-propagation">{{ 'STRANGENESS.PARTICLE_PROPAGATION_MENU' | translate }}</a>
         <div fxFlex="grow"></div>
-        <a mat-list-item (click)="onPasswordButtonClicked()">{{ 'PASSWORD.PASSWORD_MENU' | translate }}</a>
+        <a mat-list-item (click)="onPasswordButtonClicked()">
+          @if (demo) {
+            {{ 'APP_INFO.MENU' | translate }}
+          } @else {
+            {{ 'PASSWORD.PASSWORD_MENU' | translate }}
+          }
+        </a>
         <!-- <a mat-list-item routerLink="/about">{{ 'ABOUT.ABOUT_MENU' | translate }}</a> -->
       </mat-nav-list>
     </div>

@@ -1,0 +1,9 @@
+<h2 mat-dialog-title>{{ 'APP_INFO.TITLE' | translate }}</h2>
+<mat-dialog-content>
+  <p [innerHtml]="'APP_INFO.P1' | translate"></p>
+  <p [innerHtml]="'APP_INFO.P2' | translate"></p>
+  <p [innerHtml]="'APP_INFO.P3' | translate"></p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-raised-button color="primary" (click)="close()">{{ 'APP_INFO.BUTTON_START' | translate }}</button>
+</mat-dialog-actions>

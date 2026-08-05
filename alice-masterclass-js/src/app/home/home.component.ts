@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { AuthDialogComponent } from '../auth-dialog/auth-dialog.component';
+import { DEMO_INFO_SHOWN_STORAGE_KEY, DemoInfoDialogComponent } from '../demo-info-dialog/demo-info-dialog.component';
 import { ApiService } from '../shared/services/api.service';
+import { DemoConfig } from '../shared/demo/demo-config.service';
 
 @Component({
     selector: 'app-home',
@@ -15,7 +17,9 @@ export class HomeComponent implements OnInit {
   private passwordDialogDismissed: boolean;
   private readonly passwordDialogDismissedKey: string = 'passwordDialogDismissed';
   private readonly passwordUrlKey: string = 'password';
-  
+
+  private readonly demo = inject(DemoConfig);
+
   constructor(
     private apiService: ApiService,
     private dialog: MatDialog,
@@ -23,6 +27,12 @@ export class HomeComponent implements OnInit {
     private router: Router) {}
 
   ngOnInit(): void {
+    // Demo has no session: show the one-time info dialog instead of the login form.
+    if (this.demo.enabled) {
+      this.maybeShowDemoInfoDialog();
+      return;
+    }
+
     const isDismissed = sessionStorage.getItem(this.passwordDialogDismissedKey);
 
     if (isDismissed === null) {
@@ -64,6 +74,20 @@ export class HomeComponent implements OnInit {
         sessionStorage.setItem(this.passwordDialogDismissedKey, 'true');
       });
     }
+  }
+
+  /** Once per browser, not per tab — the demo is meant to be entered and explored. */
+  private maybeShowDemoInfoDialog(): void {
+    if (localStorage.getItem(DEMO_INFO_SHOWN_STORAGE_KEY) === 'true') {
+      return;
+    }
+
+    this.dialog
+      .open(DemoInfoDialogComponent, { width: '560px', autoFocus: true })
+      .afterClosed()
+      .subscribe(() => {
+        localStorage.setItem(DEMO_INFO_SHOWN_STORAGE_KEY, 'true');
+      });
   }
 
 }

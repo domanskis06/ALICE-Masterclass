@@ -107,6 +107,14 @@
   "ABOUT": {
     "ABOUT_MENU": "À propos d’ALICE"
   },
+  "APP_INFO": {
+    "MENU": "À propos de cette application",
+    "TITLE": "Bienvenue à l’ALICE MasterClass",
+    "P1": "Voici la version en ligne des exercices de l’ALICE MasterClass, ouverte à tous. Vous pouvez analyser de vraies données d’ALICE exactement comme les élèves lors d’une journée MasterClass : identifier des particules étranges dans l’affichage des événements, ajuster des spectres de masse invariante et observer la propagation des particules dans le détecteur.",
+    "P2": "Vos résultats restent uniquement dans ce navigateur — rien n’est envoyé et aucun compte n’est nécessaire. Vous pouvez fermer la page et continuer plus tard sur le même appareil ; les mesures acceptées restent dans les tableaux et les graphiques.",
+    "P3": "Vous pouvez réouvrir cette fenêtre à tout moment depuis le <strong>Menu</strong>.",
+    "BUTTON_START": "Commencer"
+  },
   "PASSWORD": {
     "PASSWORD_MENU": "Mot de passe",
     "P1": "Veuillez saisir votre numéro d’élève et le mot de passe de session (tous deux fournis par votre encadrant).",
@@ -287,7 +295,19 @@
       "BACKGROUND": "Fond",
       "FIT": "Ajuster",
       "ACCEPT": "Accepter",
-      "CLEAR_FIT": "Effacer l’ajustement"
+      "CLEAR_FIT": "Effacer l’ajustement",
+      "UNDO": "Annuler"
+    },
+    "ENHANCEMENT": {
+      "TITLE": "Résultats",
+      "PLOT_TITLE": "Graphique d’augmentation",
+      "CENTRALITY": "Centralité",
+      "NO_PARTICIPANTS": "Nb. de participants",
+      "NO_EVENTS": "Nb. d’événements",
+      "NO": "Nb.",
+      "EFFICIENCY": "Efficacité",
+      "YIELD": "Taux de production",
+      "ENHANCEMENT": "Augmentation"
     },
     "PARTICLE_PROPAGATION_MENU": "Propagation des particules",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -362,7 +382,7 @@
       "REPLAY": "Rejouer le tutoriel",
       "NEXT": "Suivant →",
       "PREVIOUS": "← Précédent",
-      "DONE": "Terminé",
+      "DONE": "Terminé →",
       "STEP_PARTICLE_TITLE": "Sélectionner l’espèce de particule",
       "STEP_PARTICLE_BODY": "Choisissez la <strong>particule étrange</strong> que vous souhaitez étudier : le kaon <strong>K<sub>S</sub><sup>0</sup></strong>, le lambda <strong>Λ</strong> ou l’anti-lambda <strong>Λ̄</strong>. Chaque espèce se désintègre en une paire spécifique de traces filles, donnant une position de pic distincte dans le spectre de masse invariante.",
       "STEP_COLLISION_TITLE": "Sélectionner le système de collision",
@@ -381,8 +401,18 @@
       "STEP_CHECK_BODY": "Vérifiez que le <strong>polynôme</strong> suit le continuum loin du pic et que la <strong>gaussienne</strong> repose sur l’excès. De mauvais choix de plages apparaissent comme des discordances évidentes. Si cela semble incorrect, ajustez les plages et <strong>Ajuster</strong> à nouveau.",
       "STEP_ACCEPT_TITLE": "Enregistrer le rendement de signal",
       "STEP_ACCEPT_BODY": "Si vous êtes satisfait, appuyez sur <strong>Accepter</strong>. L’application utilise le polynôme pour estimer le <strong>fond sous le pic</strong>, puis rapporte le nombre <strong>total</strong> de comptes dans la région du pic, le <strong>fond estimé</strong> et le <strong>signal</strong> comme excès au-dessus du fond - la grandeur dont vous avez besoin pour comparer les taux de production entre espèces et systèmes de collision.",
+      "STEP_HISTOGRAM_TOOLS_TITLE": "Réinitialiser la vue",
+      "STEP_HISTOGRAM_TOOLS_BODY": "<strong>Réinitialiser la plage</strong> rétablit l’axe de masse complet utilisé pour l’ajustement. <strong>Réinitialiser le zoom</strong> efface un zoom par brosse sur le spectre afin de revoir toute la distribution.",
+      "STEP_CLEAR_FIT_TITLE": "Effacer l’ajustement courant",
+      "STEP_CLEAR_FIT_BODY": "<strong>Effacer l’ajustement</strong> retire les courbes et les nombres du spectre sans supprimer les lignes déjà acceptées. Utilisez-le pour recommencer un ajustement sur le même histogramme.",
+      "STEP_UNDO_TITLE": "Annuler la dernière acceptation",
+      "STEP_UNDO_BODY": "<strong>Annuler</strong> retire de votre résumé l’ajustement accepté le plus récemment. Appuyez à nouveau pour remonter plus loin si vous en avez accepté plusieurs d’affilée.",
+      "STEP_ENHANCEMENT_PLOT_TITLE": "Graphique d’augmentation",
+      "STEP_ENHANCEMENT_PLOT_BODY": "Ce graphique montre l’<strong>augmentation de strangeness</strong> en fonction du <strong>nombre de nucléons participants</strong> pour chaque classe de centralité. Les points apparaissent lorsque vous acceptez des ajustements pour le kaon, le lambda et l’anti-lambda.",
       "STEP_RESULTS_TITLE": "Vos mesures soumises",
       "STEP_RESULTS_BODY": "Chaque ajustement accepté ajoute une ligne avec le <strong>type de particule</strong>, la <strong>collision</strong>, la <strong>centralité</strong> le cas échéant et l’estimation du <strong>signal</strong>. Cela reflète la façon dont vous tabulerez les rendements dans un flux d’analyse de type publication.",
+      "STEP_RESULTS_SUMMARY_TITLE": "Tableau des résultats",
+      "STEP_RESULTS_SUMMARY_BODY": "Pour chaque classe de <strong>centralité</strong>, ce tableau rassemble vos ajustements acceptés : les nombres de particules mesurés, l’<strong>efficacité</strong> du détecteur et le <strong>taux de production</strong> - combien de particules étranges sont produites en moyenne par collision après corrections. Le chiffre clé est l’<strong>augmentation</strong> : ce taux divisé par le même taux dans les collisions proton-proton. Une valeur supérieure à 1 signifie que les particules étranges sont créées plus souvent dans les collisions d’ions lourds que dans de simples collisions proton-proton - c’est l’augmentation de strangeness.",
       "STEP_UPLOAD_TITLE": "Partager les résultats avec votre enseignant",
       "STEP_UPLOAD_BODY": "Une fois connecté, <strong>Envoyer les données</strong> envoie votre tableau à la session serveur, en regroupant les résultats de la classe. Si le bouton est désactivé, connectez-vous d’abord depuis le flux principal."
     }

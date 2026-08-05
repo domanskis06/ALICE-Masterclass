@@ -53,7 +53,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Tighter axis chrome (smaller Invariant Mass / Counts band, less gap under Ox).
-   * Used by VA mass-histograms so five plots fit one viewport; leave false for LSA.
+   * Used by VA mass-histograms and LSA fit-histogram so the plot reclaim bottom whitespace.
    */
   @Input()
   compactChrome = false;
@@ -79,16 +79,16 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     LEFT_YLABEL: 12
   };
 
-  /** VA: pull axis titles closer to the axes and reclaim plot height. */
+  /** VA / LSA: pull axis titles closer to the axes and reclaim plot height. */
   private readonly MARGIN_COMPACT = {
     TOP: 2,
-    RIGHT: 6,
+    RIGHT: 8,
     // Slightly more than the original 14 so ~0.75em tick numbers clear the axis title.
-    BOTTOM: 16,
+    BOTTOM: 19,
     BOTTOM_XLABEL: 16,
     BOTTOM_TEXT: 3,
     // Slightly more than the original 22/8 so ~0.75em Y tick numbers clear "Counts".
-    LEFT: 24,
+    LEFT: 27,
     LEFT_YLABEL: 10
   };
 
@@ -120,8 +120,10 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     if (!this.compactChrome) {
       return this.SVG.H - this.MARGIN.BOTTOM_TEXT + rotatedNudge;
     }
-    // Just under the tick-number row — keep clear of ~0.75em labels.
-    return this.CONTENT_AREA.Y + this.CONTENT_AREA.H + this.MARGIN.BOTTOM + 12 + rotatedNudge;
+    // Sit just under the tick row (enhancement-plot closeness to Ox).
+    // Rotated -45° ticks already get X_AXIS_LABEL_ROTATED_NUDGE; upright need a little extra.
+    const underTicks = this.shouldRotateXTickLabels() ? 2 : 10;
+    return this.CONTENT_AREA.Y + this.CONTENT_AREA.H + this.MARGIN.BOTTOM + underTicks + rotatedNudge;
   }
 
   /** Bar grow / axis transition (ms). Short so VA landing feels locked to the flight. */

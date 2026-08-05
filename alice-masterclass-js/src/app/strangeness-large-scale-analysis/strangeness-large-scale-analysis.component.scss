@@ -6,3 +6,205 @@
   padding-left: 16px;
   padding-right: 16px;
 }
+
+/*
+ * Demo layout: two charts share the row; Results may extend below the fold.
+ */
+.demo-layout {
+  // ~30% larger than the previous max(240px, 30vh) band.
+  --demo-plot-h: max(312px, 39vh);
+
+  .demo-charts {
+    // Same card height for Histogram Display and Enhancement plot.
+    align-items: stretch;
+
+    > * {
+      min-width: 0;
+      display: flex;
+    }
+  }
+
+  ::ng-deep app-histogram-selector {
+    .title {
+      line-height: 28px;
+    }
+
+    mat-card-content {
+      padding-bottom: 4px;
+    }
+  }
+
+  ::ng-deep app-histogram-display,
+  ::ng-deep app-enhancement-plot {
+    mat-card {
+      flex: 1 1 auto;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    mat-card-content {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+  }
+
+  ::ng-deep app-histogram-display {
+    #anchor,
+    #content {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100% !important;
+      display: flex;
+      // Top-align with the enhancement plot (legend sits under the right SVG).
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    #content {
+      padding-top: 2px;
+      padding-bottom: 0;
+      width: 100%;
+    }
+
+    .plot-stage {
+      --plot-h: var(--demo-plot-h);
+      // Same outer plot height as the enhancement SVG frame.
+      height: var(--demo-plot-h);
+      width: min(100%, calc(var(--demo-plot-h) * 400 / 224));
+      aspect-ratio: auto;
+      margin: 0 auto;
+    }
+
+    /*
+     * Axis titles/ticks follow the SVG CTM. Fit-histogram viewBox is 400×224
+     * vs enhancement 600×300; at equal outer height the left CTM scale is
+     * ~300/224 larger, so the same CSS px looks bigger. 9.5px ≈ 12.8×224/300.
+     */
+    app-fit-histogram ::ng-deep svg {
+      #yAxisLabel,
+      #xAxisLabel,
+      #yAxisLabel text,
+      #xAxisLabel text,
+      text[yAxisLabel],
+      text[xAxisLabel] {
+        font-size: 9.5px !important;
+        font-family: Roboto, 'Helvetica Neue', sans-serif !important;
+        font-weight: 400 !important;
+      }
+
+      #xAxis text,
+      #yAxis text,
+      #xAxis .tick text,
+      #yAxis .tick text {
+        font-size: 7.5px !important;
+      }
+    }
+  }
+
+  ::ng-deep app-enhancement-plot {
+    // Match default mat-card-title inset (16px), same as Histogram Display / Fit Selector.
+    mat-card-title.title {
+      padding: 0 16px !important;
+      line-height: 40px;
+    }
+
+    .plot-frame {
+      height: var(--demo-plot-h);
+      width: min(100%, calc(var(--demo-plot-h) * 600 / 300));
+      margin: 0 auto;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+
+      #yAxisLabel,
+      #xAxisLabel,
+      #yAxisLabel text,
+      #xAxisLabel text {
+        font-size: 12.8px !important;
+        font-family: Roboto, 'Helvetica Neue', sans-serif;
+        font-weight: 400;
+      }
+    }
+  }
+
+  ::ng-deep app-fit-selector {
+    // Keep the current panel height; only nudge sliders down (background more).
+    mat-card-title.title {
+      line-height: 28px;
+      padding-top: 4px;
+      padding-bottom: 0;
+    }
+
+    mat-card-content {
+      padding-top: 0;
+      padding-bottom: 8px;
+    }
+
+    mat-card-content > div {
+      gap: 4px !important;
+    }
+
+    mat-card-content > div > div:first-child {
+      gap: 0 !important;
+    }
+
+    mat-card-content > div > div:last-child {
+      margin-top: -14px;
+      gap: 6px !important;
+    }
+
+    .lsa-slider-group--signal ::ng-deep .ngx-slider {
+      margin-top: 34px;
+      margin-bottom: 0;
+    }
+
+    // Keep the Background slider where it is; pull its label down so the
+    // label→slider gap matches Signal (28px). Extra slider margin was 40px.
+    .lsa-slider-group--background .lsa-slider-label {
+      margin-top: 12px;
+    }
+
+    .lsa-slider-group--background ::ng-deep .ngx-slider {
+      margin-top: 28px;
+      margin-bottom: 0;
+    }
+  }
+
+  ::ng-deep app-enhancement-results {
+    // Same 16px title inset as the other LSA cards.
+    mat-card-title.title {
+      padding: 0 16px !important;
+      line-height: 40px;
+    }
+
+    mat-card-content {
+      padding-top: 4px;
+      padding-bottom: 8px;
+    }
+
+    .enhancement-table {
+      th.mat-mdc-header-cell {
+        font-size: 0.8rem;
+        padding: 7px 8px;
+      }
+
+      td.mat-mdc-cell {
+        font-size: 0.88rem;
+        padding: 5px 8px;
+      }
+
+      tr.mat-mdc-row {
+        height: 38px;
+      }
+    }
+  }
+}

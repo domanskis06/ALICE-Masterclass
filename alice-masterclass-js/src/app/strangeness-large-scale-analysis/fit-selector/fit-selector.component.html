@@ -25,6 +25,9 @@
       <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px">
         <button id="lsa-tour-fit-button" mat-raised-button color="primary" [disabled]="fitService.data.data.length === 0" (click)="onFitButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.FIT' | translate }}</button>
         <button id="lsa-tour-accept-button" mat-raised-button color="primary" [disabled]="fitService.result === null" (click)="onAcceptButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.ACCEPT' | translate }}</button>
+        @if (demo) {
+          <button id="lsa-demo-undo-button" mat-stroked-button [disabled]="undoDisabled" (click)="onUndoButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.UNDO' | translate }}</button>
+        }
         <button id="lsa-tour-clear-fit-button" mat-stroked-button [disabled]="fitService.result === null" (click)="onClearFitButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.CLEAR_FIT' | translate }}</button>
       </div>
     </div>

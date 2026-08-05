@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { driver, type DriveStep, type Driver } from 'driver.js';
 
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { FitService } from '../../shared/services/fit.service';
 import {
   LSA_TUTORIAL_STEP_INDEX_ACCEPT,
@@ -18,6 +19,17 @@ export class LsaTutorialService {
   private static readonly SELECTOR_HISTOGRAM = '#lsa-tour-histogram-display';
   private static readonly SELECTOR_SIGNAL = '#lsa-tour-signal-group';
   private static readonly SELECTOR_BACKGROUND = '#lsa-tour-background-group';
+  private static readonly SELECTOR_FIT_SELECTOR = '#lsa-tour-fit-selector';
+  private static readonly SELECTOR_RESULTS = '#lsa-tour-results-table';
+  private static readonly SELECTOR_RESULTS_DEMO = '#lsa-demo-results-table';
+  private static readonly SELECTOR_ENHANCEMENT_PLOT = '#lsa-demo-enhancement-plot';
+  private static readonly SELECTOR_HISTOGRAM_ACTIONS = '#lsa-tour-histogram-actions';
+  private static readonly SELECTOR_FIT = '#lsa-tour-fit-button';
+  private static readonly SELECTOR_ACCEPT = '#lsa-tour-accept-button';
+  private static readonly SELECTOR_CLEAR_FIT = '#lsa-tour-clear-fit-button';
+  private static readonly SELECTOR_UNDO = '#lsa-demo-undo-button';
+  private static readonly SELECTOR_UPLOAD = '#lsa-tour-upload-button';
+  private readonly demo = inject(DemoConfig).enabled;
 
   private driverInstance: Driver | null = null;
   private suppressDismissOnDestroy = false;
@@ -25,8 +37,17 @@ export class LsaTutorialService {
   /** In-memory only — resets on full page reload so the welcome dialog shows again. */
   private dismissedThisSession = false;
 
-  /** Selectors currently covered by the expanding stage (steps 5–6). */
+  /** Live indices for auto-advance (workshop constants or demo offsets). */
+  private stepIndexOpenHistogram = LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM;
+  private stepIndexFit = LSA_TUTORIAL_STEP_INDEX_FIT;
+  private stepIndexAccept = LSA_TUTORIAL_STEP_INDEX_ACCEPT;
+
+  /** Selectors currently covered by the expanding stage (signal / background steps). */
   private expandingSelectors: string[] = [];
+  /** Extra pixels below the union AABB (demo signal step). */
+  private expandingBottomPad = 0;
+  /** When set, stage bottom reaches at least this element's bottom (demo background step). */
+  private expandingBottomAlignSelector: string | null = null;
   private readonly onWindowResizeForStage = (): void => {
     if (this.expandingSelectors.length === 0) {
       return;
@@ -61,7 +82,7 @@ export class LsaTutorialService {
     if (!this.awaitingHistogramAdvance || !this.driverInstance?.isActive()) {
       return;
     }
-    if (this.driverInstance.getActiveIndex() !== LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM) {
+    if (this.driverInstance.getActiveIndex() !== this.stepIndexOpenHistogram) {
       return;
     }
     this.awaitingHistogramAdvance = false;
@@ -76,7 +97,7 @@ export class LsaTutorialService {
     if (!this.driverInstance?.isActive()) {
       return;
     }
-    if (this.driverInstance.getActiveIndex() !== LSA_TUTORIAL_STEP_INDEX_FIT) {
+    if (this.driverInstance.getActiveIndex() !== this.stepIndexFit) {
       return;
     }
     setTimeout(() => {
@@ -90,7 +111,7 @@ export class LsaTutorialService {
     if (!this.driverInstance?.isActive()) {
       return;
     }
-    if (this.driverInstance.getActiveIndex() !== LSA_TUTORIAL_STEP_INDEX_ACCEPT) {
+    if (this.driverInstance.getActiveIndex() !== this.stepIndexAccept) {
       return;
     }
     setTimeout(() => {
@@ -150,10 +171,34 @@ export class LsaTutorialService {
   }
 
   private buildSteps(): DriveStep[] {
-    const t = (key: string) => this.translate.instant(`STRANGENESS.LSA_TUTORIAL.${key}`);
+    const steps = this.demo ? this.buildDemoSteps() : this.buildWorkshopSteps();
+    this.stepIndexOpenHistogram = this.indexOfElement(steps, '#lsa-tour-open-histogram');
+    this.stepIndexFit = this.indexOfElement(steps, LsaTutorialService.SELECTOR_FIT);
+    this.stepIndexAccept = this.indexOfElement(steps, LsaTutorialService.SELECTOR_ACCEPT);
+    return steps;
+  }
+
+  private indexOfElement(steps: DriveStep[], selector: string): number {
+    const index = steps.findIndex((step) => step.element === selector);
+    return index >= 0 ? index : -1;
+  }
+
+  private t(key: string): string {
+    return this.translate.instant(`STRANGENESS.LSA_TUTORIAL.${key}`);
+  }
+
+  /** Prefer the outlined control box so stage padding does not cover the card title. */
+  private resolveFormFieldControl(fieldId: string): Element {
+    const preferred = document.querySelector(`${fieldId} .mat-mdc-text-field-wrapper`);
+    return preferred ?? document.querySelector(fieldId)!;
+  }
+
+  /** Workshop layout: spectrum | results side by side, then fit selector. */
+  private buildWorkshopSteps(): DriveStep[] {
+    const t = (key: string) => this.t(key);
     return [
       {
-        element: '#lsa-tour-particle-field',
+        element: () => this.resolveFormFieldControl('#lsa-tour-particle-field'),
         disableActiveInteraction: false,
         popover: {
           title: t('STEP_PARTICLE_TITLE'),
@@ -163,7 +208,7 @@ export class LsaTutorialService {
         },
       },
       {
-        element: '#lsa-tour-collision-field',
+        element: () => this.resolveFormFieldControl('#lsa-tour-collision-field'),
         disableActiveInteraction: false,
         popover: {
           title: t('STEP_COLLISION_TITLE'),
@@ -197,7 +242,6 @@ export class LsaTutorialService {
           align: 'start',
         },
       },
-      // Step 5: stage from step 4 expands downward to include the signal slider.
       {
         element: () => this.getExpandingStage([
           LsaTutorialService.SELECTOR_HISTOGRAM,
@@ -216,7 +260,6 @@ export class LsaTutorialService {
         ]),
         onDeselected: () => this.onExpandingStageDeselected(),
       },
-      // Step 6: stage expands further to include the background slider.
       {
         element: () => this.getExpandingStage([
           LsaTutorialService.SELECTOR_HISTOGRAM,
@@ -238,7 +281,7 @@ export class LsaTutorialService {
         onDeselected: () => this.onExpandingStageDeselected(),
       },
       {
-        element: '#lsa-tour-fit-button',
+        element: LsaTutorialService.SELECTOR_FIT,
         popover: {
           title: t('STEP_FIT_TITLE'),
           description: t('STEP_FIT_BODY'),
@@ -254,7 +297,7 @@ export class LsaTutorialService {
         },
       },
       {
-        element: '#lsa-tour-accept-button',
+        element: LsaTutorialService.SELECTOR_ACCEPT,
         popover: {
           title: t('STEP_ACCEPT_TITLE'),
           description: t('STEP_ACCEPT_BODY'),
@@ -262,7 +305,15 @@ export class LsaTutorialService {
         },
       },
       {
-        element: '#lsa-tour-results-table',
+        element: LsaTutorialService.SELECTOR_CLEAR_FIT,
+        popover: {
+          title: t('STEP_CLEAR_FIT_TITLE'),
+          description: t('STEP_CLEAR_FIT_BODY'),
+          side: 'left',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_RESULTS,
         popover: {
           title: t('STEP_RESULTS_TITLE'),
           description: t('STEP_RESULTS_BODY'),
@@ -270,11 +321,179 @@ export class LsaTutorialService {
         },
       },
       {
-        element: '#lsa-tour-upload-button',
+        element: LsaTutorialService.SELECTOR_UPLOAD,
         popover: {
           title: t('STEP_UPLOAD_TITLE'),
           description: t('STEP_UPLOAD_BODY'),
           side: 'left',
+        },
+      },
+    ];
+  }
+
+  /**
+   * Demo layout: spectrum | enhancement plot, fit selector full width, results below.
+   * Covers every interactive control, including Undo / Clear fit.
+   */
+  private buildDemoSteps(): DriveStep[] {
+    const t = (key: string) => this.t(key);
+    return [
+      {
+        element: () => this.resolveFormFieldControl('#lsa-tour-particle-field'),
+        disableActiveInteraction: false,
+        popover: {
+          title: t('STEP_PARTICLE_TITLE'),
+          description: t('STEP_PARTICLE_BODY'),
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: () => this.resolveFormFieldControl('#lsa-tour-collision-field'),
+        disableActiveInteraction: false,
+        popover: {
+          title: t('STEP_COLLISION_TITLE'),
+          description: t('STEP_COLLISION_BODY'),
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: '#lsa-tour-open-histogram',
+        disableActiveInteraction: false,
+        popover: {
+          title: t('STEP_OPEN_TITLE'),
+          description: t('STEP_OPEN_BODY'),
+          side: 'left',
+          showButtons: ['next', 'previous', 'close'],
+        },
+        onHighlighted: () => {
+          this.awaitingHistogramAdvance = true;
+        },
+        onDeselected: () => {
+          this.awaitingHistogramAdvance = false;
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_HISTOGRAM,
+        popover: {
+          title: t('STEP_SPECTRUM_TITLE'),
+          description: t('STEP_SPECTRUM_BODY'),
+          side: 'left',
+          align: 'start',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_HISTOGRAM_ACTIONS,
+        popover: {
+          title: t('STEP_HISTOGRAM_TOOLS_TITLE'),
+          description: t('STEP_HISTOGRAM_TOOLS_BODY'),
+          side: 'bottom',
+          align: 'end',
+        },
+      },
+      {
+        // Step 6: spectrum + signal; nudge bottom a few px past the slider group.
+        element: () => this.getExpandingStage(
+          [
+            LsaTutorialService.SELECTOR_HISTOGRAM,
+            LsaTutorialService.SELECTOR_SIGNAL,
+          ],
+          { bottomPad: 10 },
+        ),
+        disableActiveInteraction: true,
+        popover: {
+          title: t('STEP_SIGNAL_TITLE'),
+          description: t('STEP_SIGNAL_BODY'),
+          side: 'left',
+          align: 'end',
+        },
+        onHighlighted: () => this.enableExpandingInteractions([
+          LsaTutorialService.SELECTOR_HISTOGRAM,
+          LsaTutorialService.SELECTOR_SIGNAL,
+        ]),
+        onDeselected: () => this.onExpandingStageDeselected(),
+      },
+      {
+        // Step 7: include background and stretch to the Fit Selector card bottom.
+        element: () => this.getExpandingStage(
+          [
+            LsaTutorialService.SELECTOR_HISTOGRAM,
+            LsaTutorialService.SELECTOR_SIGNAL,
+            LsaTutorialService.SELECTOR_BACKGROUND,
+          ],
+          { bottomAlignSelector: LsaTutorialService.SELECTOR_FIT_SELECTOR },
+        ),
+        disableActiveInteraction: true,
+        popover: {
+          title: t('STEP_BACKGROUND_TITLE'),
+          description: t('STEP_BACKGROUND_BODY'),
+          side: 'left',
+          align: 'end',
+        },
+        onHighlighted: () => this.enableExpandingInteractions([
+          LsaTutorialService.SELECTOR_HISTOGRAM,
+          LsaTutorialService.SELECTOR_SIGNAL,
+          LsaTutorialService.SELECTOR_BACKGROUND,
+        ]),
+        onDeselected: () => this.onExpandingStageDeselected(),
+      },
+      {
+        element: LsaTutorialService.SELECTOR_FIT,
+        popover: {
+          title: t('STEP_FIT_TITLE'),
+          description: t('STEP_FIT_BODY'),
+          side: 'left',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_HISTOGRAM,
+        popover: {
+          title: t('STEP_CHECK_TITLE'),
+          description: t('STEP_CHECK_BODY'),
+          side: 'left',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_ACCEPT,
+        popover: {
+          title: t('STEP_ACCEPT_TITLE'),
+          description: t('STEP_ACCEPT_BODY'),
+          side: 'left',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_UNDO,
+        popover: {
+          title: t('STEP_UNDO_TITLE'),
+          description: t('STEP_UNDO_BODY'),
+          side: 'left',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_CLEAR_FIT,
+        popover: {
+          title: t('STEP_CLEAR_FIT_TITLE'),
+          description: t('STEP_CLEAR_FIT_BODY'),
+          side: 'left',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_ENHANCEMENT_PLOT,
+        popover: {
+          title: t('STEP_ENHANCEMENT_PLOT_TITLE'),
+          description: t('STEP_ENHANCEMENT_PLOT_BODY'),
+          side: 'left',
+          align: 'start',
+        },
+      },
+      {
+        element: LsaTutorialService.SELECTOR_RESULTS_DEMO,
+        popover: {
+          title: t('STEP_RESULTS_SUMMARY_TITLE'),
+          description: t('STEP_RESULTS_SUMMARY_BODY'),
+          side: 'top',
+          align: 'center',
         },
       },
     ];
@@ -286,8 +505,13 @@ export class LsaTutorialService {
    * included (histogram → +signal → +background) without swallowing Results
    * (same left-column width as the histogram card).
    */
-  private getExpandingStage(selectors: string[]): HTMLElement {
+  private getExpandingStage(
+    selectors: string[],
+    options?: { bottomPad?: number; bottomAlignSelector?: string },
+  ): HTMLElement {
     this.expandingSelectors = [...selectors];
+    this.expandingBottomPad = options?.bottomPad ?? 0;
+    this.expandingBottomAlignSelector = options?.bottomAlignSelector ?? null;
     const stage = this.layoutExpandingStage(selectors);
     window.removeEventListener('resize', this.onWindowResizeForStage);
     window.addEventListener('resize', this.onWindowResizeForStage);
@@ -321,10 +545,39 @@ export class LsaTutorialService {
       return stage;
     }
 
-    const left = Math.min(...rects.map((r) => r.left));
-    const top = Math.min(...rects.map((r) => r.top));
-    const right = Math.max(...rects.map((r) => r.right));
-    const bottom = Math.max(...rects.map((r) => r.bottom));
+    let left = Math.min(...rects.map((r) => r.left));
+    let top = Math.min(...rects.map((r) => r.top));
+    let right = Math.max(...rects.map((r) => r.right));
+    let bottom = Math.max(...rects.map((r) => r.bottom));
+
+    /*
+     * Demo: charts are 50/50. Keep the expanding highlight in the histogram
+     * column (do not swallow the enhancement plot) and always span the full
+     * Histogram Display card height when the stage reaches the background slider.
+     */
+    if (this.demo && selectors.includes(LsaTutorialService.SELECTOR_HISTOGRAM)) {
+      const hist = document
+        .querySelector(LsaTutorialService.SELECTOR_HISTOGRAM)
+        ?.getBoundingClientRect();
+      if (hist && hist.width > 0 && hist.height > 0) {
+        left = hist.left;
+        right = hist.right;
+        top = hist.top;
+        bottom = Math.max(bottom, hist.bottom);
+      }
+    }
+
+    bottom += this.expandingBottomPad;
+
+    if (this.expandingBottomAlignSelector) {
+      const alignRect = document
+        .querySelector(this.expandingBottomAlignSelector)
+        ?.getBoundingClientRect();
+      if (alignRect && alignRect.height > 0) {
+        bottom = Math.max(bottom, alignRect.bottom);
+      }
+    }
+
     stage.style.left = `${left}px`;
     stage.style.top = `${top}px`;
     stage.style.width = `${right - left}px`;
@@ -348,7 +601,7 @@ export class LsaTutorialService {
   /**
    * driver.js calls the next step's `element()` before the previous step's
    * `onDeselected`, so we must not remove the proxy synchronously when moving
-   * between steps 5 and 6. Tear it down on the next tick only if the tour has
+   * between expanding steps. Tear it down on the next tick only if the tour has
    * moved on to a different target.
    */
   private onExpandingStageDeselected(): void {
@@ -364,6 +617,8 @@ export class LsaTutorialService {
     window.removeEventListener('resize', this.onWindowResizeForStage);
     this.clearExpandingInteractions();
     this.expandingSelectors = [];
+    this.expandingBottomPad = 0;
+    this.expandingBottomAlignSelector = null;
     document.getElementById(LsaTutorialService.EXPANDING_STAGE_ID)?.remove();
   }
 }

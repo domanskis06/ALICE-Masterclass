@@ -1,0 +1,58 @@
+.title {
+  line-height: 40px;
+  margin: 0;
+  // Same inset as other LSA mat-card titles (see parent host rule / demo-layout).
+  padding: 0;
+}
+
+.results-frame {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.enhancement-table {
+  width: 100%;
+
+  // 15 columns: keep the whole summary readable without a page-wide scrollbar.
+  th.mat-mdc-header-cell {
+    font-size: 0.7rem;
+    line-height: 1.15;
+    padding: 4px 6px;
+    white-space: nowrap;
+  }
+
+  td.mat-mdc-cell {
+    font-size: 0.78rem;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+
+  tr.mat-mdc-header-row {
+    height: auto;
+  }
+
+  tr.mat-mdc-row {
+    height: 32px;
+  }
+}
+
+.dot {
+  height: 9px;
+  width: 9px;
+  margin-left: 5px;
+  vertical-align: middle;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.kaon {
+  background-color: var(--kaon-color);
+}
+
+.lambda {
+  background-color: var(--lambda-color);
+}
+
+.antilambda {
+  background-color: var(--antilambda-color);
+}

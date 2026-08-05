@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Event, LSAData } from '../shared/models';
 import { ParticleType, CollisionType, CentralityType, VisualAnalysisResultsEntry, LargeScaleAnalysisResultsEntry, ApiService } from '../shared/services/api.service';
+import { DemoLsaUndoEntry, DemoResultsStore } from '../shared/demo/demo-results-store.service';
 import { Observable } from 'rxjs';
 
 export interface CollisionCentralityEntry {
@@ -80,6 +81,9 @@ export class StrangenessDataService {
       {collision: CollisionType.PBPB, centrality: CentralityType.C070_080},
     ]],
   ]);
+
+  /** No-op outside the demo build. */
+  private readonly demoStore = inject(DemoResultsStore);
 
   // Note: objects are re-created each time to properly trigger updates when data is used as @Input
 
@@ -164,6 +168,8 @@ export class StrangenessDataService {
         this.claimTracksForHistogram(key, unclaimed);
       }
     }
+
+    this.persistDemoVisualAnalysis();
   }
 
   /** Histogram entries for one event (empty array if none). */
@@ -201,6 +207,7 @@ export class StrangenessDataService {
     }
 
     this.releaseTracksForHistogram(key, trackKeys);
+    this.persistDemoVisualAnalysis();
     return true;
   }
 
@@ -226,6 +233,8 @@ export class StrangenessDataService {
       analyzed.delete(key);
       this._analyzedTrackKeys = analyzed;
     }
+
+    this.persistDemoVisualAnalysis();
   }
 
   /** True once every required decay-daughter track key has been used in a histogram add. */
@@ -247,6 +256,8 @@ export class StrangenessDataService {
     this._vaResults = new Map<string, VisualAnalysisResultsEntry[]>();
     this._vaResultTrackKeys = new Map<string, string[][]>();
     this._analyzedTrackKeys = new Map<string, Set<string>>();
+
+    this.persistDemoVisualAnalysis();
   }
 
   submitVisualAnalysisResults(datasetID: number): Observable<any> {
@@ -256,9 +267,37 @@ export class StrangenessDataService {
   get largeScaleAnalysisResults(): Map<string, LargeScaleAnalysisResultsEntry> { return this._lsaResults; }
   private _lsaResults: Map<string, LargeScaleAnalysisResultsEntry> = new Map<string, LargeScaleAnalysisResultsEntry>();
 
+  /** Accept history for the demo Undo button; empty (and unused) in the workshop build. */
+  private _lsaUndoStack: DemoLsaUndoEntry[] = [];
+
+  get canUndoLargeScaleAnalysisResult(): boolean {
+    return this._lsaUndoStack.length > 0;
+  }
+
   addLargeScaleAnalysisResult(key: string, value: LargeScaleAnalysisResultsEntry) {
+    if (this.demoStore.enabled) {
+      // Accepting the same bin twice overwrites it, so Undo has to restore the old value.
+      this._lsaUndoStack.push({ key, previous: this._lsaResults.get(key) ?? null });
+    }
     this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>(this._lsaResults);
     this._lsaResults.set(key, value);
+    this.persistDemoLargeScaleAnalysis();
+  }
+
+  /** Revert the most recent accepted fit (demo only). */
+  undoLastLargeScaleAnalysisResult(): boolean {
+    const last = this._lsaUndoStack.pop();
+    if (!last) {
+      return false;
+    }
+    this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>(this._lsaResults);
+    if (last.previous === null) {
+      this._lsaResults.delete(last.key);
+    } else {
+      this._lsaResults.set(last.key, last.previous);
+    }
+    this.persistDemoLargeScaleAnalysis();
+    return true;
   }
 
   removeLargeScaleAnalysisResult(key: string): void {
@@ -267,17 +306,52 @@ export class StrangenessDataService {
     }
     this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>(this._lsaResults);
     this._lsaResults.delete(key);
+    // The history no longer describes the current table.
+    this._lsaUndoStack = [];
+    this.persistDemoLargeScaleAnalysis();
   }
 
   clearLargeScaleAnalysisResults(): void {
     this._lsaResults = new Map<string, LargeScaleAnalysisResultsEntry>();
+    this._lsaUndoStack = [];
+    this.persistDemoLargeScaleAnalysis();
   }
 
   submitLargeScaleAnalysisResults(): Observable<any> {
     return this.apiService.submitLargeScaleAnalysisResults(this.largeScaleAnalysisResults);
   }
 
-  constructor(private http: HttpClient, private apiService: ApiService) { }
+  constructor(private http: HttpClient, private apiService: ApiService) {
+    this.hydrateDemoResults();
+  }
+
+  /** Demo build: restore what this browser measured before (no-op otherwise). */
+  private hydrateDemoResults(): void {
+    if (!this.demoStore.enabled) {
+      return;
+    }
+
+    const va = this.demoStore.loadVisualAnalysis();
+    if (va) {
+      this._vaResults = va.results;
+      this._vaResultTrackKeys = va.trackKeys;
+      this._analyzedTrackKeys = va.analyzed;
+    }
+
+    const lsa = this.demoStore.loadLargeScaleAnalysis();
+    if (lsa) {
+      this._lsaResults = lsa.results;
+      this._lsaUndoStack = lsa.undoStack;
+    }
+  }
+
+  private persistDemoVisualAnalysis(): void {
+    this.demoStore.saveVisualAnalysis(this._vaResults, this._vaResultTrackKeys);
+  }
+
+  private persistDemoLargeScaleAnalysis(): void {
+    this.demoStore.saveLargeScaleAnalysis(this._lsaResults, this._lsaUndoStack);
+  }
 
   /** Number of navigable events for a concrete dataset id (0 demo, 1–19 workshop, 20 full). */
   getEventsInDataset(datasetNum: number): number {

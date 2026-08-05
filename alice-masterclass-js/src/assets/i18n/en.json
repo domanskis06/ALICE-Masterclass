@@ -105,6 +105,14 @@
   "ABOUT": {
     "ABOUT_MENU": "About ALICE"
   },
+  "APP_INFO": {
+    "MENU": "About this app",
+    "TITLE": "Welcome to the ALICE MasterClass",
+    "P1": "This is the online version of the ALICE MasterClass exercises, open to everyone. You can analyse real ALICE data exactly like students do during a MasterClass day: identify strange particles in the event display, fit invariant-mass spectra and watch particles propagate through the detector.",
+    "P2": "Your results are kept in this browser only — nothing is sent anywhere and no account is needed. You can close the page and continue later on the same device; measurements you accept stay in the tables and plots.",
+    "P3": "You can reopen this window at any time from the <strong>Menu</strong>.",
+    "BUTTON_START": "Start exploring"
+  },
   "PASSWORD": {
     "PASSWORD_MENU": "Password",
     "P1": "Please fill in your Student Number and the Session Password (both should be given to you by your supervisor).",
@@ -285,7 +293,19 @@
       "BACKGROUND": "Background",
       "FIT": "Fit",
       "ACCEPT": "Accept",
-      "CLEAR_FIT": "Clear fit"
+      "CLEAR_FIT": "Clear fit",
+      "UNDO": "Undo"
+    },
+    "ENHANCEMENT": {
+      "TITLE": "Results",
+      "PLOT_TITLE": "Enhancement plot",
+      "CENTRALITY": "Centrality",
+      "NO_PARTICIPANTS": "No. participants",
+      "NO_EVENTS": "No. events",
+      "NO": "No.",
+      "EFFICIENCY": "Efficiency",
+      "YIELD": "Yield",
+      "ENHANCEMENT": "Enhancement"
     },
     "PARTICLE_PROPAGATION_MENU": "Particle Propagation",
     "INSTRUCTIONS_PARTICLE_PROPAGATION": {
@@ -360,7 +380,7 @@
       "REPLAY": "Replay tutorial",
       "NEXT": "Next →",
       "PREVIOUS": "← Previous",
-      "DONE": "Done",
+      "DONE": "Done →",
       "STEP_PARTICLE_TITLE": "Select the particle species",
       "STEP_PARTICLE_BODY": "Choose the <strong>strange particle</strong> you want to study: the Kaon <strong>K<sub>S</sub><sup>0</sup></strong>, the Lambda <strong>Λ</strong>, or the Anti-Lambda <strong>Λ̄</strong>. Each species decays into a specific pair of daughter tracks, giving a distinct peak position in the invariant-mass spectrum.",
       "STEP_COLLISION_TITLE": "Select the collision system",
@@ -379,8 +399,18 @@
       "STEP_CHECK_BODY": "Check that the <strong>polynomial</strong> follows the continuum away from the peak and that the <strong>Gaussian</strong> sits on top of the excess. Poor range choices show up as obvious mismatches. If it looks wrong, adjust the ranges and <strong>Fit</strong> again.",
       "STEP_ACCEPT_TITLE": "Record the signal yield",
       "STEP_ACCEPT_BODY": "If you are satisfied, press <strong>Accept</strong>. The app uses the polynomial to estimate <strong>background under the peak</strong>, then reports <strong>total</strong> counts in the peak region, <strong>estimated background</strong>, and <strong>signal</strong> as the excess over background - the quantity you need to compare production rates between species and collision systems.",
+      "STEP_HISTOGRAM_TOOLS_TITLE": "Reset the view",
+      "STEP_HISTOGRAM_TOOLS_BODY": "<strong>Reset range</strong> restores the full mass axis used for fitting. <strong>Reset zoom</strong> clears a brush zoom on the spectrum so you can see the whole distribution again.",
+      "STEP_CLEAR_FIT_TITLE": "Clear the current fit",
+      "STEP_CLEAR_FIT_BODY": "<strong>Clear fit</strong> removes the curves and numbers from the spectrum without deleting rows you already accepted. Use it when you want to start a new fit on the same histogram.",
+      "STEP_UNDO_TITLE": "Undo the last accept",
+      "STEP_UNDO_BODY": "<strong>Undo</strong> removes the most recently accepted fit from your summary. Press it again to step further back if you accepted several in a row.",
+      "STEP_ENHANCEMENT_PLOT_TITLE": "Enhancement plot",
+      "STEP_ENHANCEMENT_PLOT_BODY": "This chart shows <strong>strangeness enhancement</strong> versus the <strong>number of participating nucleons</strong> for each centrality class. Points appear as you accept fits for Kaon, Lambda and Anti-Lambda.",
       "STEP_RESULTS_TITLE": "Your submitted measurements",
       "STEP_RESULTS_BODY": "Each accepted fit adds a row with the <strong>particle type</strong>, <strong>collision</strong>, <strong>centrality</strong> when applicable, and the <strong>signal</strong> estimate. This mirrors how you would tabulate yields in a paper-style analysis workflow.",
+      "STEP_RESULTS_SUMMARY_TITLE": "Results table",
+      "STEP_RESULTS_SUMMARY_BODY": "For each <strong>centrality</strong> class this table gathers your accepted fits: the measured particle counts, the detector <strong>efficiency</strong>, and the <strong>yield</strong> - how many strange particles are produced per collision after corrections. The key number is <strong>enhancement</strong>: the yield divided by the same yield in proton-proton collisions. A value above 1 means strange particles are created more often in heavy-ion collisions than in simple proton-proton ones - that is strangeness enhancement.",
       "STEP_UPLOAD_TITLE": "Share results with your teacher",
       "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session, pooling class results. If the button is disabled, sign in from the main flow first."
     }

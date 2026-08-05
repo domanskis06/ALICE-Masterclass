@@ -1,5 +1,6 @@
-import { Component, OnInit, Input, Output, EventEmitter, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ViewChild, inject } from '@angular/core';
 import { ApiService } from '../../shared/services/api.service';
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { ParticleType, VisualAnalysisResultsEntry } from '../../shared/services/api.service';
 import { HistogramBinTarget, HistogramComponent } from '../../shared/components/histogram/histogram.component';
 import {
@@ -36,6 +37,9 @@ export function massCenteredXDomain(center: number, halfWidth: number): [number,
 })
 export class MassHistogramsComponent implements OnInit {
   readonly ParticleType = ParticleType;
+
+  /** Demo build has no session to upload to — results are kept in the browser. */
+  protected readonly demo = inject(DemoConfig).enabled;
 
   readonly kaonBarColor = kaonHistogramColor;
   readonly lambdaBarColor = lambdaHistogramColor;

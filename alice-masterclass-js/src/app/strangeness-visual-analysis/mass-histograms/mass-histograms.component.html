@@ -30,26 +30,28 @@
           aria-label="Bin count"
         />
       </div>
-      <span
-        [matTooltipDisabled]="apiService.isAuthenticated"
-        [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate" matTooltipPosition="before"
-      >
-        <button
-          [disabled]="!apiService.isAuthenticated || uploadDisabled"
-          mat-raised-button
-          color="warn"
-          class="upload-data-button"
-          aria-label="Upload data"
-          (click)="onUploadButtonClicked()"
+      @if (!demo) {
+        <span
+          [matTooltipDisabled]="apiService.isAuthenticated"
+          [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate" matTooltipPosition="before"
         >
-          @if (apiService.isAuthenticated) {
-            <mat-icon class="material-icons-outlined">cloud_upload</mat-icon>
-          } @else {
-            <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
-          }
-          <span class="upload-data-button__text">{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
-        </button>
-      </span>
+          <button
+            [disabled]="!apiService.isAuthenticated || uploadDisabled"
+            mat-raised-button
+            color="warn"
+            class="upload-data-button"
+            aria-label="Upload data"
+            (click)="onUploadButtonClicked()"
+          >
+            @if (apiService.isAuthenticated) {
+              <mat-icon class="material-icons-outlined">cloud_upload</mat-icon>
+            } @else {
+              <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
+            }
+            <span class="upload-data-button__text">{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
+          </button>
+        </span>
+      }
     </div>
   </mat-card-title>
   <mat-card-content>
