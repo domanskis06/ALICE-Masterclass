@@ -9,8 +9,9 @@ import { InstructionsDialogComponent } from '../instructions-dialog/instructions
 import { AuthDialogComponent } from '../auth-dialog/auth-dialog.component';
 import { DemoInfoDialogComponent } from '../demo-info-dialog/demo-info-dialog.component';
 import { InstructionsProvider } from '../shared/interfaces';
-import { ApiService } from '../shared/services/api.service';
+import { ApiService, AuthStatus } from '../shared/services/api.service';
 import { DemoConfig } from '../shared/demo/demo-config.service';
+import { AppConfig } from '../../environments/environment';
 
 @Component({
     selector: 'app-nav',
@@ -31,12 +32,18 @@ export class NavComponent implements OnInit {
 
   protected readonly demo = inject(DemoConfig).enabled;
 
+  /** Session badge on the primary toolbar — non-production builds only. */
+  protected readonly showSessionBadge = !AppConfig.production;
+
+  protected readonly authStatus$: Observable<AuthStatus>;
+
   constructor(
     private apiService: ApiService,
     private breakpointObserver: BreakpointObserver,
     public translate: TranslateService,
     private dialog: MatDialog
     ) {
+      this.authStatus$ = this.apiService.authStatus$;
       this.isHandset$ = this.breakpointObserver.observe(Breakpoints.Handset)
         .pipe(
           map(result => result.matches),
