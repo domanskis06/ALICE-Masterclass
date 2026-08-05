@@ -4,7 +4,7 @@
   data-testid="nmf-event-exploration-page"
 >
   <div class="nmf-main-row">
-  <div class="nmf-event-display-wrap" id="nmf-tour-3d">
+  <div class="nmf-event-display-wrap">
     <app-event-display
       [decaysShown]="decaysShown"
       [backgroundColor]="darkBackgroundColor"
@@ -29,7 +29,7 @@
       (nextEvent)="onNextEvent()"
       (trackClickedEvent)="onTrackClicked($event)"
     >
-      <div class="event-meta-panel">
+      <div edSidebarMetaLeft class="event-meta-panel">
         <!-- Same control as Visual Analysis, for a consistent look. -->
         <div id="nmf-tour-dataset" class="dataset-controls">
           <mat-form-field appearance="outline" class="dataset-select">
@@ -68,24 +68,26 @@
           }
         </div>
 
-        <div id="nmf-tour-visibility" class="nmf-options-panel">
-          <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
-          <div fxLayout="column" fxLayoutGap="8px">
-            <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
-            <mat-slide-toggle [(ngModel)]="detectorShown">{{ 'EVENT_DISPLAY.DETECTOR' | translate }}</mat-slide-toggle>
-            @if (hasClusters) {
-              <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
-            }
-            <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
-            <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
-            @if (hasSecondaryTracks && isCurrentEventDone) {
-              <mat-slide-toggle
-                [(ngModel)]="secondaryTracksShown"
-                (ngModelChange)="onSecondaryTracksShownChange()"
-                data-testid="nmf-secondary-tracks-toggle"
-              >{{ 'EVENT_DISPLAY.SECONDARY_TRACKS' | translate }}</mat-slide-toggle>
-            }
-            <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
+        <div class="nmf-options-panel">
+          <div id="nmf-tour-visibility" class="nmf-tour-visibility-block">
+            <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
+            <div fxLayout="column" fxLayoutGap="8px">
+              <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
+              <mat-slide-toggle [(ngModel)]="detectorShown">{{ 'EVENT_DISPLAY.DETECTOR' | translate }}</mat-slide-toggle>
+              @if (hasClusters) {
+                <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
+              }
+              <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
+              <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
+              @if (hasSecondaryTracks && isCurrentEventDone) {
+                <mat-slide-toggle
+                  [(ngModel)]="secondaryTracksShown"
+                  (ngModelChange)="onSecondaryTracksShownChange()"
+                  data-testid="nmf-secondary-tracks-toggle"
+                >{{ 'EVENT_DISPLAY.SECONDARY_TRACKS' | translate }}</mat-slide-toggle>
+              }
+              <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
+            </div>
           </div>
 
           @if (hasClusters) {

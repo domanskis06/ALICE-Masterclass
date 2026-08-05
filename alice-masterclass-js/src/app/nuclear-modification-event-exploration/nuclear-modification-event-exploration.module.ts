@@ -14,6 +14,7 @@ import { NmfFilterBuilderComponent } from './filter-builder/filter-builder.compo
 import { NmfEeTutorialService } from './ee-tutorial/ee-tutorial.service';
 import { NmfEeTutorialWelcomeDialogComponent } from './ee-tutorial/ee-tutorial-welcome-dialog.component';
 import { NmfHistogramHelpDialogComponent } from './histogram-help-dialog/histogram-help-dialog.component';
+import { NmfAnalysisDialogComponent } from './analysis-dialog/analysis-dialog.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { NmfHistogramHelpDialogComponent } from './histogram-help-dialog/histogr
     InstructionsComponent,
     NmfEventCharacteristicsComponent,
     NmfHistogramDialogComponent,
+    NmfAnalysisDialogComponent,
     NmfQuickRaaComponent,
     NmfFilterBuilderComponent,
   ],

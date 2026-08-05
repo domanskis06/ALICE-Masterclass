@@ -17,6 +17,12 @@
   font-size: 0.75em;
 }
 
+/* Thin brand ring so the cutout edge reads as a tight frame, not a fat halo. */
+body.driver-active .driver-active-element {
+  outline: 2px solid #b71c1c;
+  outline-offset: 1px;
+}
+
 /*
  * driver.js sets `.driver-active * { pointer-events: none }` and only re-enables
  * `.driver-active-element` (and *all* its descendants). That second part breaks
@@ -65,6 +71,15 @@ body:has(.nmf-filter-overlay) .blocklyTooltipDiv *,
 body.driver-active .blocklyWidgetDiv *,
 body.driver-active .blocklyDropDownDiv *,
 body.driver-active .blocklyTooltipDiv * {
+  pointer-events: auto !important;
+}
+
+/*
+ * Mat-select panels mount on body (outside `.driver-active-element`). Re-enable
+ * hits so the NMF/VA dataset picker stays usable during the tour highlight.
+ */
+body.driver-active .cdk-overlay-container .mat-mdc-select-panel,
+body.driver-active .cdk-overlay-container .mat-mdc-select-panel * {
   pointer-events: auto !important;
 }
 
@@ -194,4 +209,17 @@ div.mat-mdc-select-panel.calculator-particle-select-panel {
 .nmf-histogram-dialog-panel .mdc-dialog__surface {
   background: #0a1832;
   color: #ffffff;
+}
+
+/* NMF part-1 Analysis dialog (R_AA + p_T plots). */
+.cdk-overlay-pane.nmf-analysis-dialog-panel {
+  z-index: 1100;
+}
+
+.nmf-analysis-dialog-panel .mat-mdc-dialog-container,
+.nmf-analysis-dialog-panel .mdc-dialog__surface {
+  padding: 0;
+  background: #0a1832;
+  color: #ffffff;
+  overflow: hidden;
 }

@@ -1,0 +1,149 @@
+.nmf-analysis-dialog {
+  background: var(--va-bg-panel-solid, #0a1832);
+  color: var(--va-text, #ffffff);
+  min-width: min(96vw, 1100px);
+  max-width: 96vw;
+}
+
+.nmf-analysis-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 0 18px;
+}
+
+.nmf-analysis-dialog-title {
+  margin: 0;
+  flex: 1 1 auto;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--va-text, #ffffff);
+}
+
+.nmf-analysis-dialog-close {
+  color: var(--va-text, #ffffff);
+}
+
+.nmf-analysis-dialog-content {
+  margin: 0;
+  padding: 12px 18px 0;
+  max-height: min(78vh, 820px);
+  overflow: auto;
+}
+
+.nmf-analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 14px;
+  min-height: 0;
+}
+
+.nmf-analysis-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+}
+
+.nmf-raa-group {
+  padding: 10px 12px;
+  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
+  border-radius: 6px;
+}
+
+.nmf-raa-group-title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nmf-raa-line {
+  margin: 0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--va-muted, rgba(255, 255, 255, 0.78));
+}
+
+.nmf-analysis-plot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 260px;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+}
+
+.nmf-analysis-plot-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+
+  h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+}
+
+.nmf-analysis-plot-class {
+  font-size: 0.75rem;
+  color: var(--va-muted, rgba(255, 255, 255, 0.65));
+}
+
+.nmf-analysis-plot-stats {
+  display: flex;
+  gap: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  color: var(--va-muted, rgba(255, 255, 255, 0.75));
+}
+
+.nmf-analysis-plot-body {
+  flex: 1 1 auto;
+  min-height: 200px;
+  height: 220px;
+}
+
+.nmf-analysis-plot-body app-histogram {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.nmf-analysis-dialog-actions {
+  padding: 12px 18px 16px;
+  gap: 8px;
+}
+
+:host ::ng-deep app-histogram svg {
+  background: transparent;
+
+  text {
+    fill: var(--va-text, #ffffff);
+  }
+
+  path,
+  line {
+    stroke: rgba(226, 232, 240, 0.55);
+  }
+}
+
+@media (max-width: 900px) {
+  .nmf-analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nmf-analysis-dialog {
+    min-width: min(96vw, 640px);
+  }
+}

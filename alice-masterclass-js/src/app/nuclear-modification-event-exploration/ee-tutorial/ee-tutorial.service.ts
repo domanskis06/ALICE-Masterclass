@@ -6,6 +6,7 @@ import {
   NMF_EE_STEP_MARQUEE,
   NMF_EE_STEP_PICK_PRIMARIES,
   NMF_EE_STEP_SUBMIT_FILTER,
+  NMF_TOUR_3D_SELECTOR,
 } from './ee-tutorial.constants';
 
 export interface NmfEeTutorialHostHooks {
@@ -140,7 +141,8 @@ export class NmfEeTutorialService {
       },
       overlayOpacity: 0.72,
       overlayColor: '#1a1a1a',
-      stagePadding: 8,
+      stagePadding: 2,
+      stageRadius: 4,
       popoverClass: 'lsa-driver-popover',
       doneBtnText: 'Got it',
       showButtons: ['close'],
@@ -288,7 +290,8 @@ export class NmfEeTutorialService {
       },
       overlayOpacity: 0.72,
       overlayColor: '#1a1a1a',
-      stagePadding: 8,
+      stagePadding: 2,
+      stageRadius: 4,
       popoverClass: 'lsa-driver-popover',
       nextBtnText: 'Next &rarr;',
       prevBtnText: '&larr; Previous',
@@ -372,7 +375,7 @@ export class NmfEeTutorialService {
         },
       },
       {
-        element: '#nmf-tour-3d',
+        element: NMF_TOUR_3D_SELECTOR,
         popover: {
           title: 'The ALICE event display',
           description:
@@ -416,7 +419,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Analyze: continue later',
           description:
-            'After you have analysed <strong>every event</strong> in the dataset, this red <strong>Analyze</strong> bar appears at the bottom of the page. Click it to move on to <strong>Spectrum Analysis</strong> (R<sub>AA</sub> pipeline). For this tour we show it early so you know where it will live.',
+            'After you have analysed <strong>every event</strong> in the dataset, this red <strong>Analyze</strong> bar appears at the bottom of the page. Click it to open the <strong>Analysis</strong> summary (integrated R<sub>AA</sub> and p<sub>T</sub> spectra). For this tour we show it early so you know where it will live — clicking it now will not open the dialog.',
           side: 'top',
           align: 'center',
         },
@@ -436,7 +439,7 @@ export class NmfEeTutorialService {
         },
       },
       {
-        element: '#nmf-tour-3d',
+        element: NMF_TOUR_3D_SELECTOR,
         disableActiveInteraction: false,
         popover: {
           title: 'Select the primary tracks',
@@ -551,7 +554,7 @@ export class NmfEeTutorialService {
         onHighlighted: () => this.hooks?.setFilterBuilderOpen(false),
       },
       {
-        element: '#nmf-tour-3d',
+        element: NMF_TOUR_3D_SELECTOR,
         disableActiveInteraction: false,
         popover: {
           title: 'Select tracks with Shift',
@@ -573,7 +576,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Analysed checkmark',
           description:
-            'When an event is analysed, a green <strong>done</strong> tick appears next to the event label, the same pattern as Visual Analysis. Visit every event, then use <strong>Analyze</strong> at the bottom to continue.',
+            'When an event is analysed, a green <strong>done</strong> tick appears next to the event label, the same pattern as Visual Analysis. Analyse every event, then use <strong>Analyze</strong> at the bottom to continue.',
           side: 'right',
           align: 'start',
         },

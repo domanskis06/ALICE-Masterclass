@@ -434,6 +434,10 @@
       "CHARACTERISTICS_FULLSCREEN": "Expand to fullscreen",
       "CHARACTERISTICS_EXIT_FULLSCREEN": "Exit fullscreen",
       "ANALYZE_BUTTON": "Analyze",
+      "ANALYSIS_TITLE": "Analysis",
+      "ANALYSIS_PERIPHERAL": "Peripheral",
+      "ANALYSIS_SEMI_CENTRAL": "SemiCentral",
+      "ANALYSIS_CENTRAL": "Central",
       "AXIS_TPC_TRACKS": "#TPC tracks"
     },
     "SPECTRUM_ANALYSIS": {

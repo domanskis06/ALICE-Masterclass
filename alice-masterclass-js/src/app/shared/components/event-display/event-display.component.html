@@ -144,6 +144,13 @@
               </div>
             </div>
           }
+          <!-- NMF (and similar) project dataset/options here; right slot stays for VA. -->
+          <div
+            class="event-meta-slot event-meta-slot--left"
+            [hidden]="!detectorInteractiveAssemblyDone"
+            [attr.aria-hidden]="!detectorInteractiveAssemblyDone">
+            <ng-content select="[edSidebarMetaLeft]"></ng-content>
+          </div>
         </div>
       </aside>
 

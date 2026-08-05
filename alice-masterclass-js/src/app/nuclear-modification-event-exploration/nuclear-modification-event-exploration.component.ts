@@ -23,6 +23,10 @@ import { RaaDataService } from '../services/raa-data.service';
 import { EventDisplayComponent } from '../shared/components/event-display/event-display.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { NmfEventCharacteristicsComponent } from './event-characteristics/event-characteristics.component';
+import {
+  NmfAnalysisDialogComponent,
+  NmfAnalysisEventRecord,
+} from './analysis-dialog/analysis-dialog.component';
 import { NmfEeTutorialService } from './ee-tutorial/ee-tutorial.service';
 import { NmfEeTutorialWelcomeDialogComponent } from './ee-tutorial/ee-tutorial-welcome-dialog.component';
 
@@ -139,6 +143,13 @@ export class NuclearModificationEventExplorationComponent
 
   private readonly visitedByIndex = new Set<number>();
   private readonly analyzedByIndex = new Set<number>();
+  /** Per-index publish records for the part-1 Analysis dialog (R_AA + p_T). */
+  private readonly analysisRecords = new Map<number, NmfAnalysisEventRecord>();
+  private nCollPart1: Record<string, number> = {
+    pbPbPeripheral: 6.32,
+    pbPbSemiCentral: 438.8,
+    pbPbCentral: 1686.87,
+  };
 
   tourShowAnalyze = false;
   filterBuilderOpen = false;
@@ -170,6 +181,7 @@ export class NuclearModificationEventExplorationComponent
     this.eventIndex = 0;
     this.visitedByIndex.clear();
     this.analyzedByIndex.clear();
+    this.analysisRecords.clear();
     this.characteristics?.resetSession();
     this.selectedTrack = null;
     if (value == null) {
@@ -253,6 +265,9 @@ export class NuclearModificationEventExplorationComponent
     this.raaData.getMetadata().subscribe((meta) => {
       this.datasetEvents = meta.datasets;
       this.eventRoles = meta.eventRoles ?? [];
+      if (meta.nCollPart1) {
+        this.nCollPart1 = { ...meta.nCollPart1 };
+      }
       this.datasetOptions = Object.keys(meta.datasets)
         .map(Number)
         .sort((a, b) => a - b);
@@ -265,7 +280,12 @@ export class NuclearModificationEventExplorationComponent
     queueMicrotask(() => {
       this.eventDisplay?.skipMultipartDetectorAssembly(this.ALICE_DETECTOR_MODEL);
       this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
-      this.maybeOpenDatasetPrompt();
+      // Assembly start closes the left rail; NMF keeps dataset/options there (right is hidden).
+      if (this.eventDisplay) {
+        this.eventDisplay.detectorLayersPanelOpened = true;
+      }
+      // Wait for the left sidebar width transition so driver.js can highlight the select.
+      setTimeout(() => this.maybeOpenDatasetPrompt(), 320);
     });
   }
 
@@ -302,7 +322,7 @@ export class NuclearModificationEventExplorationComponent
   }
 
   get showAnalyzeFooter(): boolean {
-    return this.tourShowAnalyze || this.allEventsVisited;
+    return this.tourShowAnalyze || this.allEventsAnalyzed;
   }
 
   get selectedTrackCharge(): number {
@@ -341,8 +361,45 @@ export class NuclearModificationEventExplorationComponent
     return true;
   }
 
+  /** True only once every event in the pack has been analysed (marquee publish). */
+  get allEventsAnalyzed(): boolean {
+    const n = this.maxEvents;
+    if (n === 0) {
+      return false;
+    }
+    for (let i = 0; i < n; i++) {
+      if (!this.analyzedByIndex.has(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   onAnalyze(): void {
-    void this.router.navigate(['/nuclear-modification-spectrum-analysis']);
+    // Tour early-previews the Analyze bar — do not open Analysis / navigate.
+    if (this.eeTutorial.isActive() || this.tourShowAnalyze) {
+      return;
+    }
+    this.dialog
+      .open(NmfAnalysisDialogComponent, {
+        data: {
+          records: [...this.analysisRecords.values()],
+          nCollPart1: this.nCollPart1,
+        },
+        panelClass: 'nmf-analysis-dialog-panel',
+        autoFocus: false,
+        hasBackdrop: true,
+        disableClose: false,
+        maxWidth: '96vw',
+        width: '1100px',
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result === 'spectrum') {
+          void this.router.navigate(['/nuclear-modification-spectrum-analysis']);
+        }
+      });
   }
 
   onPreviousEvent(): void {
@@ -482,6 +539,7 @@ export class NuclearModificationEventExplorationComponent
     const accepted = this.event.tracks.filter(passesPrimaryFilter);
     if (!this.analyzedByIndex.has(this.eventIndex)) {
       this.characteristics?.recordAnalyzedEvent(this.event, accepted);
+      this.recordAnalysisEvent(accepted);
       this.analyzedByIndex.add(this.eventIndex);
     }
     // 3D view: hide secondaries only — keep all primaries (and decays). Never
@@ -634,6 +692,20 @@ export class NuclearModificationEventExplorationComponent
       ...this.event,
       tracks: this.event.tracks.filter((t) => !isSecondaryTrack(t)),
     };
+  }
+
+  /** Snapshot multiplicities / p_T for the Analysis dialog (part-1 R_AA). */
+  private recordAnalysisEvent(accepted: Track[]): void {
+    const role = this.eventRoles[this.eventIndex] ?? roleForIndex(this.eventIndex);
+    const autoTracks = this.event.tracks.filter((t) => isPrimaryTrack(t) && t.sign !== 0);
+    const ptsOf = (tracks: Track[]) => tracks.map((t) => Math.hypot(t.px, t.py));
+    this.analysisRecords.set(this.eventIndex, {
+      role,
+      autoMultiplicity: autoTracks.length,
+      manualMultiplicity: accepted.length,
+      autoPts: ptsOf(autoTracks),
+      manualPts: ptsOf(accepted),
+    });
   }
 }
 
