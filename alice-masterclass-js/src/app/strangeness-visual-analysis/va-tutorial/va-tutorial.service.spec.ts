@@ -22,7 +22,7 @@ describe('VaTutorialService', () => {
     expect(service.shouldShow()).toBeTrue();
   });
 
-  it('shouldShow is false when demo is disabled', () => {
+  it('shouldShow is false when demo is disabled (no auto welcome)', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
@@ -55,19 +55,5 @@ describe('VaTutorialService', () => {
     service.destroyDriver(true);
     expect(service.shouldShow()).toBeTrue();
     expect(service.isActive()).toBeFalse();
-  });
-
-  it('startMainTour is a no-op when demo is disabled', () => {
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot()],
-      providers: [
-        VaTutorialService,
-        { provide: DemoConfig, useValue: { enabled: false } },
-      ],
-    });
-    const workshopService = TestBed.inject(VaTutorialService);
-    workshopService.startMainTour();
-    expect(workshopService.isActive()).toBeFalse();
   });
 });

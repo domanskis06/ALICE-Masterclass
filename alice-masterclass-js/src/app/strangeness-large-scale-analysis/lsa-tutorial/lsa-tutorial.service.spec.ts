@@ -24,7 +24,7 @@ describe('LsaTutorialService', () => {
     expect(service.shouldShow()).toBeTrue();
   });
 
-  it('shouldShow is false when demo is disabled', () => {
+  it('shouldShow is false when demo is disabled (no auto welcome)', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [TranslateModule.forRoot()],
@@ -47,20 +47,5 @@ describe('LsaTutorialService', () => {
     service.dismiss();
     service.clearDismissFlag();
     expect(service.shouldShow()).toBeTrue();
-  });
-
-  it('startMainTour is a no-op when demo is disabled', () => {
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot()],
-      providers: [
-        LsaTutorialService,
-        FitService,
-        { provide: DemoConfig, useValue: { enabled: false } },
-      ],
-    });
-    const workshopService = TestBed.inject(LsaTutorialService);
-    workshopService.startMainTour();
-    expect(workshopService.isActive()).toBeFalse();
   });
 });

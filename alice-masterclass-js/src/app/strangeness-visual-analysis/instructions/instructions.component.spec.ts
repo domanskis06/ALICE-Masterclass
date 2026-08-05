@@ -4,7 +4,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AngularModule } from '../../shared/angular.module';
 import { SharedModule } from '../../shared/shared.module';
 
-import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { VaTutorialService } from '../va-tutorial/va-tutorial.service';
 import { InstructionsComponent } from './instructions.component';
 
@@ -26,7 +25,6 @@ describe('InstructionsComponent', () => {
       ],
       providers: [
         { provide: VaTutorialService, useValue: tutorialSpy },
-        { provide: DemoConfig, useValue: { enabled: true } },
         { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
       ],
     }).compileComponents();
@@ -42,16 +40,16 @@ describe('InstructionsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('disables replay while the tutorial is active', () => {
+  it('disables start while the tutorial is active', () => {
     tutorialSpy.isActive.and.returnValue(true);
-    expect(component.replayDisabled).toBeTrue();
-    component.replayTutorial();
+    expect(component.startDisabled).toBeTrue();
+    component.startTutorial();
     expect(tutorialSpy.startMainTour).not.toHaveBeenCalled();
   });
 
-  it('replays the tutorial when inactive', () => {
+  it('starts the tutorial when inactive', () => {
     tutorialSpy.isActive.and.returnValue(false);
-    component.replayTutorial();
+    component.startTutorial();
     expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalled();
   });
 });
