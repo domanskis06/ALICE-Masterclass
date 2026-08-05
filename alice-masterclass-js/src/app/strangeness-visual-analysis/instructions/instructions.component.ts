@@ -19,11 +19,11 @@ export class InstructionsComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  get replayDisabled(): boolean {
+  get startDisabled(): boolean {
     return this.vaTutorial.isActive();
   }
 
-  replayTutorial(): void {
+  startTutorial(): void {
     if (this.vaTutorial.isActive()) {
       return;
     }

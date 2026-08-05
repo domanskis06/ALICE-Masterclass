@@ -71,8 +71,12 @@ export class VaTutorialService {
     this.hostHooks = { ...hooks };
   }
 
+  /**
+   * Whether to auto-open the Skip / Start welcome (or coach offer) on module entry.
+   * Only the standalone demo offers this; workshop apps start the tour from Help.
+   */
   shouldShow(): boolean {
-    return !this.dismissedThisSession;
+    return this.demo && !this.dismissedThisSession;
   }
 
   dismiss(): void {

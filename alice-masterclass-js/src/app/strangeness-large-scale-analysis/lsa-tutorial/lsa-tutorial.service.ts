@@ -62,8 +62,12 @@ export class LsaTutorialService {
     private readonly translate: TranslateService,
   ) {}
 
+  /**
+   * Whether to auto-open the Skip / Start welcome dialog on module entry.
+   * Only the standalone demo offers this; workshop apps start the tour from Help.
+   */
   shouldShow(): boolean {
-    return !this.dismissedThisSession;
+    return this.demo && !this.dismissedThisSession;
   }
 
   dismiss(): void {

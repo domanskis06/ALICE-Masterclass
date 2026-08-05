@@ -18,8 +18,21 @@ describe('VaTutorialService', () => {
     service = TestBed.inject(VaTutorialService);
   });
 
-  it('shouldShow is true by default', () => {
+  it('shouldShow is true by default in demo', () => {
     expect(service.shouldShow()).toBeTrue();
+  });
+
+  it('shouldShow is false when demo is disabled (no auto welcome)', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [TranslateModule.forRoot()],
+      providers: [
+        VaTutorialService,
+        { provide: DemoConfig, useValue: { enabled: false } },
+      ],
+    });
+    const workshopService = TestBed.inject(VaTutorialService);
+    expect(workshopService.shouldShow()).toBeFalse();
   });
 
   it('dismiss hides welcome for this page load only', () => {

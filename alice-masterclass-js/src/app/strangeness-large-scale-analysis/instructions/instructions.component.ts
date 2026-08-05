@@ -19,7 +19,7 @@ export class InstructionsComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  replayTutorial(): void {
+  startTutorial(): void {
     // Close help dialog first so the tour overlay can highlight the underlying UI.
     this.dialogRef.close();
     setTimeout(() => this.lsaTutorial.startMainTour(), 0);
