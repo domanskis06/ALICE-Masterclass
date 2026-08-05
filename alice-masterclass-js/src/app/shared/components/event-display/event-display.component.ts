@@ -20,6 +20,7 @@ import {
   neonTrackColor, caloBarColorLight, caloBarColorDark
 } from '../../globals';
 import { detectorPartAccentColor } from '../../three/detector-part-accent';
+import { optimizeStaticDetectorPart } from '../../three/optimize-detector-part';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -63,16 +64,21 @@ export interface AssemblyUnlockState {
 export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /**
    * Side views: full-res WebGLRenderTargets of the same scene from fixed Rφ/ρz
-   * cameras (no link to main-camera zoom). Re-rendered only when scene content /
-   * layout is dirty; blit every frame after the main pass so bloom/composer
-   * cannot leave the side regions blank. Picking is main-viewport only.
+   * cameras. Detector shells are masked per pane (ρz/View1 side: ITS+TRD;
+   * Rφ/View2 front: ITS+TPC+TRD+TOF) at a fixed opacity; tracks/markers stay
+   * shared. Zoom follows the main orbit distance (throttled while gesturing).
+   * Re-rendered when content/layout/zoom is dirty; blit every frame after the
+   * main pass. Picking is main-viewport only.
    *
-   * Layer 0 — shared by main + Rφ/ρz: detector parts (respecting root.visible), tracks,
-   * decays, clusters, markers, calorimeter readouts, lights, axes.
+   * Layer 0 — shared by main + Rφ/ρz: detector parts, tracks, decays, clusters,
+   * markers, lights, axes (calorimeter readouts hidden during side passes).
    * Layer 1 — main 3D only: helper grids (skip in side passes).
    */
   static readonly LAYER_SHARED = 0;
   static readonly LAYER_MAIN_ONLY = 1;
+  /** Side-view kind: View 1 (Rφ) vs View 2 (ρz). */
+  static readonly SIDE_VIEW_RPHI = 'rphi' as const;
+  static readonly SIDE_VIEW_RHOZ = 'rhoz' as const;
   private readonly CLUSTERS_USE_POINTS: boolean = true;
   private readonly CLICK_HIGHLIGHT_DURATION = 200;
 
@@ -98,12 +104,17 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    */
   static readonly CAMERA_3D_ASSEMBLY_START = { x: 0, y: 0, z: 3 } as const;
   /**
-   * Fixed PerspectiveCamera.zoom for Rφ/ρz side views (overview framing).
-   * Independent of the main orbit distance so zooming 3D View does not rescaled
-   * or re-render the side panes.
+   * Fallback PerspectiveCamera.zoom for Rφ/ρz when orbit distance is unavailable.
+   * Matches overview framing: side cameras sit at distance 10.
    */
   static readonly SIDE_VIEW_FIXED_ZOOM =
     10 / EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+  /** Fixed detector-shell opacity while rendering a side-view pass. */
+  static readonly SIDE_VIEW_DETECTOR_OPACITY = 0.5;
+  /** Min interval between full side-view RT refreshes during an active orbit gesture. */
+  static readonly SIDE_VIEW_ZOOM_THROTTLE_MS = 100;
+  /** Relative orbit-distance change that counts as a zoom sync for side views. */
+  static readonly SIDE_VIEW_ZOOM_EPS = 0.025;
   /** Duration of the auto zoom-out after each assembly piece is snapped. */
   static readonly ASSEMBLY_CAMERA_ZOOM_MS = 700;
   /**
@@ -484,6 +495,37 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   static isTrdAssetPath(assetPath: string): boolean {
     return /(^|[/\\])trd\.glb($|\?)/i.test(assetPath);
+  }
+
+  /**
+   * Which detector shells appear in a side-view pass.
+   * ρz / View 1 (side): ITS + TRD.
+   * Rφ / View 2 (front): ITS + TPC + TRD + TOF (all @ SIDE_VIEW_DETECTOR_OPACITY).
+   */
+  static sideViewAllowsPart(
+    assetPath: string,
+    which: typeof EventDisplayComponent.SIDE_VIEW_RPHI | typeof EventDisplayComponent.SIDE_VIEW_RHOZ
+  ): boolean {
+    if (EventDisplayComponent.isItsAssetPath(assetPath) || EventDisplayComponent.isTrdAssetPath(assetPath)) {
+      return true;
+    }
+    // Front (Rφ / View 2): also TPC + TOF. Side (ρz / View 1): no TPC/TOF.
+    if (which === EventDisplayComponent.SIDE_VIEW_RPHI) {
+      return EventDisplayComponent.isTpcAssetPath(assetPath)
+        || EventDisplayComponent.isTofAssetPath(assetPath);
+    }
+    return false;
+  }
+
+  /**
+   * Map main-orbit distance → side PerspectiveCamera.zoom.
+   * Side cameras sit at distance 10; at overview distance this matches SIDE_VIEW_FIXED_ZOOM.
+   */
+  static computeSideViewZoomFromDistance(distance: number): number {
+    if (!Number.isFinite(distance) || distance <= 1e-4) {
+      return EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+    }
+    return 10 / distance;
   }
 
   static isTofAssetPath(assetPath: string): boolean {
@@ -961,6 +1003,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private sideViewBlitCamera: THREE.OrthographicCamera | null = null;
   private sideViewBlitMaterial: THREE.MeshBasicMaterial | null = null;
   private sideViewBlitMesh: THREE.Mesh | null = null;
+  /** performance.now() of the last completed side-view RT pair. */
+  private lastSideViewRenderMs = 0;
+  /** Orbit distance used for the last completed side-view RT pair. */
+  private lastSideViewCameraDistance = Number.NaN;
+  /** True while OrbitControls pointer gesture is active (start…end). */
+  private sideViewControlsGesturing = false;
+  /** Zoom distance changed enough to need a side-view refresh when throttle allows. */
+  private sideViewZoomPending = false;
   /** Last EffectComposer CSS size used for the main viewport (avoid realloc each frame). */
   private composerMainCssW = 0;
   private composerMainCssH = 0;
@@ -1168,7 +1218,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.loaderGLTF.load(
         modelPathWithReload,
         (gltf: GLTF) => {
-          const scene = gltf.scene;
+          let scene: THREE.Object3D = gltf.scene;
           const radialInflate = 1 + pathIndex * EventDisplayComponent.DETECTOR_LAYER_RADIAL_INFLATE_STEP;
           scene.scale.setScalar(EventDisplayComponent.detectorModelScale * radialInflate);
           EventDisplayComponent.alignDetectorPartToBeamAxis(scene, modelPath);
@@ -1178,10 +1228,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
             detectorAssetPath: modelPath,
             detectorLayerIndex: pathIndex
           };
+          // Mild batched merge (≤20 source meshes / draw). ITS/TPC: merge only.
+          // Other layers: prune tiny CAD bits first. EMCal/DCal stay unmerged.
+          // FIT GLB is pre-gltfpacked.
+          scene = optimizeStaticDetectorPart(scene, modelPath);
+          EventDisplayComponent.freezeStaticTransforms(scene);
           this.setDetectorMaterialsWithPolygonOffset(scene, defaultPartOpacity, pathIndex);
-          // Keep the original GLB scene graph (SMOD_/DCSM_ node names, etc.).
-          // Mesh merging belongs in particle-propagation only — flattening here
-          // breaks calorimeter cylindrical coverage / energy readout bars.
           loadedByPath.set(modelPath, scene);
           finishOne();
         },
@@ -1566,6 +1618,115 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     for (const part of this.detectorPartsForUi) {
       this.setDetectorPartOpacity(part, part.opacity);
     }
+  }
+
+  /**
+   * Snapshot detector-root visibility + mesh material opacity for temporary side-view masks.
+   */
+  private captureDetectorPartRenderState(): Array<{
+    root: THREE.Object3D;
+    visible: boolean;
+    materials: Array<{
+      material: THREE.Material;
+      opacity: number;
+      transparent: boolean;
+      baseOpacity: number | undefined;
+    }>;
+  }> {
+    const snap: Array<{
+      root: THREE.Object3D;
+      visible: boolean;
+      materials: Array<{
+        material: THREE.Material;
+        opacity: number;
+        transparent: boolean;
+        baseOpacity: number | undefined;
+      }>;
+    }> = [];
+    for (const root of this.detectorPartRootByPath.values()) {
+      const materials: Array<{
+        material: THREE.Material;
+        opacity: number;
+        transparent: boolean;
+        baseOpacity: number | undefined;
+      }> = [];
+      root.traverse((o: THREE.Object3D) => {
+        if (!(o as THREE.Mesh).isMesh) return;
+        const raw = (o as THREE.Mesh).material;
+        const mats: THREE.Material[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        for (const m of mats) {
+          if (!m) continue;
+          const anyMat = m as THREE.Material & { opacity?: number; transparent?: boolean; userData?: any };
+          materials.push({
+            material: m,
+            opacity: typeof anyMat.opacity === 'number' ? anyMat.opacity : 1,
+            transparent: !!anyMat.transparent,
+            baseOpacity: typeof anyMat.userData?.baseOpacity === 'number'
+              ? anyMat.userData.baseOpacity
+              : undefined,
+          });
+        }
+      });
+      snap.push({ root, visible: root.visible, materials });
+    }
+    return snap;
+  }
+
+  private applySideViewDetectorMask(
+    which: typeof EventDisplayComponent.SIDE_VIEW_RPHI | typeof EventDisplayComponent.SIDE_VIEW_RHOZ
+  ): void {
+    const opacity = EventDisplayComponent.SIDE_VIEW_DETECTOR_OPACITY;
+    for (const [assetPath, root] of this.detectorPartRootByPath.entries()) {
+      const allowed = EventDisplayComponent.sideViewAllowsPart(assetPath, which);
+      root.visible = allowed;
+      if (!allowed) continue;
+      root.traverse((o: THREE.Object3D) => {
+        if (!(o as THREE.Mesh).isMesh) return;
+        const raw = (o as THREE.Mesh).material;
+        const mats: THREE.Material[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
+        for (const m of mats) {
+          if (!m) continue;
+          const anyMat = m as THREE.Material & { opacity?: number; transparent?: boolean; userData?: any; needsUpdate?: boolean };
+          anyMat.transparent = opacity < 0.995;
+          anyMat.userData = { ...(anyMat.userData || {}), baseOpacity: opacity };
+          anyMat.opacity = opacity;
+          anyMat.needsUpdate = true;
+        }
+      });
+    }
+    this.calorimeterReadouts.visible = false;
+  }
+
+  private restoreDetectorPartRenderState(
+    snap: Array<{
+      root: THREE.Object3D;
+      visible: boolean;
+      materials: Array<{
+        material: THREE.Material;
+        opacity: number;
+        transparent: boolean;
+        baseOpacity: number | undefined;
+      }>;
+    }>
+  ): void {
+    for (const entry of snap) {
+      entry.root.visible = entry.visible;
+      for (const matSnap of entry.materials) {
+        const anyMat = matSnap.material as THREE.Material & {
+          opacity?: number;
+          transparent?: boolean;
+          userData?: any;
+          needsUpdate?: boolean;
+        };
+        anyMat.opacity = matSnap.opacity;
+        anyMat.transparent = matSnap.transparent;
+        if (matSnap.baseOpacity !== undefined) {
+          anyMat.userData = { ...(anyMat.userData || {}), baseOpacity: matSnap.baseOpacity };
+        }
+        anyMat.needsUpdate = true;
+      }
+    }
+    this.syncCalorimeterReadoutVisibility();
   }
 
   private getDetectorPartOpacity(root: THREE.Object3D): number {
@@ -3369,18 +3530,50 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   private onControlsChange = (): void => {
+    this.maybeInvalidateSideViewsForZoom();
     this.requestRender();
   };
 
   private onControlsStart = (): void => {
+    this.sideViewControlsGesturing = true;
     this.requestRender();
   };
 
   private onControlsEnd = (): void => {
+    this.sideViewControlsGesturing = false;
+    if (this.effectiveSideViewsShown) {
+      this.invalidateSideViews();
+    }
     this.requestRender();
   };
 
-  /** Mark Rφ/ρz caches stale (content / layout — not main-camera zoom). */
+  /** True when orbit distance moved enough vs the last completed side-view RT. */
+  private sideViewDistanceChanged(distance: number): boolean {
+    if (!Number.isFinite(distance)) return false;
+    if (!Number.isFinite(this.lastSideViewCameraDistance)) return true;
+    const ref = Math.max(Math.abs(this.lastSideViewCameraDistance), 1e-3);
+    return Math.abs(distance - this.lastSideViewCameraDistance) / ref
+      > EventDisplayComponent.SIDE_VIEW_ZOOM_EPS;
+  }
+
+  /**
+   * During orbit zoom, mark side views dirty at most every SIDE_VIEW_ZOOM_THROTTLE_MS.
+   * Pure rotation (unchanged distance) does not invalidate.
+   */
+  private maybeInvalidateSideViewsForZoom(): void {
+    if (!this.effectiveSideViewsShown || !this.controls) return;
+    const distance = this.controls.getDistance();
+    if (!this.sideViewDistanceChanged(distance)) return;
+    this.sideViewZoomPending = true;
+    const now = performance.now();
+    const throttleOk = !this.sideViewControlsGesturing
+      || (now - this.lastSideViewRenderMs) >= EventDisplayComponent.SIDE_VIEW_ZOOM_THROTTLE_MS;
+    if (throttleOk) {
+      this.invalidateSideViews();
+    }
+  }
+
+  /** Mark Rφ/ρz caches stale (content / layout / synced zoom). */
   private invalidateSideViews(): void {
     this.sideViewsDirty = true;
   }
@@ -3709,11 +3902,23 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
         this.camRphiVP.set(oldVP.x, oldVP.y, width, height);
         this.camRhozVP.set(oldVP.x + width, oldVP.y, width, height);
       }
-      // Full-res scene render into cache when content/layout dirty; fixed framing.
+      // Full-res scene render into cache when content/layout/zoom dirty.
       this.ensureSideViewTargets(this.camRphiVP.z, this.camRphiVP.w);
+      // Flush a throttled zoom refresh if the gesture kept pending past the interval.
+      if (
+        this.sideViewZoomPending &&
+        !this.sideViewsDirty &&
+        (performance.now() - this.lastSideViewRenderMs) >= EventDisplayComponent.SIDE_VIEW_ZOOM_THROTTLE_MS
+      ) {
+        this.invalidateSideViews();
+      }
       if (this.sideViewsDirty && this.sideViewRphiRT && this.sideViewRhozRT) {
         this.sideViewsDirty = false;
-        this.cameraRphi.zoom = this.cameraRhoz.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+        const distance = this.controls?.getDistance();
+        const sideZoom = EventDisplayComponent.computeSideViewZoomFromDistance(
+          Number.isFinite(distance) ? (distance as number) : Number.NaN
+        );
+        this.cameraRphi.zoom = this.cameraRhoz.zoom = sideZoom;
         this.cameraRphi.updateProjectionMatrix();
         this.cameraRhoz.updateProjectionMatrix();
         const sideMaterials = [
@@ -3723,9 +3928,19 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           this.bachelorTrackMaterial,
           this.highlightTrackMaterial
         ];
-        this.renderSideViewToRT(this.cameraRphi, this.sideViewRphiRT, sideMaterials);
-        this.renderSideViewToRT(this.cameraRhoz, this.sideViewRhozRT, sideMaterials);
+        const snap = this.captureDetectorPartRenderState();
+        try {
+          this.applySideViewDetectorMask(EventDisplayComponent.SIDE_VIEW_RPHI);
+          this.renderSideViewToRT(this.cameraRphi, this.sideViewRphiRT, sideMaterials);
+          this.applySideViewDetectorMask(EventDisplayComponent.SIDE_VIEW_RHOZ);
+          this.renderSideViewToRT(this.cameraRhoz, this.sideViewRhozRT, sideMaterials);
+        } finally {
+          this.restoreDetectorPartRenderState(snap);
+        }
         this.sideViewCacheValid = true;
+        this.lastSideViewRenderMs = performance.now();
+        this.lastSideViewCameraDistance = Number.isFinite(distance) ? (distance as number) : Number.NaN;
+        this.sideViewZoomPending = false;
       }
       this.renderMainView();
       if (this.sideViewCacheValid && this.sideViewRphiRT && this.sideViewRhozRT) {

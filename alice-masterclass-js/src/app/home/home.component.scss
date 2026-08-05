@@ -14,6 +14,11 @@ img {
 #text {
   margin-left: 10%;
   margin-right: 10%;
+
+  p {
+    font-size: 1.15rem;
+    text-align: justify;
+  }
 }
 
 #flags {
@@ -34,10 +39,6 @@ img {
 
 .header-image {
   height: 1em;
-}
-
-#download {
-  margin-top: 5em;
 }
 
 .footer {

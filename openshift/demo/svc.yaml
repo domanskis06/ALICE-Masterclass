@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: alice-masterclass-demo
+      namespace: alice-web-masterclass-demo
+      labels:
+        app: alice-masterclass-demo
+    spec:
+      selector:
+        app: alice-masterclass-demo
+        deploymentconfig: alice-masterclass-demo
+      ports:
+        - name: 8080-tcp
+          protocol: TCP
+          port: 8080
+          targetPort: 8080
+        - name: 8443-tcp
+          protocol: TCP
+          port: 8443
+          targetPort: 8443

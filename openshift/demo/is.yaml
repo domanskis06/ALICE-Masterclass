@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: alice-masterclass-demo
+      namespace: alice-web-masterclass-demo
+      labels:
+        app: alice-masterclass-demo
+        app.kubernetes.io/component: alice-masterclass-demo
+        app.kubernetes.io/instance: alice-masterclass-demo
+        app.kubernetes.io/part-of: alice-masterclass-demo
+    spec:
+      lookupPolicy:
+        local: false
+      tags:
+        - name: latest
+          from:
+            kind: DockerImage
+            name: gitlab-registry.cern.ch/alice-masterclass-dev-group/alice-masterclass-dev/alice-masterclass-demo:latest
+          importPolicy:
+            importMode: Legacy
+          referencePolicy:
+            type: Local

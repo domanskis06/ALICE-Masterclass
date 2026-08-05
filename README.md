@@ -6,11 +6,11 @@ Student web app, teacher panel, and Django API for the ALICE MasterClass exercis
 
 | Folder | Role | Local URL |
 | --- | --- | --- |
-| [`alice-masterclass-django`](alice-masterclass-django/) | REST API (Python / Django) | http://127.0.0.1:8000/api/v1/ |
-| [`alice-masterclass-js`](alice-masterclass-js/) | Student Angular app | http://localhost:4200 |
-| [`alice-masterclass-teacher`](alice-masterclass-teacher/) | Teacher Angular app | http://localhost:4201 |
+| [`alice-masterclass-django`](alice-masterclass-django/README.md) | REST API (Python / Django) | http://127.0.0.1:8000/api/v1/ |
+| [`alice-masterclass-js`](alice-masterclass-js/README.md) | Student Angular app | http://localhost:4200 |
+| [`alice-masterclass-teacher`](alice-masterclass-teacher/README.md) | Teacher Angular app | http://localhost:4201 |
 
-Cross-cutting docs live in [`ci/docs/`](ci/docs/). Ops notes for OpenShift: [`openshift/dev/README.md`](openshift/dev/README.md).
+Cross-cutting docs live in [`ci/docs/README.md`](ci/docs/README.md). Ops notes for OpenShift: [`openshift/dev/README.md`](openshift/dev/README.md).
 
 ## Run all three locally
 
@@ -52,6 +52,7 @@ npm start
 
 ## Documentation
 
-See [`ci/docs/README.md`](ci/docs/README.md) for the full index (E2E, EventDisplay, Particle Propagation, deployment, database).
+See [`ci/docs/README.md`](ci/docs/README.md) for the full index (E2E, EventDisplay, Particle Propagation, changelogs, deployment, database).
+Product summary vs upstream: [`CHANGELOG.md`](CHANGELOG.md).
 
 Dev redeploy (tag → CI → OpenShift): [`ci/docs/dev-deployment.md`](ci/docs/dev-deployment.md) §7.1.

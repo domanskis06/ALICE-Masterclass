@@ -3,7 +3,6 @@ import { PropagationTimeline } from './propagation-timeline';
 import { CollisionIntro } from './collision-intro';
 import { createTrackLines } from './track-renderer';
 import { BufferedTrack } from '../physics/propagation-types';
-import { PROTON_MODEL_PATH } from '../physics/constants';
 import { INTRO_DURATION_MS } from './timeline-constants';
 
 function makeTrack(id: string, times: number[]): BufferedTrack {
@@ -22,7 +21,7 @@ describe('PropagationTimeline', () => {
   let timeline: PropagationTimeline;
 
   beforeEach(async () => {
-    intro = await CollisionIntro.create(PROTON_MODEL_PATH);
+    intro = await CollisionIntro.create('pb-nucleus');
     tracksGroup = new THREE.Group();
     tracks = [makeTrack('a', [0, 10, 20, 30]), makeTrack('b', [0, 5, 15])];
     lines = createTrackLines(tracks, 1);
@@ -39,7 +38,7 @@ describe('PropagationTimeline', () => {
     expect(timeline.maxTimeMs).toBe(30);
   });
 
-  it('t < 0: hides the tracks group and animates the intro protons', () => {
+  it('t < 0: hides the tracks group and animates the intro nuclei', () => {
     timeline.applyTime(-INTRO_DURATION_MS / 2);
     expect(tracksGroup.visible).toBe(false);
     const [minusZ, plusZ] = intro.group.children as THREE.Object3D[];
@@ -48,7 +47,7 @@ describe('PropagationTimeline', () => {
     expect(minusZ.position.z).toBeLessThan(0);
   });
 
-  it('t > 0: shows the tracks group, hides the intro protons, and reveals vertices up to t', () => {
+  it('t > 0: shows the tracks group, hides the intro nuclei, and reveals vertices up to t', () => {
     timeline.applyTime(12);
     expect(tracksGroup.visible).toBe(true);
     const [minusZ, plusZ] = intro.group.children as THREE.Object3D[];

@@ -3,9 +3,23 @@ figure {
   margin: 0;
 }
 
+:host.histogram-x-ticks-rotated figure {
+  // Extra CSS padding so rotated tick labels / Invariant Mass are not clipped.
+  padding-bottom: 8px;
+}
+
 :host ::ng-deep svg {
+  display: block;
+  overflow: visible;
+
+  #xAxis text {
+    font-size: 0.75em;
+  }
+
   #bars rect {
     fill: var(--bar-color);
+    stroke: none;
+    shape-rendering: crispEdges;
   }
 
   #yAxisLabel, #xAxisLabel {
@@ -27,13 +41,5 @@ figure {
   left: 0;
   width: 100%;
   text-align: center;
+  line-height: 1;
 }
-
-// #yAxisLabel {
-//   writing-mode: vertical-lr;
-//   transform: rotate(-180deg);
-// }
-
-// #xAxisLabel, #yAxisLabel {
-//   text-align: end;
-// }

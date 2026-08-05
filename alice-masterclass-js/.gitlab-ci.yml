@@ -173,3 +173,85 @@ redeploy_js:
   variables:
     SERVER: https://api.paas.okd.cern.ch
     APP_NAME: alice-masterclass
+
+# --- Demo (public SPA only; no Django/teacher). Tag pattern: v*-demo ---
+# Until environment.demo / `npm run build:demo` exists, build uses production
+# config (same as workshop student image). Switch to build:demo later.
+
+build_website_js_demo:
+  stage: build_website
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-demo$/
+  needs:
+    - job: convert_strangeness_events
+      artifacts: true
+    - job: convert_strangeness_invariant
+      artifacts: true
+    - job: unit_tests_js
+      artifacts: false
+  image: node:22-bookworm
+  before_script:
+    - cd "$CI_PROJECT_DIR/alice-masterclass-js"
+    - npm install -g npm@11
+  script:
+    - npm ci
+    - export VERSION=$CI_COMMIT_TAG
+    - node -p "let data = require('./package.json'); data.version='$VERSION'; JSON.stringify(data, null, 2)" > package_version.json
+    - mv package_version.json package.json
+    # TODO: replace with `npm run build:demo` when Angular demo configuration lands
+    - npm run build:prod
+    - cp .htaccess ./dist/
+  artifacts:
+    paths:
+      - alice-masterclass-js/dist/
+
+build_docker_js_demo:
+  stage: dockerize
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-demo$/
+  needs:
+    - job: build_website_js_demo
+      artifacts: true
+    - job: unit_tests_js
+      artifacts: false
+  tags:
+    - docker-privileged-xl
+  image: docker:24.0.5
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DRIVER: overlay2
+    CONTAINER_VERSION_IMAGE: $CI_REGISTRY_IMAGE/alice-masterclass-demo:$CI_COMMIT_TAG
+    CONTAINER_LATEST_IMAGE: $CI_REGISTRY_IMAGE/alice-masterclass-demo:latest
+  before_script:
+    - for i in $(seq 1 30); do docker info >/dev/null 2>&1 && break || (echo "waiting for docker daemon ($i/30)"; sleep 2); done
+    - docker info
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker build --pull -f alice-masterclass-js/Dockerfile -t $CONTAINER_VERSION_IMAGE alice-masterclass-js
+    - docker push $CONTAINER_VERSION_IMAGE
+    - docker tag $CONTAINER_VERSION_IMAGE $CONTAINER_LATEST_IMAGE
+    - docker push $CONTAINER_LATEST_IMAGE
+
+redeploy_js_demo:
+  stage: openshift_redeploy
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*-demo$/
+  needs:
+    - job: build_docker_js_demo
+      artifacts: false
+  image: gitlab-registry.cern.ch/paas-tools/openshift-client:latest
+  environment:
+    name: demo
+    url: https://alice-web-masterclass-demo.app.cern.ch/
+  script:
+    # Map demo-specific CI vars onto the names expected by ci/redeploy-openshift.sh
+    - export NAMESPACE="${NAMESPACE_DEMO}"
+    - export IMAGE_IMPORT_TOKEN="${IMAGE_IMPORT_TOKEN_DEMO}"
+    - sh ci/redeploy-openshift.sh "$APP_NAME"
+  variables:
+    SERVER: https://api.paas.okd.cern.ch
+    APP_NAME: alice-masterclass-demo

@@ -33,12 +33,13 @@ import {
   FIELD_STRENGTH_MAX_T,
   FIELD_STRENGTH_MIN_T,
   FIELD_STRENGTH_STEP_T,
+  DENSE_PROPAGATION_EVENT_INDEX,
   PROTON_MODEL_PATH,
 } from './physics/constants';
 import { PropagationScene, PropagationCameraMode } from './scene/propagation-scene';
 import { DetectorLoaderService } from './scene/detector-loader.service';
 import { attachDeferredLowLods, DetectorModel } from './scene/detector-loader';
-import { CollisionIntro } from './scene/collision-intro';
+import { CollisionIntro, CollisionIntroBeamKind } from './scene/collision-intro';
 import { createTrackLines, setTrackLinesResolution } from './scene/track-renderer';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { PropagationTimeline } from './scene/propagation-timeline';
@@ -254,7 +255,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   }
 
   get controlsEnabled(): boolean {
-    return this.phase === 'ready' && this.timeline !== null;
+    return this.hasStarted && this.phase === 'ready' && this.timeline !== null;
   }
 
   /** Replay stays available after a field change that clears or stale-marks tracks. */
@@ -310,9 +311,18 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   // ---------------------------------------------------------------------
 
   onStartAnimation(): void {
-    if (this.isBusy) return;
     this.hasStarted = true;
-    this.runPrecomputePipeline();
+    this.errorMessage = null;
+    // Tracks may already be warm from an event switch / prior prep — just play.
+    if (this.phase === 'ready' && this.timeline) {
+      this.beginPlaybackFromStart();
+      return;
+    }
+    // Still loading this event: keep hasStarted so we auto-play when ready.
+    if (!this.isBusy) {
+      this.runPrecomputePipeline();
+    }
+    this.cdr.markForCheck();
   }
 
   onPlay(): void {
@@ -350,10 +360,13 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   }
 
   onEventChange(index: number): void {
+    if (index === this.selectedEventIndex) return;
     this.selectedEventIndex = index;
-    if (this.hasStarted) {
-      this.runPrecomputePipeline();
-    }
+    // Each event is independent: stop playback, show Start again, swap beam
+    // species immediately, and warm RK4 tracks without auto-playing.
+    this.resetPlaybackForNewEvent();
+    void this.swapBeamIntroForSelectedEvent();
+    this.runPrecomputePipeline();
   }
 
   onDetectorPartVisibility(part: DetectorPartUiModel, visible: boolean): void {
@@ -584,7 +597,7 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   private refreshLocalizedLabels(): void {
     this.eventOptions = this.eventRefs.map((ref, index) => ({
       id: index,
-      label: this.localizeEventLabel(ref.event + 1),
+      label: this.localizeEventLabel(ref.event),
     }));
     if (this.detectorPartsForUi.length > 0) {
       this.detectorPartsForUi = this.detectorPartsForUi.map((part) => ({
@@ -595,7 +608,13 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     this.cdr.markForCheck();
   }
 
-  private localizeEventLabel(n: number): string {
+  private localizeEventLabel(eventIndex: number): string {
+    if (eventIndex === DENSE_PROPAGATION_EVENT_INDEX) {
+      const key = 'STRANGENESS.PARTICLE_PROPAGATION.EVENT_PBPB_N';
+      const translated = this.translate.instant(key);
+      return translated === key ? 'Pb-Pb event' : translated;
+    }
+    const n = eventIndex + 1;
     const key = 'STRANGENESS.PARTICLE_PROPAGATION.EVENT_N';
     const translated = this.translate.instant(key, { n });
     return translated === key ? `Event ${n}` : translated;
@@ -713,9 +732,10 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.fieldLines = null;
     }
 
-    if (this.collisionIntroPromise || this.sessionCache.collisionIntro) {
-      this.sessionCache.collisionIntro?.group.removeFromParent();
+    for (const intro of Object.values(this.sessionCache.collisionIntros)) {
+      intro?.group.removeFromParent();
     }
+    this.sessionCache.collisionIntro?.group.removeFromParent();
 
     // Keep detector + field + UI prefs warm; drop tracks so the next visit
     // always gets the welcome dialog and a fresh RK4 / animation from t=0.
@@ -746,7 +766,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     const ui = cache.ui;
 
     if (ui) {
-      this.selectedEventIndex = ui.selectedEventIndex;
+      // Event selection always restarts at Event 1 (index 0) on revisit / refresh.
+      this.selectedEventIndex = 0;
       // Camera / field toggles always restart at defaults (see below).
       this.fieldDipoleTransitionVisible = ui.fieldDipoleTransitionVisible;
       // Opacity always restarts at defaults — do not restore last-visit slider values.
@@ -755,6 +776,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.fieldStrengthT = ui.fieldStrengthT;
       this.playbackSpeed = ui.playbackSpeed;
       this.magneticField.setFieldStrengthT(ui.fieldStrengthT);
+    } else {
+      this.selectedEventIndex = 0;
     }
 
     // Visibility / camera / sparse field / nominal polarity — reset every visit.
@@ -813,10 +836,8 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       }
     }
 
-    if (cache.collisionIntro) {
-      this.collisionIntroPromise = Promise.resolve(cache.collisionIntro);
-      scene.introGroup.add(cache.collisionIntro.group);
-    }
+    // Always show the Event 1 beam (protons) at intro t₀ on revisit.
+    void this.swapBeamIntroForSelectedEvent();
 
     this.showDetectorSplash = false;
 
@@ -844,6 +865,43 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
   // ---------------------------------------------------------------------
   // Precompute pipeline
   // ---------------------------------------------------------------------
+
+  /** Park playback and clear tracks so the Start button reappears for a new event. */
+  private resetPlaybackForNewEvent(): void {
+    this.hasStarted = false;
+    this.isPlaying = false;
+    this.lastFrameWallMs = 0;
+    this.tracksNeedRecompute = false;
+    this.clearTracks();
+    this.timeline = null;
+    this.timelineNsPerMs = DEFAULT_NS_PER_MS;
+    this.minTimeMs = -1;
+    this.maxTimeMs = 1;
+    this.currentTimeMs = 0;
+    this.errorMessage = null;
+  }
+
+  /** Attach the proton / Pb intro for the current dropdown selection at t₀. */
+  private async swapBeamIntroForSelectedEvent(): Promise<void> {
+    try {
+      const intro = await this.ensureCollisionIntro();
+      if (this.destroyed) return;
+      intro.reset();
+      this.requestRender();
+    } catch (err) {
+      if (!this.destroyed) this.onPipelineError(err as Error);
+    }
+  }
+
+  private beginPlaybackFromStart(): void {
+    if (!this.timeline) return;
+    this.currentTimeMs = this.timeline.minTimeMs;
+    this.timeline.applyTime(this.currentTimeMs);
+    this.isPlaying = true;
+    this.lastFrameWallMs = 0;
+    this.requestRender();
+    this.cdr.markForCheck();
+  }
 
   private runPrecomputePipeline(): void {
     this.precomputeSub?.unsubscribe();
@@ -945,7 +1003,9 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
       this.currentTimeMs = this.timeline.minTimeMs;
 
       this.phase = 'ready';
-      this.isPlaying = true;
+      // Auto-play only after an explicit Start (or Replay recompute); event
+      // switches warm tracks with hasStarted=false and wait for the button.
+      this.isPlaying = this.hasStarted;
       this.lastFrameWallMs = 0;
       this.cdr.markForCheck();
     } catch (err) {
@@ -953,23 +1013,39 @@ export class ParticlePropagationComponent implements AfterViewInit, OnDestroy, I
     }
   }
 
+  private beamKindForSelectedEvent(): CollisionIntroBeamKind {
+    return this.selectedEventIndex === DENSE_PROPAGATION_EVENT_INDEX ? 'pb-nucleus' : 'proton';
+  }
+
   private ensureCollisionIntro(): Promise<CollisionIntro> {
-    if (this.sessionCache.collisionIntro) {
-      const intro = this.sessionCache.collisionIntro;
-      if (this.scene && intro.group.parent !== this.scene.introGroup) {
-        this.scene.introGroup.add(intro.group);
-      }
-      this.collisionIntroPromise = Promise.resolve(intro);
+    const kind = this.beamKindForSelectedEvent();
+    const cached = this.sessionCache.collisionIntros[kind];
+    if (cached) {
+      this.attachCollisionIntro(cached);
+      this.collisionIntroPromise = Promise.resolve(cached);
       return this.collisionIntroPromise;
     }
-    if (!this.collisionIntroPromise) {
-      this.collisionIntroPromise = CollisionIntro.create(PROTON_MODEL_PATH).then((intro) => {
-        this.sessionCache.collisionIntro = intro;
-        if (!this.destroyed) this.scene?.introGroup.add(intro.group);
-        return intro;
-      });
-    }
+
+    // Drop a stale in-flight create for the other beam kind.
+    this.collisionIntroPromise = CollisionIntro.create(kind, PROTON_MODEL_PATH).then((intro) => {
+      if (this.destroyed) return intro;
+      this.sessionCache.collisionIntros[kind] = intro;
+      this.attachCollisionIntro(intro);
+      return intro;
+    });
     return this.collisionIntroPromise;
+  }
+
+  /** Swap the active intro into the scene (hide the other species if present). */
+  private attachCollisionIntro(intro: CollisionIntro): void {
+    this.sessionCache.collisionIntro = intro;
+    for (const other of Object.values(this.sessionCache.collisionIntros)) {
+      if (!other || other === intro) continue;
+      other.group.removeFromParent();
+    }
+    if (this.scene && intro.group.parent !== this.scene.introGroup) {
+      this.scene.introGroup.add(intro.group);
+    }
   }
 
   private onPipelineError(err: Error): void {

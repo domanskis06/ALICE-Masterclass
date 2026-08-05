@@ -45,8 +45,9 @@ Output is written to `dist/`.
 
 ## Architecture notes
 
-- [EventDisplay](../ci/docs/event-display.md) — Three.js god component, zones of responsibility, how to extend via Services
-- [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, detector shell including shared `L3.glb` magnet stand-in (CAD archived as `L3_original.glb`)
+- [EventDisplay](../ci/docs/event-display.md) — Three.js god component: side views (Rφ/ρz masks + zoom sync), detector load optimisation, how to extend via Services
+- [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, proton or Pb–Pb collision intro, shared `L3.glb` magnet stand-in (CAD archived as `L3_original.glb`)
+- [Changelog summary](../CHANGELOG.md) — VA / LSA / PP highlights vs upstream (`ci/docs/changelog-*.md` for file-level detail)
 - [Xi cascades (VA data)](data/strangeness/part1_Xi/README.md) — how the 32 Ξ / Ξ̅ cascades are built, merged into host events, and regenerated
 
 ## Third-party attribution

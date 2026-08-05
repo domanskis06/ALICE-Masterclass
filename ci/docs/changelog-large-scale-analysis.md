@@ -57,6 +57,19 @@ a fit), rather than only advancing on "Next".
 | `src/styles.scss` | Global `driver.js` popover theme overrides so the tour matches the app's Material look. |
 | `package.json` / `package-lock.json` | `driver.js` added as a dependency. |
 
+### Fit UX — range indicator, zoom, slider restyle
+
+Follow-up work on the live fit loop (histogram brush zoom + signal/background intervals), not present in the
+original tutorial-only changelog pass.
+
+| File | Change |
+| --- | --- |
+| `shared/components/fit-histogram/` | Brush-zoom on the mass axis; visible **range indicator** for the current zoom/fit domain; denser nice ticks after zoom-in; Unzoom path back to the full histogram domain. |
+| `shared/services/fit.service.ts` | `clampRangeToView(range, view)` keeps signal/background intervals inside the visible axis (clip or shift, preserving width when possible). `clearFit()` drops curves/result without wiping histogram data or accepted results. |
+| `fit-selector/` | Restyled signal/background `ngx-slider` groups (distinct colours), tighter Accept / Fit button layout; sliders clamp when `axisRange` / `domainResetToken` change after a zoom or particle switch; `resetRangesToAxisExtremes` restores both intervals to the axis floor/ceil. |
+| `histogram-display/` | Unzoom + **Reset range** controls wired to the fit histogram; `isZoomed` tracks brush state for enable/disable without ViewChild races; emits `rangeChangeEvent` / `resetRangeEvent` to the parent. |
+| `strangeness-large-scale-analysis.component.{ts,html}` | Parent wiring for axis range / domain reset tokens into the fit selector and display. |
+
 ## Not present upstream
 
-`lsa-tutorial/` (service, constants, welcome dialog, and all `lsa-tour-*` anchors across the selector/display/fit-selector/results templates) has no equivalent upstream — the upstream LSA flow has a static instructions dialog and no in-context tour.
+`lsa-tutorial/` (service, constants, welcome dialog, and all `lsa-tour-*` anchors across the selector/display/fit-selector/results templates) has no equivalent upstream — the upstream LSA flow has a static instructions dialog and no in-context tour. Brush-zoom range indicators and `clampRangeToView` / Reset-range controls are also fork-only UX on top of the shared `FitService` polynomial+Gaussian model.

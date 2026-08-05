@@ -17,7 +17,7 @@ import { InstructionsComponent } from './instructions/instructions.component';
 import { ParticlePropagationComponent } from './particle-propagation.component';
 import { PropagationSessionCacheService } from './propagation-session-cache.service';
 
-/** Real fetch of `proton.glb` is orthogonal to what this component-level spec is testing. */
+/** Procedural Pb nuclei are orthogonal to what this component-level spec is testing. */
 function stubCollisionIntro(): CollisionIntro {
   return {
     group: new THREE.Group(),
@@ -45,10 +45,15 @@ const fakeParticle: PropagationParticle = {
   energy: 1.2,
 };
 
+/**
+ * Long enough that the live RAF loop cannot finish the timeline during
+ * `flushAsyncChain` / `waitForBoot` on a loaded CI runner (~maxTimeNs /
+ * DEFAULT_NS_PER_MS ≈ 20s of presentation time plus the intro).
+ */
 const fakeTrack: BufferedTrack = {
   particleId: 'track-0',
   positions: new Float32Array([0, 0, 0, 0, 0, 1]),
-  times: new Float32Array([0, 1]),
+  times: new Float32Array([0, 100]),
   pointCount: 2,
   charge: 1,
   origin: 'primary',
@@ -90,7 +95,7 @@ describe('ParticlePropagationComponent', () => {
       loadEvent: jasmine.createSpy('loadEvent').and.returnValue(of([fakeParticle])),
     };
     const progressEvent: PrecomputeEvent = { type: 'progress', done: 0, total: 1 };
-    const resultEvent: PrecomputeEvent = { type: 'result', result: { tracks: [fakeTrack], maxTimeNs: 1 } };
+    const resultEvent: PrecomputeEvent = { type: 'result', result: { tracks: [fakeTrack], maxTimeNs: 100 } };
     precomputeSpy = jasmine.createSpy('precompute').and.returnValue(of(progressEvent, resultEvent));
     const fakeRk4 = { precompute: precomputeSpy };
     // Real GLTF fetches for the detector parts are orthogonal to this component-level spec
@@ -175,13 +180,16 @@ describe('ParticlePropagationComponent', () => {
     expect(component.phase).toBe('ready');
   }, 15000);
 
-  it('does not restart an already in-flight precompute pipeline', async () => {
+  it('does not re-kick RK4 when Start is pressed again while the pipeline is in-flight', async () => {
     await waitForBoot();
     component.onStartAnimation();
     expect(component.phase).toBe('loading-event');
+    const callsBefore = precomputeSpy.calls.count();
     component.onStartAnimation();
-    expect(precomputeSpy).not.toHaveBeenCalled(); // still in-flight; second call is a no-op.
-  });
+    expect(precomputeSpy.calls.count()).toBe(callsBefore);
+    await flushAsyncChain();
+    expect(component.phase).toBe('ready');
+  }, 15000);
 
   it('onFieldStrengthChange() updates the field but defers RK4 until Replay', async () => {
     await waitForBoot();
@@ -239,6 +247,33 @@ describe('ParticlePropagationComponent', () => {
     expect(component.tracksNeedRecompute).toBe(false);
   }, 15000);
 
+  it('onEventChange() swaps beam prep without auto-play and restores the Start button', async () => {
+    await waitForBoot();
+    component.onStartAnimation();
+    await flushAsyncChain();
+    expect(component.phase).toBe('ready');
+    expect(component.hasStarted).toBe(true);
+    expect(component.isPlaying).toBe(true);
+    expect(precomputeSpy).toHaveBeenCalledTimes(1);
+
+    component.onEventChange(1);
+    expect(component.hasStarted).toBe(false);
+    expect(component.isPlaying).toBe(false);
+    expect(component.phase).toBe('loading-event');
+
+    await flushAsyncChain();
+    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(component.phase).toBe('ready');
+    expect(component.hasStarted).toBe(false);
+    expect(component.isPlaying).toBe(false);
+    expect(component.controlsEnabled).toBe(false);
+
+    component.onStartAnimation();
+    expect(component.hasStarted).toBe(true);
+    expect(component.isPlaying).toBe(true);
+    expect(precomputeSpy).toHaveBeenCalledTimes(2); // tracks already warm
+  }, 15000);
+
   it('ngOnDestroy() tears down the render loop and Three.js scene without throwing', async () => {
     await waitForBoot();
     expect(() => fixture.destroy()).not.toThrow();
@@ -251,12 +286,17 @@ describe('ParticlePropagationComponent', () => {
     expect(component.phase).toBe('ready');
     expect(precomputeSpy).toHaveBeenCalledTimes(1);
 
+    component.onEventChange(1);
+    await flushAsyncChain();
+    expect(component.selectedEventIndex).toBe(1);
+
     const cache = TestBed.inject(PropagationSessionCacheService);
     fixture.destroy();
 
     expect(cache.hasSceneAssets).toBe(true);
     expect(cache.hasStarted).toBe(false);
     expect(cache.tracks.length).toBe(0);
+    expect(cache.ui?.selectedEventIndex).toBe(1);
 
     dialogOpenSpy.calls.reset();
     fixture = TestBed.createComponent(ParticlePropagationComponent);
@@ -267,12 +307,13 @@ describe('ParticlePropagationComponent', () => {
     expect(component.showDetectorSplash).toBe(false);
     expect(component.phase).toBe('idle');
     expect(component.hasStarted).toBe(false);
+    expect(component.selectedEventIndex).toBe(0);
     expect(dialogOpenSpy).toHaveBeenCalledTimes(1);
-    expect(precomputeSpy).toHaveBeenCalledTimes(1); // no auto-start / no restore of tracks
+    expect(precomputeSpy).toHaveBeenCalledTimes(2); // prior visit only; no auto-start / no restore of tracks
 
     component.onStartAnimation();
     await flushAsyncChain();
-    expect(precomputeSpy).toHaveBeenCalledTimes(2);
+    expect(precomputeSpy).toHaveBeenCalledTimes(3);
     expect(component.phase).toBe('ready');
   }, 15000);
 });

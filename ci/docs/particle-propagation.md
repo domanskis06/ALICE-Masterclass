@@ -58,7 +58,11 @@ What is **new** for the MasterClass (not a straight port):
 
 - Angular feature module, routing, i18n, welcome / instructions dialogs
 - Web Worker + chunked main-thread fallback for RK4 (`Rk4PropagatorService`)
-- Collision intro with GLB protons, detector layers with per-part opacity/visibility
+- Collision intro with GLB protons **or** procedural **lead (Pb) nuclei** for the dense-demo event
+  (`CollisionIntroBeamKind`: `'proton' | 'pb-nucleus'`; mesh builder `scene/lead-nucleus-mesh.ts`)
+- **Per-event Start**: changing the selected event parks playback and shows Start again (no auto-play
+  across events); dense Pb–Pb demo index is `DENSE_PROPAGATION_EVENT_INDEX` in `physics/constants.ts`
+- Detector layers with per-part opacity/visibility
 - Curated teaching events from Strangeness `part1` (see below) instead of the mega `events.json` shipped with the research repos
 - UI field-strength slider that scales the map while preserving spatial fall-off
 - Validation specs that lock bending direction against real VA trajectories
@@ -183,7 +187,7 @@ On-disk schema: `data/propagation-event.ts` (`PropagationRawTrack` / `Propagatio
 | --- | --- | --- |
 | `physics/` | Field parsing & eval, RK4, field-line tracing, Jet colormap, Worker + `Rk4PropagatorService`, constants/types | **All math lives here.** Pure TS (no Angular/DOM) except the two `*.service.ts` facades — same code runs in the Worker |
 | `data/` | `particle-data.service.ts`, `propagation-event.ts` | Loads/maps curated JSON, no physics |
-| `scene/` | `propagation-scene`, detector load/appearance, field-line visuals, collision intro, track renderer, timeline | Zero physics — only reads pre-computed buffers / samples B for display |
+| `scene/` | `propagation-scene`, detector load/appearance, field-line visuals, collision intro (`CollisionIntro` + `lead-nucleus-mesh`), track renderer, timeline | Zero physics — only reads pre-computed buffers / samples B for display |
 | `instructions/`, `welcome-dialog/` | Toolbar help, first-open modal | i18n: `STRANGENESS.INSTRUCTIONS_PARTICLE_PROPAGATION`, `PARTICLE_PROPAGATION.*` |
 | `particle-propagation.component.ts` | UI shell + orchestration of load → precompute → RAF loop | Thin: wire services, call `timeline.applyTime()` + `scene.render()` |
 
@@ -193,7 +197,7 @@ Streamlines in the spirit of Fig. 19 of the 2022 distributed-field paper — den
 
 ### Detector rendering (short)
 
-`detector-loader` → `DetectorModel` with ITS-centred recentering (~+30 cm Y offset fix). Most shells merge via `mergeStaticMeshesByMaterial`; TPC / MCH use `InstancedMesh` families; L3 is a lightweight stand-in (below). Materials use `depthWrite` + `polygonOffset` like Visual Analysis; DPR capped while orbiting. Camera opens in a fixed 3/4 “down the barrel” pose.
+`detector-loader` → `DetectorModel` with ITS-centred recentering (~+30 cm Y offset fix). Most shells merge via `mergeStaticMeshesByMaterial` **without** a batch limit (~one draw call per material); TPC / MCH use `InstancedMesh` families; L3 is a lightweight stand-in (below). That is separate from Visual Analysis EventDisplay’s milder batched merge / prune path (`optimize-detector-part.ts` — see [`event-display.md`](event-display.md) § “Detector load optimisation”). Materials use `depthWrite` + `polygonOffset` like Visual Analysis; DPR capped while orbiting. Camera opens in a fixed 3/4 “down the barrel” pose.
 
 ### L3 magnet
 
@@ -226,6 +230,9 @@ Temporary compare/inspect scripts and alternate GLB names (`L3_cad.glb`, `L3_uni
 3. **`Rk4PropagatorService.precompute(particles)`** — off-main-thread RK4 (`du/ds = k·(u×B(r))`, `k = charge·B2C/|p|`); progress events, then `BufferedTrack[]` as Transferable buffers.
 4. **`track-renderer.createTrackLines()`** — fat `Line2` per track, `instanceCount = 0` until reveal.
 5. **`PropagationTimeline`** — single `globalTimeMs` axis (`t < 0` intro → `t = 0` flash → `t > 0` propagation); `applyTime()` only updates visibility / draw range — **no re-computation**.
+6. **Beam species for the intro** — `beamKindForSelectedEvent()` picks `'pb-nucleus'` when the selected
+   index is the dense demo (`DENSE_PROPAGATION_EVENT_INDEX`), otherwise `'proton'`. Event switches call
+   into the session cache / intro rebuild and reset `hasStarted` so the student presses **Start** again.
 
 ---
 
