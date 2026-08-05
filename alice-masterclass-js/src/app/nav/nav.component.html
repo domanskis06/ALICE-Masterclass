@@ -36,6 +36,15 @@
           </button>
           <span>{{ 'GENERAL.ALICE_MASTERCLASS' | translate }}</span>
           <span id="buttons">
+            @if (showSessionBadge) {
+              @if (authStatus$ | async; as auth) {
+                @if (auth.authenticated) {
+                  <span class="session-badge" data-testid="session-badge" aria-live="polite">
+                    #{{ auth.studentID }} in {{ auth.sessionName }}
+                  </span>
+                }
+              }
+            }
             @if (instructionsComponent) {
               <button mat-icon-button aria-label="Instructions button" (click)="onInstructionsButtonClicked()">
                 <mat-icon>help_outline</mat-icon>
