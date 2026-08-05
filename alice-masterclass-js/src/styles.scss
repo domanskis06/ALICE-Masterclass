@@ -34,6 +34,37 @@
   color: #ffffff !important;
 }
 
+.driver-popover.va-driver-popover .driver-popover-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.driver-popover.va-driver-popover .driver-popover-description {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.driver-popover.va-driver-popover .driver-popover-description sub,
+.driver-popover.va-driver-popover .driver-popover-description sup {
+  font-size: 0.75em;
+}
+
+.driver-popover.va-driver-popover .driver-popover-next-btn {
+  background-color: #b71c1c !important;
+  color: #ffffff !important;
+  border-color: #b71c1c !important;
+  text-shadow: none !important;
+  font-weight: 600;
+  padding: 5px 12px;
+}
+
+.driver-popover.va-driver-popover .driver-popover-next-btn:hover,
+.driver-popover.va-driver-popover .driver-popover-next-btn:focus {
+  background-color: #9a1818 !important;
+  border-color: #9a1818 !important;
+  color: #ffffff !important;
+}
+
 /*
  * Real controls under the transparent expanding-stage proxy (LSA signal /
  * background steps). The proxy is the driver.js target (pointer-events: none);
@@ -42,6 +73,22 @@
 .driver-active .lsa-driver-range-interactive,
 .driver-active .lsa-driver-range-interactive * {
   pointer-events: auto !important;
+}
+
+.driver-active .va-driver-range-interactive,
+.driver-active .va-driver-range-interactive * {
+  pointer-events: auto !important;
+}
+
+/* Hide driver chrome while the mass particle flies to a histogram bin. */
+body.va-driver-flight-hide .driver-overlay,
+body.va-driver-flight-hide .driver-popover,
+body.va-driver-flight-hide .driver-stage,
+body.va-driver-flight-hide #va-tour-expanding-stage {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: none !important;
 }
 
 html, body {
