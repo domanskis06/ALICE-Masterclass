@@ -21,6 +21,7 @@ import {
 } from '../../globals';
 import { detectorPartAccentColor } from '../../three/detector-part-accent';
 import { optimizeStaticDetectorPart } from '../../three/optimize-detector-part';
+import { SideViewScaleModel, SideViewScaleService } from '../../services/side-view-scale.service';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -103,12 +104,28 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * Same +Z ray as overview (~3.7× nearer) so zoom-out stays end-on.
    */
   static readonly CAMERA_3D_ASSEMBLY_START = { x: 0, y: 0, z: 3 } as const;
+  /** Side cameras sit this far from the origin (world units ≡ metres). */
+  static readonly SIDE_CAMERA_DISTANCE = 10;
   /**
    * Fallback PerspectiveCamera.zoom for Rφ/ρz when orbit distance is unavailable.
-   * Matches overview framing: side cameras sit at distance 10.
+   * Side cameras at {@link SIDE_CAMERA_DISTANCE}; at overview this is 10/11.
    */
   static readonly SIDE_VIEW_FIXED_ZOOM =
-    10 / EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+    EventDisplayComponent.SIDE_CAMERA_DISTANCE /
+    EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+  /**
+   * View 2 (Rφ): distance from origin to the TOF face toward the front camera
+   * (TOF half-length ≈ 3.75 m for ~7.5 m barrel). Pulls the scale plane forward so
+   * TOF diameter reads ~8 m.
+   */
+  static readonly SIDE_VIEW_RPHI_SCALE_DEPTH_M = 3.75;
+  /** Real TRD height (m) — target for ρz Y-axis labels (variant B). */
+  static readonly SIDE_VIEW_TRD_HEIGHT_M = 7.36;
+  /**
+   * Origin-plane ρz Y over-read at overview (~10 m vs {@link SIDE_VIEW_TRD_HEIGHT_M}).
+   * Y scale plane = cameraDistance * TRD_HEIGHT / this.
+   */
+  static readonly SIDE_VIEW_RHOZ_Y_OVERREAD_M = 10;
   /** Fixed detector-shell opacity while rendering a side-view pass. */
   static readonly SIDE_VIEW_DETECTOR_OPACITY = 0.5;
   /** Min interval between full side-view RT refreshes during an active orbit gesture. */
@@ -519,13 +536,30 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   /**
    * Map main-orbit distance → side PerspectiveCamera.zoom.
-   * Side cameras sit at distance 10; at overview distance this matches SIDE_VIEW_FIXED_ZOOM.
+   * Rφ uses the legacy `SIDE_CAMERA_DISTANCE / distance` framing.
+   * ρz is zoomed in by `camDist / rphiScalePlane` so the initial metre window
+   * matches View 2 (TOF near-face plane is closer than the IP).
    */
-  static computeSideViewZoomFromDistance(distance: number): number {
-    if (!Number.isFinite(distance) || distance <= 1e-4) {
-      return EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+  static computeSideViewZoomFromDistance(
+    distance: number,
+    which:
+      | typeof EventDisplayComponent.SIDE_VIEW_RPHI
+      | typeof EventDisplayComponent.SIDE_VIEW_RHOZ
+      = EventDisplayComponent.SIDE_VIEW_RPHI
+  ): number {
+    const overviewZ = EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+    const d = !Number.isFinite(distance) || distance <= 1e-4 ? overviewZ : distance;
+    const base =
+      EventDisplayComponent.SIDE_CAMERA_DISTANCE / d;
+    if (which !== EventDisplayComponent.SIDE_VIEW_RHOZ) {
+      return base;
     }
-    return 10 / distance;
+    const rphiPlane = Math.max(
+      0.5,
+      EventDisplayComponent.SIDE_CAMERA_DISTANCE -
+        EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M
+    );
+    return base * (EventDisplayComponent.SIDE_CAMERA_DISTANCE / rphiPlane);
   }
 
   static isTofAssetPath(assetPath: string): boolean {
@@ -3333,7 +3367,22 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   @Input()
   cornerOverlayTemplate: TemplateRef<unknown> | null = null;
 
-  constructor(private cdr: ChangeDetectorRef, private translate: TranslateService) {
+  /**
+   * HUD scale for CSS panes #scales1 / #scales2.
+   * Landscape: pane1=ρz (top), pane2=Rφ (bottom). Portrait: pane1=Rφ (left), pane2=ρz (right)
+   * — matches WebGL blit viewports in `render()`.
+   */
+  scalePane1: SideViewScaleModel | null = null;
+  scalePane2: SideViewScaleModel | null = null;
+  /** Last Rφ / ρz zooms applied to the HUD — skip markForCheck when unchanged. */
+  private lastSideViewScaleZoomRphi = Number.NaN;
+  private lastSideViewScaleZoomRhoz = Number.NaN;
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService,
+    private sideViewScale: SideViewScaleService
+  ) {
     const lineParams = {
       linewidth: this.effectiveTrackWidth,
       resolution: new THREE.Vector2(1, 1),
@@ -3470,6 +3519,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           this.camera3D.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
         }
         this.camera3D.updateProjectionMatrix();
+        if (this.effectiveSideViewsShown) {
+          this.syncSideViewScales(true);
+        }
         this.requestRender();
       }
     }
@@ -3514,6 +3566,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private onControlsChange = (): void => {
     this.maybeInvalidateSideViewsForZoom();
+    this.syncSideViewScales();
     this.requestRender();
   };
 
@@ -3663,6 +3716,134 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.invalidateSideViews();
     }
     this.resize(true);
+    this.syncSideViewScales(true);
+  }
+
+  /**
+   * CSS pixel X for a normalised tick (full viewport — matches WebGL NDC / camera aspect).
+   * Label insets (`m.pad*`) are chrome only and must not enter this mapping.
+   */
+  sideScaleX(m: SideViewScaleModel, t: number): number {
+    return t * m.viewportCssW;
+  }
+
+  /**
+   * CSS pixel Y for a normalised tick (SVG y-down; t=0 → bottom / min metres).
+   * Full viewport so px/m on Y equals px/m on X.
+   */
+  sideScaleY(m: SideViewScaleModel, t: number): number {
+    return (1 - t) * m.viewportCssH;
+  }
+
+  /**
+   * Refresh metre scale HUD overlays for Rφ / ρz from the live side-camera framing.
+   * Math lives in SideViewScaleService; this only supplies camera + CSS pane size.
+   */
+  private syncSideViewScales(force = false): void {
+    if (
+      !this.effectiveSideViewsShown ||
+      !this.cameraRphi ||
+      !this.cameraRhoz ||
+      !this.canvas
+    ) {
+      if (this.scalePane1 || this.scalePane2) {
+        this.scalePane1 = null;
+        this.scalePane2 = null;
+        this.lastSideViewScaleZoomRphi = Number.NaN;
+        this.lastSideViewScaleZoomRhoz = Number.NaN;
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+    const displayWidth = this.canvas.clientWidth;
+    const displayHeight = this.canvas.clientHeight;
+    if (displayWidth <= 0 || displayHeight <= 0) {
+      return;
+    }
+
+    let cssW: number;
+    let cssH: number;
+    if (this.landscape) {
+      const width3D = Math.ceil(displayWidth * this.PRIMARY_AXIS_RATIO);
+      cssW = displayWidth - width3D;
+      cssH = Math.ceil(displayHeight * this.SECONDARY_AXIS_RATIO);
+    } else {
+      cssW = Math.ceil(displayWidth * this.SECONDARY_AXIS_RATIO);
+      const height3D = Math.ceil(displayHeight * this.PRIMARY_AXIS_RATIO);
+      cssH = displayHeight - height3D;
+    }
+    if (cssW <= 0 || cssH <= 0) {
+      return;
+    }
+
+    const distance = this.controls?.getDistance();
+    const dist = Number.isFinite(distance) ? (distance as number) : Number.NaN;
+    const zoomRphi = EventDisplayComponent.computeSideViewZoomFromDistance(
+      dist,
+      EventDisplayComponent.SIDE_VIEW_RPHI
+    );
+    const zoomRhoz = EventDisplayComponent.computeSideViewZoomFromDistance(
+      dist,
+      EventDisplayComponent.SIDE_VIEW_RHOZ
+    );
+    if (
+      !force &&
+      Number.isFinite(this.lastSideViewScaleZoomRphi) &&
+      Number.isFinite(this.lastSideViewScaleZoomRhoz) &&
+      Math.abs(zoomRphi - this.lastSideViewScaleZoomRphi) < 1e-6 &&
+      Math.abs(zoomRhoz - this.lastSideViewScaleZoomRhoz) < 1e-6 &&
+      this.scalePane1 &&
+      this.scalePane2 &&
+      this.scalePane1.viewportCssW === cssW &&
+      this.scalePane1.viewportCssH === cssH
+    ) {
+      return;
+    }
+
+    const camDist = EventDisplayComponent.SIDE_CAMERA_DISTANCE;
+    const rphiPlane = Math.max(
+      0.5,
+      camDist - EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M
+    );
+    // Variant B: ρz Z stays on the IP (length OK); Y plane scaled so TRD height → 7.36 m.
+    const rhozPlaneY = Math.max(
+      0.5,
+      camDist *
+        (EventDisplayComponent.SIDE_VIEW_TRD_HEIGHT_M /
+          EventDisplayComponent.SIDE_VIEW_RHOZ_Y_OVERREAD_M)
+    );
+    const shared = {
+      fovDeg: EventDisplayComponent.fieldOfView,
+      aspect: cssW / cssH,
+      cameraDistanceWu: camDist,
+      objectScale: EventDisplayComponent.objectScale,
+      viewportCssW: cssW,
+      viewportCssH: cssH,
+    };
+    const rhoz = this.sideViewScale.compute({
+      ...shared,
+      zoom: zoomRhoz,
+      axisKind: 'rhoz',
+      scalePlaneDistanceXWu: camDist,
+      scalePlaneDistanceYWu: rhozPlaneY,
+    });
+    const rphi = this.sideViewScale.compute({
+      ...shared,
+      zoom: zoomRphi,
+      axisKind: 'rphi',
+      scalePlaneDistanceWu: rphiPlane,
+    });
+    // Match blit layout: landscape top=ρz / bottom=Rφ; portrait left=Rφ / right=ρz.
+    if (this.landscape) {
+      this.scalePane1 = rhoz;
+      this.scalePane2 = rphi;
+    } else {
+      this.scalePane1 = rphi;
+      this.scalePane2 = rhoz;
+    }
+    this.lastSideViewScaleZoomRphi = zoomRphi;
+    this.lastSideViewScaleZoomRhoz = zoomRhoz;
+    this.cdr.markForCheck();
   }
 
   ngAfterViewInit(): void {
@@ -3898,10 +4079,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (this.sideViewsDirty && this.sideViewRphiRT && this.sideViewRhozRT) {
         this.sideViewsDirty = false;
         const distance = this.controls?.getDistance();
-        const sideZoom = EventDisplayComponent.computeSideViewZoomFromDistance(
-          Number.isFinite(distance) ? (distance as number) : Number.NaN
+        const dist = Number.isFinite(distance) ? (distance as number) : Number.NaN;
+        this.cameraRphi.zoom = EventDisplayComponent.computeSideViewZoomFromDistance(
+          dist,
+          EventDisplayComponent.SIDE_VIEW_RPHI
         );
-        this.cameraRphi.zoom = this.cameraRhoz.zoom = sideZoom;
+        this.cameraRhoz.zoom = EventDisplayComponent.computeSideViewZoomFromDistance(
+          dist,
+          EventDisplayComponent.SIDE_VIEW_RHOZ
+        );
         this.cameraRphi.updateProjectionMatrix();
         this.cameraRhoz.updateProjectionMatrix();
         const sideMaterials = [
@@ -4477,10 +4663,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       EventDisplayComponent.nearClippingPlane,
       EventDisplayComponent.farClippingPlane
     );
-    this.cameraRphi.position.set(0.0, 0.0, 10.0);
+    this.cameraRphi.position.set(0.0, 0.0, EventDisplayComponent.SIDE_CAMERA_DISTANCE);
     this.cameraRphi.up.set(0.0, 1.0, 0.0);
     this.cameraRphi.lookAt(new THREE.Vector3(0, 0, 0));
-    this.cameraRphi.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+    this.cameraRphi.zoom = EventDisplayComponent.computeSideViewZoomFromDistance(
+      EventDisplayComponent.CAMERA_3D_OVERVIEW.z,
+      EventDisplayComponent.SIDE_VIEW_RPHI
+    );
     this.cameraRphi.updateProjectionMatrix();
     this.cameraRphi.layers.set(EventDisplayComponent.LAYER_SHARED);
     this.cameraRhoz = new THREE.PerspectiveCamera(
@@ -4489,10 +4678,13 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       EventDisplayComponent.nearClippingPlane,
       EventDisplayComponent.farClippingPlane
     );
-    this.cameraRhoz.position.set(-10.0, 0.0, 0.0);
+    this.cameraRhoz.position.set(-EventDisplayComponent.SIDE_CAMERA_DISTANCE, 0.0, 0.0);
     this.cameraRhoz.up.set(0.0, 1.0, 0.0);
     this.cameraRhoz.lookAt(new THREE.Vector3(0, 0, 0));
-    this.cameraRhoz.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
+    this.cameraRhoz.zoom = EventDisplayComponent.computeSideViewZoomFromDistance(
+      EventDisplayComponent.CAMERA_3D_OVERVIEW.z,
+      EventDisplayComponent.SIDE_VIEW_RHOZ
+    );
     this.cameraRhoz.updateProjectionMatrix();
     this.cameraRhoz.layers.set(EventDisplayComponent.LAYER_SHARED);
     this.controls = new OrbitControls(this.camera3D, this.renderer.domElement);
