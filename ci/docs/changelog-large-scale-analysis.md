@@ -70,6 +70,35 @@ original tutorial-only changelog pass.
 | `histogram-display/` | Unzoom + **Reset range** controls wired to the fit histogram; `isZoomed` tracks brush state for enable/disable without ViewChild races; emits `rangeChangeEvent` / `resetRangeEvent` to the parent. |
 | `strangeness-large-scale-analysis.component.{ts,html}` | Parent wiring for axis range / domain reset tokens into the fit selector and display. |
 
+### Tutorials — workshop vs demo (follow-up)
+
+Tours run in **both** workshop and demo builds. Auto Skip/Start welcome remains
+**demo-only**; workshop users start from Help → Start tutorial. See
+[`tutorials.md`](tutorials.md).
+
+| File | Change |
+| --- | --- |
+| `lsa-tutorial/lsa-tutorial.service.ts` | `buildWorkshopSteps()` vs `buildDemoSteps()`; `shouldShow()` gated on `DemoConfig`; live auto-advance indices; demo expanding-stage clip to histogram column; demo steps for enhancement plot / Results summary; workshop keeps Upload |
+| `lsa-tutorial/lsa-tutorial.constants.ts` | Workshop index comments; demo uses resolved indices |
+| `instructions/` | Start tutorial available in workshop again |
+| `assets/i18n/*` | Demo keys (`STEP_ENHANCEMENT_*`, `STEP_RESULTS_SUMMARY_*`, Undo, Clear fit, red Next/Done copy) |
+| `src/styles.scss` | Red Next/Done popover buttons |
+
+### Demo LSA layout (follow-up)
+
+Only when `demoMode` is true (see [`changelog-demo-app.md`](changelog-demo-app.md)
+and [`demo-app.md`](demo-app.md)):
+
+| File | Change |
+| --- | --- |
+| `strangeness-large-scale-analysis.component.*` | 50/50 histogram \| enhancement plot; fit selector; full-width Results |
+| `enhancement-plot/`, `enhancement-results/` | Teacher-style plot + table |
+| `lsa-enhancement.service.ts` | Yields / enhancement computation |
+| `fit-selector/` | Undo (demo); Upload hidden |
+
 ## Not present upstream
 
-`lsa-tutorial/` (service, constants, welcome dialog, and all `lsa-tour-*` anchors across the selector/display/fit-selector/results templates) has no equivalent upstream — the upstream LSA flow has a static instructions dialog and no in-context tour. Brush-zoom range indicators and `clampRangeToView` / Reset-range controls are also fork-only UX on top of the shared `FitService` polynomial+Gaussian model.
+`lsa-tutorial/` (service, constants, welcome dialog, and all `lsa-tour-*` /
+`lsa-demo-*` anchors), demo enhancement layout, and brush-zoom /
+`clampRangeToView` / Reset-range controls have no equivalent upstream — the
+upstream LSA flow has a static instructions dialog and no in-context tour.

@@ -17,18 +17,21 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 | --- | --- |
 | [`event-display.md`](event-display.md) | Three.js EventDisplay (god component): side views (Rφ/ρz masks + zoom sync), VA detector load optimisation (merge / prune) |
 | [`particle-propagation.md`](particle-propagation.md) | Particle Propagation — RK4 / field, Pb–Pb intro, L3 magnet stand-in, architecture |
+| [`demo-app.md`](demo-app.md) | Public offline demo SPA — purpose, `demoMode`, OKD, `v*-demo` redeploy, opening the Route |
+| [`tutorials.md`](tutorials.md) | VA / LSA driver.js tours — demo auto-welcome vs workshop Help |
 | [`../../alice-masterclass-js/data/strangeness/part1_Xi/README.md`](../../alice-masterclass-js/data/strangeness/part1_Xi/README.md) | Ξ / Ξ̅ cascade VA data — FemtoUniverse dump, helix converter, merge into host events, regenerate |
 
 ## Changelogs (vs upstream `0.0.6`)
 
 | Doc | Topic |
 | --- | --- |
-| [`../../CHANGELOG.md`](../../CHANGELOG.md) | Student-app summary (VA / LSA / PP / home) |
+| [`../../CHANGELOG.md`](../../CHANGELOG.md) | Student-app summary (VA / LSA / PP / demo / tutorials / home) |
 | [`changelog-visual-analysis-histograms.md`](changelog-visual-analysis-histograms.md) | VA multi-entry histograms, flight animation, bin control |
 | [`changelog-visual-analysis-visualisation.md`](changelog-visual-analysis-visualisation.md) | VA theme, calorimeter bars, linked side views, lets-us panel |
 | [`changelog-visual-analysis-construction.md`](changelog-visual-analysis-construction.md) | VA guided detector assembly |
 | [`changelog-visual-analysis-model.md`](changelog-visual-analysis-model.md) | O2 → GLB pipeline + EventDisplay runtime merge/prune |
-| [`changelog-large-scale-analysis.md`](changelog-large-scale-analysis.md) | LSA driver.js tour + fit UX (range indicator / zoom) |
+| [`changelog-large-scale-analysis.md`](changelog-large-scale-analysis.md) | LSA driver.js tour + fit UX + demo layout notes |
+| [`changelog-demo-app.md`](changelog-demo-app.md) | Offline demo mode, persistence, enhancement LSA, CI/OKD |
 
 ## Testing
 
@@ -41,6 +44,8 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 | Doc | Topic |
 | --- | --- |
 | [`dev-deployment.md`](dev-deployment.md) | Dev OpenShift / CI deploy — **redeploy via `v*-dev` tag**: §7.1 |
+| [`demo-app.md`](demo-app.md) | Demo OpenShift / CI — **redeploy via `v*-demo` tag**: §5 |
 | [`dev-remote-access.md`](dev-remote-access.md) | Dev app from outside CERN — SSH SOCKS tunnel + Firefox |
 | [`prod-database.md`](prod-database.md) | Production database notes |
 | [`../../openshift/dev/README.md`](../../openshift/dev/README.md) | OpenShift dev cluster helpers |
+| [`../../openshift/demo/README.md`](../../openshift/demo/README.md) | OpenShift demo manifests (SPA only) |
