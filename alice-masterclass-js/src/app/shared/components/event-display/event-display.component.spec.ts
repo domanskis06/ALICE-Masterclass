@@ -391,4 +391,11 @@ describe('EventDisplayComponent side-view layers', () => {
     expect(EventDisplayComponent.computeSideViewZoomFromDistance(Number.NaN))
       .toBe(EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM);
   });
+
+  it('side-view Rφ scale depth matches TOF half-length (ρz uses origin plane)', () => {
+    expect(EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M).toBeCloseTo(3.75, 2);
+    expect(EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M).toBeLessThan(
+      EventDisplayComponent.SIDE_CAMERA_DISTANCE
+    );
+  });
 });

@@ -21,6 +21,7 @@ import {
 } from '../../globals';
 import { detectorPartAccentColor } from '../../three/detector-part-accent';
 import { optimizeStaticDetectorPart } from '../../three/optimize-detector-part';
+import { SideViewScaleModel, SideViewScaleService } from '../../services/side-view-scale.service';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -103,12 +104,25 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * Same +Z ray as overview (~3.7× nearer) so zoom-out stays end-on.
    */
   static readonly CAMERA_3D_ASSEMBLY_START = { x: 0, y: 0, z: 3 } as const;
+  /** Side cameras sit this far from the origin (world units ≡ metres). */
+  static readonly SIDE_CAMERA_DISTANCE = 10;
   /**
    * Fallback PerspectiveCamera.zoom for Rφ/ρz when orbit distance is unavailable.
-   * Matches overview framing: side cameras sit at distance 10.
+   * Side cameras at {@link SIDE_CAMERA_DISTANCE}; at overview this is 10/11.
    */
   static readonly SIDE_VIEW_FIXED_ZOOM =
-    10 / EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+    EventDisplayComponent.SIDE_CAMERA_DISTANCE /
+    EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
+  /**
+   * View 2 (Rφ) only: distance from origin to the TOF face toward the front camera
+   * (TOF half-length ≈ 3.75 m for ~7.5 m barrel). Pulls the scale plane forward so
+   * TOF diameter reads ~8 m.
+   *
+   * View 1 (ρz) uses the origin plane (no depth shift): TRD height is the limb at
+   * x≈0 (true ~7.36 m), while barrel length on the near wall naturally perspective-
+   * projects to ~12 m — matching what students should read on that pane.
+   */
+  static readonly SIDE_VIEW_RPHI_SCALE_DEPTH_M = 3.75;
   /** Fixed detector-shell opacity while rendering a side-view pass. */
   static readonly SIDE_VIEW_DETECTOR_OPACITY = 0.5;
   /** Min interval between full side-view RT refreshes during an active orbit gesture. */
@@ -518,14 +532,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Map main-orbit distance → side PerspectiveCamera.zoom.
-   * Side cameras sit at distance 10; at overview distance this matches SIDE_VIEW_FIXED_ZOOM.
+   * Map main-orbit distance → side PerspectiveCamera.zoom (shared by Rφ and ρz).
+   * Side cameras sit at {@link SIDE_CAMERA_DISTANCE}; at overview this matches
+   * {@link SIDE_VIEW_FIXED_ZOOM}.
    */
   static computeSideViewZoomFromDistance(distance: number): number {
     if (!Number.isFinite(distance) || distance <= 1e-4) {
       return EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
     }
-    return 10 / distance;
+    return EventDisplayComponent.SIDE_CAMERA_DISTANCE / distance;
   }
 
   static isTofAssetPath(assetPath: string): boolean {
@@ -3328,7 +3343,21 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   @Input()
   cornerOverlayTemplate: TemplateRef<unknown> | null = null;
 
-  constructor(private cdr: ChangeDetectorRef, private translate: TranslateService) {
+  /**
+   * HUD scale for CSS panes #scales1 / #scales2.
+   * Landscape: pane1=ρz (top), pane2=Rφ (bottom). Portrait: pane1=Rφ (left), pane2=ρz (right)
+   * — matches WebGL blit viewports in `render()`.
+   */
+  scalePane1: SideViewScaleModel | null = null;
+  scalePane2: SideViewScaleModel | null = null;
+  /** Last shared side zoom applied to the HUD — skip markForCheck when unchanged. */
+  private lastSideViewScaleZoom = Number.NaN;
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private translate: TranslateService,
+    private sideViewScale: SideViewScaleService
+  ) {
     const lineParams = {
       linewidth: this.effectiveTrackWidth,
       resolution: new THREE.Vector2(1, 1),
@@ -3465,6 +3494,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           this.camera3D.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
         }
         this.camera3D.updateProjectionMatrix();
+        if (this.effectiveSideViewsShown) {
+          this.syncSideViewScales(true);
+        }
         this.requestRender();
       }
     }
@@ -3509,6 +3541,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
 
   private onControlsChange = (): void => {
     this.maybeInvalidateSideViewsForZoom();
+    this.syncSideViewScales();
     this.requestRender();
   };
 
@@ -3658,6 +3691,109 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.invalidateSideViews();
     }
     this.resize(true);
+    this.syncSideViewScales(true);
+  }
+
+  /** CSS pixel X along the plot for a normalised tick position. */
+  sideScaleX(m: SideViewScaleModel, t: number): number {
+    return m.padLeft + t * (m.viewportCssW - m.padLeft - m.padRight);
+  }
+
+  /** CSS pixel Y along the plot (SVG y-down; t=0 → bottom / min metres). */
+  sideScaleY(m: SideViewScaleModel, t: number): number {
+    return m.padTop + (1 - t) * (m.viewportCssH - m.padTop - m.padBottom);
+  }
+
+  /**
+   * Refresh metre scale HUD overlays for Rφ / ρz from the live side-camera framing.
+   * Math lives in SideViewScaleService; this only supplies camera + CSS pane size.
+   */
+  private syncSideViewScales(force = false): void {
+    if (
+      !this.effectiveSideViewsShown ||
+      !this.cameraRphi ||
+      !this.cameraRhoz ||
+      !this.canvas
+    ) {
+      if (this.scalePane1 || this.scalePane2) {
+        this.scalePane1 = null;
+        this.scalePane2 = null;
+        this.lastSideViewScaleZoom = Number.NaN;
+        this.cdr.markForCheck();
+      }
+      return;
+    }
+    const displayWidth = this.canvas.clientWidth;
+    const displayHeight = this.canvas.clientHeight;
+    if (displayWidth <= 0 || displayHeight <= 0) {
+      return;
+    }
+
+    let cssW: number;
+    let cssH: number;
+    if (this.landscape) {
+      const width3D = Math.ceil(displayWidth * this.PRIMARY_AXIS_RATIO);
+      cssW = displayWidth - width3D;
+      cssH = Math.ceil(displayHeight * this.SECONDARY_AXIS_RATIO);
+    } else {
+      cssW = Math.ceil(displayWidth * this.SECONDARY_AXIS_RATIO);
+      const height3D = Math.ceil(displayHeight * this.PRIMARY_AXIS_RATIO);
+      cssH = displayHeight - height3D;
+    }
+    if (cssW <= 0 || cssH <= 0) {
+      return;
+    }
+
+    const distance = this.controls?.getDistance();
+    const sideZoom = EventDisplayComponent.computeSideViewZoomFromDistance(
+      Number.isFinite(distance) ? (distance as number) : Number.NaN
+    );
+    if (
+      !force &&
+      Number.isFinite(this.lastSideViewScaleZoom) &&
+      Math.abs(sideZoom - this.lastSideViewScaleZoom) < 1e-6 &&
+      this.scalePane1 &&
+      this.scalePane2 &&
+      this.scalePane1.viewportCssW === cssW &&
+      this.scalePane1.viewportCssH === cssH
+    ) {
+      return;
+    }
+
+    const camDist = EventDisplayComponent.SIDE_CAMERA_DISTANCE;
+    const shared = {
+      fovDeg: EventDisplayComponent.fieldOfView,
+      aspect: cssW / cssH,
+      zoom: sideZoom,
+      cameraDistanceWu: camDist,
+      objectScale: EventDisplayComponent.objectScale,
+      viewportCssW: cssW,
+      viewportCssH: cssH,
+    };
+    // ρz: origin plane (TRD height at x≈0). Rφ: TOF near-face plane (unchanged).
+    const rhoz = this.sideViewScale.compute({
+      ...shared,
+      axisKind: 'rhoz',
+      scalePlaneDistanceWu: camDist,
+    });
+    const rphi = this.sideViewScale.compute({
+      ...shared,
+      axisKind: 'rphi',
+      scalePlaneDistanceWu: Math.max(
+        0.5,
+        camDist - EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M
+      ),
+    });
+    // Match blit layout: landscape top=ρz / bottom=Rφ; portrait left=Rφ / right=ρz.
+    if (this.landscape) {
+      this.scalePane1 = rhoz;
+      this.scalePane2 = rphi;
+    } else {
+      this.scalePane1 = rphi;
+      this.scalePane2 = rhoz;
+    }
+    this.lastSideViewScaleZoom = sideZoom;
+    this.cdr.markForCheck();
   }
 
   ngAfterViewInit(): void {
@@ -4472,7 +4608,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       EventDisplayComponent.nearClippingPlane,
       EventDisplayComponent.farClippingPlane
     );
-    this.cameraRphi.position.set(0.0, 0.0, 10.0);
+    this.cameraRphi.position.set(0.0, 0.0, EventDisplayComponent.SIDE_CAMERA_DISTANCE);
     this.cameraRphi.up.set(0.0, 1.0, 0.0);
     this.cameraRphi.lookAt(new THREE.Vector3(0, 0, 0));
     this.cameraRphi.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;
@@ -4484,7 +4620,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       EventDisplayComponent.nearClippingPlane,
       EventDisplayComponent.farClippingPlane
     );
-    this.cameraRhoz.position.set(-10.0, 0.0, 0.0);
+    this.cameraRhoz.position.set(-EventDisplayComponent.SIDE_CAMERA_DISTANCE, 0.0, 0.0);
     this.cameraRhoz.up.set(0.0, 1.0, 0.0);
     this.cameraRhoz.lookAt(new THREE.Vector3(0, 0, 0));
     this.cameraRhoz.zoom = EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM;

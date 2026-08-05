@@ -56,12 +56,27 @@ clusters, and markers stay shared (`LAYER_SHARED`); helper grids stay `LAYER_MAI
 readouts are hidden during side passes.
 
 **Zoom sync:** side `PerspectiveCamera.zoom` = `computeSideViewZoomFromDistance(controls.getDistance())`
-(`10 / distance`, fallback `SIDE_VIEW_FIXED_ZOOM` at overview). While the student orbits/zooms,
-side RT refreshes are throttled (`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end`
-always does a full refresh. Rotation without a distance change does **not** invalidate the caches.
+(`SIDE_CAMERA_DISTANCE / distance`, fallback `SIDE_VIEW_FIXED_ZOOM` at overview). Shared by both
+panes (original framing). While the student orbits/zooms, side RT refreshes are throttled
+(`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end` always does a full refresh.
+Rotation without a distance change does **not** invalidate the caches.
+
+**Scale HUD (m):** SVG overlays on `#scales1` / `#scales2`. Metres use a **per-pane
+scale plane**:
+
+| Pane | Largest shell | Scale plane |
+| --- | --- | --- |
+| View 1 ρz | TRD (~7.36 m tall; length reads ~12 m with perspective) | Origin / IP (`cameraDistance`) — height limb at x≈0 |
+| View 2 Rφ | TOF (~7.5 m long, ~8 m tall) | `SIDE_VIEW_RPHI_SCALE_DEPTH_M` = 3.75 m (TOF face toward camera) |
+
+Projection math:
+[`side-view-scale.service.ts`](../alice-masterclass-js/src/app/shared/services/side-view-scale.service.ts)
+(`tan(fov/2) * scalePlaneDistance / zoom` → m; `objectScale = 1e-2` ⇒ 1 wu = 1 m).
+Axis labels: Rφ → `x`/`y`, ρz → `z`/`y`. Pane mapping matches the WebGL blit
+(landscape: top ρz / bottom Rφ; portrait: left Rφ / right ρz).
 
 Helpers/tests: `sideViewAllowsPart`, `computeSideViewZoomFromDistance` in
-`event-display.component.spec.ts`. Changelog detail:
+`event-display.component.spec.ts`; scale math in `side-view-scale.service.spec.ts`. Changelog detail:
 [`changelog-visual-analysis-visualisation.md`](changelog-visual-analysis-visualisation.md) § “Linked side views”.
 
 ## Detector load optimisation (Visual Analysis)
