@@ -265,16 +265,16 @@
               <ng-content select="[edSidebarMeta]"></ng-content>
             </div>
             @if (detectorInteractiveAssemblyDone) {
-              <div class="options">
+              <div class="options" id="va-tour-visibility">
                 <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
                 <div fxLayout="column" fxLayoutGap="8px">
                   <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
                   @if (hasClusters) {
-                    <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
+                    <mat-slide-toggle id="va-tour-clusters-toggle" [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
                   }
                   <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
                   <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
-                  <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
+                  <mat-slide-toggle id="va-tour-decays-toggle" [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
                   @if (showThemeToggle) {
                     <mat-slide-toggle
                       [ngModel]="darkMode"

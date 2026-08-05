@@ -87,8 +87,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     BOTTOM: 19,
     BOTTOM_XLABEL: 16,
     BOTTOM_TEXT: 3,
-    // Slightly more than the original 22/8 so ~0.75em Y tick numbers clear "Counts".
-    LEFT: 27,
+    // Extra room so 4-digit Y tick numbers clear the vertical "Counts" title.
+    LEFT: 34,
     LEFT_YLABEL: 10
   };
 

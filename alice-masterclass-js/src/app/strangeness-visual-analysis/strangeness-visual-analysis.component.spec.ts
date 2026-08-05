@@ -11,6 +11,7 @@ import { ParticleMassComponent } from './particle-mass/particle-mass.component';
 import { CalculatorComponent } from './calculator/calculator.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
 import { InstructionsComponent } from './instructions/instructions.component';
+import { VaTutorialService } from './va-tutorial/va-tutorial.service';
 
 import { StrangenessVisualAnalysisComponent } from './strangeness-visual-analysis.component';
 
@@ -19,6 +20,21 @@ describe('StrangenessVisualAnalysisComponent', () => {
   let fixture: ComponentFixture<StrangenessVisualAnalysisComponent>;
 
   beforeEach(async () => {
+    const tutorialSpy = jasmine.createSpyObj('VaTutorialService', [
+      'shouldShow',
+      'dismiss',
+      'startMainTour',
+      'destroyDriver',
+      'isActive',
+      'registerHostHooks',
+      'notifyTrackSelected',
+      'notifyAddFlightStarted',
+      'notifyAddLanded',
+      'notifyFinishNextEvent',
+    ]);
+    tutorialSpy.shouldShow.and.returnValue(false);
+    tutorialSpy.isActive.and.returnValue(false);
+
     await TestBed.configureTestingModule({
       declarations: [
         StrangenessVisualAnalysisComponent,
@@ -28,7 +44,11 @@ describe('StrangenessVisualAnalysisComponent', () => {
         InstructionsComponent,
       ],
       imports: [AngularModule, SharedModule, TranslateModule.forRoot()],
-      providers: [FitService, provideHttpClient(withInterceptorsFromDi())],
+      providers: [
+        FitService,
+        provideHttpClient(withInterceptorsFromDi()),
+        { provide: VaTutorialService, useValue: tutorialSpy },
+      ],
     }).compileComponents();
   });
 
