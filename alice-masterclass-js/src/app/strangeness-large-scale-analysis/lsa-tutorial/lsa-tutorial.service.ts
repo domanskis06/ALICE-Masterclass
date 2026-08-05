@@ -16,6 +16,8 @@ export class LsaTutorialService {
   private static readonly EXPANDING_STAGE_ID = 'lsa-tour-expanding-stage';
   private static readonly INTERACTIVE_CLASS = 'lsa-driver-range-interactive';
 
+  private static readonly SELECTOR_HISTOGRAM_SELECTOR = '#lsa-tour-histogram-selector';
+  private static readonly SELECTOR_OPEN_HISTOGRAM = '#lsa-tour-open-histogram';
   private static readonly SELECTOR_HISTOGRAM = '#lsa-tour-histogram-display';
   private static readonly SELECTOR_SIGNAL = '#lsa-tour-signal-group';
   private static readonly SELECTOR_BACKGROUND = '#lsa-tour-background-group';
@@ -23,11 +25,8 @@ export class LsaTutorialService {
   private static readonly SELECTOR_RESULTS = '#lsa-tour-results-table';
   private static readonly SELECTOR_RESULTS_DEMO = '#lsa-demo-results-table';
   private static readonly SELECTOR_ENHANCEMENT_PLOT = '#lsa-demo-enhancement-plot';
-  private static readonly SELECTOR_HISTOGRAM_ACTIONS = '#lsa-tour-histogram-actions';
   private static readonly SELECTOR_FIT = '#lsa-tour-fit-button';
-  private static readonly SELECTOR_ACCEPT = '#lsa-tour-accept-button';
-  private static readonly SELECTOR_CLEAR_FIT = '#lsa-tour-clear-fit-button';
-  private static readonly SELECTOR_UNDO = '#lsa-demo-undo-button';
+  private static readonly SELECTOR_RESULT_ACTIONS = '#lsa-tour-result-actions';
   private static readonly SELECTOR_UPLOAD = '#lsa-tour-upload-button';
   private readonly demo = inject(DemoConfig).enabled;
 
@@ -48,6 +47,8 @@ export class LsaTutorialService {
   private expandingBottomPad = 0;
   /** When set, stage bottom reaches at least this element's bottom (demo background step). */
   private expandingBottomAlignSelector: string | null = null;
+  /** When set, stage right edge is clipped to this element's right. */
+  private expandingRightClipSelector: string | null = null;
   private readonly onWindowResizeForStage = (): void => {
     if (this.expandingSelectors.length === 0) {
       return;
@@ -172,9 +173,13 @@ export class LsaTutorialService {
 
   private buildSteps(): DriveStep[] {
     const steps = this.demo ? this.buildDemoSteps() : this.buildWorkshopSteps();
-    this.stepIndexOpenHistogram = this.indexOfElement(steps, '#lsa-tour-open-histogram');
+    // Setup is always first; its element is an expanding-stage function.
+    this.stepIndexOpenHistogram = LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM;
     this.stepIndexFit = this.indexOfElement(steps, LsaTutorialService.SELECTOR_FIT);
-    this.stepIndexAccept = this.indexOfElement(steps, LsaTutorialService.SELECTOR_ACCEPT);
+    this.stepIndexAccept = this.indexOfElement(
+      steps,
+      LsaTutorialService.SELECTOR_RESULT_ACTIONS,
+    );
     return steps;
   }
 
@@ -187,52 +192,37 @@ export class LsaTutorialService {
     return this.translate.instant(`STRANGENESS.LSA_TUTORIAL.${key}`);
   }
 
-  /** Prefer the outlined control box so stage padding does not cover the card title. */
-  private resolveFormFieldControl(fieldId: string): Element {
-    const preferred = document.querySelector(`${fieldId} .mat-mdc-text-field-wrapper`);
-    return preferred ?? document.querySelector(fieldId)!;
+  private buildSetupStep(t: (key: string) => string): DriveStep {
+    return {
+      // Full histogram-selector card, clipped on the right just past Open histogram.
+      element: () => this.getExpandingStage(
+        [LsaTutorialService.SELECTOR_HISTOGRAM_SELECTOR],
+        { rightClipSelector: LsaTutorialService.SELECTOR_OPEN_HISTOGRAM },
+      ),
+      disableActiveInteraction: true,
+      popover: {
+        title: t('STEP_SETUP_TITLE'),
+        description: t('STEP_SETUP_BODY'),
+        side: 'bottom',
+        align: 'start',
+        showButtons: ['next', 'previous', 'close'],
+      },
+      onHighlighted: () => {
+        this.awaitingHistogramAdvance = true;
+        this.enableExpandingInteractions([LsaTutorialService.SELECTOR_HISTOGRAM_SELECTOR]);
+      },
+      onDeselected: () => {
+        this.awaitingHistogramAdvance = false;
+        this.onExpandingStageDeselected();
+      },
+    };
   }
 
   /** Workshop layout: spectrum | results side by side, then fit selector. */
   private buildWorkshopSteps(): DriveStep[] {
     const t = (key: string) => this.t(key);
     return [
-      {
-        element: () => this.resolveFormFieldControl('#lsa-tour-particle-field'),
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_PARTICLE_TITLE'),
-          description: t('STEP_PARTICLE_BODY'),
-          side: 'bottom',
-          align: 'start',
-        },
-      },
-      {
-        element: () => this.resolveFormFieldControl('#lsa-tour-collision-field'),
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_COLLISION_TITLE'),
-          description: t('STEP_COLLISION_BODY'),
-          side: 'bottom',
-          align: 'start',
-        },
-      },
-      {
-        element: '#lsa-tour-open-histogram',
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_OPEN_TITLE'),
-          description: t('STEP_OPEN_BODY'),
-          side: 'left',
-          showButtons: ['next', 'previous', 'close'],
-        },
-        onHighlighted: () => {
-          this.awaitingHistogramAdvance = true;
-        },
-        onDeselected: () => {
-          this.awaitingHistogramAdvance = false;
-        },
-      },
+      this.buildSetupStep(t),
       {
         element: LsaTutorialService.SELECTOR_HISTOGRAM,
         popover: {
@@ -297,18 +287,11 @@ export class LsaTutorialService {
         },
       },
       {
-        element: LsaTutorialService.SELECTOR_ACCEPT,
+        element: LsaTutorialService.SELECTOR_RESULT_ACTIONS,
+        disableActiveInteraction: false,
         popover: {
-          title: t('STEP_ACCEPT_TITLE'),
-          description: t('STEP_ACCEPT_BODY'),
-          side: 'left',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_CLEAR_FIT,
-        popover: {
-          title: t('STEP_CLEAR_FIT_TITLE'),
-          description: t('STEP_CLEAR_FIT_BODY'),
+          title: t('STEP_RESULT_ACTIONS_TITLE_WORKSHOP'),
+          description: t('STEP_RESULT_ACTIONS_BODY_WORKSHOP'),
           side: 'left',
         },
       },
@@ -333,47 +316,11 @@ export class LsaTutorialService {
 
   /**
    * Demo layout: spectrum | enhancement plot, fit selector full width, results below.
-   * Covers every interactive control, including Undo / Clear fit.
    */
   private buildDemoSteps(): DriveStep[] {
     const t = (key: string) => this.t(key);
     return [
-      {
-        element: () => this.resolveFormFieldControl('#lsa-tour-particle-field'),
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_PARTICLE_TITLE'),
-          description: t('STEP_PARTICLE_BODY'),
-          side: 'bottom',
-          align: 'start',
-        },
-      },
-      {
-        element: () => this.resolveFormFieldControl('#lsa-tour-collision-field'),
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_COLLISION_TITLE'),
-          description: t('STEP_COLLISION_BODY'),
-          side: 'bottom',
-          align: 'start',
-        },
-      },
-      {
-        element: '#lsa-tour-open-histogram',
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_OPEN_TITLE'),
-          description: t('STEP_OPEN_BODY'),
-          side: 'left',
-          showButtons: ['next', 'previous', 'close'],
-        },
-        onHighlighted: () => {
-          this.awaitingHistogramAdvance = true;
-        },
-        onDeselected: () => {
-          this.awaitingHistogramAdvance = false;
-        },
-      },
+      this.buildSetupStep(t),
       {
         element: LsaTutorialService.SELECTOR_HISTOGRAM,
         popover: {
@@ -384,16 +331,7 @@ export class LsaTutorialService {
         },
       },
       {
-        element: LsaTutorialService.SELECTOR_HISTOGRAM_ACTIONS,
-        popover: {
-          title: t('STEP_HISTOGRAM_TOOLS_TITLE'),
-          description: t('STEP_HISTOGRAM_TOOLS_BODY'),
-          side: 'bottom',
-          align: 'end',
-        },
-      },
-      {
-        // Step 6: spectrum + signal; nudge bottom a few px past the slider group.
+        // Spectrum + signal; nudge bottom a few px past the slider group.
         element: () => this.getExpandingStage(
           [
             LsaTutorialService.SELECTOR_HISTOGRAM,
@@ -415,7 +353,7 @@ export class LsaTutorialService {
         onDeselected: () => this.onExpandingStageDeselected(),
       },
       {
-        // Step 7: include background and stretch to the Fit Selector card bottom.
+        // Include background and stretch to the Fit Selector card bottom.
         element: () => this.getExpandingStage(
           [
             LsaTutorialService.SELECTOR_HISTOGRAM,
@@ -455,26 +393,11 @@ export class LsaTutorialService {
         },
       },
       {
-        element: LsaTutorialService.SELECTOR_ACCEPT,
+        element: LsaTutorialService.SELECTOR_RESULT_ACTIONS,
+        disableActiveInteraction: false,
         popover: {
-          title: t('STEP_ACCEPT_TITLE'),
-          description: t('STEP_ACCEPT_BODY'),
-          side: 'left',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_UNDO,
-        popover: {
-          title: t('STEP_UNDO_TITLE'),
-          description: t('STEP_UNDO_BODY'),
-          side: 'left',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_CLEAR_FIT,
-        popover: {
-          title: t('STEP_CLEAR_FIT_TITLE'),
-          description: t('STEP_CLEAR_FIT_BODY'),
+          title: t('STEP_RESULT_ACTIONS_TITLE'),
+          description: t('STEP_RESULT_ACTIONS_BODY'),
           side: 'left',
         },
       },
@@ -507,11 +430,16 @@ export class LsaTutorialService {
    */
   private getExpandingStage(
     selectors: string[],
-    options?: { bottomPad?: number; bottomAlignSelector?: string },
+    options?: {
+      bottomPad?: number;
+      bottomAlignSelector?: string;
+      rightClipSelector?: string;
+    },
   ): HTMLElement {
     this.expandingSelectors = [...selectors];
     this.expandingBottomPad = options?.bottomPad ?? 0;
     this.expandingBottomAlignSelector = options?.bottomAlignSelector ?? null;
+    this.expandingRightClipSelector = options?.rightClipSelector ?? null;
     const stage = this.layoutExpandingStage(selectors);
     window.removeEventListener('resize', this.onWindowResizeForStage);
     window.addEventListener('resize', this.onWindowResizeForStage);
@@ -578,9 +506,18 @@ export class LsaTutorialService {
       }
     }
 
+    if (this.expandingRightClipSelector) {
+      const clipRect = document
+        .querySelector(this.expandingRightClipSelector)
+        ?.getBoundingClientRect();
+      if (clipRect && clipRect.width > 0) {
+        right = Math.min(right, clipRect.right);
+      }
+    }
+
     stage.style.left = `${left}px`;
     stage.style.top = `${top}px`;
-    stage.style.width = `${right - left}px`;
+    stage.style.width = `${Math.max(0, right - left)}px`;
     stage.style.height = `${bottom - top}px`;
     return stage;
   }
@@ -619,6 +556,7 @@ export class LsaTutorialService {
     this.expandingSelectors = [];
     this.expandingBottomPad = 0;
     this.expandingBottomAlignSelector = null;
+    this.expandingRightClipSelector = null;
     document.getElementById(LsaTutorialService.EXPANDING_STAGE_ID)?.remove();
   }
 }
