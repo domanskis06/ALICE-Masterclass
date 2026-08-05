@@ -11,6 +11,8 @@ import { CalculatorComponent } from './calculator/calculator.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { LetsUsPanelComponent } from './lets-us-panel/lets-us-panel.component';
+import { VaTutorialService } from './va-tutorial/va-tutorial.service';
+import { VaTutorialWelcomeDialogComponent } from './va-tutorial/va-tutorial-welcome-dialog.component';
 
 @NgModule({
   declarations: [
@@ -26,6 +28,10 @@ import { LetsUsPanelComponent } from './lets-us-panel/lets-us-panel.component';
     SharedModule,
     AngularModule,
     StrangenessVisualAnalysisRoutingModule,
-  ]
+    VaTutorialWelcomeDialogComponent,
+  ],
+  providers: [
+    VaTutorialService,
+  ],
 })
 export class StrangenessVisualAnalysisModule { }

@@ -911,6 +911,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     this.sidebarOpened = !this.sidebarOpened;
   }
 
+  /** Used by the Visual Analysis tutorial so Visibility / Decays stay reachable. */
+  ensureRightSidebarOpen(): void {
+    this.sidebarOpened = true;
+  }
+
   toggleLeftSidebar(): void {
     this.leftSidebarOpened = !this.leftSidebarOpened;
   }

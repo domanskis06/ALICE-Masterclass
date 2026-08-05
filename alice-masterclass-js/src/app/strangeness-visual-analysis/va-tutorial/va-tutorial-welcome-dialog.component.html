@@ -1,0 +1,10 @@
+<h2 mat-dialog-title>{{ 'STRANGENESS.VA_TUTORIAL.WELCOME_TITLE' | translate }}</h2>
+<mat-dialog-content class="welcome-body">
+  <p>{{ 'STRANGENESS.VA_TUTORIAL.WELCOME_P1' | translate }}</p>
+  <p [innerHTML]="'STRANGENESS.VA_TUTORIAL.WELCOME_P2' | translate"></p>
+  <p [innerHTML]="'STRANGENESS.VA_TUTORIAL.WELCOME_P3' | translate"></p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="skip()">{{ 'STRANGENESS.VA_TUTORIAL.SKIP' | translate }}</button>
+  <button mat-raised-button color="primary" type="button" (click)="start()">{{ 'STRANGENESS.VA_TUTORIAL.START' | translate }}</button>
+</mat-dialog-actions>
