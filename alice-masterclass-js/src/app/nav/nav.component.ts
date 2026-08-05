@@ -11,7 +11,6 @@ import { DemoInfoDialogComponent } from '../demo-info-dialog/demo-info-dialog.co
 import { InstructionsProvider } from '../shared/interfaces';
 import { ApiService, AuthStatus } from '../shared/services/api.service';
 import { DemoConfig } from '../shared/demo/demo-config.service';
-import { AppConfig } from '../../environments/environment';
 
 @Component({
     selector: 'app-nav',
@@ -32,8 +31,8 @@ export class NavComponent implements OnInit {
 
   protected readonly demo = inject(DemoConfig).enabled;
 
-  /** Session badge on the primary toolbar — non-production builds only. */
-  protected readonly showSessionBadge = !AppConfig.production;
+  /** Session badge — workshop builds only (hidden in public demoMode). */
+  protected readonly showSessionBadge = !this.demo;
 
   protected readonly authStatus$: Observable<AuthStatus>;
 
