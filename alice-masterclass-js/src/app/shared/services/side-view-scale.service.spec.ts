@@ -54,7 +54,8 @@ describe('SideViewScaleService', () => {
     const rhoz = service.compute({
       ...baseInput,
       axisKind: 'rhoz',
-      scalePlaneDistanceWu: 10, // origin plane
+      scalePlaneDistanceXWu: 10,
+      scalePlaneDistanceYWu: 10 * (7.36 / 10),
     });
     expect(rphi.xAxisLabel).toBe('x');
     expect(rphi.yAxisLabel).toBe('y');
@@ -63,8 +64,16 @@ describe('SideViewScaleService', () => {
     expect(rphi.xTicks.length).toBeGreaterThan(2);
     expect(rphi.scaleBar.lengthM).toBeGreaterThan(0);
     expect(rphi.scaleBar.label).toMatch(/ m$/);
-    // Rφ near-face plane is tighter than ρz origin plane.
-    expect(rphi.xMaxM).toBeLessThan(rhoz.xMaxM);
+  });
+
+  it('variant B: per-axis planes shrink ρz Y vs X (TRD height fix)', () => {
+    const rhoz = service.visibleHalfExtentsM({
+      ...baseInput,
+      scalePlaneDistanceXWu: 10,
+      scalePlaneDistanceYWu: 10 * (7.36 / 10),
+    });
+    expect(rhoz.halfHM).toBeCloseTo(rhoz.halfWM * (7.36 / 10), 5);
+    expect(rhoz.halfHM).toBeLessThan(rhoz.halfWM);
   });
 
   it('niceScaleBarM stays inside the visible width', () => {
@@ -72,5 +81,22 @@ describe('SideViewScaleService', () => {
     const bar = service.niceScaleBarM(halfWM);
     expect(bar).toBeGreaterThan(0);
     expect(bar).toBeLessThanOrEqual(halfWM * 2);
+  });
+
+  it('metresPerPixel is isotropic for non-square panes (variant A)', () => {
+    const wide = service.compute({
+      ...baseInput,
+      aspect: 400 / 250,
+      viewportCssW: 400,
+      viewportCssH: 250,
+      axisKind: 'rphi',
+      scalePlaneDistanceWu: 10 - 3.75,
+    });
+    const { x, y } = service.metresPerPixel(wide);
+    expect(x).toBeCloseTo(y, 8);
+    // Equal label insets — not used in the metre↔pixel mapping.
+    expect(wide.padLeft).toBe(wide.padRight);
+    expect(wide.padTop).toBe(wide.padBottom);
+    expect(wide.padLeft).toBe(wide.padTop);
   });
 });

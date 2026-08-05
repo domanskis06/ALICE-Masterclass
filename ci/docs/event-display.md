@@ -55,25 +55,24 @@ in `try/finally`) so the main 3D view keeps the student’s slider visibility/op
 clusters, and markers stay shared (`LAYER_SHARED`); helper grids stay `LAYER_MAIN_ONLY`; calorimeter
 readouts are hidden during side passes.
 
-**Zoom sync:** side `PerspectiveCamera.zoom` = `computeSideViewZoomFromDistance(controls.getDistance())`
-(`SIDE_CAMERA_DISTANCE / distance`, fallback `SIDE_VIEW_FIXED_ZOOM` at overview). Shared by both
-panes (original framing). While the student orbits/zooms, side RT refreshes are throttled
-(`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end` always does a full refresh.
+**Zoom sync:** `computeSideViewZoomFromDistance(distance, which)` — Rφ keeps
+`SIDE_CAMERA_DISTANCE / distance`; ρz is zoomed by `camDist / rphiScalePlane` so both
+panes open with a similar metre window. Side RT refreshes stay throttled
+(`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end` always full-refreshes.
 Rotation without a distance change does **not** invalidate the caches.
 
-**Scale HUD (m):** SVG overlays on `#scales1` / `#scales2`. Metres use a **per-pane
-scale plane**:
+**Scale HUD (m):** SVG overlays on `#scales1` / `#scales2`:
 
-| Pane | Largest shell | Scale plane |
+| Pane | Largest shell | Scale plane(s) |
 | --- | --- | --- |
-| View 1 ρz | TRD (~7.36 m tall; length reads ~12 m with perspective) | Origin / IP (`cameraDistance`) — height limb at x≈0 |
-| View 2 Rφ | TOF (~7.5 m long, ~8 m tall) | `SIDE_VIEW_RPHI_SCALE_DEPTH_M` = 3.75 m (TOF face toward camera) |
+| View 1 ρz | TRD (height target 7.36 m) | X/z: IP; Y: `camDist * TRD_HEIGHT / RHOZ_Y_OVERREAD` (variant B) |
+| View 2 Rφ | TOF (~8 m diameter) | `SIDE_VIEW_RPHI_SCALE_DEPTH_M` = 3.75 m (TOF face) |
 
 Projection math:
 [`side-view-scale.service.ts`](../alice-masterclass-js/src/app/shared/services/side-view-scale.service.ts)
-(`tan(fov/2) * scalePlaneDistance / zoom` → m; `objectScale = 1e-2` ⇒ 1 wu = 1 m).
-Axis labels: Rφ → `x`/`y`, ρz → `z`/`y`. Pane mapping matches the WebGL blit
-(landscape: top ρz / bottom Rφ; portrait: left Rφ / right ρz).
+(`tan(fov/2) * plane / zoom` → m; optional per-axis planes). **Isotropic HUD (A):** full-pane
+tick mapping so px/m matches the camera when X/Y share one plane (Rφ). ρz Y uses a tighter
+plane on purpose (B). Axis labels: Rφ → `x`/`y`, ρz → `z`/`y`. Pane mapping matches the blit.
 
 Helpers/tests: `sideViewAllowsPart`, `computeSideViewZoomFromDistance` in
 `event-display.component.spec.ts`; scale math in `side-view-scale.service.spec.ts`. Changelog detail:

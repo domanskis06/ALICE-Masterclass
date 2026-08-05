@@ -379,23 +379,36 @@ describe('EventDisplayComponent side-view layers', () => {
     expect(EventDisplayComponent.sideViewAllowsPart(fit, rphi)).toBe(false);
   });
 
-  it('computeSideViewZoomFromDistance matches overview framing and zooms in when closer', () => {
+  it('computeSideViewZoomFromDistance: Rφ overview framing; ρz zoomed to match scale window', () => {
     const overviewZ = EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
-    const atOverview = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ);
-    expect(atOverview).toBeCloseTo(EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM, 5);
+    const rphi = EventDisplayComponent.SIDE_VIEW_RPHI;
+    const rhoz = EventDisplayComponent.SIDE_VIEW_RHOZ;
 
-    const closer = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ / 2);
-    expect(closer).toBeGreaterThan(atOverview);
-    expect(closer).toBeCloseTo(atOverview * 2, 5);
+    const rphiOverview = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ, rphi);
+    expect(rphiOverview).toBeCloseTo(EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM, 5);
 
-    expect(EventDisplayComponent.computeSideViewZoomFromDistance(Number.NaN))
-      .toBe(EventDisplayComponent.SIDE_VIEW_FIXED_ZOOM);
+    const rhozOverview = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ, rhoz);
+    const rphiPlane =
+      EventDisplayComponent.SIDE_CAMERA_DISTANCE -
+      EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M;
+    expect(rhozOverview).toBeCloseTo(
+      rphiOverview * (EventDisplayComponent.SIDE_CAMERA_DISTANCE / rphiPlane),
+      5
+    );
+    expect(rhozOverview).toBeGreaterThan(rphiOverview);
+
+    const closer = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ / 2, rphi);
+    expect(closer).toBeCloseTo(rphiOverview * 2, 5);
+
+    expect(EventDisplayComponent.computeSideViewZoomFromDistance(Number.NaN, rphi))
+      .toBeCloseTo(rphiOverview, 5);
   });
 
-  it('side-view Rφ scale depth matches TOF half-length (ρz uses origin plane)', () => {
+  it('side-view scale constants: TOF depth and TRD height target', () => {
     expect(EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M).toBeCloseTo(3.75, 2);
-    expect(EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M).toBeLessThan(
-      EventDisplayComponent.SIDE_CAMERA_DISTANCE
+    expect(EventDisplayComponent.SIDE_VIEW_TRD_HEIGHT_M).toBeCloseTo(7.36, 2);
+    expect(EventDisplayComponent.SIDE_VIEW_RHOZ_Y_OVERREAD_M).toBeGreaterThan(
+      EventDisplayComponent.SIDE_VIEW_TRD_HEIGHT_M
     );
   });
 });

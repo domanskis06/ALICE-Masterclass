@@ -29,7 +29,10 @@ export interface SideViewScaleModel {
   xAxisLabel: string;
   yAxisLabel: string;
   scaleBar: SideViewScaleBar;
-  /** SVG inset so ticks sit in the HUD frame, not over the detector. */
+  /**
+   * Label / chrome inset only (not part of the metre mapping).
+   * Tick positions use the full viewport so px/m matches the WebGL camera (isotropic).
+   */
   padTop: number;
   padRight: number;
   padBottom: number;
@@ -46,11 +49,14 @@ export interface SideViewScaleInput {
   cameraDistanceWu: number;
   /**
    * Distance from camera to the plane used for metre labels (world units).
-   * Defaults to {@link cameraDistanceWu} (origin). For perspective side views,
-   * pass the distance to the near face of the largest shell (TRD wall / TOF face)
-   * so the HUD matches real component size instead of over-reading at the IP.
+   * Defaults to {@link cameraDistanceWu} (origin). Applied to both axes unless
+   * {@link scalePlaneDistanceXWu} / {@link scalePlaneDistanceYWu} override.
    */
   scalePlaneDistanceWu?: number;
+  /** Optional horizontal-axis (plot X) scale-plane distance; defaults as above. */
+  scalePlaneDistanceXWu?: number;
+  /** Optional vertical-axis (plot Y) scale-plane distance; defaults as above. */
+  scalePlaneDistanceYWu?: number;
   /**
    * Scene scale: physics_cm * objectScale = world units (EventDisplay: 1e-2).
    * With that convention 1 world unit = 1 metre.
@@ -68,18 +74,18 @@ const NICE_STEPS_M = [
 
 @Injectable({ providedIn: 'root' })
 export class SideViewScaleService {
-  static readonly PAD_TOP = 22;
-  static readonly PAD_RIGHT = 30;
-  static readonly PAD_BOTTOM = 24;
-  static readonly PAD_LEFT = 10;
+  /**
+   * Equal label margins (chrome only). Metric mapping uses the full CSS viewport
+   * so px/m on X equals px/m on Y and matches the side-camera aspect.
+   */
+  static readonly LABEL_INSET = 14;
   /** physics cm → metres (objectScale maps cm → world units ≡ metres). */
   static readonly CM_PER_M = 100;
 
   /**
-   * Visible half-extents (metres) at the scale plane for a perspective side camera.
-   * Matches Three.js: halfH = tan(fov/2) * planeDistance / zoom.
-   * Use {@link SideViewScaleInput.scalePlaneDistanceWu} for the TRD/TOF near face;
-   * origin-plane distance over-reads those shells by ~cameraDist/(cameraDist−R).
+   * Visible half-extents (metres) for a perspective side camera.
+   * halfH = tan(fov/2) * planeY / zoom; halfW = tan(fov/2) * planeX / zoom * aspect.
+   * Per-axis planes allow ρz (View 1) to keep Z at the IP while correcting Y for TRD height.
    */
   visibleHalfExtentsM(input: Pick<
     SideViewScaleInput,
@@ -88,6 +94,8 @@ export class SideViewScaleService {
     | 'zoom'
     | 'cameraDistanceWu'
     | 'scalePlaneDistanceWu'
+    | 'scalePlaneDistanceXWu'
+    | 'scalePlaneDistanceYWu'
     | 'objectScale'
   >): { halfWM: number; halfHM: number } {
     const zoom = Number.isFinite(input.zoom) && input.zoom > 0 ? input.zoom : 1;
@@ -95,19 +103,30 @@ export class SideViewScaleService {
       Number.isFinite(input.cameraDistanceWu) && input.cameraDistanceWu > 0
         ? input.cameraDistanceWu
         : 10;
-    const planeDistance =
+    const sharedPlane =
       Number.isFinite(input.scalePlaneDistanceWu) &&
       (input.scalePlaneDistanceWu as number) > 0
         ? (input.scalePlaneDistanceWu as number)
         : cameraDistance;
+    const planeX =
+      Number.isFinite(input.scalePlaneDistanceXWu) &&
+      (input.scalePlaneDistanceXWu as number) > 0
+        ? (input.scalePlaneDistanceXWu as number)
+        : sharedPlane;
+    const planeY =
+      Number.isFinite(input.scalePlaneDistanceYWu) &&
+      (input.scalePlaneDistanceYWu as number) > 0
+        ? (input.scalePlaneDistanceYWu as number)
+        : sharedPlane;
     const objectScale =
       Number.isFinite(input.objectScale) && input.objectScale > 0
         ? input.objectScale
         : 1e-2;
     const aspect = Number.isFinite(input.aspect) && input.aspect > 0 ? input.aspect : 1;
     const fovRad = ((Number.isFinite(input.fovDeg) ? input.fovDeg : 70) * Math.PI) / 180;
-    const halfHWu = Math.tan(fovRad / 2) * planeDistance / zoom;
-    const halfWWu = halfHWu * aspect;
+    const tanHalf = Math.tan(fovRad / 2);
+    const halfHWu = tanHalf * planeY / zoom;
+    const halfWWu = tanHalf * planeX / zoom * aspect;
     // wu / objectScale → cm; / 100 → m. With objectScale=1e-2, 1 wu = 1 m.
     const wuToM = 1 / (objectScale * SideViewScaleService.CM_PER_M);
     return {
@@ -151,20 +170,15 @@ export class SideViewScaleService {
     const yMinM = -halfHM;
     const yMaxM = halfHM;
 
-    const padTop = SideViewScaleService.PAD_TOP;
-    const padRight = SideViewScaleService.PAD_RIGHT;
-    const padBottom = SideViewScaleService.PAD_BOTTOM;
-    const padLeft = SideViewScaleService.PAD_LEFT;
-
-    const plotW = Math.max(input.viewportCssW - padLeft - padRight, 1);
-
+    const inset = SideViewScaleService.LABEL_INSET;
     const xStep = this.niceStepM(halfWM * 2, 5);
     const yStep = this.niceStepM(halfHM * 2, 5);
     const xTicks = this.buildTicks(xMinM, xMaxM, xStep);
     const yTicks = this.buildTicks(yMinM, yMaxM, yStep);
 
+    // Scale bar length against the full viewport width (same mapping as tick X).
     const barM = this.niceScaleBarM(halfWM);
-    const lengthPx = (barM / (halfWM * 2)) * plotW;
+    const lengthPx = (barM / (halfWM * 2)) * Math.max(input.viewportCssW, 1);
 
     const rphi = input.axisKind === 'rphi';
     return {
@@ -181,12 +195,25 @@ export class SideViewScaleService {
         lengthM: barM,
         label: `${this.formatTick(barM)} m`,
       },
-      padTop,
-      padRight,
-      padBottom,
-      padLeft,
+      padTop: inset,
+      padRight: inset,
+      padBottom: inset,
+      padLeft: inset,
       viewportCssW: input.viewportCssW,
       viewportCssH: input.viewportCssH,
+    };
+  }
+
+  /**
+   * Metres per CSS pixel on each axis for a computed model.
+   * With full-viewport tick mapping these must be equal (isotropic HUD).
+   */
+  metresPerPixel(model: SideViewScaleModel): { x: number; y: number } {
+    const spanX = model.xMaxM - model.xMinM;
+    const spanY = model.yMaxM - model.yMinM;
+    return {
+      x: spanX / Math.max(model.viewportCssW, 1),
+      y: spanY / Math.max(model.viewportCssH, 1),
     };
   }
 

@@ -69,45 +69,49 @@
                 [attr.viewBox]="'0 0 ' + m.viewportCssW + ' ' + m.viewportCssH"
                 preserveAspectRatio="none"
                 aria-hidden="true">
+                <!--
+                  Metric mapping = full viewport (same aspect as the side camera).
+                  pad* only offsets labels/chrome so px/m stays isotropic.
+                -->
                 <!-- Bottom X axis -->
                 <line
                   class="side-scale-axis"
-                  [attr.x1]="m.padLeft"
-                  [attr.y1]="m.viewportCssH - m.padBottom"
-                  [attr.x2]="m.viewportCssW - m.padRight"
-                  [attr.y2]="m.viewportCssH - m.padBottom" />
+                  x1="0"
+                  [attr.y1]="m.viewportCssH - 0.5"
+                  [attr.x2]="m.viewportCssW"
+                  [attr.y2]="m.viewportCssH - 0.5" />
                 @for (tick of m.xTicks; track tick.valueM) {
                   <line
                     class="side-scale-tick"
                     [attr.x1]="sideScaleX(m, tick.t)"
-                    [attr.y1]="m.viewportCssH - m.padBottom"
+                    [attr.y1]="m.viewportCssH"
                     [attr.x2]="sideScaleX(m, tick.t)"
-                    [attr.y2]="m.viewportCssH - m.padBottom + 5" />
+                    [attr.y2]="m.viewportCssH - 6" />
                   <text
                     class="side-scale-label"
                     [attr.x]="sideScaleX(m, tick.t)"
-                    [attr.y]="m.viewportCssH - 6"
+                    [attr.y]="m.viewportCssH - m.padBottom + 10"
                     text-anchor="middle">{{ tick.label }}</text>
                 }
                 <text
                   class="side-scale-axis-name"
-                  [attr.x]="m.viewportCssW - m.padRight - 4"
-                  [attr.y]="m.viewportCssH - m.padBottom - 6"
+                  [attr.x]="m.viewportCssW - m.padRight"
+                  [attr.y]="m.viewportCssH - m.padBottom - 2"
                   text-anchor="end">{{ m.xAxisLabel }}</text>
 
                 <!-- Right Y axis -->
                 <line
                   class="side-scale-axis"
-                  [attr.x1]="m.viewportCssW - m.padRight"
-                  [attr.y1]="m.padTop"
-                  [attr.x2]="m.viewportCssW - m.padRight"
-                  [attr.y2]="m.viewportCssH - m.padBottom" />
+                  [attr.x1]="m.viewportCssW - 0.5"
+                  y1="0"
+                  [attr.x2]="m.viewportCssW - 0.5"
+                  [attr.y2]="m.viewportCssH" />
                 @for (tick of m.yTicks; track tick.valueM) {
                   <line
                     class="side-scale-tick"
-                    [attr.x1]="m.viewportCssW - m.padRight"
+                    [attr.x1]="m.viewportCssW"
                     [attr.y1]="sideScaleY(m, tick.t)"
-                    [attr.x2]="m.viewportCssW - m.padRight + 5"
+                    [attr.x2]="m.viewportCssW - 6"
                     [attr.y2]="sideScaleY(m, tick.t)" />
                   <text
                     class="side-scale-label"
@@ -117,13 +121,13 @@
                 }
                 <text
                   class="side-scale-axis-name"
-                  [attr.x]="m.viewportCssW - m.padRight - 6"
-                  [attr.y]="m.padTop + 10"
+                  [attr.x]="m.viewportCssW - m.padRight"
+                  [attr.y]="m.padTop"
                   text-anchor="end">{{ m.yAxisLabel }}</text>
 
                 <!-- Scale bar (map-style) -->
                 <g class="side-scale-bar"
-                  [attr.transform]="'translate(' + m.padLeft + ' ' + (m.viewportCssH - m.padBottom - 14) + ')'">
+                  [attr.transform]="'translate(' + m.padLeft + ' ' + (m.viewportCssH - m.padBottom - 12) + ')'">
                   <line class="side-scale-bar-line" x1="0" y1="0" [attr.x2]="m.scaleBar.lengthPx" y2="0" />
                   <line class="side-scale-bar-line" x1="0" y1="-4" x2="0" y2="4" />
                   <line class="side-scale-bar-line" [attr.x1]="m.scaleBar.lengthPx" y1="-4" [attr.x2]="m.scaleBar.lengthPx" y2="4" />
@@ -135,7 +139,7 @@
                 <text
                   class="side-scale-unit"
                   [attr.x]="m.padLeft"
-                  [attr.y]="m.padTop + 10"
+                  [attr.y]="m.padTop"
                   text-anchor="start">{{ 'EVENT_DISPLAY.SCALE_UNIT_M' | translate }}</text>
               </svg>
             </ng-template>
