@@ -4,6 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AngularModule } from '../../shared/angular.module';
 import { SharedModule } from '../../shared/shared.module';
 
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { VaTutorialService } from '../va-tutorial/va-tutorial.service';
 import { InstructionsComponent } from './instructions.component';
 
@@ -25,6 +26,7 @@ describe('InstructionsComponent', () => {
       ],
       providers: [
         { provide: VaTutorialService, useValue: tutorialSpy },
+        { provide: DemoConfig, useValue: { enabled: true } },
         { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
       ],
     }).compileComponents();

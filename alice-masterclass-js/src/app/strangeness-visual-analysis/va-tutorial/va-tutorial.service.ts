@@ -36,7 +36,6 @@ export class VaTutorialService {
   private static readonly SELECTOR_ADD = '#va-tour-add';
   private static readonly SELECTOR_UNDO = '#va-tour-undo';
   private static readonly SELECTOR_HISTOGRAMS = '#va-tour-histograms';
-  private static readonly SELECTOR_UPLOAD = '#va-tour-upload';
   private static readonly SELECTOR_COMPLETE_NEXT = '#va-tour-complete-next';
   private static readonly SELECTOR_COMPLETE_PANEL = '#va-tour-event-complete';
 
@@ -71,8 +70,9 @@ export class VaTutorialService {
     this.hostHooks = { ...hooks };
   }
 
+  /** Welcome / replay only in the standalone demo app. */
   shouldShow(): boolean {
-    return !this.dismissedThisSession;
+    return this.demo && !this.dismissedThisSession;
   }
 
   dismiss(): void {
@@ -202,6 +202,9 @@ export class VaTutorialService {
   }
 
   startMainTour(): void {
+    if (!this.demo) {
+      return;
+    }
     this.destroyDriver(true);
     this.hostHooks.ensureRightSidebarOpen?.();
     this.hostHooks.scrollToDetector?.();
@@ -238,7 +241,7 @@ export class VaTutorialService {
   }
 
   private buildSteps(): DriveStep[] {
-    const steps = this.demo ? this.buildDemoSteps() : this.buildWorkshopSteps();
+    const steps = this.buildDemoSteps();
     // Scene and click-tracks both target #render-area; auto-advance uses the second one.
     this.stepIndexClickTracks = this.indexOfNthElement(steps, VaTutorialService.SELECTOR_RENDER, 2);
     this.stepIndexIdentify = this.indexOfStepWithPopoverKey(steps, 'STEP_IDENTIFY_TITLE');
@@ -247,9 +250,7 @@ export class VaTutorialService {
     }
     this.stepIndexFinish = this.indexOfStepWithPopoverKey(steps, 'STEP_FINISH_TITLE');
     if (this.stepIndexFinish < 0) {
-      this.stepIndexFinish = this.demo
-        ? VA_TUTORIAL_STEP_INDEX_FINISH_DEMO
-        : VA_TUTORIAL_STEP_INDEX_FINISH_DEMO + 1;
+      this.stepIndexFinish = VA_TUTORIAL_STEP_INDEX_FINISH_DEMO;
     }
     return steps;
   }
@@ -347,25 +348,7 @@ export class VaTutorialService {
     }, delayMs);
   }
 
-  private scrollHistogramsAndRefresh(delayMs = 320): void {
-    this.hostHooks.scrollToHistograms?.();
-    setTimeout(() => {
-      if (this.expandingSelectors.length > 0) {
-        this.layoutExpandingStage(this.expandingSelectors);
-      }
-      this.driverInstance?.refresh();
-    }, delayMs);
-  }
-
   private buildDemoSteps(): DriveStep[] {
-    return this.buildSharedSteps(false);
-  }
-
-  private buildWorkshopSteps(): DriveStep[] {
-    return this.buildSharedSteps(true);
-  }
-
-  private buildSharedSteps(includeUpload: boolean): DriveStep[] {
     const t = (key: string) => this.t(key);
     const steps: DriveStep[] = [
       {
@@ -483,58 +466,45 @@ export class VaTutorialService {
         },
         onDeselected: () => this.onExpandingStageDeselected(),
       },
-    ];
-
-    if (includeUpload) {
-      steps.push({
-        element: VaTutorialService.SELECTOR_UPLOAD,
-        popover: {
-          title: t('STEP_UPLOAD_TITLE'),
-          description: t('STEP_UPLOAD_BODY'),
-          side: 'left',
-        },
-        onHighlighted: () => this.scrollHistogramsAndRefresh(280),
-      });
-    }
-
-    steps.push({
-      element: () => {
-        this.hostHooks.scrollToAnalysis?.();
-        const completeNext = document.querySelector(VaTutorialService.SELECTOR_COMPLETE_NEXT);
-        if (completeNext) {
-          return completeNext;
-        }
-        const completePanel = document.querySelector(VaTutorialService.SELECTOR_COMPLETE_PANEL);
-        if (completePanel) {
-          return completePanel;
-        }
-        return this.getExpandingStage([
-          VaTutorialService.SELECTOR_PARTICLE_TYPE,
-          VaTutorialService.SELECTOR_ADD,
-        ]);
-      },
-      disableActiveInteraction: false,
-      popover: {
-        title: t('STEP_FINISH_TITLE'),
-        description: t('STEP_FINISH_BODY'),
-        side: 'left',
-        align: 'start',
-        showButtons: ['previous', 'close'],
-        disableButtons: ['next'],
-      },
-      onHighlighted: () => {
-        this.scrollAnalysisAndRefresh(320);
-        if (document.querySelector(VaTutorialService.SELECTOR_COMPLETE_NEXT)) {
-          this.enableExpandingInteractions([VaTutorialService.SELECTOR_COMPLETE_NEXT]);
-        } else if (!document.querySelector(VaTutorialService.SELECTOR_COMPLETE_PANEL)) {
-          this.enableExpandingInteractions([
+      {
+        element: () => {
+          this.hostHooks.scrollToAnalysis?.();
+          const completeNext = document.querySelector(VaTutorialService.SELECTOR_COMPLETE_NEXT);
+          if (completeNext) {
+            return completeNext;
+          }
+          const completePanel = document.querySelector(VaTutorialService.SELECTOR_COMPLETE_PANEL);
+          if (completePanel) {
+            return completePanel;
+          }
+          return this.getExpandingStage([
             VaTutorialService.SELECTOR_PARTICLE_TYPE,
             VaTutorialService.SELECTOR_ADD,
           ]);
-        }
+        },
+        disableActiveInteraction: false,
+        popover: {
+          title: t('STEP_FINISH_TITLE'),
+          description: t('STEP_FINISH_BODY'),
+          side: 'left',
+          align: 'start',
+          showButtons: ['previous', 'close'],
+          disableButtons: ['next'],
+        },
+        onHighlighted: () => {
+          this.scrollAnalysisAndRefresh(320);
+          if (document.querySelector(VaTutorialService.SELECTOR_COMPLETE_NEXT)) {
+            this.enableExpandingInteractions([VaTutorialService.SELECTOR_COMPLETE_NEXT]);
+          } else if (!document.querySelector(VaTutorialService.SELECTOR_COMPLETE_PANEL)) {
+            this.enableExpandingInteractions([
+              VaTutorialService.SELECTOR_PARTICLE_TYPE,
+              VaTutorialService.SELECTOR_ADD,
+            ]);
+          }
+        },
+        onDeselected: () => this.onExpandingStageDeselected(),
       },
-      onDeselected: () => this.onExpandingStageDeselected(),
-    });
+    ];
 
     return steps;
   }

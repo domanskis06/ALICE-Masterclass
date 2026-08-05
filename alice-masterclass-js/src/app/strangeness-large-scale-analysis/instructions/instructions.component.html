@@ -2,16 +2,18 @@
 
 <h2>{{ 'STRANGENESS.INSTRUCTIONS_LARGE_SCALE_ANALYSIS.SUBTITLE' | translate }}</h2>
 
-<div class="lsa-replay-tutorial">
-  <button
-    mat-raised-button
-    color="primary"
-    type="button"
-    (click)="replayTutorial()"
-  >
-    {{ 'STRANGENESS.LSA_TUTORIAL.REPLAY' | translate }}
-  </button>
-</div>
+@if (demo) {
+  <div class="lsa-replay-tutorial">
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      (click)="replayTutorial()"
+    >
+      {{ 'STRANGENESS.LSA_TUTORIAL.REPLAY' | translate }}
+    </button>
+  </div>
+}
 
 <p [innerHtml]="'STRANGENESS.INSTRUCTIONS_LARGE_SCALE_ANALYSIS.P1' | translate"></p>
 

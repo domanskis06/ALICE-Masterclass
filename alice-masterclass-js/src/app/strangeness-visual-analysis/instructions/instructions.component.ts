@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { VaTutorialService } from '../va-tutorial/va-tutorial.service';
 
 @Component({
@@ -10,6 +11,8 @@ import { VaTutorialService } from '../va-tutorial/va-tutorial.service';
     standalone: false
 })
 export class InstructionsComponent implements OnInit {
+
+  protected readonly demo = inject(DemoConfig).enabled;
 
   constructor(
     private readonly vaTutorial: VaTutorialService,
@@ -24,7 +27,7 @@ export class InstructionsComponent implements OnInit {
   }
 
   replayTutorial(): void {
-    if (this.vaTutorial.isActive()) {
+    if (!this.demo || this.vaTutorial.isActive()) {
       return;
     }
     // Close help dialog first so the tour overlay can highlight the underlying UI.

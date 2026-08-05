@@ -137,7 +137,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     'assets/models/alice components/L3.glb',
   ];
 
-  private readonly demo = inject(DemoConfig).enabled;
+  protected readonly demo = inject(DemoConfig).enabled;
   private readonly vaTutorial = inject(VaTutorialService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -596,18 +596,24 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
   }
 
-  /** Skip the exercise tutorial for this page load. */
+  /** Skip the exercise tutorial for this page load (demo only). */
   onVaCoachVictorySkipTutorial(): void {
     this.tutorialOfferOpened = true;
     this.closeVaCoachVictory();
     this.vaTutorial.dismiss();
   }
 
-  /** Close the assembly coach and start the exercise UI tutorial. */
+  /** Close the assembly coach and start the exercise UI tutorial (demo only). */
   onVaCoachVictoryStartTutorial(): void {
     this.tutorialOfferOpened = true;
     this.closeVaCoachVictory();
     this.vaTutorial.startMainTour();
+  }
+
+  /** Close the assembly coach with no tutorial offer (workshop). */
+  onVaCoachVictoryDismiss(): void {
+    this.tutorialOfferOpened = true;
+    this.closeVaCoachVictory();
   }
 
   /**

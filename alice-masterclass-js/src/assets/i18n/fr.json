@@ -21,6 +21,7 @@
     "DRAG_TITLE": "Prochaine pièce à placer",
     "DONE_TITLE": "Détecteur terminé",
     "DONE_BODY": "Toutes les pièces du détecteur sont en place. Les options de visibilité et de traces sont dans le panneau de droite. Vous pouvez maintenant lancer un court tutoriel sur l'utilisation de cet exercice, ou le passer et explorer par vous-même.",
+    "DONE_BODY_WORKSHOP": "Toutes les pièces du détecteur sont en place. Les options de visibilité et de traces sont dans le panneau de droite.",
     "DONE_BUTTON": "Compris",
     "DONE_SKIP": "Ignorer",
     "DONE_START_TUTORIAL": "Démarrer le tutoriel",
@@ -399,8 +400,6 @@
       "STEP_IDENTIFY_BODY": "Comparez le total de la Calculatrice aux masses connues du tableau <strong>Particules</strong>, puis choisissez le type correspondant. Si vous avez besoin d'aide sur les formes de désintégration, cliquez <strong>Comment identifier une particule ?</strong>. Utilisez <strong>Ajouter</strong> pour envoyer le résultat à un histogramme, ou <strong>Annuler</strong> pour corriger une erreur. Rejouer le tutoriel reste désactivé tant que ce guide est ouvert.",
       "STEP_HISTOGRAMS_TITLE": "Remplir les histogrammes de masse",
       "STEP_HISTOGRAMS_BODY": "Chaque identification acceptée ajoute une entrée à l'histogramme de masse invariante correspondant. Après beaucoup d'événements, les vraies particules forment des pics près de leurs masses connues, tandis que les combinaisons aléatoires restent un fond lisse. Utilisez <strong>Bins</strong> pour changer la finesse des intervalles de masse.",
-      "STEP_UPLOAD_TITLE": "Envoyer vos résultats",
-      "STEP_UPLOAD_BODY": "Lorsque vous êtes connecté, <strong>Envoyer les données</strong> transmet vos particules identifiées à la session enseignant pour collecter les résultats de la classe. Cette option est désactivée pour le jeu Demo.",
       "STEP_FINISH_TITLE": "Terminer l'événement",
       "STEP_FINISH_BODY": "Lorsque chaque trace de désintégration de cette collision a été utilisée, le sélecteur de particule est remplacé par <strong>Événement suivant</strong>. Appuyez dessus pour analyser la collision suivante et continuer à remplir les histogrammes. Appuyez sur Terminé pour fermer le tutoriel."
     },
@@ -429,16 +428,10 @@
       "STEP_CHECK_BODY": "Vérifiez que le <strong>polynôme</strong> suit le continuum loin du pic et que la <strong>gaussienne</strong> repose sur l’excès. De mauvais choix de plages apparaissent comme des discordances évidentes. Si cela semble incorrect, ajustez les plages et <strong>Ajuster</strong> à nouveau.",
       "STEP_RESULT_ACTIONS_TITLE": "Accepter, annuler ou effacer",
       "STEP_RESULT_ACTIONS_BODY": "<strong>Accepter</strong> enregistre le rendement de signal de votre ajustement. <strong>Annuler</strong> retire le dernier résultat enregistré. <strong>Effacer l’ajustement</strong> retire les courbes de l’histogramme pour recommencer, sans supprimer les lignes déjà acceptées.",
-      "STEP_RESULT_ACTIONS_TITLE_WORKSHOP": "Accepter ou effacer",
-      "STEP_RESULT_ACTIONS_BODY_WORKSHOP": "<strong>Accepter</strong> enregistre le rendement de signal de votre ajustement. <strong>Effacer l’ajustement</strong> retire les courbes de l’histogramme pour recommencer, sans supprimer les lignes déjà acceptées.",
       "STEP_ENHANCEMENT_PLOT_TITLE": "Graphique d’augmentation",
       "STEP_ENHANCEMENT_PLOT_BODY": "Ce graphique montre l’<strong>augmentation de strangeness</strong> en fonction du <strong>nombre de nucléons participants</strong> pour chaque classe de centralité. Les points apparaissent lorsque vous acceptez des ajustements pour le kaon, le lambda et l’anti-lambda.",
-      "STEP_RESULTS_TITLE": "Vos mesures soumises",
-      "STEP_RESULTS_BODY": "Chaque ajustement accepté ajoute une ligne avec le <strong>type de particule</strong>, la <strong>collision</strong>, la <strong>centralité</strong> le cas échéant et l’estimation du <strong>signal</strong>. Cela reflète la façon dont vous tabulerez les rendements dans un flux d’analyse de type publication.",
       "STEP_RESULTS_SUMMARY_TITLE": "Tableau des résultats",
-      "STEP_RESULTS_SUMMARY_BODY": "Pour chaque classe de <strong>centralité</strong>, ce tableau rassemble vos ajustements acceptés : les nombres de particules mesurés, l’<strong>efficacité</strong> du détecteur et le <strong>taux de production</strong> - combien de particules étranges sont produites en moyenne par collision après corrections. Le chiffre clé est l’<strong>augmentation</strong> : ce taux divisé par le même taux dans les collisions proton-proton. Une valeur supérieure à 1 signifie que les particules étranges sont créées plus souvent dans les collisions d’ions lourds que dans de simples collisions proton-proton - c’est l’augmentation de strangeness.",
-      "STEP_UPLOAD_TITLE": "Partager les résultats avec votre enseignant",
-      "STEP_UPLOAD_BODY": "Une fois connecté, <strong>Envoyer les données</strong> envoie votre tableau à la session serveur, en regroupant les résultats de la classe. Si le bouton est désactivé, connectez-vous d’abord depuis le flux principal."
+      "STEP_RESULTS_SUMMARY_BODY": "Pour chaque classe de <strong>centralité</strong>, ce tableau rassemble vos ajustements acceptés : les nombres de particules mesurés, l’<strong>efficacité</strong> du détecteur et le <strong>taux de production</strong> - combien de particules étranges sont produites en moyenne par collision après corrections. Le chiffre clé est l’<strong>augmentation</strong> : ce taux divisé par le même taux dans les collisions proton-proton. Une valeur supérieure à 1 signifie que les particules étranges sont créées plus souvent dans les collisions d’ions lourds que dans de simples collisions proton-proton - c’est l’augmentation de strangeness."
     }
   }
 }

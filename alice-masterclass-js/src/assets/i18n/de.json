@@ -14,6 +14,7 @@
     "DRAG_TITLE": "Nächstes Teil platzieren",
     "DONE_TITLE": "Detektor fertig montiert",
     "DONE_BODY": "Alle Detektorteile sind an ihrem Platz. Sichtbarkeit und Spuroptionen finden Sie im rechten Panel. Sie können jetzt eine kurze Anleitung zur Bedienung dieser Übung starten oder sie überspringen und selbst erkunden.",
+    "DONE_BODY_WORKSHOP": "Alle Detektorteile sind an ihrem Platz. Sichtbarkeit und Spuroptionen finden Sie im rechten Panel.",
     "DONE_BUTTON": "Alles klar",
     "DONE_SKIP": "Überspringen",
     "DONE_START_TUTORIAL": "Anleitung starten",
@@ -397,8 +398,6 @@
       "STEP_IDENTIFY_BODY": "Vergleichen Sie die Rechnersumme mit den bekannten Massen in der Tabelle <strong>Teilchen</strong> und wählen Sie den passenden Typ. Bei Unsicherheit zu Zerfallsformen klicken Sie <strong>Wie identifiziert man ein Teilchen?</strong>. Mit <strong>Hinzufügen</strong> senden Sie das Ergebnis in ein Histogramm, mit <strong>Rückgängig</strong> korrigieren Sie einen Fehler. Anleitung wiederholen bleibt deaktiviert, solange dieser Guide offen ist.",
       "STEP_HISTOGRAMS_TITLE": "Massenhistogramme füllen",
       "STEP_HISTOGRAMS_BODY": "Jede akzeptierte Identifikation fügt einen Eintrag in das passende Histogramm der invarianten Masse ein. Nach vielen Ereignissen bilden echte Teilchen Peaks nahe ihrer bekannten Massen, zufällige Kombinationen bleiben als glatter Untergrund. Mit <strong>Bins</strong> ändern Sie die Feinheit der Massenintervalle.",
-      "STEP_UPLOAD_TITLE": "Ergebnisse hochladen",
-      "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre identifizierten Teilchen an die Lehrkraftsitzung, damit die Klassenergebnisse gesammelt werden können. Für den Demo-Datensatz ist das deaktiviert.",
       "STEP_FINISH_TITLE": "Ereignis abschließen",
       "STEP_FINISH_BODY": "Wenn jede Zerfallsspur in dieser Kollision verwendet wurde, ersetzt <strong>Nächstes</strong> den Teilchenwähler. Drücken Sie es, um die nächste Kollision zu analysieren und die Histogramme weiter zu füllen. Drücken Sie Fertig, um die Anleitung zu schließen."
     },
@@ -427,16 +426,10 @@
       "STEP_CHECK_BODY": "Prüfen Sie, ob das <strong>Polynom</strong> dem Kontinuum abseits des Peaks folgt und die <strong>Gauß</strong>-Kurve auf dem Überschuss sitzt. Schlechte Bereichswahlen zeigen sich als offensichtliche Abweichungen. Wenn es falsch aussieht, passen Sie die Bereiche an und klicken erneut auf <strong>Fit</strong>.",
       "STEP_RESULT_ACTIONS_TITLE": "Übernehmen, rückgängig oder löschen",
       "STEP_RESULT_ACTIONS_BODY": "<strong>Übernehmen</strong> speichert die Signalausbeute aus Ihrem Fit. <strong>Rückgängig</strong> entfernt das zuletzt gespeicherte Ergebnis. <strong>Fit löschen</strong> entfernt die Kurven vom Histogramm, damit Sie erneut fitten können, ohne übernommene Zeilen zu löschen.",
-      "STEP_RESULT_ACTIONS_TITLE_WORKSHOP": "Übernehmen oder löschen",
-      "STEP_RESULT_ACTIONS_BODY_WORKSHOP": "<strong>Übernehmen</strong> speichert die Signalausbeute aus Ihrem Fit. <strong>Fit löschen</strong> entfernt die Kurven vom Histogramm, damit Sie erneut fitten können, ohne übernommene Zeilen zu löschen.",
       "STEP_ENHANCEMENT_PLOT_TITLE": "Verstärkungsdiagramm",
       "STEP_ENHANCEMENT_PLOT_BODY": "Dieses Diagramm zeigt die <strong>Strangeness-Verstärkung</strong> gegen die <strong>Anzahl teilnehmender Nukleonen</strong> für jede Zentralitätsklasse. Punkte erscheinen, wenn Sie Fits für Kaon, Lambda und Anti-Lambda übernehmen.",
-      "STEP_RESULTS_TITLE": "Ihre eingereichten Messungen",
-      "STEP_RESULTS_BODY": "Jeder übernommene Fit fügt eine Zeile mit <strong>Teilchentyp</strong>, <strong>Kollision</strong>, <strong>Zentralität</strong> falls zutreffend und der <strong>Signal</strong>-Schätzung hinzu. Das spiegelt wider, wie man Ausbeuten in einem publikationsähnlichen Analyseablauf tabelliert.",
       "STEP_RESULTS_SUMMARY_TITLE": "Ergebnistabelle",
-      "STEP_RESULTS_SUMMARY_BODY": "Für jede <strong>Zentralitäts</strong>klasse sammelt diese Tabelle Ihre übernommenen Fits: die gemessenen Teilchenzahlen, die Detektor-<strong>Effizienz</strong> und die <strong>Ausbeute</strong> - wie viele Strange-Teilchen nach Korrekturen pro Kollision erzeugt werden. Die Schlüsselgröße ist die <strong>Verstärkung</strong>: die Ausbeute geteilt durch dieselbe Ausbeute in Proton-Proton-Kollisionen. Ein Wert über 1 bedeutet, dass Strange-Teilchen in Schwerionenkollisionen häufiger erzeugt werden als in einfachen Proton-Proton-Kollisionen - das ist die Strangeness-Verstärkung.",
-      "STEP_UPLOAD_TITLE": "Ergebnisse mit dem Lehrer teilen",
-      "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung und sammelt die Klassenergebnisse. Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
+      "STEP_RESULTS_SUMMARY_BODY": "Für jede <strong>Zentralitäts</strong>klasse sammelt diese Tabelle Ihre übernommenen Fits: die gemessenen Teilchenzahlen, die Detektor-<strong>Effizienz</strong> und die <strong>Ausbeute</strong> - wie viele Strange-Teilchen nach Korrekturen pro Kollision erzeugt werden. Die Schlüsselgröße ist die <strong>Verstärkung</strong>: die Ausbeute geteilt durch dieselbe Ausbeute in Proton-Proton-Kollisionen. Ein Wert über 1 bedeutet, dass Strange-Teilchen in Schwerionenkollisionen häufiger erzeugt werden als in einfachen Proton-Proton-Kollisionen - das ist die Strangeness-Verstärkung."
     }
   }
 }

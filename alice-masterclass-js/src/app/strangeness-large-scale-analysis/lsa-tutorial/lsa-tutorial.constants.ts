@@ -1,11 +1,11 @@
 /**
- * Workshop tour indices (0-based) in `LsaTutorialService.buildWorkshopSteps()`.
- * Demo mode builds a different sequence and stores live indices on the service.
+ * Demo tour indices (0-based) in `LsaTutorialService.buildDemoSteps()`.
+ * The workshop app does not run this tour.
  */
 export const LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM = 0;
 
-/** Workshop: "Run the fit". */
+/** Demo: "Run the fit". */
 export const LSA_TUTORIAL_STEP_INDEX_FIT = 4;
 
-/** Workshop: Accept / Clear fit actions. */
+/** Demo: Accept / Undo / Clear fit actions. */
 export const LSA_TUTORIAL_STEP_INDEX_ACCEPT = 6;

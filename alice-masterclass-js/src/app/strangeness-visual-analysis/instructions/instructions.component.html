@@ -2,18 +2,20 @@
 
 <h2>{{ 'STRANGENESS.INSTRUCTIONS_VISUAL_ANALYSIS.SUBTITLE' | translate }}</h2>
 
-<div class="va-replay-tutorial">
-  <button
-    mat-raised-button
-    color="primary"
-    type="button"
-    data-testid="va-replay-tutorial"
-    [disabled]="replayDisabled"
-    (click)="replayTutorial()"
-  >
-    {{ 'STRANGENESS.VA_TUTORIAL.REPLAY' | translate }}
-  </button>
-</div>
+@if (demo) {
+  <div class="va-replay-tutorial">
+    <button
+      mat-raised-button
+      color="primary"
+      type="button"
+      data-testid="va-replay-tutorial"
+      [disabled]="replayDisabled"
+      (click)="replayTutorial()"
+    >
+      {{ 'STRANGENESS.VA_TUTORIAL.REPLAY' | translate }}
+    </button>
+  </div>
+}
 
 <p [innerHtml]="'STRANGENESS.INSTRUCTIONS_VISUAL_ANALYSIS.P1' | translate"></p>
 

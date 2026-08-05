@@ -22,12 +22,10 @@ export class LsaTutorialService {
   private static readonly SELECTOR_SIGNAL = '#lsa-tour-signal-group';
   private static readonly SELECTOR_BACKGROUND = '#lsa-tour-background-group';
   private static readonly SELECTOR_FIT_SELECTOR = '#lsa-tour-fit-selector';
-  private static readonly SELECTOR_RESULTS = '#lsa-tour-results-table';
   private static readonly SELECTOR_RESULTS_DEMO = '#lsa-demo-results-table';
   private static readonly SELECTOR_ENHANCEMENT_PLOT = '#lsa-demo-enhancement-plot';
   private static readonly SELECTOR_FIT = '#lsa-tour-fit-button';
   private static readonly SELECTOR_RESULT_ACTIONS = '#lsa-tour-result-actions';
-  private static readonly SELECTOR_UPLOAD = '#lsa-tour-upload-button';
   private readonly demo = inject(DemoConfig).enabled;
 
   private driverInstance: Driver | null = null;
@@ -36,7 +34,7 @@ export class LsaTutorialService {
   /** In-memory only — resets on full page reload so the welcome dialog shows again. */
   private dismissedThisSession = false;
 
-  /** Live indices for auto-advance (workshop constants or demo offsets). */
+  /** Live indices for auto-advance (demo tour only). */
   private stepIndexOpenHistogram = LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM;
   private stepIndexFit = LSA_TUTORIAL_STEP_INDEX_FIT;
   private stepIndexAccept = LSA_TUTORIAL_STEP_INDEX_ACCEPT;
@@ -62,8 +60,9 @@ export class LsaTutorialService {
     private readonly translate: TranslateService,
   ) {}
 
+  /** Welcome / replay only in the standalone demo app. */
   shouldShow(): boolean {
-    return !this.dismissedThisSession;
+    return this.demo && !this.dismissedThisSession;
   }
 
   dismiss(): void {
@@ -138,6 +137,9 @@ export class LsaTutorialService {
   }
 
   startMainTour(): void {
+    if (!this.demo) {
+      return;
+    }
     this.destroyDriver(true);
     const steps = this.buildSteps();
     const t = (key: string) => this.translate.instant(`STRANGENESS.LSA_TUTORIAL.${key}`);
@@ -172,7 +174,7 @@ export class LsaTutorialService {
   }
 
   private buildSteps(): DriveStep[] {
-    const steps = this.demo ? this.buildDemoSteps() : this.buildWorkshopSteps();
+    const steps = this.buildDemoSteps();
     // Setup is always first; its element is an expanding-stage function.
     this.stepIndexOpenHistogram = LSA_TUTORIAL_STEP_INDEX_OPEN_HISTOGRAM;
     this.stepIndexFit = this.indexOfElement(steps, LsaTutorialService.SELECTOR_FIT);
@@ -218,104 +220,9 @@ export class LsaTutorialService {
     };
   }
 
-  /** Workshop layout: spectrum | results side by side, then fit selector. */
-  private buildWorkshopSteps(): DriveStep[] {
-    const t = (key: string) => this.t(key);
-    return [
-      this.buildSetupStep(t),
-      {
-        element: LsaTutorialService.SELECTOR_HISTOGRAM,
-        popover: {
-          title: t('STEP_SPECTRUM_TITLE'),
-          description: t('STEP_SPECTRUM_BODY'),
-          side: 'right',
-          align: 'start',
-        },
-      },
-      {
-        element: () => this.getExpandingStage([
-          LsaTutorialService.SELECTOR_HISTOGRAM,
-          LsaTutorialService.SELECTOR_SIGNAL,
-        ]),
-        disableActiveInteraction: true,
-        popover: {
-          title: t('STEP_SIGNAL_TITLE'),
-          description: t('STEP_SIGNAL_BODY'),
-          side: 'right',
-          align: 'end',
-        },
-        onHighlighted: () => this.enableExpandingInteractions([
-          LsaTutorialService.SELECTOR_HISTOGRAM,
-          LsaTutorialService.SELECTOR_SIGNAL,
-        ]),
-        onDeselected: () => this.onExpandingStageDeselected(),
-      },
-      {
-        element: () => this.getExpandingStage([
-          LsaTutorialService.SELECTOR_HISTOGRAM,
-          LsaTutorialService.SELECTOR_SIGNAL,
-          LsaTutorialService.SELECTOR_BACKGROUND,
-        ]),
-        disableActiveInteraction: true,
-        popover: {
-          title: t('STEP_BACKGROUND_TITLE'),
-          description: t('STEP_BACKGROUND_BODY'),
-          side: 'right',
-          align: 'end',
-        },
-        onHighlighted: () => this.enableExpandingInteractions([
-          LsaTutorialService.SELECTOR_HISTOGRAM,
-          LsaTutorialService.SELECTOR_SIGNAL,
-          LsaTutorialService.SELECTOR_BACKGROUND,
-        ]),
-        onDeselected: () => this.onExpandingStageDeselected(),
-      },
-      {
-        element: LsaTutorialService.SELECTOR_FIT,
-        popover: {
-          title: t('STEP_FIT_TITLE'),
-          description: t('STEP_FIT_BODY'),
-          side: 'left',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_HISTOGRAM,
-        popover: {
-          title: t('STEP_CHECK_TITLE'),
-          description: t('STEP_CHECK_BODY'),
-          side: 'right',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_RESULT_ACTIONS,
-        disableActiveInteraction: false,
-        popover: {
-          title: t('STEP_RESULT_ACTIONS_TITLE_WORKSHOP'),
-          description: t('STEP_RESULT_ACTIONS_BODY_WORKSHOP'),
-          side: 'left',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_RESULTS,
-        popover: {
-          title: t('STEP_RESULTS_TITLE'),
-          description: t('STEP_RESULTS_BODY'),
-          side: 'top',
-        },
-      },
-      {
-        element: LsaTutorialService.SELECTOR_UPLOAD,
-        popover: {
-          title: t('STEP_UPLOAD_TITLE'),
-          description: t('STEP_UPLOAD_BODY'),
-          side: 'left',
-        },
-      },
-    ];
-  }
-
   /**
    * Demo layout: spectrum | enhancement plot, fit selector full width, results below.
+   * Workshop builds omit this tour entirely (teacher-led sessions).
    */
   private buildDemoSteps(): DriveStep[] {
     const t = (key: string) => this.t(key);
