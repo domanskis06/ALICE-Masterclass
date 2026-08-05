@@ -30,6 +30,16 @@ mat-sidenav-content > div {
 
 #buttons {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+
+  .session-badge {
+    color: #fff;
+    font-size: 0.9em;
+    font-weight: 400;
+    white-space: nowrap;
+    margin-right: 0.25em;
+  }
 
   button {
     vertical-align: middle;
