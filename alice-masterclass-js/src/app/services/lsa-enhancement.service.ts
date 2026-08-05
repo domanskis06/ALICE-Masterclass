@@ -36,10 +36,10 @@ export interface StrangenessEnhancementPlotEntry {
   centrality: CentralityType;
 }
 
-/** Plot / table legend colours, matching the mass-histogram palette. */
-export const ENHANCEMENT_KAON_COLOR = '#3F51B5';
-export const ENHANCEMENT_LAMBDA_COLOR = '#7E57C2';
-export const ENHANCEMENT_ANTILAMBDA_COLOR = '#EC407A';
+/** Plot / table legend colours — same as the teacher enhancement UI. */
+export const ENHANCEMENT_KAON_COLOR = '#1F78B4';
+export const ENHANCEMENT_LAMBDA_COLOR = '#33A02C';
+export const ENHANCEMENT_ANTILAMBDA_COLOR = '#E31A1C';
 
 /**
  * Reference pp yields (dN/dy) used as the enhancement denominator, per

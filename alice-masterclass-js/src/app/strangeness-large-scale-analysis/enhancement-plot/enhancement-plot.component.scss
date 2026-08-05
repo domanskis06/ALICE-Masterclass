@@ -1,6 +1,7 @@
 .title {
-  line-height: 1.2;
+  line-height: 40px;
   margin: 0;
+  // Same inset as other LSA mat-card titles (see parent host rule / demo-layout).
   padding: 0;
 }
 

@@ -21,11 +21,12 @@ export interface DemoLargeScaleAnalysisSnapshot {
 }
 
 /**
- * Browser-local persistence for the demo build, in place of uploading to Django.
+ * Per-tab persistence for the demo build, in place of uploading to Django.
  *
- * Everything lives under the `demo:` prefix; the workshop build never reads or
- * writes these keys. All access is defensive: a full or unavailable storage
- * (private mode) must not break the exercises.
+ * Uses `sessionStorage` so a refresh keeps VA/LSA progress, but opening the
+ * demo in a new tab starts clean. Everything lives under the `demo:` prefix;
+ * the workshop build never reads or writes these keys. All access is defensive:
+ * unavailable storage (private mode) must not break the exercises.
  */
 @Injectable({ providedIn: 'root' })
 export class DemoResultsStore {
@@ -36,6 +37,20 @@ export class DemoResultsStore {
   private static readonly KEY_LSA_RESULTS = 'demo:lsa:results';
   /** Accept history for Undo — see `DemoLsaUndoEntry`. */
   private static readonly KEY_LSA_ORDER = 'demo:lsa:order';
+
+  private static readonly ALL_KEYS = [
+    DemoResultsStore.KEY_VA_RESULTS,
+    DemoResultsStore.KEY_VA_TRACK_KEYS,
+    DemoResultsStore.KEY_LSA_RESULTS,
+    DemoResultsStore.KEY_LSA_ORDER,
+  ];
+
+  constructor() {
+    // Drop legacy localStorage copies from earlier demo builds.
+    if (this.enabled) {
+      this.clearLocalStorageLegacy();
+    }
+  }
 
   loadVisualAnalysis(): DemoVisualAnalysisSnapshot | null {
     if (!this.enabled) {
@@ -111,18 +126,14 @@ export class DemoResultsStore {
     if (!this.enabled) {
       return;
     }
-    for (const key of [
-      DemoResultsStore.KEY_VA_RESULTS,
-      DemoResultsStore.KEY_VA_TRACK_KEYS,
-      DemoResultsStore.KEY_LSA_RESULTS,
-      DemoResultsStore.KEY_LSA_ORDER,
-    ]) {
+    for (const key of DemoResultsStore.ALL_KEYS) {
       try {
-        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
       } catch {
         return;
       }
     }
+    this.clearLocalStorageLegacy();
   }
 
   /** Maps are stored as `[key, value]` pairs; null means "nothing usable stored". */
@@ -137,7 +148,7 @@ export class DemoResultsStore {
   private read<T>(storageKey: string): T | null {
     let raw: string | null = null;
     try {
-      raw = localStorage.getItem(storageKey);
+      raw = sessionStorage.getItem(storageKey);
     } catch {
       return null;
     }
@@ -153,9 +164,19 @@ export class DemoResultsStore {
 
   private write(storageKey: string, value: unknown): void {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(value));
+      sessionStorage.setItem(storageKey, JSON.stringify(value));
     } catch {
       // Quota exceeded / storage disabled: the exercise keeps working in memory.
+    }
+  }
+
+  private clearLocalStorageLegacy(): void {
+    for (const key of DemoResultsStore.ALL_KEYS) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        return;
+      }
     }
   }
 }

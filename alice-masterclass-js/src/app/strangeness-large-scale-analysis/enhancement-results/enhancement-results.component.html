@@ -1,7 +1,7 @@
-<mat-card appearance="outlined" fxLayout="column">
+<mat-card appearance="outlined" fxLayout="column" id="lsa-demo-results-table">
   <mat-card-title class="title">{{ 'STRANGENESS.ENHANCEMENT.TITLE' | translate }}</mat-card-title>
   <mat-card-content>
-    <div id="lsa-demo-results-table" class="mat-elevation-z2 results-frame">
+    <div class="mat-elevation-z2 results-frame">
       <table mat-table [dataSource]="tableRows" class="enhancement-table">
 
         <ng-container matColumnDef="centrality">

@@ -40,7 +40,12 @@ describe('StrangenessDataService (demo mode)', () => {
     return TestBed.inject(StrangenessDataService);
   };
 
-  const clearDemoStorage = () => DEMO_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+  const clearDemoStorage = () => {
+    DEMO_STORAGE_KEYS.forEach((key) => {
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
+    });
+  };
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -49,13 +54,14 @@ describe('StrangenessDataService (demo mode)', () => {
 
   afterEach(() => clearDemoStorage());
 
-  it('persists visual-analysis results to localStorage', () => {
+  it('persists visual-analysis results to sessionStorage', () => {
     const service = createService();
     service.addVisualAnalysisResult('1:0', { particle: ParticleType.KAON, mass: 0.5 }, ['0:+', '0:-']);
 
-    expect(JSON.parse(localStorage.getItem('demo:va:results')!)).toEqual([
+    expect(JSON.parse(sessionStorage.getItem('demo:va:results')!)).toEqual([
       ['1:0', [{ particle: ParticleType.KAON, mass: 0.5 }]],
     ]);
+    expect(localStorage.getItem('demo:va:results')).toBeNull();
   });
 
   it('restores visual-analysis results and track claims on a fresh instance', () => {
@@ -122,6 +128,7 @@ describe('StrangenessDataService (demo mode)', () => {
     service.addVisualAnalysisResult('0', { particle: ParticleType.KAON, mass: 0.5 }, ['0:+']);
     service.addLargeScaleAnalysisResult('k0_pbpb_000_010', kaonFit(CentralityType.C000_010, 100));
 
+    expect(DEMO_STORAGE_KEYS.every((key) => sessionStorage.getItem(key) === null)).toBeTrue();
     expect(DEMO_STORAGE_KEYS.every((key) => localStorage.getItem(key) === null)).toBeTrue();
     expect(service.canUndoLargeScaleAnalysisResult).toBeFalse();
   });
