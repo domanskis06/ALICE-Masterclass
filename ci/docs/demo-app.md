@@ -36,6 +36,23 @@ Code lives in the **same monorepo and `main` branch**. Demo is selected at
 long-lived fork. Feature work stays on normal branches; demo-only UI is gated
 with `DemoConfig` / `@if (demo)`.
 
+### Why this shape (not a separate repo)
+
+Demo is a **build of the student SPA**, not a second product. Workshop needs
+Django, sessions, and the teacher app; demo needs none of that — only a static
+host and a few UI/persistence differences.
+
+| Approach | Verdict |
+| --- | --- |
+| **Monorepo + `demoMode` (chosen)** | One fix / new exercise lands once; demo stays a thin overlay (`DemoConfig`, `@if (demo)`, `sessionStorage`). Separate OKD namespace for deploy only. |
+| Separate GitLab repo / fork | Looks cleaner at first; every shared UI/physics/i18n change must be ported. Drift and double release cost grow with new exercises. |
+| Long-lived `demo` branch | Same merge pain as a fork, without isolation. Avoid. |
+
+**Rules of thumb:** keep demo branches local (auth, upload vs store, LSA layout,
+tutorials). Do not fork whole exercise modules. New workshop exercises need not
+ship a full demo variant on day one. Revisit a split only if most PRs become
+large demo-only duplicates of workshop code.
+
 ---
 
 ## 2. Architecture
