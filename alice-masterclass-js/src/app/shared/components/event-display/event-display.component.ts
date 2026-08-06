@@ -127,6 +127,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
    * Y scale plane = cameraDistance * TRD_HEIGHT / this.
    */
   static readonly SIDE_VIEW_RHOZ_Y_OVERREAD_M = 10;
+  /**
+   * View 1 (ρz) default zoom vs the legacy Rφ-matched X window.
+   * 0.85 → 15% more zoomed-out; X metre scales on View 1 / View 2 stay independent
+   * (each HUD uses its own plane + zoom).
+   */
+  static readonly SIDE_VIEW_RHOZ_ZOOM_FACTOR = 0.85;
   /** Fixed detector-shell opacity while rendering a side-view pass. */
   static readonly SIDE_VIEW_DETECTOR_OPACITY = 0.5;
   /** Min interval between full side-view RT refreshes during an active orbit gesture. */
@@ -538,8 +544,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /**
    * Map main-orbit distance → side PerspectiveCamera.zoom.
    * Rφ uses the legacy `SIDE_CAMERA_DISTANCE / distance` framing.
-   * ρz is zoomed in by `camDist / rphiScalePlane` so the initial metre window
-   * matches View 2 (TOF near-face plane is closer than the IP).
+   * ρz starts from the old Rφ-matched X window (`camDist / rphiScalePlane`) then
+   * applies {@link SIDE_VIEW_RHOZ_ZOOM_FACTOR} so View 1 opens 15% wider on X;
+   * scale HUDs stay independent (ρz X @ IP, Rφ X @ TOF face).
    */
   static computeSideViewZoomFromDistance(
     distance: number,
@@ -560,7 +567,11 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       EventDisplayComponent.SIDE_CAMERA_DISTANCE -
         EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M
     );
-    return base * (EventDisplayComponent.SIDE_CAMERA_DISTANCE / rphiPlane);
+    return (
+      base *
+      (EventDisplayComponent.SIDE_CAMERA_DISTANCE / rphiPlane) *
+      EventDisplayComponent.SIDE_VIEW_RHOZ_ZOOM_FACTOR
+    );
   }
 
   static isTofAssetPath(assetPath: string): boolean {

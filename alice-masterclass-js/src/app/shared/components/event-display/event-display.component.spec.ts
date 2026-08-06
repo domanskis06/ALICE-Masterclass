@@ -379,7 +379,7 @@ describe('EventDisplayComponent side-view layers', () => {
     expect(EventDisplayComponent.sideViewAllowsPart(fit, rphi)).toBe(false);
   });
 
-  it('computeSideViewZoomFromDistance: Rφ overview framing; ρz zoomed to match scale window', () => {
+  it('computeSideViewZoomFromDistance: Rφ overview framing; ρz 15% wider than matched X window', () => {
     const overviewZ = EventDisplayComponent.CAMERA_3D_OVERVIEW.z;
     const rphi = EventDisplayComponent.SIDE_VIEW_RPHI;
     const rhoz = EventDisplayComponent.SIDE_VIEW_RHOZ;
@@ -391,10 +391,14 @@ describe('EventDisplayComponent side-view layers', () => {
     const rphiPlane =
       EventDisplayComponent.SIDE_CAMERA_DISTANCE -
       EventDisplayComponent.SIDE_VIEW_RPHI_SCALE_DEPTH_M;
+    const matchedRhoz =
+      rphiOverview * (EventDisplayComponent.SIDE_CAMERA_DISTANCE / rphiPlane);
     expect(rhozOverview).toBeCloseTo(
-      rphiOverview * (EventDisplayComponent.SIDE_CAMERA_DISTANCE / rphiPlane),
+      matchedRhoz * EventDisplayComponent.SIDE_VIEW_RHOZ_ZOOM_FACTOR,
       5
     );
+    expect(EventDisplayComponent.SIDE_VIEW_RHOZ_ZOOM_FACTOR).toBeCloseTo(0.85, 5);
+    expect(rhozOverview).toBeLessThan(matchedRhoz);
     expect(rhozOverview).toBeGreaterThan(rphiOverview);
 
     const closer = EventDisplayComponent.computeSideViewZoomFromDistance(overviewZ / 2, rphi);

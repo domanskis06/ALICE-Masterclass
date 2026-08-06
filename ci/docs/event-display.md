@@ -57,8 +57,9 @@ clusters, and markers stay shared (`LAYER_SHARED`); helper grids stay `LAYER_MAI
 readouts are hidden during side passes.
 
 **Zoom sync:** `computeSideViewZoomFromDistance(distance, which)` — Rφ keeps
-`SIDE_CAMERA_DISTANCE / distance`; ρz is zoomed by `camDist / rphiScalePlane` so both
-panes open with a similar metre window. Side RT refreshes stay throttled
+`SIDE_CAMERA_DISTANCE / distance`; ρz uses the legacy Rφ-matched factor then
+`SIDE_VIEW_RHOZ_ZOOM_FACTOR` (0.85) so View 1 opens ~15% wider on X. Scale HUDs are
+independent (ρz X @ IP, Rφ X @ TOF face). Side RT refreshes stay throttled
 (`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end` always full-refreshes.
 Rotation without a distance change does **not** invalidate the caches.
 
