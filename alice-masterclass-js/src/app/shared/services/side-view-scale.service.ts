@@ -78,7 +78,8 @@ export class SideViewScaleService {
    * Equal label margins (chrome only). Metric mapping uses the full CSS viewport
    * so px/m on X equals px/m on Y and matches the side-camera aspect.
    */
-  static readonly LABEL_INSET = 14;
+  /** Chrome margin for tick labels / axis names / scale bar (not in metre mapping). */
+  static readonly LABEL_INSET = 18;
   /** physics cm → metres (objectScale maps cm → world units ≡ metres). */
   static readonly CM_PER_M = 100;
 

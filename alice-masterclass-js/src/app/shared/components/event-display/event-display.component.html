@@ -90,13 +90,13 @@
                   <text
                     class="side-scale-label"
                     [attr.x]="sideScaleX(m, tick.t)"
-                    [attr.y]="m.viewportCssH - m.padBottom + 10"
+                    [attr.y]="m.viewportCssH - m.padBottom + 2"
                     text-anchor="middle">{{ tick.label }}</text>
                 }
                 <text
                   class="side-scale-axis-name"
                   [attr.x]="m.viewportCssW - m.padRight"
-                  [attr.y]="m.viewportCssH - m.padBottom - 2"
+                  [attr.y]="m.viewportCssH - m.padBottom - 4"
                   text-anchor="end">{{ m.xAxisLabel }}</text>
 
                 <!-- Right Y axis -->
@@ -115,32 +115,27 @@
                     [attr.y2]="sideScaleY(m, tick.t)" />
                   <text
                     class="side-scale-label"
-                    [attr.x]="m.viewportCssW - 4"
-                    [attr.y]="sideScaleY(m, tick.t) + 3"
-                    text-anchor="end">{{ tick.label }}</text>
+                    [attr.x]="m.viewportCssW - 12"
+                    [attr.y]="sideScaleY(m, tick.t)"
+                    text-anchor="end"
+                    dominant-baseline="middle">{{ tick.label }}</text>
                 }
                 <text
                   class="side-scale-axis-name"
                   [attr.x]="m.viewportCssW - m.padRight"
-                  [attr.y]="m.padTop"
+                  [attr.y]="m.padTop + 2"
                   text-anchor="end">{{ m.yAxisLabel }}</text>
 
-                <!-- Scale bar (map-style) -->
+                <!-- Scale bar (map-style); unit lives in the label (e.g. "2 m"). -->
                 <g class="side-scale-bar"
-                  [attr.transform]="'translate(' + m.padLeft + ' ' + (m.viewportCssH - m.padBottom - 12) + ')'">
+                  [attr.transform]="'translate(' + m.padLeft + ' ' + (m.viewportCssH - m.padBottom - 14) + ')'">
                   <line class="side-scale-bar-line" x1="0" y1="0" [attr.x2]="m.scaleBar.lengthPx" y2="0" />
                   <line class="side-scale-bar-line" x1="0" y1="-4" x2="0" y2="4" />
                   <line class="side-scale-bar-line" [attr.x1]="m.scaleBar.lengthPx" y1="-4" [attr.x2]="m.scaleBar.lengthPx" y2="4" />
-                  <text class="side-scale-bar-label" [attr.x]="m.scaleBar.lengthPx / 2" y="-6" text-anchor="middle">
+                  <text class="side-scale-bar-label" [attr.x]="m.scaleBar.lengthPx / 2" y="-7" text-anchor="middle">
                     {{ m.scaleBar.label }}
                   </text>
                 </g>
-
-                <text
-                  class="side-scale-unit"
-                  [attr.x]="m.padLeft"
-                  [attr.y]="m.padTop"
-                  text-anchor="start">{{ 'EVENT_DISPLAY.SCALE_UNIT_M' | translate }}</text>
               </svg>
             </ng-template>
           </div>

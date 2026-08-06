@@ -604,23 +604,21 @@ mat-card-content {
 
   .side-scale-label,
   .side-scale-axis-name,
-  .side-scale-bar-label,
-  .side-scale-unit {
+  .side-scale-bar-label {
     fill: rgba(30, 30, 30, 0.75);
-    font-size: 10px;
+    font-size: 12px;
     font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     user-select: none;
   }
 
-  .side-scale-axis-name,
-  .side-scale-unit {
-    font-size: 11px;
+  .side-scale-axis-name {
+    font-size: 13px;
     font-weight: 600;
     fill: rgba(30, 30, 30, 0.75);
   }
 
   .side-scale-bar-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 500;
   }
 }
@@ -640,13 +638,11 @@ mat-card-content {
 
   .side-scale-label,
   .side-scale-axis-name,
-  .side-scale-bar-label,
-  .side-scale-unit {
+  .side-scale-bar-label {
     fill: rgba(255, 255, 255, 0.75);
   }
 
-  .side-scale-axis-name,
-  .side-scale-unit {
+  .side-scale-axis-name {
     fill: rgba(255, 255, 255, 0.75);
   }
 }
