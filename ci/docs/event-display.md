@@ -36,6 +36,7 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 | Scene / camera / render | `createScene`, `render`, `resize`, `updateCameraMode`; side views via RT cache + blit (`SIDE_VIEW_*`, `sideViewAllowsPart`, `applySideViewDetectorMask`) | Core WebGL loop. View1 ρz (side): ITS+TRD @ 0.5; View2 Rφ (front): ITS+TPC+TRD+TOF @ 0.5; zoom follows main orbit distance with throttle |
 | Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop; load calls `optimizeStaticDetectorPart` | GLB layers (ITS, TPC, `L3.glb`, …) — see § Detector load optimisation |
 | Physics visibility / intro | `applyDesiredPhysicsVisibility`, proton collision intro helpers | Show/hide tracks around intro |
+| Track draw clip | `trajectoryForAssemblyMode` → [`TrackVolumeClipService`](../alice-masterclass-js/src/app/shared/services/track-volume-clip.service.ts) | Visual-only L3 free-bore octagon prism (+ progressive ITS/TPC cylinder); JSON trajectories unchanged |
 | Interaction | `onPointer*`, vertex panel, cascade hover / proximity helpers | Picking UI |
 | Legacy math in component | `invariantMass` | **Do not grow** — new math → Service |
 

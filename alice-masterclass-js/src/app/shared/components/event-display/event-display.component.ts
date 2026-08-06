@@ -22,6 +22,7 @@ import {
 import { detectorPartAccentColor } from '../../three/detector-part-accent';
 import { optimizeStaticDetectorPart } from '../../three/optimize-detector-part';
 import { SideViewScaleModel, SideViewScaleService } from '../../services/side-view-scale.service';
+import { TrackVolumeClipService } from '../../services/track-volume-clip.service';
 
 /** Detector layer toggle row (multipart GLB assembly). */
 export interface DetectorPartToggleModel {
@@ -2748,13 +2749,15 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   /**
    * Max track cylinder unlocked by placed barrel trackers (ITS < TPC).
    * TRD/TOF unlock hit markers instead of extending tracks.
-   * Null = no clip (non-progressive model, or full assembly complete).
+   * Null = no progressive cylinder clip (non-progressive model, or full
+   * assembly complete). Trajectories are still clipped to the L3 free bore
+   * (octagonal prism) in {@link trajectoryForAssemblyMode}.
    */
   private getUnlockedTrackClipBounds(): { rMax: number; zMax: number } | null {
     if (!this.detectorModelHasTrackerUnlock()) {
       return null;
     }
-    // After the detector is fully assembled, show complete trajectories.
+    // After assembly: drop the ITS/TPC cylinder; L3 bore clip remains.
     if (this._detectorInteractiveAssemblyDone) {
       return null;
     }
@@ -3033,6 +3036,10 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       );
     }
 
+    // Always hide the polyline outside the L3 free bore (octagonal prism).
+    // JSON trajectories stay full-length; only the drawn path is shortened.
+    points = this.trackVolumeClip.clipTrajectoryToL3Bore(points);
+
     return points.length >= 2 ? { points, geometricStraight } : null;
   }
 
@@ -3058,7 +3065,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     const assemblyDone = this._detectorInteractiveAssemblyDone;
     const tpcActive = this.isDetectorPartPlaced(EventDisplayComponent.isTpcAssetPath);
     const itsActive = this.isDetectorPartPlaced(EventDisplayComponent.isItsAssetPath);
-    // Completed assembly (incl. refresh / session restore): always full tracks.
+    // Completed assembly (incl. refresh / session restore): bent tracks to L3 bore.
     // During progressive build: TPC+ → full mode; ITS-only → stubs; else nothing.
     const showFull = !useTrackerUnlock || assemblyDone || tpcActive;
     const showStubs = useTrackerUnlock && !assemblyDone && itsActive && !tpcActive;
@@ -3381,7 +3388,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   constructor(
     private cdr: ChangeDetectorRef,
     private translate: TranslateService,
-    private sideViewScale: SideViewScaleService
+    private sideViewScale: SideViewScaleService,
+    private trackVolumeClip: TrackVolumeClipService
   ) {
     const lineParams = {
       linewidth: this.effectiveTrackWidth,
