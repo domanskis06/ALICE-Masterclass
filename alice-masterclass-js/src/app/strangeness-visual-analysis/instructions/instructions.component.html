@@ -2,6 +2,19 @@
 
 <h2>{{ 'STRANGENESS.INSTRUCTIONS_VISUAL_ANALYSIS.SUBTITLE' | translate }}</h2>
 
+<div class="va-replay-tutorial">
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    data-testid="va-start-tutorial"
+    [disabled]="startDisabled"
+    (click)="startTutorial()"
+  >
+    {{ 'STRANGENESS.VA_TUTORIAL.START' | translate }}
+  </button>
+</div>
+
 <p [innerHtml]="'STRANGENESS.INSTRUCTIONS_VISUAL_ANALYSIS.P1' | translate"></p>
 
 <h3 class="decay-guide-heading">{{ 'STRANGENESS.VISUAL_ANALYSIS.DECAY_GUIDE' | translate }}</h3>

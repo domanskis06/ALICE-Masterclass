@@ -5,7 +5,39 @@ compared against the upstream repository
 [`gitlab.cern.ch/alice-masterclass/alice-masterclass-js`](https://gitlab.cern.ch/alice-masterclass/alice-masterclass-js)
 (`master`, tag `0.0.6`) — the version this monorepo forked from before the features below were added.
 
-Version tags follow the existing `v*-dev` release flow (see [`ci/docs/dev-deployment.md`](ci/docs/dev-deployment.md)).
+Version tags follow the existing release flows: `v*-dev` for the workshop stack
+([`ci/docs/dev-deployment.md`](ci/docs/dev-deployment.md)) and `v*-demo` for the
+public SPA ([`ci/docs/demo-app.md`](ci/docs/demo-app.md)).
+
+## [0.3.0] - 2026-08-05
+
+Public **demo** student SPA (offline, no Django/teacher) plus guided **VA / LSA
+tutorials** in both demo and workshop builds. Detail:
+[`ci/docs/demo-app.md`](ci/docs/demo-app.md),
+[`ci/docs/tutorials.md`](ci/docs/tutorials.md),
+[`ci/docs/changelog-demo-app.md`](ci/docs/changelog-demo-app.md).
+
+### **Public demo app**
+
+Separate OKD namespace `alice-web-masterclass-demo` serving only the student Angular
+build with `demoMode: true`. Results persist in `sessionStorage` (refresh-safe,
+new tab resets). One-time info dialog (no permanent banner). VA histograms are
+shared across datasets; LSA adds enhancement plot + teacher-style Results table,
+Undo on accepted fits, and no Upload. Deploy with tags `v*-demo`.
+
+→ Details: [`ci/docs/changelog-demo-app.md`](ci/docs/changelog-demo-app.md)
+→ Ops / redeploy: [`ci/docs/demo-app.md`](ci/docs/demo-app.md)
+
+### **Tutorials (VA & LSA)**
+
+driver.js tours for Visual Analysis and Large Scale Analysis. In the **demo**, a
+Skip/Start welcome opens on exercise entry; in **workshop** builds the same tours
+start from Help → Start tutorial. Demo step lists omit Upload and (LSA) walk
+through the enhancement plot and Results summary. Next/Done controls styled red
+with white labels in both builds.
+
+→ Behaviour matrix: [`ci/docs/tutorials.md`](ci/docs/tutorials.md)
+→ LSA tour history: [`ci/docs/changelog-large-scale-analysis.md`](ci/docs/changelog-large-scale-analysis.md)
 
 ## [0.2.0] - 2026-08-03
 

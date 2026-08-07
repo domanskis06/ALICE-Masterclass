@@ -36,6 +36,7 @@ Parents pass an `@Input() event` (and related UI inputs). Prefer changing parent
 | Scene / camera / render | `createScene`, `render`, `resize`, `updateCameraMode`; side views via RT cache + blit (`SIDE_VIEW_*`, `sideViewAllowsPart`, `applySideViewDetectorMask`) | Core WebGL loop. View1 ρz (side): ITS+TRD @ 0.5; View2 Rφ (front): ITS+TPC+TRD+TOF @ 0.5; zoom follows main orbit distance with throttle |
 | Detector | `detectorModel`, multipart assembly, `setDetectorPartVisibility`, `setDetectorPartOpacity`, palette drag-drop; load calls `optimizeStaticDetectorPart` | GLB layers (ITS, TPC, `L3.glb`, …) — see § Detector load optimisation |
 | Physics visibility / intro | `applyDesiredPhysicsVisibility`, proton collision intro helpers | Show/hide tracks around intro |
+| Track draw clip | `trajectoryForAssemblyMode` → [`TrackVolumeClipService`](../alice-masterclass-js/src/app/shared/services/track-volume-clip.service.ts) | Visual-only L3 free-bore octagon prism (+ progressive ITS/TPC cylinder); JSON trajectories unchanged |
 | Interaction | `onPointer*`, vertex panel, cascade hover / proximity helpers | Picking UI |
 | Legacy math in component | `invariantMass` | **Do not grow** — new math → Service |
 
@@ -55,13 +56,28 @@ in `try/finally`) so the main 3D view keeps the student’s slider visibility/op
 clusters, and markers stay shared (`LAYER_SHARED`); helper grids stay `LAYER_MAIN_ONLY`; calorimeter
 readouts are hidden during side passes.
 
-**Zoom sync:** side `PerspectiveCamera.zoom` = `computeSideViewZoomFromDistance(controls.getDistance())`
-(`10 / distance`, fallback `SIDE_VIEW_FIXED_ZOOM` at overview). While the student orbits/zooms,
-side RT refreshes are throttled (`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end`
-always does a full refresh. Rotation without a distance change does **not** invalidate the caches.
+**Zoom sync:** `computeSideViewZoomFromDistance(distance, which)` — Rφ keeps
+`SIDE_CAMERA_DISTANCE / distance`; ρz uses the legacy Rφ-matched factor then
+`SIDE_VIEW_RHOZ_ZOOM_FACTOR` (0.85) so View 1 opens ~15% wider on X. Scale HUDs are
+independent (ρz X @ IP, Rφ X @ TOF face). Side RT refreshes stay throttled
+(`SIDE_VIEW_ZOOM_THROTTLE_MS`, `SIDE_VIEW_ZOOM_EPS`); `controls.end` always full-refreshes.
+Rotation without a distance change does **not** invalidate the caches.
+
+**Scale HUD (m):** SVG overlays on `#scales1` / `#scales2`:
+
+| Pane | Largest shell | Scale plane(s) |
+| --- | --- | --- |
+| View 1 ρz | TRD (height target 7.36 m) | X/z: IP; Y: `camDist * TRD_HEIGHT / RHOZ_Y_OVERREAD` (variant B) |
+| View 2 Rφ | TOF (~8 m diameter) | `SIDE_VIEW_RPHI_SCALE_DEPTH_M` = 3.75 m (TOF face) |
+
+Projection math:
+[`side-view-scale.service.ts`](../alice-masterclass-js/src/app/shared/services/side-view-scale.service.ts)
+(`tan(fov/2) * plane / zoom` → m; optional per-axis planes). **Isotropic HUD (A):** full-pane
+tick mapping so px/m matches the camera when X/Y share one plane (Rφ). ρz Y uses a tighter
+plane on purpose (B). Axis labels: Rφ → `x`/`y`, ρz → `z`/`y`. Pane mapping matches the blit.
 
 Helpers/tests: `sideViewAllowsPart`, `computeSideViewZoomFromDistance` in
-`event-display.component.spec.ts`. Changelog detail:
+`event-display.component.spec.ts`; scale math in `side-view-scale.service.spec.ts`. Changelog detail:
 [`changelog-visual-analysis-visualisation.md`](changelog-visual-analysis-visualisation.md) § “Linked side views”.
 
 ## Detector load optimisation (Visual Analysis)

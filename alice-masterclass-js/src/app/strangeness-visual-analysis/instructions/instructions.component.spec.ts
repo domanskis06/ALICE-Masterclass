@@ -1,24 +1,33 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
 import { AngularModule } from '../../shared/angular.module';
 import { SharedModule } from '../../shared/shared.module';
 
+import { VaTutorialService } from '../va-tutorial/va-tutorial.service';
 import { InstructionsComponent } from './instructions.component';
 
 describe('InstructionsComponent', () => {
   let component: InstructionsComponent;
   let fixture: ComponentFixture<InstructionsComponent>;
+  let tutorialSpy: jasmine.SpyObj<VaTutorialService>;
 
   beforeEach(async () => {
+    tutorialSpy = jasmine.createSpyObj('VaTutorialService', ['isActive', 'startMainTour']);
+    tutorialSpy.isActive.and.returnValue(false);
+
     await TestBed.configureTestingModule({
-      declarations: [ InstructionsComponent ],
+      declarations: [InstructionsComponent],
       imports: [
         AngularModule,
         SharedModule,
-        TranslateModule.forRoot()
-      ]
-    })
-    .compileComponents();
+        TranslateModule.forRoot(),
+      ],
+      providers: [
+        { provide: VaTutorialService, useValue: tutorialSpy },
+        { provide: MatDialogRef, useValue: { close: jasmine.createSpy('close') } },
+      ],
+    }).compileComponents();
   });
 
   beforeEach(() => {
@@ -29,5 +38,18 @@ describe('InstructionsComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('disables start while the tutorial is active', () => {
+    tutorialSpy.isActive.and.returnValue(true);
+    expect(component.startDisabled).toBeTrue();
+    component.startTutorial();
+    expect(tutorialSpy.startMainTour).not.toHaveBeenCalled();
+  });
+
+  it('starts the tutorial when inactive', () => {
+    tutorialSpy.isActive.and.returnValue(false);
+    component.startTutorial();
+    expect(TestBed.inject(MatDialogRef).close).toHaveBeenCalled();
   });
 });

@@ -55,12 +55,38 @@
             <mat-card-title>{{ 'VA_COACH.DONE_TITLE' | translate }}</mat-card-title>
           </mat-card-header>
           <mat-card-content class="va-coach-text">
-            <p>{{ 'VA_COACH.DONE_BODY' | translate }}</p>
+            <p>{{ (demo ? 'VA_COACH.DONE_BODY' : 'VA_COACH.DONE_BODY_WORKSHOP') | translate }}</p>
           </mat-card-content>
           <mat-card-actions align="end">
-            <button mat-flat-button color="primary" type="button" (click)="onVaCoachVictoryDismiss()">
-              {{ 'VA_COACH.DONE_BUTTON' | translate }}
-            </button>
+            @if (demo) {
+              <button
+                mat-button
+                type="button"
+                data-testid="va-coach-skip-tutorial"
+                (click)="onVaCoachVictorySkipTutorial()"
+              >
+                {{ 'VA_COACH.DONE_SKIP' | translate }}
+              </button>
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                data-testid="va-coach-start-tutorial"
+                (click)="onVaCoachVictoryStartTutorial()"
+              >
+                {{ 'VA_COACH.DONE_START_TUTORIAL' | translate }}
+              </button>
+            } @else {
+              <button
+                mat-flat-button
+                color="primary"
+                type="button"
+                data-testid="va-coach-done"
+                (click)="onVaCoachVictoryDismiss()"
+              >
+                {{ 'VA_COACH.DONE_BUTTON' | translate }}
+              </button>
+            }
           </mat-card-actions>
         </mat-card>
       } @else {
@@ -136,9 +162,9 @@
         >
           {{ 'GENERAL.SKIP' | translate }}
         </button>
-        <div edSidebarMeta class="event-meta-panel">
-          <div class="dataset-controls">
-            <mat-form-field appearance="outline" class="dataset-select">
+        <div edSidebarMeta class="event-meta-panel" id="va-tour-dataset-nav">
+          <div class="dataset-controls" id="va-tour-dataset">
+            <mat-form-field appearance="outline" class="dataset-select" id="va-tour-dataset-field">
               <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
               <mat-select
                 data-testid="va-dataset-select"
@@ -169,7 +195,7 @@
               </mat-select>
             </mat-form-field>
           </div>
-          <div class="event-label-row">
+          <div class="event-label-row" id="va-tour-event-label">
             <span class="event-label">
               {{ 'STRANGENESS.VISUAL_ANALYSIS.EVENT_OF' | translate:{ current: displayEventNumber, total: maxEvents } }}
             </span>
@@ -177,7 +203,12 @@
               <mat-icon id="done" aria-hidden="true">done</mat-icon>
             }
           </div>
-          <div class="event-nav-controls" role="group" [attr.aria-label]="'EVENT_DISPLAY.EVENT' | translate">
+          <div
+            class="event-nav-controls"
+            id="va-tour-event-nav"
+            role="group"
+            [attr.aria-label]="'EVENT_DISPLAY.EVENT' | translate"
+          >
             <button
               type="button"
               mat-stroked-button
@@ -194,6 +225,7 @@
               mat-flat-button
               color="primary"
               class="event-nav-control event-nav-control--next"
+              id="va-tour-next-event"
               [class.event-nav-control--cta]="isCurrentEventDone"
               data-testid="va-next-event"
               [disabled]="isDetectorAssemblyInProgress || (eventID + 1) >= maxEvents"

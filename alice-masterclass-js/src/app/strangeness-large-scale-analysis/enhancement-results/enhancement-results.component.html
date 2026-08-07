@@ -1,0 +1,87 @@
+<mat-card appearance="outlined" fxLayout="column" id="lsa-demo-results-table">
+  <mat-card-title class="title">{{ 'STRANGENESS.ENHANCEMENT.TITLE' | translate }}</mat-card-title>
+  <mat-card-content>
+    <div class="mat-elevation-z2 results-frame">
+      <table mat-table [dataSource]="tableRows" class="enhancement-table">
+
+        <ng-container matColumnDef="centrality">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.CENTRALITY' | translate }}</th>
+          <td mat-cell *matCellDef="let element;">{{ 'STRANGENESS.HISTOGRAM_SELECTOR.' + element.centrality | translate }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nParticipants">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.NO_PARTICIPANTS' | translate }}</th>
+          <td mat-cell *matCellDef="let element;">{{ element.nParticipants }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nEvents">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.NO_EVENTS' | translate }}</th>
+          <td mat-cell *matCellDef="let element;">{{ element.nEvents }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nKaons">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.NO' | translate }} <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span></th>
+          <td mat-cell *matCellDef="let element;"><strong>{{ element.nKaons | number:'1.1-1' }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="effKaons">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.EFFICIENCY' | translate }} <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span></th>
+          <td mat-cell *matCellDef="let element;">{{ element.effKaons | number:'1.3-3' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="yieldKaons">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.YIELD' | translate }} <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span></th>
+          <td mat-cell *matCellDef="let element;">{{ element.yieldKaons | number:'1.3-3' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="enhKaons">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.ENHANCEMENT' | translate }} <span class="particle">K<span class="supsub"><sup>0</sup><sub>S</sub></span></span> <span class="dot kaon"></span></th>
+          <td mat-cell *matCellDef="let element;"><strong>{{ element.enhKaons | number:'1.3-3' }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="nLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.NO' | translate }} <span class="particle">Λ</span></th>
+          <td mat-cell *matCellDef="let element;"><strong>{{ element.nLambdas | number:'1.1-1' }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="effLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.EFFICIENCY' | translate }} <span class="particle">Λ</span></th>
+          <td mat-cell *matCellDef="let element;">{{ element.effLambdas | number:'1.3-3' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="yieldLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.YIELD' | translate }} <span class="particle">Λ</span></th>
+          <td mat-cell *matCellDef="let element;">{{ element.yieldLambdas | number:'1.3-3' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="enhLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.ENHANCEMENT' | translate }} <span class="particle">Λ</span> <span class="dot lambda"></span></th>
+          <td mat-cell *matCellDef="let element;"><strong>{{ element.enhLambdas | number:'1.3-3' }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="nAntiLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.NO' | translate }} <span class="particle">Λ&#773;</span></th>
+          <td mat-cell *matCellDef="let element;"><strong>{{ element.nAntiLambdas | number:'1.1-1' }}</strong></td>
+        </ng-container>
+
+        <ng-container matColumnDef="effAntiLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.EFFICIENCY' | translate }} <span class="particle">Λ&#773;</span></th>
+          <td mat-cell *matCellDef="let element;">{{ element.effAntiLambdas | number:'1.3-3' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="yieldAntiLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.YIELD' | translate }} <span class="particle">Λ&#773;</span></th>
+          <td mat-cell *matCellDef="let element;">{{ element.yieldAntiLambdas | number:'1.3-3' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="enhAntiLambdas">
+          <th mat-header-cell *matHeaderCellDef>{{ 'STRANGENESS.ENHANCEMENT.ENHANCEMENT' | translate }} <span class="particle">Λ&#773;</span> <span class="dot antilambda"></span></th>
+          <td mat-cell *matCellDef="let element;"><strong>{{ element.enhAntiLambdas | number:'1.3-3' }}</strong></td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>

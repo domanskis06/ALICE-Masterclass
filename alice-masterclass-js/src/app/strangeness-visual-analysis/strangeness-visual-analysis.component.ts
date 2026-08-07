@@ -1,4 +1,5 @@
-import { AfterViewInit, ApplicationRef, Component, ElementRef, NgZone, OnDestroy, OnInit, Type, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ApplicationRef, Component, DestroyRef, ElementRef, NgZone, OnDestroy, OnInit, Type, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { InstructionsProvider } from '../shared/interfaces';
@@ -15,6 +16,7 @@ import {
   StrangenessDataService,
 } from '../services/strangeness-data.service';
 import { ParticleType, VisualAnalysisResultsEntry } from '../shared/services/api.service';
+import { DemoConfig } from '../shared/demo/demo-config.service';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DetectorPartToggleModel, EventDisplayComponent } from '../shared/components/event-display/event-display.component';
@@ -30,6 +32,8 @@ import {
 } from '../shared/globals';
 import { HistogramInfoDialogComponent } from './histogram-info-dialog/histogram-info-dialog.component';
 import { InstructionsDialogComponent } from '../instructions-dialog/instructions-dialog.component';
+import { VaTutorialService } from './va-tutorial/va-tutorial.service';
+import { VaTutorialWelcomeDialogComponent } from './va-tutorial/va-tutorial-welcome-dialog.component';
 
 export interface SubmitHistogramEntry {
   type: ParticleType,
@@ -133,6 +137,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     'assets/models/alice components/L3.glb',
   ];
 
+  protected readonly demo = inject(DemoConfig).enabled;
+  private readonly vaTutorial = inject(VaTutorialService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Ensures we only offer the VA tutorial once per component instance. */
+  private tutorialOfferOpened = false;
+
   datasetID: number = DATASET_PICKER_DEMO;
   /** 0-based index into the dataset; UI shows `displayEventNumber` (1-based). */
   eventID: number = 0;
@@ -148,9 +159,19 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     return this.eventID + 1;
   }
 
+  /**
+   * Storage key for one event's histogram entries.
+   *
+   * The demo keeps all datasets in the same histograms, so the key is namespaced
+   * by dataset; the workshop keeps the bare event id it has always used.
+   */
+  private eventKeyFor(eventId: number = this.eventID): string {
+    return this.demo ? `${this.datasetID}:${eventId}` : String(eventId);
+  }
+
   /** Histogram entries already added for the current event (for undo / remove UI). */
   get currentEventResults(): VisualAnalysisResultsEntry[] {
-    return this.dataService.getVisualAnalysisResultsForEvent(String(this.eventID));
+    return this.dataService.getVisualAnalysisResultsForEvent(this.eventKeyFor());
   }
 
   /** True while a mass-to-histogram flight for this event has claimed tracks but not committed yet. */
@@ -203,7 +224,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (required.size === 0) {
       return false;
     }
-    return this.dataService.areAllTracksAnalyzed(String(this.eventID), required);
+    return this.dataService.areAllTracksAnalyzed(this.eventKeyFor(), required);
   }
 
   /**
@@ -298,13 +319,24 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     }
 
     this.setupAnalysisScrollObserver();
+    this.vaTutorial.registerHostHooks({
+      ensureRightSidebarOpen: () => this.eventDisplay?.ensureRightSidebarOpen(),
+      scrollToAnalysis: () => this.scrollToAnalysis(),
+      scrollToDetector: () => this.scrollToDetector(),
+      scrollToHistograms: () => this.scrollToHistograms(),
+      hasV0PairSelected: () => this.particlePos != null && this.particleNeg != null,
+      getScrollContainer: () =>
+        (document.querySelector('mat-sidenav-content') as HTMLElement | null) ?? window,
+    });
 
     this.vaCoachScheduleSub = this.appRef.isStable
       .pipe(filter((stable) => stable), take(1))
       .subscribe(() => {
         queueMicrotask(() => window.setTimeout(() => this.tryScheduleVaCoach(), 380));
+        queueMicrotask(() => window.setTimeout(() => this.tryOpenTutorialWelcomeFallback(), 500));
       });
     window.setTimeout(() => this.tryScheduleVaCoach(), 1650);
+    window.setTimeout(() => this.tryOpenTutorialWelcomeFallback(), 1800);
   }
 
   ngOnDestroy(): void {
@@ -318,6 +350,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       window.clearTimeout(this.histogramInfoDialogTimeout);
       this.histogramInfoDialogTimeout = null;
     }
+    this.vaTutorial.destroyDriver(true);
     // Commit entries still in flight so a mid-animation destroy does not drop them.
     for (const pending of this.pendingFlightEntries.values()) {
       this.commitHistogramEntry(pending.entry, pending.trackKeys, pending.eventKey);
@@ -359,6 +392,24 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       return;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /** Smooth-scroll so the histograms card sits in view for the tutorial. */
+  scrollToHistograms(): void {
+    const histograms = document.querySelector('#va-tour-histograms') as HTMLElement | null;
+    if (!histograms) {
+      this.scrollToAnalysis();
+      return;
+    }
+    const topPaddingPx = Math.min(200, Math.max(120, window.innerHeight * 0.12));
+    const sidenav = document.querySelector('mat-sidenav-content') as HTMLElement | null;
+    const currentScroll = sidenav ? sidenav.scrollTop : window.scrollY;
+    const targetScroll = Math.max(0, currentScroll + histograms.getBoundingClientRect().top - topPaddingPx);
+    if (sidenav) {
+      sidenav.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      return;
+    }
+    window.scrollTo({ top: targetScroll, behavior: 'smooth' });
   }
 
   private setupAnalysisScrollObserver(): void {
@@ -539,10 +590,65 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.vaCoachWelcomePhase = false;
   }
 
-  onVaCoachVictoryDismiss(): void {
+  private closeVaCoachVictory(): void {
     this.vaCoachOverlayVisible = false;
     this.vaCoachVictoryPhase = false;
     this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
+  }
+
+  /** Skip the exercise tutorial for this page load (demo only). */
+  onVaCoachVictorySkipTutorial(): void {
+    this.tutorialOfferOpened = true;
+    this.closeVaCoachVictory();
+    this.vaTutorial.dismiss();
+  }
+
+  /** Close the assembly coach and start the exercise UI tutorial (demo only). */
+  onVaCoachVictoryStartTutorial(): void {
+    this.tutorialOfferOpened = true;
+    this.closeVaCoachVictory();
+    this.vaTutorial.startMainTour();
+  }
+
+  /** Close the assembly coach with no tutorial offer (workshop). */
+  onVaCoachVictoryDismiss(): void {
+    this.tutorialOfferOpened = true;
+    this.closeVaCoachVictory();
+  }
+
+  /**
+   * Fallback welcome when assembly was skipped or already complete on entry
+   * so the user still gets Skip / Start tutorial.
+   */
+  private tryOpenTutorialWelcomeFallback(): void {
+    if (this.tutorialOfferOpened || !this.vaTutorial.shouldShow()) {
+      return;
+    }
+    // Victory card owns the offer while it is visible.
+    if (this.vaCoachOverlayVisible && this.vaCoachVictoryPhase) {
+      return;
+    }
+    // Assembly coach still running - wait for victory or skip.
+    if (this.isDetectorAssemblyInProgress) {
+      return;
+    }
+    this.tutorialOfferOpened = true;
+    this.dialog
+      .open(VaTutorialWelcomeDialogComponent, {
+        width: '560px',
+        autoFocus: true,
+        disableClose: true,
+        hasBackdrop: true,
+      })
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((start: boolean | undefined) => {
+        if (start === true) {
+          this.vaTutorial.startMainTour();
+        } else if (start === false) {
+          this.vaTutorial.dismiss();
+        }
+      });
   }
 
   /** Skip only the collision intro video; detector assembly continues. */
@@ -570,6 +676,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     this.vaCoachOpenScheduled = true;
     this.eventDisplay?.skipMultipartDetectorAssembly(this.ALICE_DETECTOR_MODEL);
     this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
+    queueMicrotask(() => this.tryOpenTutorialWelcomeFallback());
   }
 
   onDetectorAssemblyPiecePlaced(assetPath: string): void {
@@ -696,9 +803,12 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.isDetectorAssemblyInProgress) {
       return;
     }
-    // Dataset wipe — discard in-flight adds (do not commit into a dataset about to be cleared).
+    // Discard in-flight adds: they belong to the dataset being left.
     this.discardInFlightHistogramAdds();
-    this.dataService.clearVisualAnalysisResults();
+    // Demo accumulates every dataset in the same histograms, so nothing is wiped.
+    if (!this.demo) {
+      this.dataService.clearVisualAnalysisResults();
+    }
     this.datasetID = newDatasetID;
     this.maxEvents = this.dataService.getEventsInDataset(
       this.dataService.resolveDatasetNum(this.datasetID)
@@ -737,6 +847,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.isDetectorAssemblyInProgress) {
       return;
     }
+    // Finish-step Next event closes the exercise tutorial for this session.
+    this.vaTutorial.notifyFinishNextEvent();
     // Flush before eventID changes so an in-flight Add stays on the event it was claimed for.
     this.flushInFlightHistogramAdds();
     this.eventID += 1;
@@ -762,7 +874,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     // Each physical daughter may enter the calculator / histogram only once.
     if (
       trackKey != null &&
-      this.dataService.isTrackAnalyzed(String(this.eventID), trackKey)
+      this.dataService.isTrackAnalyzed(this.eventKeyFor(), trackKey)
     ) {
       return;
     }
@@ -773,7 +885,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       this.particlePos = event;
     } else if (event.sign < 0) {
       this.particleNeg = event;
+    } else {
+      return;
     }
+    this.vaTutorial.notifyTrackSelected();
   }
 
   onAddToHistogram(event: SubmitHistogramEntry) {
@@ -786,7 +901,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (trackKeys == null) {
       return;
     }
-    const eventKey = String(this.eventID);
+    const eventKey = this.eventKeyFor();
 
     // Claim immediately so a second submit (or re-select during flight) cannot duplicate.
     // Cross-decay mixes are fine — we claim the concrete daughters, not whole V0 groups.
@@ -799,12 +914,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     // Background has no dedicated mass histogram — commit immediately.
     if (event.type === ParticleType.BACKGROUND) {
       this.commitHistogramEntry(value, trackKeys, eventKey);
+      this.vaTutorial.notifyAddLanded();
       return;
     }
 
     const renderArea = this.eventDisplayHostRef?.nativeElement.querySelector('#render-area') as HTMLElement | null;
     if (!renderArea) {
       this.commitHistogramEntry(value, trackKeys, eventKey);
+      this.vaTutorial.notifyAddLanded();
       return;
     }
 
@@ -813,6 +930,7 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     const renderRect = renderArea.getBoundingClientRect();
     if (!target || renderRect.width <= 0 || renderRect.height <= 0) {
       this.commitHistogramEntry(value, trackKeys, eventKey);
+      this.vaTutorial.notifyAddLanded();
       return;
     }
 
@@ -824,6 +942,9 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       binIndex: target.binIndex,
       eventKey,
     });
+
+    // Hide the tutorial dimming while the particle flies and the bar appears.
+    this.vaTutorial.notifyAddFlightStarted();
 
     void this.flightService
       .fly(
@@ -844,6 +965,8 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
           requestAnimationFrame(() => {
             this.massHistograms?.pulseBin(pending.particle, pending.binIndex);
             this.maybeShowHistogramInfoDialog();
+            // Advance the tutorial only after the bar is visible.
+            this.vaTutorial.notifyAddLanded();
           });
         });
       });
@@ -859,14 +982,14 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   private commitHistogramEntry(
     value: VisualAnalysisResultsEntry,
     trackKeys: string[],
-    eventKey: string = String(this.eventID),
+    eventKey: string = this.eventKeyFor(),
   ): void {
     // Tracks were already claimed in onAddToHistogram; this only appends the histogram entry.
     this.dataService.addVisualAnalysisResult(eventKey, value, trackKeys);
   }
 
   onRemoveIdentified(index: number): void {
-    this.dataService.removeVisualAnalysisResultAt(String(this.eventID), index);
+    this.dataService.removeVisualAnalysisResultAt(this.eventKeyFor(), index);
   }
 
   /**
@@ -881,13 +1004,13 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     if (this.cancelLatestPendingFlight()) {
       return;
     }
-    this.dataService.undoLastVisualAnalysisResult(String(this.eventID));
+    this.dataService.undoLastVisualAnalysisResult(this.eventKeyFor());
   }
 
   /** Wipe all identification for the current event and reopen the calculator. */
   onResetEvent(): void {
     this.cancelAllPendingFlights();
-    this.dataService.clearVisualAnalysisResultsForEvent(String(this.eventID));
+    this.dataService.clearVisualAnalysisResultsForEvent(this.eventKeyFor());
     this.clearCalculatorSelection();
   }
 
@@ -965,6 +1088,10 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   /** One-shot tip after the first animated add lands in a histogram bar (resets on refresh). */
   private maybeShowHistogramInfoDialog(): void {
     if (typeof window === 'undefined') {
+      return;
+    }
+    // Avoid stacking dialogs over the active exercise tutorial.
+    if (this.vaTutorial.isActive()) {
       return;
     }
     if (this.histogramInfoDialogShownThisLoad || this.histogramInfoDialogTimeout != null) {

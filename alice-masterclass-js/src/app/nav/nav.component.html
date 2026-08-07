@@ -14,7 +14,13 @@
         <a mat-list-item routerLink="/nuclear-modification-event-exploration" routerLinkActive #rlaNmfEe="routerLinkActive" [activated]="rlaNmfEe.isActive" data-testid="nav-link-nmf-event-exploration">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION_MENU' | translate }}</a>
         <a mat-list-item routerLink="/nuclear-modification-spectrum-analysis" routerLinkActive #rlaNmfSa="routerLinkActive" [activated]="rlaNmfSa.isActive" data-testid="nav-link-nmf-spectrum-analysis">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS_MENU' | translate }}</a>
         <div fxFlex="grow"></div>
-        <a mat-list-item (click)="onPasswordButtonClicked()">{{ 'PASSWORD.PASSWORD_MENU' | translate }}</a>
+        <a mat-list-item (click)="onPasswordButtonClicked()">
+          @if (demo) {
+            {{ 'APP_INFO.MENU' | translate }}
+          } @else {
+            {{ 'PASSWORD.PASSWORD_MENU' | translate }}
+          }
+        </a>
         <!-- <a mat-list-item routerLink="/about">{{ 'ABOUT.ABOUT_MENU' | translate }}</a> -->
       </mat-nav-list>
     </div>
@@ -34,6 +40,15 @@
           </button>
           <span>{{ 'GENERAL.ALICE_MASTERCLASS' | translate }}</span>
           <span id="buttons">
+            @if (showSessionBadge) {
+              @if (authStatus$ | async; as auth) {
+                @if (auth.authenticated) {
+                  <span class="session-badge" data-testid="session-badge" aria-live="polite">
+                    #{{ auth.studentID }} in {{ auth.sessionName }}
+                  </span>
+                }
+              }
+            }
             @if (instructionsComponent) {
               <button mat-icon-button aria-label="Instructions button" (click)="onInstructionsButtonClicked()">
                 <mat-icon>help_outline</mat-icon>

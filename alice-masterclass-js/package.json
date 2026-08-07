@@ -6,10 +6,13 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve -c web -o",
+    "start:demo": "ng serve -c demo -o",
     "config": "ts-node make-prod.mjs",
+    "config:demo": "node make-demo.mjs",
     "build": "ng build --base-href ./",
     "build:dev": "npm run build -- -c dev",
     "build:prod": "npm run config && npm run build -- -c production",
+    "build:demo": "npm run config:demo && npm run build -- -c demo",
     "ng:serve": "ng serve -c web -o",
     "test": "ng test --watch=false",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI",

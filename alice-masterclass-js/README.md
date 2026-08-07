@@ -33,21 +33,36 @@ npm run ng:serve
 
 Then open the URL shown in the terminal (typically [http://localhost:4200](http://localhost:4200)).
 
+### Public demo (offline)
+
+No Django. Uses `environment.demo.ts` (`demoMode: true`):
+
+```bash
+npm run start:demo
+```
+
+Guide: [ci/docs/demo-app.md](../ci/docs/demo-app.md). Tutorials (demo vs workshop):
+[ci/docs/tutorials.md](../ci/docs/tutorials.md).
+
 ## Build
 
 ```bash
 npm run build          # default configuration
 npm run build:dev      # dev environment
-npm run build:prod     # production (runs `make-prod.mjs` first)
+npm run build:prod     # production (runs `make-prod.mjs` first; needs API_URL)
+npm run build:demo     # offline demo (runs `make-demo.mjs` first)
 ```
 
-Output is written to `dist/`.
+Output is written to `dist/`. Do not run `build:prod` locally without `API_URL`
+set — the script fails fast rather than writing `apiUrl: 'undefined'`.
 
 ## Architecture notes
 
 - [EventDisplay](../ci/docs/event-display.md) — Three.js god component: side views (Rφ/ρz masks + zoom sync), detector load optimisation, how to extend via Services
 - [Particle Propagation](../ci/docs/particle-propagation.md) — own Three.js scene, RK4 / field map, proton or Pb–Pb collision intro, shared `L3.glb` magnet stand-in (CAD archived as `L3_original.glb`)
-- [Changelog summary](../CHANGELOG.md) — VA / LSA / PP highlights vs upstream (`ci/docs/changelog-*.md` for file-level detail)
+- [Public demo app](../ci/docs/demo-app.md) — `demoMode`, sessionStorage persistence, OKD / `v*-demo` tags
+- [Tutorials](../ci/docs/tutorials.md) — VA / LSA driver.js tours in demo vs workshop
+- [Changelog summary](../CHANGELOG.md) — VA / LSA / PP / demo highlights vs upstream (`ci/docs/changelog-*.md` for file-level detail)
 - [Xi cascades (VA data)](data/strangeness/part1_Xi/README.md) — how the 32 Ξ / Ξ̅ cascades are built, merged into host events, and regenerated
 
 ## Third-party attribution

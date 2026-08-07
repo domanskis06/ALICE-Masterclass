@@ -1,8 +1,13 @@
-<mat-card appearance="outlined" fxLayout="column">
+<mat-card appearance="outlined" fxLayout="column" id="va-tour-histograms">
   <mat-card-title fxLayout="row" fxLayoutAlign="space-between start" class="hist-card-title">
     <span class="title">{{ 'STRANGENESS.HISTOGRAMS.TITLE' | translate }}</span>
     <div class="hist-card-actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
-      <div class="bin-control" role="group" [attr.aria-label]="'STRANGENESS.HISTOGRAMS.BINS' | translate">
+      <div
+        class="bin-control"
+        id="va-tour-bins"
+        role="group"
+        [attr.aria-label]="'STRANGENESS.HISTOGRAMS.BINS' | translate"
+      >
         <span class="bin-control__caption">{{ 'STRANGENESS.HISTOGRAMS.BINS' | translate }}</span>
         <input
           id="bins-all"
@@ -30,26 +35,29 @@
           aria-label="Bin count"
         />
       </div>
-      <span
-        [matTooltipDisabled]="apiService.isAuthenticated"
-        [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate" matTooltipPosition="before"
-      >
-        <button
-          [disabled]="!apiService.isAuthenticated || uploadDisabled"
-          mat-raised-button
-          color="warn"
-          class="upload-data-button"
-          aria-label="Upload data"
-          (click)="onUploadButtonClicked()"
+      @if (!demo) {
+        <span
+          [matTooltipDisabled]="apiService.isAuthenticated"
+          [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate" matTooltipPosition="before"
         >
-          @if (apiService.isAuthenticated) {
-            <mat-icon class="material-icons-outlined">cloud_upload</mat-icon>
-          } @else {
-            <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
-          }
-          <span class="upload-data-button__text">{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
-        </button>
-      </span>
+          <button
+            id="va-tour-upload"
+            [disabled]="!apiService.isAuthenticated || uploadDisabled"
+            mat-raised-button
+            color="warn"
+            class="upload-data-button"
+            aria-label="Upload data"
+            (click)="onUploadButtonClicked()"
+          >
+            @if (apiService.isAuthenticated) {
+              <mat-icon class="material-icons-outlined">cloud_upload</mat-icon>
+            } @else {
+              <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
+            }
+            <span class="upload-data-button__text">{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
+          </button>
+        </span>
+      }
     </div>
   </mat-card-title>
   <mat-card-content>

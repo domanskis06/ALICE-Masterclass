@@ -1,8 +1,9 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, inject } from '@angular/core';
 
 import { LabelType, Options } from '@angular-slider/ngx-slider';
 
 import { FitHistogramEntry } from '../strangeness-large-scale-analysis.component';
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { FitService } from '../../shared/services/fit.service';
 
 export interface Slider {
@@ -18,6 +19,13 @@ export interface Slider {
     standalone: false
 })
 export class FitSelectorComponent implements OnInit {
+
+  /** Demo replaces the per-row delete buttons with a single Undo. */
+  protected readonly demo = inject(DemoConfig).enabled;
+
+  /** True when there is no accepted fit left to revert. */
+  @Input()
+  undoDisabled: boolean = true;
 
   /**
    * Visible axis domain (full histogram or zoom window).
@@ -56,6 +64,9 @@ export class FitSelectorComponent implements OnInit {
 
   @Output()
   clearFitEvent: EventEmitter<void> = new EventEmitter<void>();
+
+  @Output()
+  undoFitResultEvent: EventEmitter<void> = new EventEmitter<void>();
 
   @Output()
   selectionChangeEvent: EventEmitter<FitHistogramEntry> = new EventEmitter<FitHistogramEntry>();
@@ -165,6 +176,10 @@ export class FitSelectorComponent implements OnInit {
 
   onClearFitButtonClicked(): void {
     this.clearFitEvent.emit();
+  }
+
+  onUndoButtonClicked(): void {
+    this.undoFitResultEvent.emit();
   }
 
   /**

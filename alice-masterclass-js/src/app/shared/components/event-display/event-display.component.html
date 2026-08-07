@@ -52,8 +52,92 @@
             @if (effectiveSideViewsShown) {
               <div id="view1" [class.landscape]="landscape">{{ 'EVENT_DISPLAY.VIEW_1' | translate }}</div>
               <div id="view2" [class.landscape]="landscape">{{ 'EVENT_DISPLAY.VIEW_2' | translate }}</div>
-              <div id="scales1" [class.landscape]="landscape"></div>
+              <div id="scales1" class="side-scale-host" [class.landscape]="landscape">
+                @if (scalePane1; as m) {
+                  <ng-container *ngTemplateOutlet="sideScaleHud; context: { m: m }"></ng-container>
+                }
+              </div>
+              <div id="scales2" class="side-scale-host" [class.landscape]="landscape">
+                @if (scalePane2; as m) {
+                  <ng-container *ngTemplateOutlet="sideScaleHud; context: { m: m }"></ng-container>
+                }
+              </div>
             }
+            <ng-template #sideScaleHud let-m="m">
+              <svg
+                class="side-scale-hud"
+                [attr.viewBox]="'0 0 ' + m.viewportCssW + ' ' + m.viewportCssH"
+                preserveAspectRatio="none"
+                aria-hidden="true">
+                <!--
+                  Metric mapping = full viewport (same aspect as the side camera).
+                  pad* only offsets labels/chrome so px/m stays isotropic.
+                -->
+                <!-- Bottom X axis -->
+                <line
+                  class="side-scale-axis"
+                  x1="0"
+                  [attr.y1]="m.viewportCssH - 0.5"
+                  [attr.x2]="m.viewportCssW"
+                  [attr.y2]="m.viewportCssH - 0.5" />
+                @for (tick of m.xTicks; track tick.valueM) {
+                  <line
+                    class="side-scale-tick"
+                    [attr.x1]="sideScaleX(m, tick.t)"
+                    [attr.y1]="m.viewportCssH"
+                    [attr.x2]="sideScaleX(m, tick.t)"
+                    [attr.y2]="m.viewportCssH - 6" />
+                  <text
+                    class="side-scale-label"
+                    [attr.x]="sideScaleX(m, tick.t)"
+                    [attr.y]="m.viewportCssH - m.padBottom + 2"
+                    text-anchor="middle">{{ tick.label }}</text>
+                }
+                <text
+                  class="side-scale-axis-name"
+                  [attr.x]="m.viewportCssW - m.padRight"
+                  [attr.y]="m.viewportCssH - m.padBottom - 4"
+                  text-anchor="end">{{ m.xAxisLabel }}</text>
+
+                <!-- Right Y axis -->
+                <line
+                  class="side-scale-axis"
+                  [attr.x1]="m.viewportCssW - 0.5"
+                  y1="0"
+                  [attr.x2]="m.viewportCssW - 0.5"
+                  [attr.y2]="m.viewportCssH" />
+                @for (tick of m.yTicks; track tick.valueM) {
+                  <line
+                    class="side-scale-tick"
+                    [attr.x1]="m.viewportCssW"
+                    [attr.y1]="sideScaleY(m, tick.t)"
+                    [attr.x2]="m.viewportCssW - 6"
+                    [attr.y2]="sideScaleY(m, tick.t)" />
+                  <text
+                    class="side-scale-label"
+                    [attr.x]="m.viewportCssW - 12"
+                    [attr.y]="sideScaleY(m, tick.t)"
+                    text-anchor="end"
+                    dominant-baseline="middle">{{ tick.label }}</text>
+                }
+                <text
+                  class="side-scale-axis-name"
+                  [attr.x]="m.viewportCssW - m.padRight"
+                  [attr.y]="m.padTop + 2"
+                  text-anchor="end">{{ m.yAxisLabel }}</text>
+
+                <!-- Scale bar (map-style); unit lives in the label (e.g. "2 m"). -->
+                <g class="side-scale-bar"
+                  [attr.transform]="'translate(' + m.padLeft + ' ' + (m.viewportCssH - m.padBottom - 14) + ')'">
+                  <line class="side-scale-bar-line" x1="0" y1="0" [attr.x2]="m.scaleBar.lengthPx" y2="0" />
+                  <line class="side-scale-bar-line" x1="0" y1="-4" x2="0" y2="4" />
+                  <line class="side-scale-bar-line" [attr.x1]="m.scaleBar.lengthPx" y1="-4" [attr.x2]="m.scaleBar.lengthPx" y2="4" />
+                  <text class="side-scale-bar-label" [attr.x]="m.scaleBar.lengthPx / 2" y="-7" text-anchor="middle">
+                    {{ m.scaleBar.label }}
+                  </text>
+                </g>
+              </svg>
+            </ng-template>
           </div>
           @if (showControls) {
             <button
@@ -188,16 +272,16 @@
               <ng-content select="[edSidebarMeta]"></ng-content>
             </div>
             @if (detectorInteractiveAssemblyDone) {
-              <div class="options">
+              <div class="options" id="va-tour-visibility">
                 <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
                 <div fxLayout="column" fxLayoutGap="8px">
                   <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
                   @if (hasClusters) {
-                    <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
+                    <mat-slide-toggle id="va-tour-clusters-toggle" [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
                   }
                   <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
                   <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
-                  <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
+                  <mat-slide-toggle id="va-tour-decays-toggle" [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
                   @if (showThemeToggle) {
                     <mat-slide-toggle
                       [ngModel]="darkMode"

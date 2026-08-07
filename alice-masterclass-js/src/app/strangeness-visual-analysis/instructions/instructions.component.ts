@@ -1,4 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
+
+import { VaTutorialService } from '../va-tutorial/va-tutorial.service';
 
 @Component({
     selector: 'app-instructions',
@@ -8,9 +11,24 @@ import { Component, OnInit } from '@angular/core';
 })
 export class InstructionsComponent implements OnInit {
 
-  constructor() { }
+  constructor(
+    private readonly vaTutorial: VaTutorialService,
+    private readonly dialogRef: MatDialogRef<any>,
+  ) { }
 
   ngOnInit(): void {
   }
 
+  get startDisabled(): boolean {
+    return this.vaTutorial.isActive();
+  }
+
+  startTutorial(): void {
+    if (this.vaTutorial.isActive()) {
+      return;
+    }
+    // Close help dialog first so the tour overlay can highlight the underlying UI.
+    this.dialogRef.close();
+    setTimeout(() => this.vaTutorial.startMainTour(), 0);
+  }
 }

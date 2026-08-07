@@ -456,6 +456,10 @@ accepted; rollback steps live in [`openshift/dev/README.md`](../openshift/dev/RE
 
 ## 7. Deployment Procedure
 
+> **Public demo SPA** (no Django/teacher) uses a different namespace and tag
+> pattern (`v*-demo`). See [`demo-app.md`](demo-app.md) — do not use the
+> commands in §7.1 for the demo Route.
+
 ### 7.1 Redeploy dev with a git tag (copy-paste)
 
 Pushing a **new** protected tag matching `v*-dev` triggers the full pipeline

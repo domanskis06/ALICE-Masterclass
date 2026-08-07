@@ -21,7 +21,13 @@ import { InstructionsProvider } from '../shared/interfaces';
 import { InstructionsComponent } from './instructions/instructions.component';
 
 import { StrangenessDataService } from '../services/strangeness-data.service';
+import {
+  LsaEnhancementService,
+  StrangenessEnhancementEntry,
+  StrangenessEnhancementPlotEntry,
+} from '../services/lsa-enhancement.service';
 import { ParticleType, CollisionType, CentralityType, LargeScaleAnalysisResultsEntry } from '../shared/services/api.service';
+import { DemoConfig } from '../shared/demo/demo-config.service';
 import { FitService } from '../shared/services/fit.service';
 import { LsaTutorialService } from './lsa-tutorial/lsa-tutorial.service';
 import { LsaTutorialWelcomeDialogComponent } from './lsa-tutorial/lsa-tutorial-welcome-dialog.component';
@@ -68,6 +74,18 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
 
   loading: boolean = false;
 
+  /** Demo shows the enhancement summary instead of the per-fit results table. */
+  protected readonly demo = inject(DemoConfig).enabled;
+  private readonly enhancementService = inject(LsaEnhancementService);
+
+  enhancementRows: StrangenessEnhancementEntry[] = [];
+  enhancementPlotData: StrangenessEnhancementPlotEntry[] = [];
+  enhancementXDomain: [number, number] = [0, 1];
+
+  get canUndoFitResult(): boolean {
+    return this.dataService.canUndoLargeScaleAnalysisResult;
+  }
+
   @ViewChild('fitSelector')
   private fitSelector: FitSelectorComponent | undefined;
 
@@ -83,6 +101,12 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
   ngOnInit(): void {
     this.fitService.result = null;
     this.fitService.data.data = [];
+
+    if (this.demo) {
+      this.enhancementXDomain = this.enhancementService.participantsDomain();
+      // Results may already exist (restored from this browser).
+      this.refreshEnhancement();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -194,12 +218,30 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, AfterView
     const value: LargeScaleAnalysisResultsEntry = {particle: this.particle, collision: this.collision, centrality: this.centrality, signal: this.fitService.result.signal};
 
     this.dataService.addLargeScaleAnalysisResult(key, value);
+    this.refreshEnhancement();
     this.lsaTutorial.notifyAcceptClicked();
+  }
+
+  /** Demo: revert the most recently accepted fit (last in, first out). */
+  onUndoFitResult(): void {
+    if (this.dataService.undoLastLargeScaleAnalysisResult()) {
+      this.refreshEnhancement();
+    }
   }
 
   onRemoveResult(entry: LargeScaleAnalysisResultsEntry): void {
     const key = this.resultKey(entry.particle, entry.collision, entry.centrality);
     this.dataService.removeLargeScaleAnalysisResult(key);
+    this.refreshEnhancement();
+  }
+
+  /** Recompute yields and enhancement from the accepted fits (demo only). */
+  private refreshEnhancement(): void {
+    if (!this.demo) {
+      return;
+    }
+    this.enhancementRows = this.enhancementService.buildRows(this.dataService.largeScaleAnalysisResults);
+    this.enhancementPlotData = this.enhancementService.buildPlotData(this.enhancementRows);
   }
 
   private resultKey(particle: ParticleType, collision: CollisionType, centrality: CentralityType): string {

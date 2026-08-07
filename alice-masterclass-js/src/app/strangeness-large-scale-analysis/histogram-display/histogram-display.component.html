@@ -1,7 +1,7 @@
 <mat-card appearance="outlined" fxFill fxLayout="column" id="lsa-tour-histogram-display">
   <mat-card-title class="title">
     <span class="title-text">{{ 'STRANGENESS.HISTOGRAM_DISPLAY.TITLE' | translate }}</span>
-    <div class="title-actions">
+    <div id="lsa-tour-histogram-actions" class="title-actions">
       <button
         type="button"
         id="lsa-tour-reset-range-button"
@@ -36,6 +36,7 @@
         -->
         <div class="plot-stage">
           <app-fit-histogram #fitHistogram [class.disabled]="loading"
+            [compactChrome]="true"
             [xDomain]="[fitService.data.xmin, fitService.data.xmax]" [bins]="fitService.data.bins"
             [data]="fitService.data.data" [enableZoom]="true"
             signalColor="#FF4081" backgroundColor="#3F51B5" barColor="#A3A3A3"
