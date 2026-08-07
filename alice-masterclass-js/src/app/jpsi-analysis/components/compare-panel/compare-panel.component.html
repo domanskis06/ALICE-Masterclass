@@ -1,0 +1,67 @@
+<mat-card appearance="outlined" id="jpsi-tour-compare">
+  <mat-card-title class="compare-panel__title">{{ 'JPSI.COMPARE.TITLE' | translate }}</mat-card-title>
+
+  <mat-card-content>
+    @if (!ready) {
+      <p class="compare-panel__locked" data-testid="jpsi-compare-locked">
+        {{ 'JPSI.COMPARE.LOCKED' | translate }}
+      </p>
+    } @else {
+      <div class="compare-panel__grid" data-testid="jpsi-compare-grid">
+        <div class="compare-panel__column">
+          <h3>{{ 'JPSI.DATASET.PP' | translate }}</h3>
+          <p class="compare-panel__metric">
+            <span>{{ 'JPSI.METRICS.SB' | translate }}</span>
+            <strong>{{ formatRatio(ppRow!.signalToBackground) }}</strong>
+          </p>
+          <p class="compare-panel__metric">
+            <span>{{ 'JPSI.METRICS.SIGNIFICANCE' | translate }}</span>
+            <strong>{{ ppRow!.significance | number: '1.1-1' }}</strong>
+          </p>
+          <p class="compare-panel__metric compare-panel__metric--muted">
+            <span>{{ 'JPSI.RESULTS.EVENTS' | translate }}</span>
+            <strong>{{ ppRow!.nEvents }}</strong>
+          </p>
+        </div>
+
+        <div class="compare-panel__column">
+          <h3>{{ 'JPSI.DATASET.PPB' | translate }}</h3>
+          <p class="compare-panel__metric">
+            <span>{{ 'JPSI.METRICS.SB' | translate }}</span>
+            <strong>{{ formatRatio(pPbRow!.signalToBackground) }}</strong>
+          </p>
+          <p class="compare-panel__metric">
+            <span>{{ 'JPSI.METRICS.SIGNIFICANCE' | translate }}</span>
+            <strong>{{ pPbRow!.significance | number: '1.1-1' }}</strong>
+          </p>
+          <p class="compare-panel__metric compare-panel__metric--muted">
+            <span>{{ 'JPSI.RESULTS.EVENTS' | translate }}</span>
+            <strong>{{ pPbRow!.nEvents }}</strong>
+          </p>
+        </div>
+      </div>
+
+      <p class="compare-panel__conclusion" data-testid="jpsi-compare-conclusion">
+        {{ 'JPSI.COMPARE.HINT' | translate }}
+      </p>
+
+      @if (backgroundGrew) {
+        <p class="compare-panel__conclusion">{{ 'JPSI.COMPARE.CONCLUSION' | translate }}</p>
+      }
+
+      @if (statisticsWarning) {
+        <p class="compare-panel__warning" data-testid="jpsi-warning-statistics">
+          <mat-icon inline="true">info_outline</mat-icon>
+          {{ 'JPSI.COMPARE.WARN_STATISTICS' | translate }}
+        </p>
+      }
+
+      @if (windowWarning) {
+        <p class="compare-panel__warning" data-testid="jpsi-warning-window">
+          <mat-icon inline="true">info_outline</mat-icon>
+          {{ 'JPSI.COMPARE.WARN_WINDOW' | translate }}
+        </p>
+      }
+    }
+  </mat-card-content>
+</mat-card>

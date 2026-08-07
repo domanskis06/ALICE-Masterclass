@@ -1,0 +1,189 @@
+<mat-card appearance="outlined" class="mass-panel" id="jpsi-tour-mass-panel">
+  <mat-card-title class="mass-panel__title">
+    {{ 'JPSI.MASS.TITLE' | translate }}
+  </mat-card-title>
+
+  <mat-card-content>
+    @if (mode === 'explore') {
+      <div class="mass-panel__legend" id="jpsi-tour-series-toggles">
+        <button
+          mat-stroked-button
+          class="mass-panel__toggle"
+          [class.mass-panel__toggle--off]="!visibility.unlike"
+          [style.--series-colour]="colours.unlike"
+          [disabled]="!hasData"
+          data-testid="jpsi-toggle-unlike"
+          (click)="onToggle('unlike')"
+        >
+          <span class="mass-panel__swatch"></span>
+          {{ 'JPSI.MASS.SERIES.UNLIKE' | translate }}
+        </button>
+
+        <button
+          mat-stroked-button
+          class="mass-panel__toggle"
+          [class.mass-panel__toggle--off]="!visibility.posPos"
+          [style.--series-colour]="showBackgroundSum ? colours.background : colours.posPos"
+          [disabled]="!hasData"
+          data-testid="jpsi-toggle-pospos"
+          (click)="onToggle('posPos')"
+        >
+          <span class="mass-panel__swatch"></span>
+          {{ 'JPSI.MASS.SERIES.POSPOS' | translate }}
+        </button>
+
+        <button
+          mat-stroked-button
+          class="mass-panel__toggle"
+          [class.mass-panel__toggle--off]="!visibility.negNeg"
+          [style.--series-colour]="showBackgroundSum ? colours.background : colours.negNeg"
+          [disabled]="!hasData"
+          data-testid="jpsi-toggle-negneg"
+          (click)="onToggle('negNeg')"
+        >
+          <span class="mass-panel__swatch"></span>
+          {{ 'JPSI.MASS.SERIES.NEGNEG' | translate }}
+        </button>
+
+        <mat-slide-toggle
+          class="mass-panel__sum-toggle"
+          [checked]="showBackgroundSum"
+          [disabled]="!hasData"
+          data-testid="jpsi-toggle-background-sum"
+          (change)="onBackgroundSumChange($event.checked)"
+        >
+          {{ 'JPSI.MASS.SERIES.BACKGROUND' | translate }}
+        </mat-slide-toggle>
+      </div>
+    } @else {
+      <p class="mass-panel__after-subtract" data-testid="jpsi-after-subtract">
+        {{ 'JPSI.MASS.AFTER_SUBTRACT' | translate }}
+      </p>
+    }
+
+    <div class="mass-panel__chart" #host [style.height.px]="height">
+      <svg #svg [attr.width]="width" [attr.height]="height">
+        @if (windowRect; as rect) {
+          <rect
+            class="mass-panel__window"
+            [attr.x]="rect.x"
+            [attr.y]="margin.top"
+            [attr.width]="rect.width"
+            [attr.height]="plotHeight"
+          ></rect>
+        }
+
+        @for (entry of series; track entry.key) {
+          <g class="mass-panel__series" [attr.data-series]="entry.key">
+            @for (bar of entry.bars; track $index) {
+              <rect
+                [attr.x]="bar.x"
+                [attr.y]="bar.y"
+                [attr.width]="bar.width"
+                [attr.height]="bar.height"
+                [attr.fill]="entry.colour"
+              ></rect>
+            }
+          </g>
+        }
+
+        <g class="x-axis"></g>
+        <g class="y-axis"></g>
+
+        <text
+          class="mass-panel__axis-label"
+          [attr.x]="margin.left + plotWidth / 2"
+          [attr.y]="height - 6"
+          text-anchor="middle"
+        >
+          {{ 'JPSI.MASS.X_AXIS' | translate }}
+        </text>
+        <text
+          class="mass-panel__axis-label"
+          [attr.transform]="'rotate(-90) translate(' + -(margin.top + plotHeight / 2) + ', 14)'"
+          text-anchor="middle"
+        >
+          {{ 'JPSI.MASS.Y_AXIS' | translate }}
+        </text>
+      </svg>
+
+      @if (tooWideSelection) {
+        <p class="mass-panel__notice" data-testid="jpsi-too-wide">
+          {{ 'JPSI.MASS.TOO_WIDE' | translate }}
+        </p>
+      } @else if (!hasData) {
+        <p class="mass-panel__notice">{{ 'JPSI.MASS.EMPTY' | translate }}</p>
+      }
+    </div>
+
+    @if (mode === 'subtracted') {
+      <div class="mass-panel__window-controls" id="jpsi-tour-mass-window">
+        <span class="mass-panel__window-label">{{ 'JPSI.MASS.WINDOW' | translate }}</span>
+        <ngx-slider
+          [(value)]="windowStart"
+          [(highValue)]="windowEnd"
+          [options]="windowOptions"
+          (userChange)="onWindowChange()"
+        ></ngx-slider>
+      </div>
+
+      @if (liveResult; as result) {
+        <div class="mass-panel__result" data-testid="jpsi-live-result">
+          <div class="mass-panel__metric">
+            <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.SIGNAL' | translate }}</span>
+            <span class="mass-panel__metric-value">
+              {{ result.signal | number: '1.0-0' }} &plusmn; {{ result.signalError | number: '1.0-0' }}
+            </span>
+          </div>
+          <div class="mass-panel__metric">
+            <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.BACKGROUND' | translate }}</span>
+            <span class="mass-panel__metric-value">{{ result.likeSum | number: '1.0-0' }}</span>
+          </div>
+          <div class="mass-panel__metric">
+            <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.SB' | translate }}</span>
+            <span class="mass-panel__metric-value">{{ formatRatio(result.signalToBackground) }}</span>
+          </div>
+          <div class="mass-panel__metric">
+            <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.SIGNIFICANCE' | translate }}</span>
+            <span class="mass-panel__metric-value">{{ result.significance | number: '1.1-1' }}</span>
+          </div>
+        </div>
+      }
+
+      <p class="mass-panel__hint">{{ 'JPSI.MASS.NEGATIVE_BINS_NOTE' | translate }}</p>
+    }
+  </mat-card-content>
+
+  <mat-card-actions class="mass-panel__actions">
+    @if (mode === 'explore') {
+      <button
+        mat-raised-button
+        color="primary"
+        id="jpsi-tour-subtract-button"
+        data-testid="jpsi-subtract"
+        [disabled]="!canSubtract"
+        [matTooltip]="'JPSI.MASS.SUBTRACT_HELP' | translate"
+        (click)="subtract.emit()"
+      >
+        {{ 'JPSI.MASS.SUBTRACT' | translate }}
+      </button>
+    } @else {
+      <button
+        mat-raised-button
+        color="primary"
+        id="jpsi-tour-accept-button"
+        data-testid="jpsi-accept"
+        [disabled]="!canAccept"
+        (click)="acceptResult.emit()"
+      >
+        {{ 'JPSI.MASS.ACCEPT' | translate }}
+      </button>
+      <button mat-stroked-button data-testid="jpsi-show-components" (click)="showComponents.emit()">
+        {{ 'JPSI.MASS.SHOW_COMPONENTS' | translate }}
+      </button>
+      @if (!canAccept) {
+        <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.NO_SIGNAL_HINT' | translate }}</span>
+      }
+    }
+  </mat-card-actions>
+</mat-card>

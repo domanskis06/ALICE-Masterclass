@@ -438,5 +438,124 @@
       "STEP_UPLOAD_TITLE": "Ergebnisse mit dem Lehrer teilen",
       "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung und sammelt die Klassenergebnisse. Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
     }
+  },
+  "JPSI": {
+    "TITLE": "J/psi-Produktion",
+    "MENU": "J/psi-Analyse",
+    "DATASET": {
+      "PP": "Proton-Proton",
+      "PPB": "Proton-Blei"
+    },
+    "TOOLBAR": {
+      "DATASET": "Kollisionssystem",
+      "EVENTS": "Anzahl der Ereignisse",
+      "RUN": "Analysieren",
+      "PROCESSED": "Analysiert",
+      "RESET_HISTOGRAMS": "Histogramme zurücksetzen",
+      "PRESET_ALL": "Alle",
+      "EXHAUSTED": "Du hast bereits alle Ereignisse dieses Datensatzes analysiert."
+    },
+    "PID": {
+      "TITLE": "Teilchenidentifikation",
+      "X_AXIS": "Impuls (GeV/c)",
+      "Y_AXIS": "Energieverlust dE/dx",
+      "EMPTY": "Klicke auf Analysieren, um dieses Diagramm zu füllen."
+    },
+    "CUTS": {
+      "MOMENTUM": "Impulsbereich",
+      "DEDX": "Bereich des Energieverlusts",
+      "RESET": "Auswahl zurücksetzen"
+    },
+    "MASS": {
+      "TITLE": "Invariante Masse",
+      "X_AXIS": "Invariante Masse (GeV/c²)",
+      "Y_AXIS": "Paare",
+      "EMPTY": "Analysiere Ereignisse, um die Massenhistogramme zu erstellen.",
+      "SERIES": {
+        "UNLIKE": "Paare mit entgegengesetzter Ladung",
+        "POSPOS": "Paare gleicher Ladung, positiv",
+        "NEGNEG": "Paare gleicher Ladung, negativ",
+        "BACKGROUND": "Kombinatorischer Untergrund"
+      },
+      "SUBTRACT": "Untergrund abziehen",
+      "SUBTRACT_HELP": "Paare gleicher Ladung können nicht aus einem J/psi-Zerfall stammen. Sie zeigen dir die zufälligen Kombinationen. Ziehe sie von den Paaren mit entgegengesetzter Ladung ab, um das Signal freizulegen.",
+      "AFTER_SUBTRACT": "Übrig bleibt das Signal. Der Peak nahe 3,1 GeV/c² stammt aus J/psi-Zerfällen.",
+      "SHOW_COMPONENTS": "Komponenten zeigen",
+      "WINDOW": "Massenfenster des Signals",
+      "ACCEPT": "Ergebnis übernehmen",
+      "NEGATIVE_BINS_NOTE": "Zufällige Schwankungen können einen Bin leicht unter null drücken. Solche Bins zeigen wir als null.",
+      "TOO_WIDE": "Deine Auswahl enthält zu viele Spuren. Grenze zuerst das Elektronenband ein.",
+      "NO_SIGNAL_HINT": "Noch kein Signal. Analysiere mehr Ereignisse oder grenze das Elektronenband ein."
+    },
+    "METRICS": {
+      "SIGNAL": "J/psi-Signal",
+      "BACKGROUND": "Untergrund",
+      "SB": "Signal zu Untergrund",
+      "SIGNIFICANCE": "Signifikanz"
+    },
+    "RESULTS": {
+      "TITLE": "Deine Ergebnisse",
+      "DATASET": "Kollisionssystem",
+      "EVENTS": "Ereignisse",
+      "SIGNAL": "J/psi-Signal",
+      "BACKGROUND": "Untergrund",
+      "SB": "S/U",
+      "SIGNIFICANCE": "Signifikanz",
+      "WINDOW": "Massenfenster",
+      "EMPTY": "Übernimm ein Ergebnis, um es hier einzutragen.",
+      "UPLOAD_SOON": "Das Senden der Ergebnisse an die Lehrkraft wird bald verfügbar sein."
+    },
+    "COMPARE": {
+      "TITLE": "Vergleiche die beiden Kollisionssysteme",
+      "LOCKED": "Übernimm ein Ergebnis für beide Kollisionssysteme, um sie zu vergleichen.",
+      "HINT": "In Proton-Blei entstehen viel mehr Teilchen, also gibt es viel mehr zufällige Paare. Der Untergrund ist größer und das Signal ist schwerer herauszuholen.",
+      "CONCLUSION": "Dein Verhältnis von Signal zu Untergrund ist in Proton-Blei schlechter. Ein seltenes Teilchen in einer vollen Kollision zu finden ist schwieriger. Genau deshalb brauchen Physikerinnen und Physiker eine sehr gute Teilchenidentifikation und riesige Datenmengen.",
+      "WARN_STATISTICS": "Du hast in beiden Systemen sehr unterschiedlich viele Ereignisse analysiert. Die Signifikanz wächst mit der Anzahl der Ereignisse, vergleiche daher lieber das Verhältnis von Signal zu Untergrund.",
+      "WARN_WINDOW": "Die beiden Ergebnisse nutzen unterschiedliche Massenfenster. Miss beide im gleichen Fenster, damit der Vergleich fair ist."
+    },
+    "WELCOME": {
+      "TITLE": "Auf der Suche nach dem J/psi",
+      "P1": "Das J/psi ist ein seltenes Teilchen aus einem Charm-Quark und seinem Antiquark. Es lebt nur den Bruchteil einer Sekunde und zerfällt manchmal in ein Elektron und ein Positron.",
+      "P2": "Du analysierst echte ALICE-Daten aus zwei Kollisionssystemen. Zuerst Proton-Proton, danach Proton-Blei, wo viel mehr Teilchen entstehen.",
+      "P3": "Deine Aufgabe ist es, Elektronen auszuwählen, die invariante Masse der Paare zu berechnen und das J/psi-Signal vom zufälligen Untergrund zu trennen.",
+      "SKIP": "Ich schaue selbst",
+      "START": "Geführte Tour starten"
+    },
+    "INSTRUCTIONS": {
+      "TITLE": "J/psi-Produktion",
+      "SUBTITLE": "Ein seltenes Signal in einer vollen Kollision finden",
+      "P1": "Geladene Teilchen verlieren Energie, wenn sie den Detektor durchqueren. Wie viel sie verlieren, hängt von ihrem Impuls ab und davon, welches Teilchen sie sind. Das Diagramm links zeigt diesen Energieverlust gegen den Impuls, deshalb bilden verschiedene Teilchen verschiedene Bänder.",
+      "P2": "Elektronen und Positronen liegen in einem schmalen Band. Wähle es mit den Reglern aus. Jede behaltene Spur wird als Elektron behandelt.",
+      "P3": "Die App bildet dann Paare aus den ausgewählten Spuren innerhalb jeder Kollision und berechnet die invariante Masse jedes Paares. Ein J/psi-Zerfall liefert ein Elektron und ein Positron und erscheint daher als Peak nahe 3,1 GeV/c² bei den Paaren mit entgegengesetzter Ladung.",
+      "P4": "Paare gleicher Ladung können nicht aus einem J/psi-Zerfall stammen und messen so den zufälligen Untergrund. Ziehe sie ab, und was übrig bleibt, ist dein Signal.",
+      "START_TUTORIAL": "Geführte Tour wiederholen"
+    },
+    "TUTORIAL": {
+      "NEXT": "Weiter",
+      "PREVIOUS": "Zurück",
+      "DONE": "Fertig",
+      "STEP_RUN_TITLE": "Ereignisse analysieren",
+      "STEP_RUN_BODY": "Wähle, wie viele Kollisionen analysiert werden sollen, und klicke auf <strong>Analysieren</strong>. Du kannst später erneut klicken, um weitere Ereignisse hinzuzufügen.",
+      "STEP_HEATMAP_TITLE": "Teilchenidentifikation",
+      "STEP_HEATMAP_BODY": "Jede Spur landet hier gemäß ihrem Impuls und ihrem Energieverlust. Teilchen derselben Art bilden Bänder. Elektronen liegen in einem recht flachen Band über dem starken Pionenband.",
+      "STEP_CUTS_TITLE": "Elektronen auswählen",
+      "STEP_CUTS_BODY": "Stelle die Regler so ein, dass das rote Rechteck das Elektronenband abdeckt. Ein guter Startpunkt ist ein Energieverlust zwischen 70 und 90. Alles im Rechteck geht in die Massenhistogramme ein.",
+      "STEP_SERIES_TITLE": "Drei Arten von Paaren",
+      "STEP_SERIES_BODY": "Rot zeigt Paare mit entgegengesetzter Ladung, die aus einem J/psi stammen können. Blau und Grün zeigen Paare gleicher Ladung, die das nicht können. Schalte die Serien an und aus, um ihre Formen zu vergleichen, und aktiviere <strong>Kombinatorischer Untergrund</strong>, um beide Serien gleicher Ladung zusammen zu sehen.",
+      "STEP_SUBTRACT_TITLE": "Untergrund abziehen",
+      "STEP_SUBTRACT_BODY": "Paare gleicher Ladung messen die zufälligen Kombinationen direkt aus den Daten. Ziehe sie Bin für Bin von den Paaren mit entgegengesetzter Ladung ab, und der J/psi-Peak erscheint.",
+      "STEP_WINDOW_TITLE": "Signal zählen",
+      "STEP_WINDOW_BODY": "Ziehe das Fenster über den Peak. Alles darin wird gezählt. Achte darauf, wie ein zu breites Fenster Untergrund hinzufügt und das Verhältnis von Signal zu Untergrund verschlechtert.",
+      "STEP_ACCEPT_TITLE": "Ergebnis speichern",
+      "STEP_ACCEPT_BODY": "<strong>Ergebnis übernehmen</strong> speichert diese Messung in deiner Tabelle. Du kannst das Fenster jederzeit ändern und erneut übernehmen.",
+      "STEP_DATASET_TITLE": "Das zweite Kollisionssystem",
+      "STEP_DATASET_BODY": "Wechsle jetzt zu Proton-Blei und wiederhole die ganze Analyse. Deine Proton-Proton-Arbeit bleibt genau so, wie du sie verlassen hast.",
+      "STEP_COMPARE_TITLE": "Vergleichen",
+      "STEP_COMPARE_BODY": "Mit beiden Ergebnissen in der Tabelle siehst du, wie viel schwieriger die Messung wird, wenn eine Kollision mehr Teilchen erzeugt."
+    },
+    "ERRORS": {
+      "MANIFEST": "Die Liste der Datensätze konnte nicht geladen werden.",
+      "BATCH": "Weitere Ereignisse konnten nicht geladen werden. Deine bisherigen Ergebnisse wurden behalten."
+    }
   }
 }

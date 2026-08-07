@@ -7,6 +7,7 @@ import { AboutRoutingModule } from './about/about-routing.module';
 import { StrangenessVisualAnalysisRoutingModule } from './strangeness-visual-analysis/strangeness-visual-analysis-routing.module';
 import { StrangenessLargeScaleAnalysisRoutingModule } from './strangeness-large-scale-analysis/strangeness-large-scale-analysis-routing.module';
 import { ParticlePropagationRoutingModule } from './particle-propagation/particle-propagation-routing.module';
+import { JpsiAnalysisRoutingModule } from './jpsi-analysis/jpsi-analysis-routing.module';
 
 const routes: Routes = [
   {
@@ -26,7 +27,8 @@ const routes: Routes = [
     // AboutRoutingModule,
     StrangenessVisualAnalysisRoutingModule,
     StrangenessLargeScaleAnalysisRoutingModule,
-    ParticlePropagationRoutingModule
+    ParticlePropagationRoutingModule,
+    JpsiAnalysisRoutingModule
   ],
   exports: [RouterModule]
 })

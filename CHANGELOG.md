@@ -9,6 +9,33 @@ Version tags follow the existing release flows: `v*-dev` for the workshop stack
 ([`ci/docs/dev-deployment.md`](ci/docs/dev-deployment.md)) and `v*-demo` for the
 public SPA ([`ci/docs/demo-app.md`](ci/docs/demo-app.md)).
 
+## [0.4.0] - 2026-08-07
+
+New **J/psi analysis** exercise: students measure J/psi production in proton-proton and
+proton-lead collisions and remove the combinatorial background with the like-sign method.
+Detail: [`ci/docs/jpsi-analysis.md`](ci/docs/jpsi-analysis.md).
+
+### **J/psi analysis**
+
+Own module at `/jpsi-analysis`, with no event display. Quick Analysis fills a live dE/dx vs
+momentum heatmap in presets of 100/200/500/1000 events or all of them, appending to what is
+already analysed rather than starting over. The student selects electron candidates with a
+cut rectangle, then compares opposite-charge against same-charge pairs on a single overlaid
+mass chart and subtracts the background sum to expose the peak at 3.1 GeV/c². Signal,
+background, S/B and significance are read off a mass window and saved to a results table.
+
+Both collision systems are analysed independently; their state is kept side by side, so
+switching back and forth never loses progress. A compare panel opens once both rows exist.
+
+Data comes from the classic ROOT MasterClass VSD files, converted offline to PID-only
+columnar JSON batches (`data/jpsi/convert_events.C`, ~6.7 MB of assets).
+
+Upload data is a placeholder: there is no J/psi endpoint in the Django API yet, and the
+teacher module is untouched.
+
+→ Details: [`ci/docs/jpsi-analysis.md`](ci/docs/jpsi-analysis.md)
+→ Data pipeline: [`alice-masterclass-js/data/jpsi/README.md`](alice-masterclass-js/data/jpsi/README.md)
+
 ## [0.3.0] - 2026-08-05
 
 Public **demo** student SPA (offline, no Django/teacher) plus guided **VA / LSA

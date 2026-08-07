@@ -440,5 +440,124 @@
       "STEP_UPLOAD_TITLE": "Partager les résultats avec votre enseignant",
       "STEP_UPLOAD_BODY": "Une fois connecté, <strong>Envoyer les données</strong> envoie votre tableau à la session serveur, en regroupant les résultats de la classe. Si le bouton est désactivé, connectez-vous d’abord depuis le flux principal."
     }
+  },
+  "JPSI": {
+    "TITLE": "Production de J/psi",
+    "MENU": "Analyse J/psi",
+    "DATASET": {
+      "PP": "proton-proton",
+      "PPB": "proton-plomb"
+    },
+    "TOOLBAR": {
+      "DATASET": "Système de collision",
+      "EVENTS": "Nombre d'événements",
+      "RUN": "Analyser",
+      "PROCESSED": "Analysés",
+      "RESET_HISTOGRAMS": "Réinitialiser les histogrammes",
+      "PRESET_ALL": "Tous",
+      "EXHAUSTED": "Tu as déjà analysé tous les événements de ce jeu de données."
+    },
+    "PID": {
+      "TITLE": "Identification des particules",
+      "X_AXIS": "Impulsion (GeV/c)",
+      "Y_AXIS": "Perte d'énergie dE/dx",
+      "EMPTY": "Clique sur Analyser pour commencer à remplir ce graphique."
+    },
+    "CUTS": {
+      "MOMENTUM": "Plage d'impulsion",
+      "DEDX": "Plage de perte d'énergie",
+      "RESET": "Réinitialiser la sélection"
+    },
+    "MASS": {
+      "TITLE": "Masse invariante",
+      "X_AXIS": "Masse invariante (GeV/c²)",
+      "Y_AXIS": "Paires",
+      "EMPTY": "Analyse des événements pour construire les histogrammes de masse.",
+      "SERIES": {
+        "UNLIKE": "Paires de charges opposées",
+        "POSPOS": "Paires de même charge, positives",
+        "NEGNEG": "Paires de même charge, négatives",
+        "BACKGROUND": "Bruit de fond combinatoire"
+      },
+      "SUBTRACT": "Soustraire le bruit de fond",
+      "SUBTRACT_HELP": "Les paires de même charge ne peuvent pas venir d'une désintégration de J/psi, elles te montrent donc les combinaisons aléatoires. Soustrais-les des paires de charges opposées pour révéler le signal.",
+      "AFTER_SUBTRACT": "Ce qui reste est le signal. Le pic près de 3,1 GeV/c² vient des désintégrations de J/psi.",
+      "SHOW_COMPONENTS": "Afficher les composantes",
+      "WINDOW": "Fenêtre de masse du signal",
+      "ACCEPT": "Valider le résultat",
+      "NEGATIVE_BINS_NOTE": "Les fluctuations aléatoires peuvent faire passer une case légèrement sous zéro. Ces cases sont affichées à zéro.",
+      "TOO_WIDE": "Ta sélection contient trop de traces. Resserre d'abord la bande des électrons.",
+      "NO_SIGNAL_HINT": "Pas encore de signal. Analyse plus d'événements ou resserre la bande des électrons."
+    },
+    "METRICS": {
+      "SIGNAL": "Signal J/psi",
+      "BACKGROUND": "Bruit de fond",
+      "SB": "Signal sur bruit",
+      "SIGNIFICANCE": "Significativité"
+    },
+    "RESULTS": {
+      "TITLE": "Tes résultats",
+      "DATASET": "Système de collision",
+      "EVENTS": "Événements",
+      "SIGNAL": "Signal J/psi",
+      "BACKGROUND": "Bruit de fond",
+      "SB": "S/B",
+      "SIGNIFICANCE": "Significativité",
+      "WINDOW": "Fenêtre de masse",
+      "EMPTY": "Valide un résultat pour l'ajouter ici.",
+      "UPLOAD_SOON": "L'envoi des résultats à ton enseignant sera bientôt disponible."
+    },
+    "COMPARE": {
+      "TITLE": "Compare les deux systèmes de collision",
+      "LOCKED": "Valide un résultat pour les deux systèmes de collision afin de les comparer.",
+      "HINT": "En proton-plomb beaucoup plus de particules sont produites, il y a donc beaucoup plus de paires aléatoires. Le bruit de fond est plus grand et le signal est plus difficile à extraire.",
+      "CONCLUSION": "Ton rapport signal sur bruit est moins bon en proton-plomb. Trouver une particule rare dans une collision chargée est plus difficile. C'est pour cela que les physiciens ont besoin d'une excellente identification des particules et de très grands jeux de données.",
+      "WARN_STATISTICS": "Tu as analysé un nombre très différent d'événements dans les deux systèmes. La significativité augmente avec le nombre d'événements, compare plutôt le rapport signal sur bruit.",
+      "WARN_WINDOW": "Les deux résultats utilisent des fenêtres de masse différentes. Mesure-les dans la même fenêtre pour comparer de façon juste."
+    },
+    "WELCOME": {
+      "TITLE": "À la recherche de la particule J/psi",
+      "P1": "Le J/psi est une particule rare formée d'un quark charmé et de son antiquark. Il vit une infime fraction de seconde et se désintègre parfois en un électron et un positron.",
+      "P2": "Tu vas analyser de vraies données d'ALICE issues de deux systèmes de collision. D'abord proton-proton, puis proton-plomb, où beaucoup plus de particules sont produites.",
+      "P3": "Ta tâche est de sélectionner les électrons, de calculer la masse invariante des paires et de séparer le signal J/psi du bruit de fond aléatoire.",
+      "SKIP": "Je regarde seul",
+      "START": "Commencer la visite guidée"
+    },
+    "INSTRUCTIONS": {
+      "TITLE": "Production de J/psi",
+      "SUBTITLE": "Trouver un signal rare dans une collision chargée",
+      "P1": "Les particules chargées perdent de l'énergie en traversant le détecteur. La perte dépend de leur impulsion et du type de particule. Le graphique de gauche montre cette perte d'énergie en fonction de l'impulsion, si bien que les particules différentes forment des bandes différentes.",
+      "P2": "Les électrons et les positrons se trouvent dans une bande étroite. Sélectionne-la avec les curseurs. Chaque trace conservée est traitée comme un électron.",
+      "P3": "L'application forme ensuite des paires à partir des traces sélectionnées dans chaque collision et calcule la masse invariante de chaque paire. Une désintégration de J/psi donne un électron et un positron, elle apparaît donc comme un pic près de 3,1 GeV/c² parmi les paires de charges opposées.",
+      "P4": "Les paires de même charge ne peuvent pas venir d'une désintégration de J/psi, elles mesurent donc le bruit de fond aléatoire. Soustrais-les et ce qui reste est ton signal.",
+      "START_TUTORIAL": "Revoir la visite guidée"
+    },
+    "TUTORIAL": {
+      "NEXT": "Suivant",
+      "PREVIOUS": "Retour",
+      "DONE": "Terminé",
+      "STEP_RUN_TITLE": "Analyser des événements",
+      "STEP_RUN_BODY": "Choisis combien de collisions analyser puis clique sur <strong>Analyser</strong>. Tu peux cliquer de nouveau plus tard pour ajouter des événements à ceux que tu as déjà.",
+      "STEP_HEATMAP_TITLE": "Identification des particules",
+      "STEP_HEATMAP_BODY": "Chaque trace arrive ici selon son impulsion et sa perte d'énergie. Les particules de même type forment des bandes. Les électrons se trouvent dans une bande assez plate au-dessus de la forte bande des pions.",
+      "STEP_CUTS_TITLE": "Sélectionner les électrons",
+      "STEP_CUTS_BODY": "Règle les curseurs pour que le rectangle rouge couvre la bande des électrons. Un bon point de départ est une perte d'énergie entre 70 et 90. Tout ce qui est dans le rectangle sert à construire les histogrammes de masse.",
+      "STEP_SERIES_TITLE": "Trois sortes de paires",
+      "STEP_SERIES_BODY": "Le rouge montre les paires de charges opposées, qui peuvent venir d'un J/psi. Le bleu et le vert montrent les paires de même charge, qui ne le peuvent pas. Active et désactive les séries pour comparer leurs formes, et active <strong>Bruit de fond combinatoire</strong> pour voir les deux séries de même charge additionnées.",
+      "STEP_SUBTRACT_TITLE": "Soustraire le bruit de fond",
+      "STEP_SUBTRACT_BODY": "Les paires de même charge mesurent les combinaisons aléatoires directement dans les données. Soustrais-les case par case des paires de charges opposées et le pic du J/psi apparaît.",
+      "STEP_WINDOW_TITLE": "Compter le signal",
+      "STEP_WINDOW_BODY": "Fais glisser la fenêtre sur le pic. Tout ce qui est à l'intérieur est compté. Remarque comment une fenêtre trop large ajoute du bruit de fond et dégrade le rapport signal sur bruit.",
+      "STEP_ACCEPT_TITLE": "Enregistrer ton résultat",
+      "STEP_ACCEPT_BODY": "<strong>Valider le résultat</strong> enregistre cette mesure dans ton tableau. Tu peux toujours changer la fenêtre et valider de nouveau.",
+      "STEP_DATASET_TITLE": "Le deuxième système de collision",
+      "STEP_DATASET_BODY": "Passe maintenant à proton-plomb et refais toute l'analyse. Ton travail sur proton-proton reste exactement où tu l'as laissé.",
+      "STEP_COMPARE_TITLE": "Comparer",
+      "STEP_COMPARE_BODY": "Avec les deux résultats dans le tableau, tu vois à quel point la mesure devient plus difficile quand une collision produit plus de particules."
+    },
+    "ERRORS": {
+      "MANIFEST": "Impossible de charger la liste des jeux de données.",
+      "BATCH": "Impossible de charger d'autres événements. Tes résultats actuels ont été conservés."
+    }
   }
 }

@@ -440,5 +440,124 @@
       "STEP_UPLOAD_TITLE": "Udostępnij wyniki nauczycielowi",
       "STEP_UPLOAD_BODY": "Po zalogowaniu <strong>Prześlij dane</strong> wysyła Twoją tabelę do sesji na serwerze, zbierając wyniki klasy. Jeśli przycisk jest wyłączony, najpierw zaloguj się z głównego przepływu."
     }
+  },
+  "JPSI": {
+    "TITLE": "Produkcja J/psi",
+    "MENU": "Analiza J/psi",
+    "DATASET": {
+      "PP": "proton-proton",
+      "PPB": "proton-ołów"
+    },
+    "TOOLBAR": {
+      "DATASET": "Układ zderzenia",
+      "EVENTS": "Liczba zdarzeń",
+      "RUN": "Analizuj",
+      "PROCESSED": "Przeanalizowano",
+      "RESET_HISTOGRAMS": "Wyczyść histogramy",
+      "PRESET_ALL": "Wszystkie",
+      "EXHAUSTED": "Przeanalizowałeś już wszystkie zdarzenia w tym zbiorze."
+    },
+    "PID": {
+      "TITLE": "Identyfikacja cząstek",
+      "X_AXIS": "Pęd (GeV/c)",
+      "Y_AXIS": "Strata energii dE/dx",
+      "EMPTY": "Naciśnij Analizuj, żeby zacząć wypełniać ten wykres."
+    },
+    "CUTS": {
+      "MOMENTUM": "Zakres pędu",
+      "DEDX": "Zakres straty energii",
+      "RESET": "Wyczyść zaznaczenie"
+    },
+    "MASS": {
+      "TITLE": "Masa niezmiennicza",
+      "X_AXIS": "Masa niezmiennicza (GeV/c²)",
+      "Y_AXIS": "Pary",
+      "EMPTY": "Przeanalizuj zdarzenia, żeby zbudować histogramy masy.",
+      "SERIES": {
+        "UNLIKE": "Pary przeciwnego znaku",
+        "POSPOS": "Pary tego samego znaku, dodatnie",
+        "NEGNEG": "Pary tego samego znaku, ujemne",
+        "BACKGROUND": "Tło kombinatoryczne"
+      },
+      "SUBTRACT": "Odejmij tło",
+      "SUBTRACT_HELP": "Pary tego samego znaku nie mogą pochodzić z rozpadu J/psi, więc pokazują przypadkowe kombinacje. Odejmij je od par przeciwnego znaku, żeby odsłonić sygnał.",
+      "AFTER_SUBTRACT": "Zostaje sygnał. Pik w okolicy 3,1 GeV/c² pochodzi z rozpadów J/psi.",
+      "SHOW_COMPONENTS": "Pokaż składowe",
+      "WINDOW": "Okno masy sygnału",
+      "ACCEPT": "Zaakceptuj wynik",
+      "NEGATIVE_BINS_NOTE": "Losowe fluktuacje mogą zepchnąć bin lekko poniżej zera. Takie biny pokazujemy jako zero.",
+      "TOO_WIDE": "Twoje zaznaczenie zawiera za dużo torów. Najpierw zawęż pas elektronów.",
+      "NO_SIGNAL_HINT": "Nie ma jeszcze sygnału. Przeanalizuj więcej zdarzeń albo zawęż pas elektronów."
+    },
+    "METRICS": {
+      "SIGNAL": "Sygnał J/psi",
+      "BACKGROUND": "Tło",
+      "SB": "Sygnał do tła",
+      "SIGNIFICANCE": "Istotność"
+    },
+    "RESULTS": {
+      "TITLE": "Twoje wyniki",
+      "DATASET": "Układ zderzenia",
+      "EVENTS": "Zdarzenia",
+      "SIGNAL": "Sygnał J/psi",
+      "BACKGROUND": "Tło",
+      "SB": "S/B",
+      "SIGNIFICANCE": "Istotność",
+      "WINDOW": "Okno masy",
+      "EMPTY": "Zaakceptuj wynik, żeby dodać go tutaj.",
+      "UPLOAD_SOON": "Wysyłanie wyników do nauczyciela będzie dostępne wkrótce."
+    },
+    "COMPARE": {
+      "TITLE": "Porównaj oba układy zderzeń",
+      "LOCKED": "Zaakceptuj wynik dla obu układów zderzeń, żeby je porównać.",
+      "HINT": "W zderzeniach proton-ołów powstaje dużo więcej cząstek, więc jest dużo więcej przypadkowych par. Tło jest większe i sygnał trudniej wyciągnąć.",
+      "CONCLUSION": "Twój stosunek sygnału do tła jest gorszy w zderzeniach proton-ołów. Znalezienie rzadkiej cząstki w zatłoczonym zderzeniu jest trudniejsze. Właśnie dlatego fizycy potrzebują bardzo dobrej identyfikacji cząstek i ogromnych zbiorów danych.",
+      "WARN_STATISTICS": "Przeanalizowałeś bardzo różną liczbę zdarzeń w obu układach. Istotność rośnie z liczbą zdarzeń, więc porównuj raczej stosunek sygnału do tła.",
+      "WARN_WINDOW": "Oba wyniki policzono w innych oknach masy. Zmierz je w tym samym oknie, żeby porównanie było uczciwe."
+    },
+    "WELCOME": {
+      "TITLE": "Szukamy cząstki J/psi",
+      "P1": "J/psi to rzadka cząstka zbudowana z kwarka powabnego i jego antykwarka. Żyje ułamek sekundy i czasem rozpada się na elektron i pozyton.",
+      "P2": "Przeanalizujesz prawdziwe dane z eksperymentu ALICE z dwóch układów zderzeń. Najpierw proton-proton, potem proton-ołów, w których powstaje dużo więcej cząstek.",
+      "P3": "Twoje zadanie to wybrać elektrony, policzyć masę niezmienniczą par i oddzielić sygnał J/psi od przypadkowego tła.",
+      "SKIP": "Poradzę sobie sam",
+      "START": "Zacznij przewodnik"
+    },
+    "INSTRUCTIONS": {
+      "TITLE": "Produkcja J/psi",
+      "SUBTITLE": "Jak znaleźć rzadki sygnał w zatłoczonym zderzeniu",
+      "P1": "Naładowane cząstki tracą energię, przechodząc przez detektor. Ile jej tracą, zależy od ich pędu i od tego, jaką są cząstką. Wykres po lewej pokazuje tę stratę energii w funkcji pędu, więc różne cząstki tworzą różne pasy.",
+      "P2": "Elektrony i pozytony leżą w wąskim pasie. Zaznacz go suwakami. Każdy zaznaczony tor traktujemy jak elektron.",
+      "P3": "Aplikacja łączy potem zaznaczone tory w pary wewnątrz każdego zderzenia i liczy masę niezmienniczą każdej pary. Rozpad J/psi daje elektron i pozyton, więc widać go jako pik w okolicy 3,1 GeV/c² wśród par przeciwnego znaku.",
+      "P4": "Pary tego samego znaku nie mogą pochodzić z rozpadu J/psi, więc mierzą przypadkowe tło. Odejmij je, a to, co zostanie, jest twoim sygnałem.",
+      "START_TUTORIAL": "Odtwórz przewodnik"
+    },
+    "TUTORIAL": {
+      "NEXT": "Dalej",
+      "PREVIOUS": "Wstecz",
+      "DONE": "Gotowe",
+      "STEP_RUN_TITLE": "Analizuj zdarzenia",
+      "STEP_RUN_BODY": "Wybierz, ile zderzeń przeanalizować, i naciśnij <strong>Analizuj</strong>. Możesz nacisnąć ponownie później, żeby doliczać kolejne zdarzenia do tych, które już masz.",
+      "STEP_HEATMAP_TITLE": "Identyfikacja cząstek",
+      "STEP_HEATMAP_BODY": "Każdy tor trafia tutaj zgodnie ze swoim pędem i stratą energii. Cząstki tego samego rodzaju tworzą pasy. Elektrony leżą w dość płaskim pasie nad mocnym pasem pionów.",
+      "STEP_CUTS_TITLE": "Zaznacz elektrony",
+      "STEP_CUTS_BODY": "Ustaw suwaki tak, żeby czerwony prostokąt objął pas elektronów. Dobry punkt startu to strata energii między 70 a 90. Wszystko wewnątrz prostokąta trafia do histogramów masy.",
+      "STEP_SERIES_TITLE": "Trzy rodzaje par",
+      "STEP_SERIES_BODY": "Czerwony pokazuje pary przeciwnego znaku, które mogą pochodzić z J/psi. Niebieski i zielony pokazują pary tego samego znaku, które nie mogą. Włączaj i wyłączaj serie, żeby porównać ich kształty, a przełącznik <strong>Tło kombinatoryczne</strong> pokaże obie serie tego samego znaku razem.",
+      "STEP_SUBTRACT_TITLE": "Odejmij tło",
+      "STEP_SUBTRACT_BODY": "Pary tego samego znaku mierzą przypadkowe kombinacje wprost z danych. Odejmij je bin po binie od par przeciwnego znaku, a pokaże się pik J/psi.",
+      "STEP_WINDOW_TITLE": "Policz sygnał",
+      "STEP_WINDOW_BODY": "Przesuń okno na pik. Liczy się wszystko, co jest w środku. Zwróć uwagę, jak zbyt szerokie okno dokłada tło i psuje stosunek sygnału do tła.",
+      "STEP_ACCEPT_TITLE": "Zapisz wynik",
+      "STEP_ACCEPT_BODY": "<strong>Zaakceptuj wynik</strong> zapisuje ten pomiar w twojej tabeli. Zawsze możesz zmienić okno i zaakceptować ponownie.",
+      "STEP_DATASET_TITLE": "Drugi układ zderzenia",
+      "STEP_DATASET_BODY": "Teraz przełącz się na proton-ołów i powtórz całą analizę. Twoja praca nad zderzeniami proton-proton zostaje dokładnie tam, gdzie ją zostawiłeś.",
+      "STEP_COMPARE_TITLE": "Porównaj",
+      "STEP_COMPARE_BODY": "Mając oba wyniki w tabeli, zobaczysz, o ile trudniejszy staje się pomiar, gdy w zderzeniu powstaje więcej cząstek."
+    },
+    "ERRORS": {
+      "MANIFEST": "Nie udało się wczytać listy zbiorów danych.",
+      "BATCH": "Nie udało się wczytać kolejnych zdarzeń. Dotychczasowe wyniki zostały zachowane."
+    }
   }
 }

@@ -1,0 +1,7 @@
+{
+  "batchSize": 100,
+  "datasets": [
+    { "id": "pp", "labelKey": "JPSI.DATASET.PP", "nEvents": 3800, "batches": 38 },
+    { "id": "pPb", "labelKey": "JPSI.DATASET.PPB", "nEvents": 2300, "batches": 23 }
+  ]
+}

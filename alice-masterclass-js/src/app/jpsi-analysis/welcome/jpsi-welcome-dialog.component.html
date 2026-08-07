@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>{{ 'JPSI.WELCOME.TITLE' | translate }}</h2>
+<mat-dialog-content class="jpsi-welcome">
+  <p>{{ 'JPSI.WELCOME.P1' | translate }}</p>
+  <p>{{ 'JPSI.WELCOME.P2' | translate }}</p>
+  <p>{{ 'JPSI.WELCOME.P3' | translate }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" data-testid="jpsi-welcome-skip" (click)="skip()">
+    {{ 'JPSI.WELCOME.SKIP' | translate }}
+  </button>
+  <button mat-raised-button color="primary" type="button" data-testid="jpsi-welcome-start" (click)="start()">
+    {{ 'JPSI.WELCOME.START' | translate }}
+  </button>
+</mat-dialog-actions>

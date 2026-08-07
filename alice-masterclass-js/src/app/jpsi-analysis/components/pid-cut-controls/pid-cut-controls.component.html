@@ -1,0 +1,89 @@
+<div class="pid-cuts" id="jpsi-tour-cuts">
+  <div class="pid-cuts__row">
+    <span class="pid-cuts__label">{{ 'JPSI.CUTS.MOMENTUM' | translate }}</span>
+    <div class="pid-cuts__numbers">
+      <mat-form-field appearance="outline" class="pid-cuts__number">
+        <input
+          matInput
+          type="number"
+          [min]="limits.pMin"
+          [max]="limits.pMax"
+          step="0.1"
+          [disabled]="disabled"
+          [(ngModel)]="pMin"
+          data-testid="jpsi-cut-pmin"
+          (change)="onNumberChange()"
+        />
+      </mat-form-field>
+      <span class="pid-cuts__dash">&ndash;</span>
+      <mat-form-field appearance="outline" class="pid-cuts__number">
+        <input
+          matInput
+          type="number"
+          [min]="limits.pMin"
+          [max]="limits.pMax"
+          step="0.1"
+          [disabled]="disabled"
+          [(ngModel)]="pMax"
+          data-testid="jpsi-cut-pmax"
+          (change)="onNumberChange()"
+        />
+      </mat-form-field>
+    </div>
+  </div>
+  <ngx-slider
+    [(value)]="pMin"
+    [(highValue)]="pMax"
+    [options]="pOptions"
+    (userChange)="onSliderChange()"
+  ></ngx-slider>
+
+  <div class="pid-cuts__row">
+    <span class="pid-cuts__label">{{ 'JPSI.CUTS.DEDX' | translate }}</span>
+    <div class="pid-cuts__numbers">
+      <mat-form-field appearance="outline" class="pid-cuts__number">
+        <input
+          matInput
+          type="number"
+          [min]="limits.dedxMin"
+          [max]="limits.dedxMax"
+          step="1"
+          [disabled]="disabled"
+          [(ngModel)]="dedxMin"
+          data-testid="jpsi-cut-dedxmin"
+          (change)="onNumberChange()"
+        />
+      </mat-form-field>
+      <span class="pid-cuts__dash">&ndash;</span>
+      <mat-form-field appearance="outline" class="pid-cuts__number">
+        <input
+          matInput
+          type="number"
+          [min]="limits.dedxMin"
+          [max]="limits.dedxMax"
+          step="1"
+          [disabled]="disabled"
+          [(ngModel)]="dedxMax"
+          data-testid="jpsi-cut-dedxmax"
+          (change)="onNumberChange()"
+        />
+      </mat-form-field>
+    </div>
+  </div>
+  <ngx-slider
+    [(value)]="dedxMin"
+    [(highValue)]="dedxMax"
+    [options]="dedxOptions"
+    (userChange)="onSliderChange()"
+  ></ngx-slider>
+
+  <button
+    mat-stroked-button
+    class="pid-cuts__reset"
+    [disabled]="disabled"
+    data-testid="jpsi-reset-cuts"
+    (click)="resetCuts.emit()"
+  >
+    {{ 'JPSI.CUTS.RESET' | translate }}
+  </button>
+</div>

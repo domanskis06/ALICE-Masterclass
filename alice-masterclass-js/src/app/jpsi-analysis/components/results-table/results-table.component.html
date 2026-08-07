@@ -1,0 +1,75 @@
+<mat-card appearance="outlined" id="jpsi-tour-results">
+  <mat-card-title class="results-table__header">
+    <span class="results-table__title">{{ 'JPSI.RESULTS.TITLE' | translate }}</span>
+    <span
+      [matTooltipDisabled]="apiService.isAuthenticated"
+      [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate"
+      matTooltipPosition="before"
+    >
+      <button
+        id="jpsi-tour-upload-button"
+        mat-raised-button
+        color="warn"
+        aria-label="Upload data"
+        data-testid="jpsi-upload"
+        [disabled]="!apiService.isAuthenticated || rows.length === 0"
+        (click)="uploadResults.emit()"
+      >
+        <mat-icon class="material-icons-outlined">
+          {{ apiService.isAuthenticated ? 'cloud_upload' : 'cloud_off' }}
+        </mat-icon>
+        <span>{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
+      </button>
+    </span>
+  </mat-card-title>
+
+  <mat-card-content>
+    <table mat-table [dataSource]="rows" class="results-table" data-testid="jpsi-results-table">
+      <ng-container matColumnDef="dataset">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.DATASET' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ datasetLabelKey(row) | translate }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="events">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.EVENTS' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.nEvents }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="signal">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.SIGNAL' | translate }}</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.signal | number: '1.0-0' }} &plusmn; {{ row.signalError | number: '1.0-0' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="background">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.BACKGROUND' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.likeSum | number: '1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="signalToBackground">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.SB' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ formatRatio(row.signalToBackground) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="significance">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.SIGNIFICANCE' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.significance | number: '1.1-1' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="window">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.RESULTS.WINDOW' | translate }}</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.windowMin | number: '1.2-2' }} &ndash; {{ row.windowMax | number: '1.2-2' }}
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    @if (rows.length === 0) {
+      <p class="results-table__empty">{{ 'JPSI.RESULTS.EMPTY' | translate }}</p>
+    }
+  </mat-card-content>
+</mat-card>

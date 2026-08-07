@@ -1,0 +1,51 @@
+.pid-heatmap {
+  position: relative;
+  width: 100%;
+}
+
+.pid-heatmap__canvas {
+  position: absolute;
+  image-rendering: pixelated;
+}
+
+.pid-heatmap__overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+
+  ::ng-deep .tick text {
+    font-size: 10px;
+    fill: rgba(0, 0, 0, 0.7);
+  }
+
+  ::ng-deep .domain,
+  ::ng-deep .tick line {
+    stroke: rgba(0, 0, 0, 0.45);
+  }
+}
+
+.pid-heatmap__cut {
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: #ff5252;
+  stroke-width: 2;
+  stroke-dasharray: 6 3;
+}
+
+.pid-heatmap__axis-label {
+  font-size: 11px;
+  fill: rgba(0, 0, 0, 0.72);
+}
+
+.pid-heatmap__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 24px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+}

@@ -438,5 +438,124 @@
       "STEP_UPLOAD_TITLE": "Share results with your teacher",
       "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session, pooling class results. If the button is disabled, sign in from the main flow first."
     }
+  },
+  "JPSI": {
+    "TITLE": "J/psi production",
+    "MENU": "J/psi analysis",
+    "DATASET": {
+      "PP": "proton-proton",
+      "PPB": "proton-lead"
+    },
+    "TOOLBAR": {
+      "DATASET": "Collision system",
+      "EVENTS": "Events to analyse",
+      "RUN": "Analyse",
+      "PROCESSED": "Analysed",
+      "RESET_HISTOGRAMS": "Reset histograms",
+      "PRESET_ALL": "All",
+      "EXHAUSTED": "You have analysed every event in this dataset."
+    },
+    "PID": {
+      "TITLE": "Particle identification",
+      "X_AXIS": "Momentum (GeV/c)",
+      "Y_AXIS": "Energy loss dE/dx",
+      "EMPTY": "Press Analyse to start filling this plot."
+    },
+    "CUTS": {
+      "MOMENTUM": "Momentum range",
+      "DEDX": "Energy loss range",
+      "RESET": "Reset selection"
+    },
+    "MASS": {
+      "TITLE": "Invariant mass",
+      "X_AXIS": "Invariant mass (GeV/c²)",
+      "Y_AXIS": "Pairs",
+      "EMPTY": "Analyse some events to build the mass histograms.",
+      "SERIES": {
+        "UNLIKE": "Opposite-charge pairs",
+        "POSPOS": "Same-charge pairs, positive",
+        "NEGNEG": "Same-charge pairs, negative",
+        "BACKGROUND": "Combinatorial background"
+      },
+      "SUBTRACT": "Subtract background",
+      "SUBTRACT_HELP": "Same-charge pairs cannot come from a J/psi decay, so they show you the random combinations. Subtract them from the opposite-charge pairs to reveal the signal.",
+      "AFTER_SUBTRACT": "What remains is the signal. The peak near 3.1 GeV/c² comes from J/psi decays.",
+      "SHOW_COMPONENTS": "Show components",
+      "WINDOW": "Signal mass window",
+      "ACCEPT": "Accept result",
+      "NEGATIVE_BINS_NOTE": "Random fluctuations can push a bin slightly below zero. We show those bins as zero.",
+      "TOO_WIDE": "Your selection contains too many tracks. Narrow the electron band first.",
+      "NO_SIGNAL_HINT": "No signal yet. Analyse more events or narrow the electron band."
+    },
+    "METRICS": {
+      "SIGNAL": "J/psi signal",
+      "BACKGROUND": "Background",
+      "SB": "Signal to background",
+      "SIGNIFICANCE": "Significance"
+    },
+    "RESULTS": {
+      "TITLE": "Your results",
+      "DATASET": "Collision system",
+      "EVENTS": "Events",
+      "SIGNAL": "J/psi signal",
+      "BACKGROUND": "Background",
+      "SB": "S/B",
+      "SIGNIFICANCE": "Significance",
+      "WINDOW": "Mass window",
+      "EMPTY": "Accept a result to add it here.",
+      "UPLOAD_SOON": "Sending results to your teacher will be available soon."
+    },
+    "COMPARE": {
+      "TITLE": "Compare the two collision systems",
+      "LOCKED": "Accept a result for both collision systems to compare them.",
+      "HINT": "In proton-lead many more particles are produced, so there are many more random pairs. The background is larger and the signal is harder to extract.",
+      "CONCLUSION": "Your signal to background ratio is worse in proton-lead. Finding a rare particle in a crowded collision is harder, which is why physicists need excellent particle identification and very large datasets.",
+      "WARN_STATISTICS": "You analysed a very different number of events in the two systems. Significance grows with the number of events, so compare the signal to background ratio instead.",
+      "WARN_WINDOW": "The two results use different mass windows. Measure both in the same window to compare them fairly."
+    },
+    "WELCOME": {
+      "TITLE": "Looking for the J/psi particle",
+      "P1": "The J/psi is a rare particle made of a charm quark and its antiquark. It lives for a tiny fraction of a second and sometimes decays into an electron and a positron.",
+      "P2": "You will analyse real ALICE data from two collision systems. First proton-proton collisions, then proton-lead collisions, which produce many more particles.",
+      "P3": "Your task is to select electrons, build the invariant mass of pairs, and separate the J/psi signal from the random background.",
+      "SKIP": "Explore on my own",
+      "START": "Start the guided tour"
+    },
+    "INSTRUCTIONS": {
+      "TITLE": "J/psi production",
+      "SUBTITLE": "Finding a rare signal in a busy collision",
+      "P1": "Charged particles lose energy as they cross the detector. How much they lose depends on their momentum and on what kind of particle they are. The plot on the left shows this energy loss against momentum, so different particles form different bands.",
+      "P2": "Electrons and positrons sit in a narrow band. Use the sliders to select it. Every track you keep is treated as an electron.",
+      "P3": "The app then pairs the selected tracks inside each collision and computes the invariant mass of every pair. A J/psi decay gives an electron and a positron, so it shows up as a peak near 3.1 GeV/c² among the opposite-charge pairs.",
+      "P4": "Pairs of the same charge cannot come from a J/psi decay, so they measure the random background. Subtract them and what is left is your signal.",
+      "START_TUTORIAL": "Replay the guided tour"
+    },
+    "TUTORIAL": {
+      "NEXT": "Next",
+      "PREVIOUS": "Back",
+      "DONE": "Done",
+      "STEP_RUN_TITLE": "Analyse events",
+      "STEP_RUN_BODY": "Pick how many collisions to analyse and press <strong>Analyse</strong>. You can press it again later to add more events on top of what you already have.",
+      "STEP_HEATMAP_TITLE": "Particle identification",
+      "STEP_HEATMAP_BODY": "Every track lands here according to its momentum and its energy loss. Particles of the same type form bands. Electrons sit in a fairly flat band above the strong pion band.",
+      "STEP_CUTS_TITLE": "Select the electrons",
+      "STEP_CUTS_BODY": "Move the sliders so the red rectangle covers the electron band. A good starting point is an energy loss between 70 and 90. Everything inside the rectangle is used to build the mass histograms.",
+      "STEP_SERIES_TITLE": "Three kinds of pairs",
+      "STEP_SERIES_BODY": "Red shows pairs of opposite charge, which can come from a J/psi. Blue and green show pairs of the same charge, which cannot. Turn the series on and off to compare their shapes, and switch on <strong>Combinatorial background</strong> to see the two same-charge series added together.",
+      "STEP_SUBTRACT_TITLE": "Subtract the background",
+      "STEP_SUBTRACT_BODY": "Same-charge pairs measure the random combinations directly from the data. Subtract them bin by bin from the opposite-charge pairs and the J/psi peak appears.",
+      "STEP_WINDOW_TITLE": "Count the signal",
+      "STEP_WINDOW_BODY": "Drag the window over the peak. Everything inside it is counted. Notice how a window that is too wide adds background and makes the signal to background ratio worse.",
+      "STEP_ACCEPT_TITLE": "Save your result",
+      "STEP_ACCEPT_BODY": "<strong>Accept result</strong> stores this measurement in your table. You can always change the window and accept again.",
+      "STEP_DATASET_TITLE": "The second collision system",
+      "STEP_DATASET_BODY": "Now switch to proton-lead and repeat the whole analysis. Your proton-proton work stays exactly as you left it.",
+      "STEP_COMPARE_TITLE": "Compare",
+      "STEP_COMPARE_BODY": "With both results in the table you can see how much harder the measurement becomes when a collision produces more particles."
+    },
+    "ERRORS": {
+      "MANIFEST": "Could not load the dataset list.",
+      "BATCH": "Could not load more events. Your current results were kept."
+    }
   }
 }
