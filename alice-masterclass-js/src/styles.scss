@@ -157,22 +157,6 @@ body.driver-active .cdk-overlay-container .mat-mdc-select-panel * {
   pointer-events: auto !important;
 }
 
-.driver-active .va-driver-range-interactive,
-.driver-active .va-driver-range-interactive * {
-  pointer-events: auto !important;
-}
-
-/* Hide driver chrome while the mass particle flies to a histogram bin. */
-body.va-driver-flight-hide .driver-overlay,
-body.va-driver-flight-hide .driver-popover,
-body.va-driver-flight-hide .driver-stage,
-body.va-driver-flight-hide #va-tour-expanding-stage {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  transition: none !important;
-}
-
 html, body {
   margin: 0;
   padding: 0;
