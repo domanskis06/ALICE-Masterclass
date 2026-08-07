@@ -1,6 +1,6 @@
 <mat-card appearance="outlined" class="nmf-panel" data-testid="nmf-extract-panel">
   <mat-card-header>
-    <mat-card-title>{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.EXTRACT_TITLE' | translate }}</mat-card-title>
+    <mat-card-title [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.EXTRACT_TITLE' | translate"></mat-card-title>
   </mat-card-header>
   <mat-card-content>
     <div class="row">
@@ -13,7 +13,7 @@
         </mat-select>
       </mat-form-field>
       <mat-form-field appearance="outline">
-        <mat-label>{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PT_BIN' | translate }}</mat-label>
+        <mat-label [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PT_BIN' | translate"></mat-label>
         <mat-select [(ngModel)]="binIndex" (selectionChange)="onChange()">
           @for (i of binIndexes; track i) {
             <mat-option [value]="i">#{{ i }}</mat-option>

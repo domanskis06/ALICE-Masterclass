@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { MatDialog } from '@angular/material/dialog';
 
 import { RaaEventRole } from '../../shared/models/raa/raa';
-import { calcRaa, meanOf, rmsOf, RaaValue } from '../../shared/utils/raa-calc';
+import { calcRaa, meanOf } from '../../shared/utils/raa-calc';
 import { NmfHistogramSpec } from '../event-characteristics/event-characteristics.component';
 import {
   NmfHistogramDialogComponent,
@@ -12,25 +12,31 @@ import {
 /** One analysed event’s contribution to the part-1 R_AA Analysis tab. */
 export interface NmfAnalysisEventRecord {
   role: RaaEventRole;
-  /** Charged primaries (desktop automatic counter). */
-  autoMultiplicity: number;
-  /** Filter-accepted charged primaries (desktop manual / publish path). */
-  manualMultiplicity: number;
-  autoPts: number[];
-  manualPts: number[];
+  /** Filter-accepted charged primaries. */
+  multiplicity: number;
+  pts: number[];
 }
 
 interface NmfRaaClassBlock {
   key: 'pbPbPeripheral' | 'pbPbSemiCentral' | 'pbPbCentral';
   titleKey: string;
-  auto: RaaValue;
-  manual: RaaValue;
+  raa: number;
+  /** True when pp baseline + this Pb–Pb event are available. */
+  ready: boolean;
+  /** Bar color matched to the centrality accent. */
+  barColor: string;
   ptSpec: NmfHistogramSpec;
 }
 
 /** Desktop-style p_T spectra; bin count is student-adjustable (1–20). */
 const PT_BINS = 20;
 const PT_X_MAX = 6;
+
+const CLASS_BAR_COLORS: Record<NmfRaaClassBlock['key'], string> = {
+  pbPbPeripheral: '#38bdf8',
+  pbPbSemiCentral: '#fbbf24',
+  pbPbCentral: '#f472b6',
+};
 
 /**
  * Part-1 R_AA Analysis view (classic `TAnalysisWidget`): R_AA readouts + three
@@ -68,6 +74,21 @@ export class NmfAnalysisPanelComponent implements OnChanges {
     return { entries: data.length, mean: meanOf(data) };
   }
 
+  /**
+   * Vertical offset of the two approaching beams in the collision icon
+   * (impact parameter): 0 = head-on (central), larger = glancing (peripheral).
+   */
+  impactOffset(key: NmfRaaClassBlock['key']): number {
+    switch (key) {
+      case 'pbPbCentral':
+        return 0;
+      case 'pbPbSemiCentral':
+        return 5;
+      case 'pbPbPeripheral':
+        return 14;
+    }
+  }
+
   onGoSpectrum(): void {
     this.goSpectrum.emit();
   }
@@ -98,13 +119,8 @@ export class NmfAnalysisPanelComponent implements OnChanges {
     records: NmfAnalysisEventRecord[],
     nCollPart1: Record<string, number>,
   ): NmfRaaClassBlock[] {
-    const ppManual = records.filter((r) => r.role === 'pp276TeV').map((r) => r.manualMultiplicity);
-    const ppAuto = records.filter((r) => r.role === 'pp276TeV').map((r) => r.autoMultiplicity);
-
-    const meanPpManual = meanOf(ppManual);
-    const meanPpAuto = meanOf(ppAuto);
-    const rmsPpManual = rmsOf(ppManual);
-    const rmsPpAuto = rmsOf(ppAuto);
+    const ppMults = records.filter((r) => r.role === 'pp276TeV').map((r) => r.multiplicity);
+    const meanPp = meanOf(ppMults);
 
     const defs: Array<{
       key: NmfRaaClassBlock['key'];
@@ -131,28 +147,22 @@ export class NmfAnalysisPanelComponent implements OnChanges {
     return defs.map((d) => {
       const nColl = nCollPart1[d.nCollKey] ?? 0;
       const rec = records.find((r) => r.role === d.key);
-      const autoMult = rec?.autoMultiplicity ?? 0;
-      const manualMult = rec?.manualMultiplicity ?? 0;
-      const pts = rec?.manualPts ?? [];
+      const mult = rec?.multiplicity ?? 0;
+      const pts = rec?.pts ?? [];
       const specKey = `pt-${d.key}`;
 
       return {
         key: d.key,
         titleKey: d.titleKey,
-        auto: calcRaa(autoMult, meanPpAuto, nColl, Math.sqrt(Math.max(autoMult, 0)), rmsPpAuto),
-        manual: calcRaa(
-          manualMult,
-          meanPpManual,
-          nColl,
-          Math.sqrt(Math.max(manualMult, 0)),
-          rmsPpManual,
-        ),
+        raa: calcRaa(mult, meanPp, nColl),
+        ready: meanPp > 0 && mult > 0 && nColl > 0,
+        barColor: CLASS_BAR_COLORS[d.key],
         ptSpec: {
           key: specKey,
           data: pts,
           xDomain: [0, PT_X_MAX],
           bins: this.binOverrides.get(specKey) ?? PT_BINS,
-          barColor: '#4ade80',
+          barColor: CLASS_BAR_COLORS[d.key],
           expandDomainToData: false,
           titleKey: 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.HIST_PT_TITLE',
           xAxisLabelKey: 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.AXIS_PT',

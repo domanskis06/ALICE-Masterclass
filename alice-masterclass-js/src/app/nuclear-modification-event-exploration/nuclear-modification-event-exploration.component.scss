@@ -256,34 +256,6 @@
   }
 }
 
-/** Full-width red ANALYZE bar — only after every event in the dataset was analysed. */
-.nmf-analyze-footer {
-  flex: 0 0 auto;
-  width: 100%;
-}
-
-.nmf-analyze-button {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 14px 16px;
-  border: none;
-  border-radius: 0;
-  cursor: pointer;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #ffffff;
-  background: #b71c1c;
-}
-
-.nmf-analyze-button:hover {
-  background: #a31616;
-}
-
 /**
  * Hit target over the 3D scene only. Default pointer-events: none so OrbitControls
  * keep working; armed (Shift held) or mid-drag enables capture for marquee select.
@@ -324,7 +296,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(2, 8, 23, 0.55);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(30, 58, 95, 0.35), transparent 70%),
+    rgba(2, 8, 23, 0.72);
+  backdrop-filter: blur(3px);
   padding: 16px;
   box-sizing: border-box;
   pointer-events: auto;

@@ -204,7 +204,7 @@
             [records]="analysisRecordsList"
             [nCollPart1]="nCollPart1"
             [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
-            [showGoSpectrum]="allEventsAnalyzed && !tourShowAnalyze"
+            [showGoSpectrum]="allEventsAnalyzed"
             (goSpectrum)="onGoSpectrum()"
           ></app-nmf-analysis-panel>
         </mat-tab>
@@ -236,20 +236,6 @@
     </div>
   </aside>
   </div>
-
-  @if (showAnalyzeFooter) {
-    <div class="nmf-analyze-footer" data-testid="nmf-analyze-footer">
-      <button
-        type="button"
-        id="nmf-tour-analyze"
-        class="nmf-analyze-button"
-        data-testid="nmf-analyze-button"
-        (click)="onAnalyze()"
-      >
-        {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.ANALYZE_BUTTON' | translate }}
-      </button>
-    </div>
-  }
 
   @if (filterBuilderOpen) {
     <div class="nmf-filter-overlay" data-testid="nmf-filter-overlay">

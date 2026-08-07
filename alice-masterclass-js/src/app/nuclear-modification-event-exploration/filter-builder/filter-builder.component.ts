@@ -42,7 +42,7 @@ export class NmfFilterBuilderComponent implements AfterViewInit, OnDestroy {
       trashcan: true,
       scrollbars: true,
       move: { scrollbars: true, drag: true, wheel: true },
-      grid: { spacing: 20, length: 2, colour: '#e2e8f0', snap: true },
+      grid: { spacing: 22, length: 2, colour: '#dbe3ee', snap: true },
       zoom: { controls: true, wheel: true, startScale: 1 },
       media: 'assets/blockly/media/',
     });

@@ -152,10 +152,10 @@ export function createPrimaryFilterLightTheme(): Blockly.Theme {
     name: 'nmfFilterLight',
     base: Blockly.Themes.Classic,
     componentStyles: {
-      workspaceBackgroundColour: '#ffffff',
-      toolboxBackgroundColour: '#f1f5f9',
+      workspaceBackgroundColour: '#f8fafc',
+      toolboxBackgroundColour: '#eef2f7',
       toolboxForegroundColour: '#0f172a',
-      flyoutBackgroundColour: '#f8fafc',
+      flyoutBackgroundColour: '#f1f5f9',
       flyoutForegroundColour: '#0f172a',
       flyoutOpacity: 1,
       scrollbarColour: '#94a3b8',

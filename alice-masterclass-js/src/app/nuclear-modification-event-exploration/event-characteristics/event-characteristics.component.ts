@@ -150,7 +150,7 @@ export class NmfEventCharacteristicsComponent {
         barColor: '#62d9ff',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_MULTIPLICITY_TITLE',
-        xAxisLabelKey: this.PREFIX + 'AXIS_TPC_TRACKS',
+        xAxisLabelKey: this.PREFIX + 'AXIS_MULTIPLICITY',
         yAxisLabelKey: 'STRANGENESS.HISTOGRAMS.COUNTS',
       },
       {

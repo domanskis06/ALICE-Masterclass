@@ -11,11 +11,11 @@ describe('NmfEeTutorialService', () => {
     });
     service = TestBed.inject(NmfEeTutorialService);
     service.registerHost({
-      setTourShowAnalyze: () => undefined,
       setFilterBuilderOpen: () => undefined,
       setMarqueeMode: () => undefined,
       ensureCharPanelOpen: () => undefined,
       setResultsTab: () => undefined,
+      refreshHost: () => undefined,
       setPrimaryPickChallenge: () => undefined,
       setNextEventLocked: () => undefined,
       ensureFirstEvent: () => undefined,

@@ -19,7 +19,11 @@
   min-width: 0;
   color: var(--va-text, #ffffff);
   font-size: 1.15rem;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+:host ::ng-deep .nmf-hist-dialog-title sub {
+  font-size: 0.72em;
 }
 
 .nmf-hist-dialog-close {
@@ -214,6 +218,16 @@
 
   text {
     fill: var(--va-text, #ffffff);
+  }
+
+  #title,
+  #xAxisLabel,
+  #yAxisLabel,
+  #xAxisLabel text,
+  #yAxisLabel text,
+  #xAxis .tick text,
+  #yAxis .tick text {
+    font-weight: 700;
   }
 
   path,

@@ -10,8 +10,6 @@ import {
 } from './ee-tutorial.constants';
 
 export interface NmfEeTutorialHostHooks {
-  /** Force the bottom ANALYZE bar visible for the tour highlight. */
-  setTourShowAnalyze: (show: boolean) => void;
   /** Open / close the white Blockly filter builder. */
   setFilterBuilderOpen: (open: boolean) => void;
   /** Enable Shift+drag marquee selection on the 3D view. */
@@ -20,6 +18,8 @@ export interface NmfEeTutorialHostHooks {
   ensureCharPanelOpen: () => void;
   /** Select Event Characteristics (0) or R_AA Analysis (1) in the results drawer. */
   setResultsTab: (tab: 'characteristics' | 'raa') => void;
+  /** Force a host change-detection pass (e.g. after a side-help tour ends). */
+  refreshHost: () => void;
   /** Start / stop the “click every primary on event 1” challenge. */
   setPrimaryPickChallenge: (active: boolean) => void;
   /** Lock the Next-event control until the pick challenge is finished. */
@@ -42,6 +42,8 @@ export class NmfEeTutorialService {
   private awaitingNextEvent = false;
   /** One step highlight on the dataset picker before the main tour. */
   private datasetPromptActive = false;
+  /** Standalone ?-button walkthrough of the Event Characteristics plots. */
+  private histHelpTourActive = false;
   private readonly onEnterAdvance = (event: KeyboardEvent): void => {
     if (event.key !== 'Enter' && event.key !== 'NumpadEnter') {
       return;
@@ -113,7 +115,7 @@ export class NmfEeTutorialService {
     this.awaitingPrimaryPicks = false;
     this.awaitingNextEvent = false;
     this.datasetPromptActive = false;
-    this.hooks?.setTourShowAnalyze(false);
+    this.histHelpTourActive = false;
     this.hooks?.setFilterBuilderOpen(false);
     this.hooks?.setMarqueeMode(false);
     this.hooks?.setPrimaryPickChallenge(false);
@@ -186,6 +188,222 @@ export class NmfEeTutorialService {
       return;
     }
     this.destroyDriver(true);
+  }
+
+  /**
+   * Seven-step popover tour of the Event Characteristics histograms (toolbar ?).
+   * Does not dismiss the main tutorial session flag.
+   */
+  startHistogramHelpTour(): void {
+    this.destroyDriver(true);
+    this.histHelpTourActive = true;
+    this.hooks?.ensureCharPanelOpen();
+    this.hooks?.setResultsTab('characteristics');
+
+    const steps: DriveStep[] = [
+      {
+        element: '[data-testid="nmf-hist-multiplicity"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '1 / 7 — Multiplicity distribution',
+          description:
+            'One entry per analysed event: the number of accepted charged primary tracks the detector sees in that event. The horizontal axis is multiplicity and the vertical axis is how many events had that multiplicity.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-multiplicity'),
+      },
+      {
+        element: '[data-testid="nmf-hist-multiplicityMinPt"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '2 / 7 — Multiplicity, p<sub>T</sub> &gt; 1 GeV/c',
+          description:
+            'This works just like the total multiplicity per event, but we only count primary particle tracks with a transverse momentum above <strong>p<sub>T</sub> &gt; 1&nbsp;GeV/c</strong>. High-momentum (“harder”) particles are rarer and much more sensitive to the hot medium because of jet quenching. This makes high-p<sub>T</sub> multiplicity a clearer, more detailed addition to the main multiplicity plot.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-multiplicityMinPt'),
+      },
+      {
+        element: '[data-testid="nmf-hist-secondaries"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '3 / 7 — Multiplicity of secondaries',
+          description:
+            'This shows the count of secondary tracks per event, like particle decays, interactions with detector material, or background collisions known as pile up. These tracks must be excluded because R<sub>AA</sub> measures only particles produced directly in the main collision. Including them would distort the final result and give a false signal. This histogram simply shows how much noise your primary filter is cleaning out.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-secondaries'),
+      },
+      {
+        element: '[data-testid="nmf-hist-pt"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '4 / 7 — p<sub>T</sub> distribution',
+          description:
+            'This histogram plots the transverse momentum (p<sub>T</sub>) of every accepted primary track. As expected, most particles stay at low p<sub>T</sub>, while high-p<sub>T</sub> particles are extremely rare. The Spectrum Analysis module will later use this distribution to build the R<sub>AA</sub>(p<sub>T</sub>) plot.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-pt'),
+      },
+      {
+        element: '[data-testid="nmf-hist-charge"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '5 / 7 — Charge distribution',
+          description:
+            'Electric charge of accepted tracks. Charged reconstructed tracks are only −1 or +1.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-charge'),
+      },
+      {
+        element: '[data-testid="nmf-hist-phi"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '6 / 7 — Normalized φ projection',
+          description:
+            'This histogram shows the direction (φ) in which particles fly around the beam line, covering the full 360-degree space. In an ideal setup, particles spread out equally in all directions, creating a flat line. Any unusual peaks or dips can reveal inactive detector zones or collective physical effects from the collision. “Normalized” simply means we are looking at the overall percentage shape rather than raw counts.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-phi'),
+      },
+      {
+        element: '.nmf-hist-grid',
+        disableActiveInteraction: false,
+        popover: {
+          title: '7 / 7 — Enlarge a plot',
+          description:
+            'Want a closer look? <strong>Click any histogram</strong> to open it in a larger window.',
+          side: 'left',
+          align: 'center',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-hist-multiplicity'),
+      },
+    ];
+
+    const d = driver({
+      showProgress: true,
+      smoothScroll: true,
+      allowClose: true,
+      overlayClickBehavior: () => {
+        /* keep the walkthrough until Next / Done / Close */
+      },
+      overlayOpacity: 0.72,
+      overlayColor: '#1a1a1a',
+      stagePadding: 6,
+      stageRadius: 8,
+      popoverClass: 'lsa-driver-popover',
+      nextBtnText: 'Next &rarr;',
+      prevBtnText: '&larr; Previous',
+      doneBtnText: 'Got it',
+      showButtons: ['next', 'previous', 'close'],
+      steps,
+      onDestroyed: () => {
+        this.histHelpTourActive = false;
+        this.detachEnterAdvance();
+        this.suppressDismissOnDestroy = false;
+        this.driverInstance = null;
+        this.hooks?.refreshHost();
+      },
+    });
+
+    this.driverInstance = d;
+    this.attachEnterAdvance();
+    setTimeout(() => d.drive(0), 0);
+  }
+
+  /**
+   * Three-step walkthrough of the R_AA Analysis tab (toolbar ? while that tab
+   * is open). Written for high-school students; does not dismiss the main tour.
+   */
+  startRaaAnalysisHelpTour(): void {
+    this.destroyDriver(true);
+    this.histHelpTourActive = true;
+    this.hooks?.ensureCharPanelOpen();
+    this.hooks?.setResultsTab('raa');
+
+    const steps: DriveStep[] = [
+      {
+        element: '[data-testid="nmf-analysis-results"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '1 / 3 — Why Peripheral, SemiCentral and Central?',
+          description:
+            'Two lead nuclei do not always hit the same way. <strong>Peripheral</strong> means a glancing blow (they barely overlap). <strong>SemiCentral</strong> means a bigger overlap. <strong>Central</strong> means an almost head-on smash. A more central collision creates a hotter, denser “fireball” and involves more nucleon–nucleon collisions inside (a larger <strong>N<sub>coll</sub></strong>). We study all three so you can see how the nuclear effect changes with how central the crash was.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-analysis-results'),
+      },
+      {
+        element: '[data-testid="nmf-analysis-results"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '2 / 3 — What is R<sub>AA</sub>? (quick reminder)',
+          description:
+            '<strong>R<sub>AA</sub></strong> is the <em>nuclear modification factor</em>. It asks: after a Pb–Pb collision, do we see as many particles as we would expect from <strong>N<sub>coll</sub></strong> separate proton–proton collisions?<br/><br/>' +
+            '<code style="display:inline-block;margin:0.35rem 0;padding:0.35rem 0.55rem;background:rgba(0,0,0,0.35);border-radius:6px;">R<sub>AA</sub> = Y(Pb–Pb) / (N<sub>coll</sub> × Y(pp))</code><br/><br/>' +
+            '<strong>Y</strong> means “how many charged primary tracks we counted”. <strong>Y(pp)</strong> is the average from your ~30 pp events. <strong>Y(Pb–Pb)</strong> is the count from that one Pb–Pb event. <strong>N<sub>coll</sub></strong> is given for each centrality class.<br/><br/>' +
+            'If <strong>R<sub>AA</sub> ≈ 1</strong>, Pb–Pb looks like a simple pile-up of pp collisions. If it is clearly <strong>not 1</strong>, the nuclear medium changed particle production (for example by jet quenching).',
+          side: 'left',
+          align: 'start',
+        },
+      },
+      {
+        element: '[data-testid="nmf-analysis-plots"]',
+        disableActiveInteraction: false,
+        popover: {
+          title: '3 / 3 — Why Counts vs p<sub>T</sub>?',
+          description:
+            'These plots show <strong>Counts</strong> against transverse momentum <strong>p<sub>T</sub></strong> — how hard a particle was kicked <em>sideways</em> from the beam direction.<br/><br/>' +
+            'Most particles are “soft” (low p<sub>T</sub>). High-p<sub>T</sub> particles are rare, but they feel the hot medium more strongly. Looking at the shape of Counts vs p<sub>T</sub> for each centrality class prepares you for <strong>Spectrum Analysis</strong>, where you build R<sub>AA</sub> as a function of p<sub>T</sub>.',
+          side: 'left',
+          align: 'start',
+        },
+        onHighlighted: () => this.scrollHistIntoView('nmf-analysis-plots'),
+      },
+    ];
+
+    const d = driver({
+      showProgress: true,
+      smoothScroll: true,
+      allowClose: true,
+      overlayClickBehavior: () => {
+        /* keep the walkthrough until Next / Done / Close */
+      },
+      overlayOpacity: 0.72,
+      overlayColor: '#1a1a1a',
+      stagePadding: 6,
+      stageRadius: 8,
+      popoverClass: 'lsa-driver-popover',
+      nextBtnText: 'Next &rarr;',
+      prevBtnText: '&larr; Previous',
+      doneBtnText: 'Got it',
+      showButtons: ['next', 'previous', 'close'],
+      steps,
+      onDestroyed: () => {
+        this.histHelpTourActive = false;
+        this.detachEnterAdvance();
+        this.suppressDismissOnDestroy = false;
+        this.driverInstance = null;
+        this.hooks?.refreshHost();
+      },
+    });
+
+    this.driverInstance = d;
+    this.attachEnterAdvance();
+    setTimeout(() => d.drive(0), 0);
+  }
+
+  private scrollHistIntoView(testId: string): void {
+    const el = document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+    el?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   }
 
   /** True when Enter should type into the focused control, not advance the tour. */
@@ -312,7 +530,6 @@ export class NmfEeTutorialService {
         this.awaitingMarquee = false;
         this.awaitingPrimaryPicks = false;
         this.awaitingNextEvent = false;
-        this.hooks?.setTourShowAnalyze(false);
         this.hooks?.setFilterBuilderOpen(false);
         this.hooks?.setMarqueeMode(false);
         this.hooks?.setPrimaryPickChallenge(false);
@@ -322,12 +539,8 @@ export class NmfEeTutorialService {
 
     this.driverInstance = d;
     this.attachEnterAdvance();
+    this.hooks?.refreshHost();
     setTimeout(() => d.drive(0), 0);
-  }
-
-  /** Show ANALYZE footer and flush host CD before the next highlight. */
-  private prepareAnalyzeFooter(): void {
-    this.hooks?.setTourShowAnalyze(true);
   }
 
   /** Open Blockly overlay and flush host CD before the next highlight. */
@@ -355,7 +568,7 @@ export class NmfEeTutorialService {
     }
   }
 
-  /** Resolve a tour target after mounting tour-only UI (ANALYZE / Blockly). */
+  /** Resolve a tour target after mounting tour-only UI (Blockly / tabs). */
   private requireElement(id: string): Element {
     const el = document.getElementById(id);
     if (!el) {
@@ -404,7 +617,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Event Characteristics',
           description:
-            'This drawer has two tabs, like a browser. <strong>Event Characteristics</strong> holds six summary histograms that fill as you analyse events. Click the <strong>?</strong> button anytime for a short guide to each plot.',
+            'This drawer has two tabs, like a browser. <strong>Event Characteristics</strong> holds six summary histograms that fill as you analyse events. <strong>R<sub>AA</sub> Analysis</strong> shows the three centrality results. Click <strong>?</strong> anytime for a short walkthrough of the tab you are on.',
           side: 'left',
           align: 'start',
         },
@@ -412,13 +625,10 @@ export class NmfEeTutorialService {
           this.hooks?.ensureCharPanelOpen();
           this.hooks?.setResultsTab('characteristics');
         },
-        // Mount the ANALYZE footer and open R_AA before the next step queries it.
-        onDeselected: () => this.prepareAnalyzeFooter(),
       },
       {
-        // Mount footer + R_AA tab synchronously before driver.js queries the target.
         element: () => {
-          this.prepareAnalyzeFooter();
+          this.hooks?.ensureCharPanelOpen();
           this.hooks?.setResultsTab('raa');
           return this.requireElement('nmf-tour-raa-analysis');
         },
@@ -426,17 +636,17 @@ export class NmfEeTutorialService {
         popover: {
           title: 'R<sub>AA</sub> Analysis tab',
           description:
-            'The second tab is <strong>R<sub>AA</sub> Analysis</strong> — the classic Analysis view. After you publish Pb–Pb events it shows Peripheral / SemiCentral / Central <strong>Auto</strong> and <strong>Manual</strong> R<sub>AA</sub> values plus three p<sub>T</sub> spectra. When every event is analysed, the red <strong>Analyze</strong> bar at the bottom jumps you here (and you can continue to Spectrum Analysis). For this tour we open the tab early so you know where it lives.',
+            'This tab shows your <strong>results</strong>. At the top you get three R<sub>AA</sub> numbers — <strong>Peripheral</strong>, <strong>SemiCentral</strong>, and <strong>Central</strong> — for how head-on the Pb–Pb smash was. Underneath are three plots of <strong>Counts vs p<sub>T</sub></strong> (how hard particles were kicked sideways).<br/><br/>' +
+            'R<sub>AA</sub> compares each Pb–Pb multiplicity to the average from your ~30 pp events, scaled by <strong>N<sub>coll</sub></strong>. The numbers fill in as you analyse events. Press <strong>?</strong> here anytime for a short reminder.',
           side: 'left',
           align: 'start',
         },
         onHighlighted: () => {
-          this.prepareAnalyzeFooter();
+          this.hooks?.ensureCharPanelOpen();
           this.hooks?.setResultsTab('raa');
           setTimeout(() => this.driverInstance?.refresh(), 0);
         },
         onDeselected: () => {
-          this.hooks?.setTourShowAnalyze(false);
           this.hooks?.setResultsTab('characteristics');
         },
       },
@@ -590,7 +800,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Analysed checkmark',
           description:
-            'When an event is analysed, a green <strong>done</strong> tick appears next to the event label, the same pattern as Visual Analysis. Analyse every event in the dataset, then use <strong>Analyze</strong> at the bottom to open the <strong>R<sub>AA</sub> Analysis</strong> tab.',
+            'When an event is analysed, a green <strong>done</strong> tick appears next to the event label, the same pattern as Visual Analysis. Analyse every event in the dataset, then open the <strong>R<sub>AA</sub> Analysis</strong> tab to see your results.',
           side: 'right',
           align: 'start',
         },
@@ -600,7 +810,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'You are ready',
           description:
-            'Explore events, watch the Event Characteristics histograms fill, and check R<sub>AA</sub> Analysis after Pb–Pb publishes. When the red Analyze bar appears, open that tab and continue to Spectrum Analysis.',
+            'Explore events, watch the Event Characteristics histograms fill, and check <strong>R<sub>AA</sub> Analysis</strong> after Pb–Pb publishes. When every event is done, use <strong>Continue to Spectrum Analysis</strong> on that tab.',
           side: 'over',
         },
       },

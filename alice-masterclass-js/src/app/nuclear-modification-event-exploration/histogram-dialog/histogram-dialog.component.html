@@ -1,6 +1,6 @@
 <div class="nmf-hist-dialog" data-testid="nmf-histogram-dialog">
   <div class="nmf-hist-dialog-header">
-    <h2 mat-dialog-title class="nmf-hist-dialog-title">{{ data.spec.titleKey | translate }}</h2>
+    <h2 mat-dialog-title class="nmf-hist-dialog-title" [innerHTML]="data.spec.titleKey | translate"></h2>
     @if (allowBinControl) {
       <div
         class="bin-control"

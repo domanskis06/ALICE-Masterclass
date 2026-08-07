@@ -61,14 +61,34 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   /**
    * Stretch the SVG to the host box (non-uniform). Used when a panel wants the
    * plot to fill width/height instead of letterboxing with aspect-ratio `meet`.
+   * Note: this also stretches SVG text — prefer `viewBoxHeight` when only OY
+   * needs more pixel height without distorting labels.
    */
   @Input()
   stretchFill = false;
 
+  /**
+   * Override the SVG viewBox height (default from `SVG.H`). A taller viewBox +
+   * uniform `meet` scaling lengthens the OY axis in pixels without distorting fonts.
+   */
+  @Input()
+  viewBoxHeight: number | null = null;
+
+  /** Subclasses (e.g. FitHistogram) may override W/H. Prefer `svgBox` at call sites. */
   readonly SVG = {
     W: 400,
     // Tall enough for rotated tick labels + x-axis title without viewBox clipping.
     H: 218
+  };
+
+  /** Effective viewBox — applies optional `viewBoxHeight` on top of `SVG`. */
+  get svgBox() {
+    return {
+      W: this.SVG.W,
+      H: this.viewBoxHeight != null && this.viewBoxHeight > 0
+        ? this.viewBoxHeight
+        : this.SVG.H
+    };
   }
 
   private readonly MARGIN_DEFAULT = {
@@ -117,11 +137,12 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   get CONTENT_AREA() {
     const m = this.MARGIN;
+    const box = this.svgBox;
     return {
       X: m.LEFT + m.LEFT_YLABEL,
       Y: m.TOP,
-      W: this.SVG.W - m.LEFT - m.LEFT_YLABEL - m.RIGHT,
-      H: this.SVG.H - m.TOP - m.BOTTOM - m.BOTTOM_XLABEL
+      W: box.W - m.LEFT - m.LEFT_YLABEL - m.RIGHT,
+      H: box.H - m.TOP - m.BOTTOM - m.BOTTOM_XLABEL
     };
   }
 
@@ -137,7 +158,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       ? HistogramComponent.X_AXIS_LABEL_ROTATED_NUDGE
       : 0;
     if (!this.compactChrome) {
-      return this.SVG.H - this.MARGIN.BOTTOM_TEXT + rotatedNudge;
+      return this.svgBox.H - this.MARGIN.BOTTOM_TEXT + rotatedNudge;
     }
     // Sit just under the tick row (enhancement-plot closeness to Ox).
     // Rotated -45° ticks already get X_AXIS_LABEL_ROTATED_NUDGE; upright need a little extra.

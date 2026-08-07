@@ -26,7 +26,6 @@ import { NmfEventCharacteristicsComponent } from './event-characteristics/event-
 import { NmfAnalysisEventRecord } from './analysis-panel/analysis-panel.component';
 import { NmfEeTutorialService } from './ee-tutorial/ee-tutorial.service';
 import { NmfEeTutorialWelcomeDialogComponent } from './ee-tutorial/ee-tutorial-welcome-dialog.component';
-import { NmfHistogramHelpDialogComponent } from './histogram-help-dialog/histogram-help-dialog.component';
 
 /** Desktop `Utility::IsPrimary` / TrackType.SECONDARY — what "Secondary tracks" toggles. */
 function isSecondaryTrack(track: Track): boolean {
@@ -153,7 +152,6 @@ export class NuclearModificationEventExplorationComponent
 
   /** 0 = Event Characteristics, 1 = R_AA Analysis. */
   resultsTabIndex = 0;
-  tourShowAnalyze = false;
   filterBuilderOpen = false;
   filterReady = false;
   marqueeMode = false;
@@ -212,10 +210,6 @@ export class NuclearModificationEventExplorationComponent
     );
 
     this.eeTutorial.registerHost({
-      setTourShowAnalyze: (show) => {
-        this.tourShowAnalyze = show;
-        this.cdr.detectChanges();
-      },
       setFilterBuilderOpen: (open) => {
         this.filterBuilderOpen = open;
         this.cdr.detectChanges();
@@ -234,6 +228,9 @@ export class NuclearModificationEventExplorationComponent
       setResultsTab: (tab) => {
         this.charPanelOpen = true;
         this.resultsTabIndex = tab === 'raa' ? 1 : 0;
+        this.cdr.detectChanges();
+      },
+      refreshHost: () => {
         this.cdr.detectChanges();
       },
       setPrimaryPickChallenge: (active) => {
@@ -332,10 +329,6 @@ export class NuclearModificationEventExplorationComponent
     return this.analyzedByIndex.has(this.eventIndex);
   }
 
-  get showAnalyzeFooter(): boolean {
-    return this.tourShowAnalyze || this.allEventsAnalyzed;
-  }
-
   get selectedTrackCharge(): number {
     return this.selectedTrack?.sign ?? 0;
   }
@@ -370,15 +363,6 @@ export class NuclearModificationEventExplorationComponent
       }
     }
     return true;
-  }
-
-  onAnalyze(): void {
-    // Tour early-previews the Analyze bar — do not jump tabs during the highlight.
-    if (this.eeTutorial.isActive() || this.tourShowAnalyze) {
-      return;
-    }
-    this.charPanelOpen = true;
-    this.resultsTabIndex = 1;
   }
 
   onGoSpectrum(): void {
@@ -418,12 +402,13 @@ export class NuclearModificationEventExplorationComponent
   }
 
   onHistogramHelp(): void {
-    this.dialog.open(NmfHistogramHelpDialogComponent, {
-      autoFocus: false,
-      hasBackdrop: true,
-      disableClose: false,
-      maxWidth: '32rem',
-    });
+    this.charPanelOpen = true;
+    if (this.resultsTabIndex === 1) {
+      this.eeTutorial.startRaaAnalysisHelpTour();
+      return;
+    }
+    this.resultsTabIndex = 0;
+    this.eeTutorial.startHistogramHelpTour();
   }
 
   onFilterAccepted(): void {
@@ -706,20 +691,17 @@ export class NuclearModificationEventExplorationComponent
   /** Snapshot multiplicities / p_T for the R_AA Analysis tab. */
   private recordAnalysisEvent(accepted: Track[]): void {
     const role = this.eventRoles[this.eventIndex] ?? roleForIndex(this.eventIndex);
-    const autoTracks = this.event.tracks.filter((t) => isPrimaryTrack(t) && t.sign !== 0);
     const ptsOf = (tracks: Track[]) => tracks.map((t) => Math.hypot(t.px, t.py));
     this.analysisRecords.set(this.eventIndex, {
       role,
-      autoMultiplicity: autoTracks.length,
-      manualMultiplicity: accepted.length,
-      autoPts: ptsOf(autoTracks),
-      manualPts: ptsOf(accepted),
+      multiplicity: accepted.length,
+      pts: ptsOf(accepted),
     });
     this.analysisRecordsList = [...this.analysisRecords.values()];
   }
 }
 
-/** Auto multiplicity / high-pT summary for an event (reused once the analysis panel returns). */
+/** Multiplicity / high-pT summary for an event (reused once the analysis panel returns). */
 export function summarizeEvent(event: Event): RaaEventSummary {
   const tracks = event.tracks ?? [];
   let highPtCount = 0;

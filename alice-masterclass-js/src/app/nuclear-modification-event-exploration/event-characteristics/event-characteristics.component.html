@@ -10,6 +10,7 @@
       <button
         type="button"
         class="nmf-hist-item"
+        [attr.data-hist-key]="h.key"
         [attr.data-testid]="'nmf-hist-' + h.key"
         (click)="openHistogram(h)"
       >
@@ -21,8 +22,9 @@
           [barColor]="h.barColor"
           [expandDomainToData]="h.expandDomainToData"
           [compactChrome]="true"
+          [viewBoxHeight]="340"
         >
-          <span title class="nmf-hist-title">{{ h.titleKey | translate }}</span>
+          <span title class="nmf-hist-title" [innerHTML]="h.titleKey | translate"></span>
           <svg:text xAxisLabel>{{ h.xAxisLabelKey | translate }}</svg:text>
           <svg:text yAxisLabel>{{ h.yAxisLabelKey | translate }}</svg:text>
         </app-histogram>
