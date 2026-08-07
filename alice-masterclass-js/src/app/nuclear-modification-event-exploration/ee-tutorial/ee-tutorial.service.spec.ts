@@ -15,6 +15,7 @@ describe('NmfEeTutorialService', () => {
       setFilterBuilderOpen: () => undefined,
       setMarqueeMode: () => undefined,
       ensureCharPanelOpen: () => undefined,
+      setResultsTab: () => undefined,
       setPrimaryPickChallenge: () => undefined,
       setNextEventLocked: () => undefined,
       ensureFirstEvent: () => undefined,

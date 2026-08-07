@@ -1,0 +1,77 @@
+<div
+  class="nmf-analysis-panel"
+  [class.nmf-analysis-panel--fullscreen]="layout === 'fullscreen'"
+  data-testid="nmf-analysis-panel"
+  id="nmf-tour-raa-analysis"
+>
+  <section class="nmf-analysis-results" data-testid="nmf-analysis-results">
+    @for (c of classes; track c.key) {
+      <div class="nmf-raa-group">
+        <span class="nmf-raa-badge">{{ c.titleKey | translate }}</span>
+        <p class="nmf-raa-line">
+          Auto: {{ c.auto.raa | number: '1.6-6' }} +- {{ c.auto.dRaa | number: '1.6-6' }}
+        </p>
+        <p class="nmf-raa-line">
+          Manual: {{ c.manual.raa | number: '1.6-6' }} +- {{ c.manual.dRaa | number: '1.6-6' }}
+        </p>
+      </div>
+    }
+  </section>
+
+  <div class="nmf-analysis-plots">
+    @for (c of classes; track c.key) {
+      <section
+        class="nmf-analysis-plot"
+        [attr.data-testid]="'nmf-analysis-pt-' + c.key"
+        role="button"
+        tabindex="0"
+        (click)="openPlot(c, $event)"
+        (keydown.enter)="openPlot(c, $event)"
+        (keydown.space)="openPlot(c, $event); $event.preventDefault()"
+      >
+        <div class="nmf-analysis-plot-head">
+          <h3 class="nmf-analysis-plot-title">{{ c.ptSpec.titleKey | translate }}</h3>
+          <div class="nmf-analysis-plot-stats">
+            <span class="nmf-raa-badge nmf-raa-badge--sm">
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}:
+              {{ stats(c.ptSpec.data).entries }}
+            </span>
+            <span class="nmf-raa-badge nmf-raa-badge--sm">
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}:
+              {{ stats(c.ptSpec.data).mean | number: '1.2-2' }}
+            </span>
+          </div>
+          <span class="nmf-raa-badge nmf-raa-badge--sm">{{ c.titleKey | translate }}</span>
+        </div>
+        <div class="nmf-analysis-plot-body">
+          <app-histogram
+            [data]="c.ptSpec.data"
+            [xDomain]="c.ptSpec.xDomain"
+            [bins]="c.ptSpec.bins"
+            [barColor]="c.ptSpec.barColor"
+            [expandDomainToData]="c.ptSpec.expandDomainToData"
+            [compactChrome]="true"
+            [stretchFill]="true"
+          >
+            <svg:text xAxisLabel>{{ c.ptSpec.xAxisLabelKey | translate }}</svg:text>
+            <svg:text yAxisLabel>{{ c.ptSpec.yAxisLabelKey | translate }}</svg:text>
+          </app-histogram>
+        </div>
+      </section>
+    }
+  </div>
+
+  @if (showGoSpectrum) {
+    <div class="nmf-analysis-panel-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        data-testid="nmf-analysis-go-spectrum"
+        (click)="onGoSpectrum()"
+      >
+        {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.GO_SPECTRUM' | translate }}
+      </button>
+    </div>
+  }
+</div>

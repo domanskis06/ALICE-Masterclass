@@ -2,14 +2,18 @@ import { Component, Input } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { Event, Track, TrackType } from '../../shared/models';
-import { NmfHistogramDialogComponent } from '../histogram-dialog/histogram-dialog.component';
-import { NmfHistogramHelpDialogComponent } from '../histogram-help-dialog/histogram-help-dialog.component';
+import {
+  NmfHistogramDialogComponent,
+  NmfHistogramDialogResult,
+} from '../histogram-dialog/histogram-dialog.component';
 
 export interface NmfHistogramSpec {
   key: string;
   data: number[];
   xDomain: [number, number];
   bins: number;
+  /** When set, plot is a value-counts bar chart (OX ticks = these categories only). */
+  discreteValues?: number[];
   barColor: string;
   expandDomainToData: boolean;
   titleKey: string;
@@ -49,7 +53,13 @@ export class NmfEventCharacteristicsComponent {
   /** 'sidebar': compact 2×3 grid for the 1/3-width drawer. 'fullscreen': roomy 3×2 grid. */
   @Input() layout: 'sidebar' | 'fullscreen' = 'sidebar';
 
+  /** When embedded under a mat-tab label, hide the duplicate page title. */
+  @Input() showTitle = true;
+
   private readonly PREFIX = 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.';
+
+  /** Per-plot bin overrides from the enlarged dialog (survive rebuild / new events). */
+  private readonly binOverrides = new Map<string, number>();
 
   private ptData: number[] = [];
   private chargeData: number[] = [];
@@ -95,6 +105,7 @@ export class NmfEventCharacteristicsComponent {
     this.multiplicityData = [];
     this.multiplicityMinPtData = [];
     this.secondariesData = [];
+    this.binOverrides.clear();
     this.histograms = this.buildSpecs();
   }
 
@@ -105,24 +116,27 @@ export class NmfEventCharacteristicsComponent {
   }
 
   openHistogram(h: NmfHistogramSpec): void {
-    this.dialog.open(NmfHistogramDialogComponent, {
-      data: { spec: h, stats: this.stats(h) },
-      panelClass: 'nmf-histogram-dialog-panel',
-      autoFocus: false,
-      hasBackdrop: true,
-      disableClose: false,
-      maxWidth: '95vw',
-    });
+    this.dialog
+      .open(NmfHistogramDialogComponent, {
+        data: { spec: h, stats: this.stats(h) },
+        panelClass: 'nmf-histogram-dialog-panel',
+        autoFocus: false,
+        hasBackdrop: true,
+        disableClose: false,
+        maxWidth: '95vw',
+      })
+      .afterClosed()
+      .subscribe((result: NmfHistogramDialogResult | undefined) => {
+        if (result?.bins == null || h.discreteValues != null) {
+          return;
+        }
+        this.binOverrides.set(h.key, result.bins);
+        this.histograms = this.buildSpecs();
+      });
   }
 
-  openHistogramHelp(domEvent: MouseEvent): void {
-    domEvent.stopPropagation();
-    this.dialog.open(NmfHistogramHelpDialogComponent, {
-      autoFocus: false,
-      hasBackdrop: true,
-      disableClose: false,
-      maxWidth: '32rem',
-    });
+  private binsFor(key: string, fallback: number): number {
+    return this.binOverrides.get(key) ?? fallback;
   }
 
   private buildSpecs(): NmfHistogramSpec[] {
@@ -132,7 +146,7 @@ export class NmfEventCharacteristicsComponent {
         key: 'multiplicity',
         data: this.multiplicityData,
         xDomain: [0, 50],
-        bins: 10,
+        bins: this.binsFor('multiplicity', 10),
         barColor: '#62d9ff',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_MULTIPLICITY_TITLE',
@@ -143,7 +157,7 @@ export class NmfEventCharacteristicsComponent {
         key: 'multiplicityMinPt',
         data: this.multiplicityMinPtData,
         xDomain: [0, 50],
-        bins: 10,
+        bins: this.binsFor('multiplicityMinPt', 10),
         barColor: '#ff9f43',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_MULTIPLICITY_MIN_PT_TITLE',
@@ -154,7 +168,7 @@ export class NmfEventCharacteristicsComponent {
         key: 'secondaries',
         data: this.secondariesData,
         xDomain: [0, 20],
-        bins: 20,
+        bins: this.binsFor('secondaries', 20),
         barColor: '#a78bfa',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_SECONDARIES_TITLE',
@@ -165,7 +179,7 @@ export class NmfEventCharacteristicsComponent {
         key: 'pt',
         data: this.ptData,
         xDomain: [0, 20],
-        bins: 50,
+        bins: this.binsFor('pt', 20),
         barColor: '#4ade80',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_PT_TITLE',
@@ -173,10 +187,12 @@ export class NmfEventCharacteristicsComponent {
         yAxisLabelKey: 'STRANGENESS.HISTOGRAMS.COUNTS',
       },
       {
+        // Charged tracks are only ±1 — value counts, not continuous bins.
         key: 'charge',
         data: this.chargeData,
-        xDomain: [-2.5, 2.5],
-        bins: 5,
+        xDomain: [-1.5, 1.5],
+        bins: 2,
+        discreteValues: [-1, 1],
         barColor: '#f472b6',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_CHARGE_TITLE',
@@ -187,7 +203,7 @@ export class NmfEventCharacteristicsComponent {
         key: 'phi',
         data: this.phiData,
         xDomain: [-Math.PI, Math.PI],
-        bins: 72,
+        bins: this.binsFor('phi', 20),
         barColor: '#fbbf24',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_PHI_TITLE',

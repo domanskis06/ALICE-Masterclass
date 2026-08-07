@@ -136,4 +136,24 @@ describe('HistogramComponent', () => {
     const fullSpan = 1;
     expect(zoomedTicks.length / zoomSpan).toBeGreaterThan(fullTicks.length / fullSpan);
   });
+
+  it('value-counts mode ticks only the discrete categories', () => {
+    component.xDomain = [-1.5, 1.5];
+    component.discreteValues = [-1, 1];
+    component.data = [1, -1, 1, 1, -1];
+    fixture.detectChanges();
+
+    const ticks = (component as unknown as { getXTickValues(): number[] }).getXTickValues();
+    expect(ticks).toEqual([-1, 1]);
+
+    const format = (component as unknown as { getXTickFormat(): (v: number) => string }).getXTickFormat();
+    expect(format(-1)).toBe('-1');
+    expect(format(1)).toBe('1');
+
+    const incoming = component.resolveIncomingBin(-1);
+    expect(incoming).not.toBeNull();
+    expect(incoming!.binIndex).toBe(0);
+    expect(incoming!.binCenter).toBeCloseTo(-1, 5);
+    expect(incoming!.projectedCount).toBe(3);
+  });
 });

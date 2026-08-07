@@ -100,7 +100,9 @@
     "TITLE": "Welcome to the ALICE Masterclass!",
     "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such conditions, an extreme phase of matter - called the quark-gluon plasma - is formed.",
     "P2": "Our universe is thought to have been in such a primordial state for the first few millionths of a second after the Big Bang. The properties of such a phase are key issues for Quantum Chromo Dynamics, the understanding of confinement-deconfinement and chiral phase transitions.",
-    "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right."
+    "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right.",
+    "DOWNLOAD": "If you wish, you can download and use a desktop version of the Masterclass:",
+    "COMING_SOON": "Coming soon!"
   },
   "ABOUT": {
     "ABOUT_MENU": "About ALICE"
@@ -186,10 +188,10 @@
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Strange Particle Production",
       "SUBTITLE": "Exercise 1: Visual inspection",
-      "P1": "The aim of the exercise is to search for strange particles produced from collisions at LHC and recorded by the ALICE experiment. Strange particles do not live long; they decay soon after their production. However, they live long enough to travel some distance, usually a few centimeters, from the interaction point IP where they were produced at the primary vertex. Their search is thus based on the identification of their decay products, which must originate from a common secondary vertex. Neutral strange particles, such as <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> and <span class=\"particle\">Λ&#773;</span>, decay giving a characteristic decay pattern called V0. The mother particle disappears some centimeters from the interaction point and two oppositely charged particles appear in its place, which are bent in opposite directions inside the magnetic field of the ALICE solenoid. In the following figures red tracks indicate positively charged particles, green tracks indicate negatively charged particles, and blue tracks indicate the bachelor pion in cascade decays. The decays we will be looking for are:",
-      "P2": "We see that for a pion-pion final state the decay pattern is quasi-symmetric, whereas in the pion-proton final state the radius of curvature of the proton is larger than that of the pion: due to its higher mass, the proton carries most of the initial momentum.",
-      "P3": "We will also be looking for cascade decays of charged strange particles. The <span class=\"particle\">Ξ<sup>−</sup></span> decays into <span class=\"particle\">π<sup>−</sup></span> and <span class=\"particle\">Λ</span>; the <span class=\"particle\">Λ</span> then decays into a proton and <span class=\"particle\">π<sup>−</sup></span>. Its antiparticle, the <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, decays into <span class=\"particle\">π<sup>+</sup></span> and <span class=\"particle\">Λ&#773;</span>; the <span class=\"particle\">Λ&#773;</span> then decays into an antiproton and <span class=\"particle\">π<sup>+</sup></span>. In both cases the first pion is the bachelor, a single charged track, and is shown in blue. The search for V0s and cascades is based on the decay topology and the identification of the decay products; an additional confirmation of the particle identity is the calculation of its mass, based on the mass and momentum of the decay products.",
-      "P4": "In this exercise, you will determine the number of strange particles in 15 pp collisions at a collision energy of 7 TeV. Particles can be identified through the topology of their decays. When you select tracks from a V0 or Cascade, the relevant numbers, momentum components <em>px, py, pz</em> and mass, will automatically be sent to the <strong>Calculator</strong> interface, and the invariant mass for the currently selected particles is calculated. Then you choose a particle type and click <strong>Add</strong> to include its mass in the graphs below."
+      "P1": "The aim of the exercise is to search for strange particles produced from collisions at LHC and recorded by the ALICE experiment. Strange particles do not live long; they decay soon after their production. However, they live long enough to travel some distance (usually a few centimeters) from the interaction point (IP) from where they were produced (primary vertex). Their search is thus based on the identification of their decay products, which must originate from a common secondary vertex. Neutral strange particles, such as <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> and <span class=\"particle\">Λ&#773;</span>, decay giving a characteristic decay pattern, called V0. The mother particle disappears some centimeters from the interaction point and two oppositely charged particles appear in its place, which are bent in opposite directions inside the magnetic field of the ALICE solenoid. In the following figures red tracks indicate positively charged particles, green tracks indicate negatively charged particles, and blue tracks indicate the bachelor pion in cascade decays. The decays we will be looking for are:",
+      "P2": "We see that for a pion–pion final state the decay pattern is quasi-symmetric, whereas in the pion–proton final state the radius of curvature of the proton is larger than that of the pion: due to its higher mass, the proton carries most of the initial momentum.",
+      "P3": "We will also be looking for cascade decays of charged strange particles. The <span class=\"particle\">Ξ<sup>−</sup></span> decays into <span class=\"particle\">π<sup>−</sup></span> and <span class=\"particle\">Λ</span>; the <span class=\"particle\">Λ</span> then decays into a proton and <span class=\"particle\">π<sup>−</sup></span>. Its antiparticle, the <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, decays into <span class=\"particle\">π<sup>+</sup></span> and <span class=\"particle\">Λ&#773;</span>; the <span class=\"particle\">Λ&#773;</span> then decays into an antiproton and <span class=\"particle\">π<sup>+</sup></span>. In both cases the first pion is the bachelor (a single charged track) and is shown in blue. The search for V0s and cascades is based on the decay topology and the identification of the decay products; an additional confirmation of the particle identity is the calculation of its mass, based on the mass and momentum of the decay products.",
+      "P4": "In this exercise, you will determine the number of strange particles in 15 pp collisions at a collision energy of 7 TeV. Particles can be identified through the topology of their decays. When you select tracks from a V0 or Cascade, the relevant numbers (momentum in the form <em>(px,py,pz)</em> and mass) will automatically be sent to the <strong>Calculator</strong> interface, and the invariant mass for the currently selected particles is calculated. Then you choose a particle type and click <strong>Add</strong> to include its mass in the graphs below."
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Visual Analysis",
@@ -241,9 +243,9 @@
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
       "TITLE": "Strange Particle Production",
       "SUBTITLE": "Exercise 2: Large Scale Analysis",
-      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However, in real life data analysis is not done visually, because that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
-      "P2": "You will now analyse recordings from hundreds of events at once. You can see that the invariant mass is a continuous distribution, because the pairs of pions combined are random, not coming from a common secondary vertex and can give any value of mass. Most of them are background.",
-      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a second-degree polynomial curve to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable. If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second-degree polynomial are used. After clicking the <strong>Accept</strong> button you will get, on the histogram, the total number of counts in the peak, the number of background counts and those which are signal."
+      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However, in real life data analysis is not done visually — that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
+      "P2": "You will now analyse recordings from hundreds of events at once. You can see that the invariant mass is a continuous distribution – this is because the pairs of pions combined are random, not coming from a common secondary vertex and can give any value of mass. Most of them are background.",
+      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a curve (second degree polynomial) to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable. If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second degree polynomial are used. After clicking the <strong>Accept</strong> button you will get, on the histogram, the total number of counts in the peak, the number of background counts and those which are signal."
     },
     "HISTOGRAM_SELECTOR": {
       "TITLE": "Histogram Selector",
@@ -293,11 +295,11 @@
       "TITLE": "How tracks curve through ALICE",
       "P1": "Charged particles in ALICE travel through a strong magnetic field, and the Lorentz force pushes them sideways whenever their motion cuts across that field. Their tracks therefore curve: a stronger field or a lower momentum gives a tighter bend, while positive and negative charges curve opposite ways. Neutral particles feel no magnetic force, so they go straight. From how sharply a track bends, physicists can read the particle’s momentum.",
       "P2": "That field is shaped by a large solenoid around the barrel and a dipole near the muon detectors. Before the animation begins, the app follows every particle through this measured field and stores the paths. Once that is done, play and the time slider only reveal what was prepared, which keeps the motion smooth as you move through the event.",
-      "P3": "Along the timeline you first see the beams approaching, protons or lead nuclei in the Pb-Pb event, then the collision, and finally the particles flying outward from the centre. If you change the field strength or reverse the solenoid, the bends should change with it; press Replay afterwards so the tracks are recalculated. Fading the detector layers or showing the field lines can make the same story easier to follow in the scene."
+      "P3": "Along the timeline you first see the protons approaching, then the collision, and finally the particles flying outward from the centre. If you change the field strength or reverse the solenoid, the bends should change with it; press Replay afterwards so the tracks are recalculated. Fading the detector layers or showing the field lines can make the same story easier to follow in the scene."
     },
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Particle Propagation in the Magnetic Field",
-      "WELCOME_BODY_1": "In most events two protons collide at the centre of ALICE; in the Pb-Pb event two lead nuclei collide instead. Both are shown in the visualisation. New particles fly outward, and the detector’s magnetic field bends the paths of those that carry electric charge.",
+      "WELCOME_BODY_1": "Two protons collide at the centre of ALICE. New particles fly outward, and the detector’s magnetic field bends the paths of those that carry electric charge.",
       "WELCOME_BODY_2": "Press Start and the app prepares each trajectory through the real magnetic field of ALICE. Events with many particles may need a short moment to load.",
       "WELCOME_BODY_3": "Afterwards, use the time slider to move from the approaching protons, through the collision, to the particles leaving the centre. Explore freely: the side panels let you change the field and look through the detector layers.",
       "START_BUTTON": "Start animation",
@@ -309,7 +311,6 @@
       "RETRY": "Retry",
       "LOADING_DETECTOR": "Loading detector model…",
       "EVENT_N": "Event {{n}}",
-      "EVENT_PBPB_N": "Pb-Pb event",
       "SIDEBAR_DETECTOR_PARTS": "Detector parts",
       "SIDEBAR_EVENT": "Event",
       "SIDEBAR_PLAYBACK": "Playback",
@@ -352,10 +353,10 @@
       "PART_ABSO": "ABSO"
     },
     "LSA_TUTORIAL": {
-      "WELCOME_TITLE": "Large scale analysis - short tutorial",
+      "WELCOME_TITLE": "Large scale analysis — short tutorial",
       "WELCOME_P1": "The event display helps you build intuition about single events, but real LHC analysis uses programs over millions of events.",
       "WELCOME_P2": "Here you analyse <strong>hundreds of events at once</strong> by studying the <strong>invariant-mass</strong> distribution of V0 candidates and extracting signal yields with a fit.",
-      "WELCOME_P3": "You can <strong>skip</strong> this tour anytime using the <strong>×</strong> button. To replay it later, open the <strong>Help</strong> panel via the <strong>?</strong> icon in the toolbar and click <strong>Replay tutorial</strong>.",
+      "WELCOME_P3": "You can <strong>skip</strong> this tour anytime using the <strong>×</strong> button. To replay it later, open the <strong>Help</strong> panel (the <strong>?</strong> icon in the toolbar) and click <strong>Replay tutorial</strong>.",
       "SKIP": "Skip",
       "START": "Start tutorial",
       "REPLAY": "Replay tutorial",
@@ -363,27 +364,27 @@
       "PREVIOUS": "← Previous",
       "DONE": "Done",
       "STEP_PARTICLE_TITLE": "Select the particle species",
-      "STEP_PARTICLE_BODY": "Choose the <strong>strange particle</strong> you want to study: the Kaon <strong>K<sub>S</sub><sup>0</sup></strong>, the Lambda <strong>Λ</strong>, or the Anti-Lambda <strong>Λ̄</strong>. Each species decays into a specific pair of daughter tracks, giving a distinct peak position in the invariant-mass spectrum.",
+      "STEP_PARTICLE_BODY": "Choose the <strong>strange particle</strong> you want to study: <strong>K<sub>S</sub><sup>0</sup></strong> (Kaon), <strong>Λ</strong> (Lambda), or <strong>Λ̄</strong> (Anti-Lambda). Each species decays into a specific pair of daughter tracks, giving a distinct peak position in the invariant-mass spectrum.",
       "STEP_COLLISION_TITLE": "Select the collision system",
-      "STEP_COLLISION_BODY": "Choose the <strong>collision system</strong>: <strong>pp</strong> for proton-proton or <strong>Pb-Pb</strong> for lead-lead. For Pb-Pb you also select the <strong>centrality</strong> class, which characterises how head-on the two nuclei collided - 0% is the most central with the largest overlap, 90-100% is the most peripheral.",
+      "STEP_COLLISION_BODY": "Choose the <strong>collision system</strong>: <strong>pp</strong> (proton–proton) or <strong>Pb–Pb</strong> (lead–lead). For Pb–Pb you also select the <strong>centrality</strong> class, which characterises how head-on the two nuclei collided — 0% is the most central (largest overlap), 90–100% is the most peripheral.",
       "STEP_OPEN_TITLE": "Load the spectrum",
-      "STEP_OPEN_BODY": "Click <strong>Open histogram</strong> to fetch the binned data - the tour will then advance automatically. You can also press <strong>Next</strong> to skip ahead if a histogram is already loaded.",
+      "STEP_OPEN_BODY": "Click <strong>Open histogram</strong> to fetch the binned data — the tour will then advance automatically. You can also press <strong>Next</strong> to skip ahead if a histogram is already loaded.",
       "STEP_SPECTRUM_TITLE": "What you are looking at",
-      "STEP_SPECTRUM_BODY": "The horizontal axis is <strong>invariant mass</strong> in GeV/c². You should see a <strong>broad continuum</strong> plus possible <strong>narrow peak structures</strong>. Most pairs are <strong>random combinatorial background</strong> from pions not originating in the same weak decay, so their mass can fall almost anywhere - that is why the background looks like a smooth underlying distribution, while a real <strong>K<sub>S</sub><sup>0</sup></strong> or <strong>Λ</strong> decay gives an excess near the known mass.",
-      "STEP_SIGNAL_TITLE": "Define the signal peak region",
-      "STEP_SIGNAL_BODY": "The <strong>Signal</strong> range control selects the mass interval where you expect the <strong>signal peak</strong>. A <strong>Gaussian</strong> will be fitted in this window to model the resonance. Choose a window wide enough to capture the peak, but not so wide that unrelated background structure dominates the fit. Watch the coloured band on the histogram update as you drag.",
+      "STEP_SPECTRUM_BODY": "The horizontal axis is <strong>invariant mass</strong> (GeV/c²). You should see a <strong>broad continuum</strong> plus possible <strong>narrow structures</strong> (peaks). Most pairs are <strong>random combinatorial background</strong> (pions not from the same weak decay), so their mass can fall almost anywhere — that is why the background looks like a smooth underlying distribution, while a real <strong>K<sub>S</sub><sup>0</sup></strong> or <strong>Λ</strong> decay gives an excess near the known mass.",
+      "STEP_SIGNAL_TITLE": "Define the signal (peak) region",
+      "STEP_SIGNAL_BODY": "The <strong>Signal</strong> range control selects the mass interval where you expect the <strong>signal peak</strong>. A <strong>Gaussian</strong> will be fitted in this window to model the resonance. Choose a window wide enough to capture the peak, but not so wide that unrelated background structure dominates the fit.",
       "STEP_BACKGROUND_TITLE": "Define the background sidebands",
-      "STEP_BACKGROUND_BODY": "The <strong>Background</strong> range control picks the mass interval used to fit the <strong>combinatorial background</strong> as a <strong>2nd-order polynomial</strong>. Typical practice is to use <strong>sidebands</strong> away from the peak, or a region dominated by smooth background. The polynomial coefficients are then extrapolated under the peak for <strong>background subtraction</strong>. Watch the coloured band on the histogram update as you drag.",
+      "STEP_BACKGROUND_BODY": "The <strong>Background</strong> range control picks the mass interval used to fit the <strong>combinatorial background</strong> as a <strong>2nd-order polynomial</strong>. Typical practice is to use <strong>sidebands</strong> away from the peak (or a region dominated by smooth background). The polynomial coefficients are then extrapolated under the peak for <strong>background subtraction</strong>.",
       "STEP_FIT_TITLE": "Run the fit",
-      "STEP_FIT_BODY": "<strong>Fit</strong> runs the simultaneous background polynomial and signal Gaussian model. The curves are drawn on top of the histogram so you can judge by eye whether the model is reasonable - a quick <strong>quality check</strong> before you trust the numbers.",
+      "STEP_FIT_BODY": "<strong>Fit</strong> runs the simultaneous background (polynomial) and signal (Gaussian) model. The curves are drawn on top of the histogram so you can judge by eye whether the model is reasonable — a quick <strong>quality check</strong> before you trust the numbers.",
       "STEP_CHECK_TITLE": "Does the model match the data?",
       "STEP_CHECK_BODY": "Check that the <strong>polynomial</strong> follows the continuum away from the peak and that the <strong>Gaussian</strong> sits on top of the excess. Poor range choices show up as obvious mismatches. If it looks wrong, adjust the ranges and <strong>Fit</strong> again.",
       "STEP_ACCEPT_TITLE": "Record the signal yield",
-      "STEP_ACCEPT_BODY": "If you are satisfied, press <strong>Accept</strong>. The app uses the polynomial to estimate <strong>background under the peak</strong>, then reports <strong>total</strong> counts in the peak region, <strong>estimated background</strong>, and <strong>signal</strong> as the excess over background - the quantity you need to compare production rates between species and collision systems.",
+      "STEP_ACCEPT_BODY": "If you are satisfied, press <strong>Accept</strong>. The app uses the polynomial to estimate <strong>background under the peak</strong>, then reports <strong>total</strong> counts in the peak region, <strong>estimated background</strong>, and <strong>signal</strong> (excess over background) — the quantity you need to compare production rates between species and collision systems.",
       "STEP_RESULTS_TITLE": "Your submitted measurements",
-      "STEP_RESULTS_BODY": "Each accepted fit adds a row with the <strong>particle type</strong>, <strong>collision</strong>, <strong>centrality</strong> when applicable, and the <strong>signal</strong> estimate. This mirrors how you would tabulate yields in a paper-style analysis workflow.",
+      "STEP_RESULTS_BODY": "Each accepted fit adds a row with the <strong>particle type</strong>, <strong>collision</strong>, <strong>centrality</strong> (if applicable), and the <strong>signal</strong> estimate. This mirrors how you would tabulate yields in a paper-style analysis workflow.",
       "STEP_UPLOAD_TITLE": "Share results with your teacher",
-      "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session, pooling class results. If the button is disabled, sign in from the main flow first."
+      "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session (pooling class results). If the button is disabled, sign in from the main flow first."
     }
   },
   "NUCLEAR_MODIFICATION": {
@@ -410,8 +411,8 @@
       "HIGH_PT": "Tracks with pT > 1 GeV/c",
       "MEAN_PT": "Mean pT",
       "ANALYZE": "Analyze this event",
-      "QUICK_RAA_TITLE": "Quick R_AA",
-      "QUICK_RAA_HINT": "Analyze the pp baseline and the three Pb–Pb showcase events to unlock integrated R_AA.",
+      "QUICK_RAA_TITLE": "Quick R<sub>AA</sub>",
+      "QUICK_RAA_HINT": "Analyze the pp baseline and the three Pb–Pb showcase events to unlock integrated R<sub>AA</sub>.",
       "CLASS": "Class",
       "GO_SPECTRUM": "Continue to Spectrum Analysis",
       "CHARACTERISTICS_TITLE": "Event Characteristics",
@@ -433,6 +434,8 @@
       "CHARACTERISTICS_FULLSCREEN": "Expand to fullscreen",
       "CHARACTERISTICS_EXIT_FULLSCREEN": "Exit fullscreen",
       "ANALYZE_BUTTON": "Analyze",
+      "TAB_CHARACTERISTICS": "Event Characteristics",
+      "TAB_RAA_ANALYSIS": "R<sub>AA</sub> Analysis",
       "ANALYSIS_TITLE": "Analysis",
       "ANALYSIS_PERIPHERAL": "Peripheral",
       "ANALYSIS_SEMI_CENTRAL": "SemiCentral",

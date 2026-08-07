@@ -30,11 +30,6 @@
   color: var(--va-text, #ffffff);
 }
 
-.nmf-hist-help-btn {
-  flex: 0 0 auto;
-  color: var(--va-text, #ffffff);
-}
-
 .nmf-hist-grid {
   flex: 1 1 auto;
   display: grid;
@@ -92,25 +87,36 @@
   color: var(--va-text, #ffffff);
 }
 
-/** ROOT-style "stats box" — Entries / Mean, floating over the top-right corner. */
+/** Entries / Mean under each plot — same red oval chips as R_AA Analysis badges. */
 .nmf-hist-stats {
-  position: absolute;
-  top: 22px;
-  right: 8px;
-  z-index: 2;
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  padding: 3px 6px;
-  font-size: 10px;
-  line-height: 1.35;
-  font-family: 'Courier New', monospace;
-  background: rgba(10, 24, 50, 0.72);
-  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
-  border-radius: 4px;
-  color: var(--va-muted, rgba(255, 255, 255, 0.75));
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
   pointer-events: none;
+}
+
+.nmf-hist-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 3px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #b71c1c;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
 }
 
 :host ::ng-deep app-histogram svg {

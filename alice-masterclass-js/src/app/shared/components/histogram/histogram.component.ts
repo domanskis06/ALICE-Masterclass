@@ -58,6 +58,13 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Input()
   compactChrome = false;
 
+  /**
+   * Stretch the SVG to the host box (non-uniform). Used when a panel wants the
+   * plot to fill width/height instead of letterboxing with aspect-ratio `meet`.
+   */
+  @Input()
+  stretchFill = false;
+
   readonly SVG = {
     W: 400,
     // Tall enough for rotated tick labels + x-axis title without viewBox clipping.
@@ -93,7 +100,19 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   };
 
   get MARGIN() {
-    return this.compactChrome ? this.MARGIN_COMPACT : this.MARGIN_DEFAULT;
+    const base = this.compactChrome ? this.MARGIN_COMPACT : this.MARGIN_DEFAULT;
+    // Stretch-fill panels clip SVG overflow; leave room for the top y-tick (e.g. "1.0").
+    if (this.stretchFill) {
+      return { ...base, TOP: Math.max(base.TOP, 16) };
+    }
+    return base;
+  }
+
+  get preserveAspectRatio(): string {
+    if (this.stretchFill) {
+      return 'none';
+    }
+    return this.compactChrome ? 'xMidYMin meet' : 'xMidYMid meet';
   }
 
   get CONTENT_AREA() {
@@ -220,16 +239,39 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   private _bins: BehaviorSubject<number> = new BehaviorSubject(1);
   private binsSubscription: Subscription | null = null;
 
+  /**
+   * Value-counts mode: one bar per listed category (e.g. charge −1 / +1).
+   * OX ticks are exactly those values; continuous bin edges are unused.
+   */
+  @Input()
+  get discreteValues(): number[] | null { return this._discreteValues; }
+  set discreteValues(values: number[] | null) {
+    const next =
+      values && values.length > 0
+        ? [...values].sort((a, b) => a - b)
+        : null;
+    const prev = this._discreteValues;
+    const same =
+      prev !== null &&
+      next !== null &&
+      prev.length === next.length &&
+      prev.every((v, i) => v === next[i]);
+    if (same || (prev === null && next === null)) {
+      return;
+    }
+    this._discreteValues = next;
+    // Recompute y-domain / bars from the current samples.
+    this.data = this.data;
+  }
+  private _discreteValues: number[] | null = null;
+
   @Input()
   get data(): Array<number> { return this._data.getValue(); }
   set data(data: Array<number>) {
     this.applyEffectiveDomain(data);
 
-    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
-
-    const bins = this.binGenerator(data);
-
-    const yMax = d3.max(bins, (d: d3.Bin<number, number>) => { return d.length; }) ?? 0;
+    const bins = this.buildBins(data, this.xDomain);
+    const yMax = d3.max(bins, (d: d3.Bin<number, number>) => d.length) ?? 0;
 
     if (yMax !== 0) {
       this.yDomain = [0, yMax];
@@ -366,10 +408,8 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     }
 
     const domain = this.domainCovering([...this.data, value]);
-    const thresholds = this.getBinThresholdsFor(domain);
-    this.binGenerator.domain(domain).thresholds(thresholds);
-    const currentBins = this.binGenerator(this.data);
-    const projectedBins = this.binGenerator([...this.data, value]);
+    const currentBins = this.buildBins(this.data, domain);
+    const projectedBins = this.buildBins([...this.data, value], domain);
 
     const binIndex = projectedBins.findIndex(
       (bin, index) => bin.length > (currentBins[index]?.length ?? 0)
@@ -469,9 +509,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateBars(): void {
-    this.binGenerator.domain(this.xDomain).thresholds(this.getBinThresholds());
-
-    const bins = this.binGenerator(this.data);
+    const bins = this.buildBins(this.data, this.xDomain);
 
     const fullBarWidth = (bin: d3.Bin<number, number>) => {
       const x0 = bin.x0 ?? this.xDomain[0];
@@ -562,6 +600,36 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
+   * Continuous histogram bins, or discrete value-count bars when `discreteValues` is set.
+   */
+  private buildBins(data: number[], domain: [number, number]): d3.Bin<number, number>[] {
+    if (this._discreteValues) {
+      return this.buildDiscreteBins(data, this._discreteValues);
+    }
+    this.binGenerator.domain(domain).thresholds(this.getBinThresholdsFor(domain));
+    return this.binGenerator(data);
+  }
+
+  /** One bar centred on each category; width is ~70% of the nearest neighbour spacing. */
+  private buildDiscreteBins(
+    data: number[],
+    values: number[]
+  ): d3.Bin<number, number>[] {
+    const step =
+      values.length > 1
+        ? Math.min(...values.slice(1).map((v, i) => v - values[i]))
+        : 1;
+    const half = Math.max(step * 0.35, Number.EPSILON);
+
+    return values.map((category) => {
+      const matches = data.filter((d) => d === category) as d3.Bin<number, number>;
+      matches.x0 = category - half;
+      matches.x1 = category + half;
+      return matches;
+    });
+  }
+
+  /**
    * Interior edges of `bins` equal-width intervals on `domain` (defaults to effective xDomain).
    * 2 bins → 1 tick (midpoint), 3 bins → 2 ticks, etc.
    */
@@ -585,6 +653,11 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   protected getXTickValues(): number[] {
     const [zoom0, zoom1] = this.xDomainZoom;
+
+    if (this._discreteValues) {
+      return this._discreteValues.filter((value) => value >= zoom0 && value <= zoom1);
+    }
+
     const thresholds = this.getBinThresholds();
     if (thresholds.length === 0) {
       const [x0, x1] = this.xDomain;
@@ -608,6 +681,9 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   protected getXTickFormat(): (value: number) => string {
     return (value: number) => {
+      if (this._discreteValues) {
+        return String(value);
+      }
       // Three decimals so adjacent bin edges stay distinct; drop trailing zeros
       // (e.g. 0.500 → "0.5", 0.416 → "0.416").
       return value.toFixed(3).replace(/\.?0+$/, '');

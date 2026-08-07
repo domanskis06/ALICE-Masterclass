@@ -23,12 +23,10 @@ import { RaaDataService } from '../services/raa-data.service';
 import { EventDisplayComponent } from '../shared/components/event-display/event-display.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { NmfEventCharacteristicsComponent } from './event-characteristics/event-characteristics.component';
-import {
-  NmfAnalysisDialogComponent,
-  NmfAnalysisEventRecord,
-} from './analysis-dialog/analysis-dialog.component';
+import { NmfAnalysisEventRecord } from './analysis-panel/analysis-panel.component';
 import { NmfEeTutorialService } from './ee-tutorial/ee-tutorial.service';
 import { NmfEeTutorialWelcomeDialogComponent } from './ee-tutorial/ee-tutorial-welcome-dialog.component';
+import { NmfHistogramHelpDialogComponent } from './histogram-help-dialog/histogram-help-dialog.component';
 
 /** Desktop `Utility::IsPrimary` / TrackType.SECONDARY — what "Secondary tracks" toggles. */
 function isSecondaryTrack(track: Track): boolean {
@@ -143,14 +141,18 @@ export class NuclearModificationEventExplorationComponent
 
   private readonly visitedByIndex = new Set<number>();
   private readonly analyzedByIndex = new Set<number>();
-  /** Per-index publish records for the part-1 Analysis dialog (R_AA + p_T). */
+  /** Per-index publish records for the part-1 R_AA Analysis tab. */
   private readonly analysisRecords = new Map<number, NmfAnalysisEventRecord>();
-  private nCollPart1: Record<string, number> = {
+  /** Snapshot for the embedded R_AA panel (new array when records change). */
+  analysisRecordsList: NmfAnalysisEventRecord[] = [];
+  nCollPart1: Record<string, number> = {
     pbPbPeripheral: 6.32,
     pbPbSemiCentral: 438.8,
     pbPbCentral: 1686.87,
   };
 
+  /** 0 = Event Characteristics, 1 = R_AA Analysis. */
+  resultsTabIndex = 0;
   tourShowAnalyze = false;
   filterBuilderOpen = false;
   filterReady = false;
@@ -162,6 +164,8 @@ export class NuclearModificationEventExplorationComponent
   private readonly pickedPrimaryIndices = new Set<number>();
   private welcomeDialogOpened = false;
   private datasetPromptOpened = false;
+  /** Start the main tour once a dataset event has loaded (after welcome → Start). */
+  private pendingTourStart = false;
 
   /** True while Shift is held — arms the marquee layer so OrbitControls stay free otherwise. */
   shiftHeld = false;
@@ -182,6 +186,8 @@ export class NuclearModificationEventExplorationComponent
     this.visitedByIndex.clear();
     this.analyzedByIndex.clear();
     this.analysisRecords.clear();
+    this.analysisRecordsList = [];
+    this.resultsTabIndex = 0;
     this.characteristics?.resetSession();
     this.selectedTrack = null;
     if (value == null) {
@@ -223,6 +229,11 @@ export class NuclearModificationEventExplorationComponent
       },
       ensureCharPanelOpen: () => {
         this.charPanelOpen = true;
+        this.cdr.detectChanges();
+      },
+      setResultsTab: (tab) => {
+        this.charPanelOpen = true;
+        this.resultsTabIndex = tab === 'raa' ? 1 : 0;
         this.cdr.detectChanges();
       },
       setPrimaryPickChallenge: (active) => {
@@ -284,8 +295,8 @@ export class NuclearModificationEventExplorationComponent
       if (this.eventDisplay) {
         this.eventDisplay.detectorLayersPanelOpened = true;
       }
-      // Wait for the left sidebar width transition so driver.js can highlight the select.
-      setTimeout(() => this.maybeOpenDatasetPrompt(), 320);
+      // Welcome first (Start / Skip) — same pattern as LSA; resets on full page reload.
+      setTimeout(() => this.tryOpenTutorialWelcome(), 320);
     });
   }
 
@@ -348,20 +359,6 @@ export class NuclearModificationEventExplorationComponent
     this.syncDisplayEvent();
   }
 
-  get allEventsVisited(): boolean {
-    const n = this.maxEvents;
-    if (n === 0) {
-      return false;
-    }
-    for (let i = 0; i < n; i++) {
-      if (!this.visitedByIndex.has(i)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  /** True only once every event in the pack has been analysed (marquee publish). */
   get allEventsAnalyzed(): boolean {
     const n = this.maxEvents;
     if (n === 0) {
@@ -376,30 +373,16 @@ export class NuclearModificationEventExplorationComponent
   }
 
   onAnalyze(): void {
-    // Tour early-previews the Analyze bar — do not open Analysis / navigate.
+    // Tour early-previews the Analyze bar — do not jump tabs during the highlight.
     if (this.eeTutorial.isActive() || this.tourShowAnalyze) {
       return;
     }
-    this.dialog
-      .open(NmfAnalysisDialogComponent, {
-        data: {
-          records: [...this.analysisRecords.values()],
-          nCollPart1: this.nCollPart1,
-        },
-        panelClass: 'nmf-analysis-dialog-panel',
-        autoFocus: false,
-        hasBackdrop: true,
-        disableClose: false,
-        maxWidth: '96vw',
-        width: '1100px',
-      })
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        if (result === 'spectrum') {
-          void this.router.navigate(['/nuclear-modification-spectrum-analysis']);
-        }
-      });
+    this.charPanelOpen = true;
+    this.resultsTabIndex = 1;
+  }
+
+  onGoSpectrum(): void {
+    void this.router.navigate(['/nuclear-modification-spectrum-analysis']);
   }
 
   onPreviousEvent(): void {
@@ -432,6 +415,15 @@ export class NuclearModificationEventExplorationComponent
 
   onToggleFullscreen(): void {
     this.charPanelFullscreen = !this.charPanelFullscreen;
+  }
+
+  onHistogramHelp(): void {
+    this.dialog.open(NmfHistogramHelpDialogComponent, {
+      autoFocus: false,
+      hasBackdrop: true,
+      disableClose: false,
+      maxWidth: '32rem',
+    });
   }
 
   onFilterAccepted(): void {
@@ -557,8 +549,13 @@ export class NuclearModificationEventExplorationComponent
     this.eeTutorial.startDatasetPrompt();
   }
 
-  private maybeOpenWelcome(): void {
+  /**
+   * Start / Skip tutorial chooser — shown on each page load / refresh (in-memory
+   * dismiss only; F5 resets it), before the dataset prompt.
+   */
+  private tryOpenTutorialWelcome(): void {
     if (this.welcomeDialogOpened || !this.eeTutorial.shouldShow()) {
+      this.maybeOpenDatasetPrompt();
       return;
     }
     this.welcomeDialogOpened = true;
@@ -573,10 +570,19 @@ export class NuclearModificationEventExplorationComponent
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((start: boolean | undefined) => {
         if (start === true) {
-          this.eeTutorial.startMainTour();
+          if (this.hasDatasetSelected) {
+            this.eeTutorial.startMainTour();
+          } else {
+            this.pendingTourStart = true;
+            this.maybeOpenDatasetPrompt();
+          }
         } else if (start === false) {
+          // Skip for this page load only (resets on refresh).
           this.eeTutorial.dismiss();
           this.filterReady = true;
+          this.maybeOpenDatasetPrompt();
+        } else {
+          this.maybeOpenDatasetPrompt();
         }
       });
   }
@@ -668,7 +674,10 @@ export class NuclearModificationEventExplorationComponent
             this.syncPrimaryPickEmphasis();
             this.reportPrimaryPickProgress();
           }
-          this.maybeOpenWelcome();
+          if (this.pendingTourStart) {
+            this.pendingTourStart = false;
+            this.eeTutorial.startMainTour();
+          }
         });
       },
       error: () => {
@@ -694,7 +703,7 @@ export class NuclearModificationEventExplorationComponent
     };
   }
 
-  /** Snapshot multiplicities / p_T for the Analysis dialog (part-1 R_AA). */
+  /** Snapshot multiplicities / p_T for the R_AA Analysis tab. */
   private recordAnalysisEvent(accepted: Track[]): void {
     const role = this.eventRoles[this.eventIndex] ?? roleForIndex(this.eventIndex);
     const autoTracks = this.event.tracks.filter((t) => isPrimaryTrack(t) && t.sign !== 0);
@@ -706,6 +715,7 @@ export class NuclearModificationEventExplorationComponent
       autoPts: ptsOf(autoTracks),
       manualPts: ptsOf(accepted),
     });
+    this.analysisRecordsList = [...this.analysisRecords.values()];
   }
 }
 

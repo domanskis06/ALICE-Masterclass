@@ -90,7 +90,7 @@
   /* Fixed share of the page — intentionally not draggable/resizable. */
   flex: 0 0 33.3333%;
   width: 33.3333%;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .nmf-characteristics-col--fullscreen {
@@ -104,21 +104,103 @@
   transition: none;
 }
 
-.nmf-char-col-header {
-  flex: 0 0 auto;
+.nmf-results-toolbar {
+  position: relative;
+  flex: 1 1 auto;
   display: flex;
-  justify-content: flex-end;
-  padding: 6px 6px 0;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
+.nmf-results-toolbar-actions {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: 48px;
+}
+
+.nmf-char-help-btn,
 .nmf-char-fullscreen-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
   color: var(--va-text);
 }
 
-.nmf-characteristics-col app-nmf-event-characteristics {
-  display: block;
+.nmf-results-tabs {
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nmf-characteristics-col app-nmf-event-characteristics,
+.nmf-characteristics-col app-nmf-analysis-panel {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.container.nmf-dark-mode ::ng-deep .nmf-results-tabs {
+  .mat-mdc-tab-header {
+    flex: 0 0 auto;
+    /* Leave room for help + fullscreen controls on the shared toolbar row. */
+    padding-right: 88px;
+    border-bottom: 1px solid var(--va-border);
+    background: var(--va-bg-panel-solid);
+  }
+
+  .mat-mdc-tab-labels {
+    background: transparent;
+  }
+
+  .mdc-tab {
+    min-width: 0;
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .mdc-tab__text-label,
+  .mat-mdc-tab .mdc-tab__text-label {
+    color: var(--va-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: none;
+  }
+
+  .mdc-tab__text-label sub,
+  .mat-mdc-tab .mdc-tab__text-label sub {
+    font-size: 0.75em;
+  }
+
+  .mdc-tab--active .mdc-tab__text-label,
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+    color: var(--va-text);
+  }
+
+  .mdc-tab-indicator__content--underline {
+    border-color: #ff6f00;
+  }
+
+  .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .mat-mdc-tab-body-content {
+    height: 100%;
+    overflow: auto;
+  }
+
+  /* mat-tab-group uses flex column only when host is flex; force fill. */
+  &.mat-mdc-tab-group {
+    height: 100%;
+  }
 }
 
 /** Same dataset-picker markup/styling as Visual Analysis (see strangeness-visual-analysis.component.scss). */

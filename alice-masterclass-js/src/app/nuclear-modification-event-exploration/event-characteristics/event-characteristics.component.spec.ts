@@ -50,6 +50,7 @@ describe('NmfEventCharacteristicsComponent', () => {
     expect(byKey['pt'].data[0]).toBeCloseTo(0.5, 5);
     expect(byKey['pt'].data[1]).toBeCloseTo(1.2, 5);
     expect(byKey['charge'].data).toEqual([1, -1]);
+    expect(byKey['charge'].discreteValues).toEqual([-1, 1]);
     expect(byKey['phi'].data.length).toBe(2);
 
     // Second analysed event appends (does not replace).

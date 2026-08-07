@@ -1,18 +1,9 @@
 <div class="nmf-char-panel">
-  <div class="nmf-char-title-row">
-    <h3 class="nmf-char-title">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_TITLE' | translate }}</h3>
-    <button
-      type="button"
-      mat-icon-button
-      id="nmf-tour-hist-help"
-      class="nmf-hist-help-btn"
-      data-testid="nmf-hist-help"
-      aria-label="Histogram help"
-      (click)="openHistogramHelp($event)"
-    >
-      <mat-icon>help_outline</mat-icon>
-    </button>
-  </div>
+  @if (showTitle) {
+    <div class="nmf-char-title-row">
+      <h3 class="nmf-char-title">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_TITLE' | translate }}</h3>
+    </div>
+  }
 
   <div class="nmf-hist-grid" [class.nmf-hist-grid--fullscreen]="layout === 'fullscreen'">
     @for (h of histograms; track h.key) {
@@ -22,14 +13,11 @@
         [attr.data-testid]="'nmf-hist-' + h.key"
         (click)="openHistogram(h)"
       >
-        <div class="nmf-hist-stats">
-          <span>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}: {{ stats(h).entries }}</span>
-          <span>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}: {{ stats(h).mean | number: '1.2-2' }}</span>
-        </div>
         <app-histogram
           [data]="h.data"
           [xDomain]="h.xDomain"
           [bins]="h.bins"
+          [discreteValues]="h.discreteValues ?? null"
           [barColor]="h.barColor"
           [expandDomainToData]="h.expandDomainToData"
           [compactChrome]="true"
@@ -38,6 +26,16 @@
           <svg:text xAxisLabel>{{ h.xAxisLabelKey | translate }}</svg:text>
           <svg:text yAxisLabel>{{ h.yAxisLabelKey | translate }}</svg:text>
         </app-histogram>
+        <div class="nmf-hist-stats">
+          <span class="nmf-hist-stat-badge">
+            {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}:
+            {{ stats(h).entries }}
+          </span>
+          <span class="nmf-hist-stat-badge">
+            {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}:
+            {{ stats(h).mean | number: '1.2-2' }}
+          </span>
+        </div>
       </button>
     }
   </div>

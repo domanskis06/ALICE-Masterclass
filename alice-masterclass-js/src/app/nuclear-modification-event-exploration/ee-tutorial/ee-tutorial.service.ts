@@ -18,6 +18,8 @@ export interface NmfEeTutorialHostHooks {
   setMarqueeMode: (on: boolean) => void;
   /** Ensure Event Characteristics drawer is open. */
   ensureCharPanelOpen: () => void;
+  /** Select Event Characteristics (0) or R_AA Analysis (1) in the results drawer. */
+  setResultsTab: (tab: 'characteristics' | 'raa') => void;
   /** Start / stop the “click every primary on event 1” challenge. */
   setPrimaryPickChallenge: (active: boolean) => void;
   /** Lock the Next-event control until the pick challenge is finished. */
@@ -31,6 +33,7 @@ export interface NmfEeTutorialHostHooks {
 export class NmfEeTutorialService {
   private driverInstance: Driver | null = null;
   private suppressDismissOnDestroy = false;
+  /** In-memory only — resets on full page reload so the welcome dialog shows again. */
   private dismissedThisSession = false;
   private hooks: NmfEeTutorialHostHooks | null = null;
   private awaitingFilterSubmit = false;
@@ -401,30 +404,41 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Event Characteristics',
           description:
-            'This drawer holds six <strong>Event Characteristics</strong> histograms. They fill as you analyse events. Click the <strong>?</strong> button anytime for a short guide to each plot.',
+            'This drawer has two tabs, like a browser. <strong>Event Characteristics</strong> holds six summary histograms that fill as you analyse events. Click the <strong>?</strong> button anytime for a short guide to each plot.',
           side: 'left',
           align: 'start',
         },
-        onHighlighted: () => this.hooks?.ensureCharPanelOpen(),
-        // Mount the ANALYZE footer before the next step queries #nmf-tour-analyze.
+        onHighlighted: () => {
+          this.hooks?.ensureCharPanelOpen();
+          this.hooks?.setResultsTab('characteristics');
+        },
+        // Mount the ANALYZE footer and open R_AA before the next step queries it.
         onDeselected: () => this.prepareAnalyzeFooter(),
       },
       {
-        // Mount footer synchronously before driver.js queries the target.
+        // Mount footer + R_AA tab synchronously before driver.js queries the target.
         element: () => {
           this.prepareAnalyzeFooter();
-          return this.requireElement('nmf-tour-analyze');
+          this.hooks?.setResultsTab('raa');
+          return this.requireElement('nmf-tour-raa-analysis');
         },
         disableActiveInteraction: false,
         popover: {
-          title: 'Analyze: continue later',
+          title: 'R<sub>AA</sub> Analysis tab',
           description:
-            'After you have analysed <strong>every event</strong> in the dataset, this red <strong>Analyze</strong> bar appears at the bottom of the page. Click it to open the <strong>Analysis</strong> summary (integrated R<sub>AA</sub> and p<sub>T</sub> spectra). For this tour we show it early so you know where it will live — clicking it now will not open the dialog.',
-          side: 'top',
-          align: 'center',
+            'The second tab is <strong>R<sub>AA</sub> Analysis</strong> — the classic Analysis view. After you publish Pb–Pb events it shows Peripheral / SemiCentral / Central <strong>Auto</strong> and <strong>Manual</strong> R<sub>AA</sub> values plus three p<sub>T</sub> spectra. When every event is analysed, the red <strong>Analyze</strong> bar at the bottom jumps you here (and you can continue to Spectrum Analysis). For this tour we open the tab early so you know where it lives.',
+          side: 'left',
+          align: 'start',
         },
-        onHighlighted: () => this.prepareAnalyzeFooter(),
-        onDeselected: () => this.hooks?.setTourShowAnalyze(false),
+        onHighlighted: () => {
+          this.prepareAnalyzeFooter();
+          this.hooks?.setResultsTab('raa');
+          setTimeout(() => this.driverInstance?.refresh(), 0);
+        },
+        onDeselected: () => {
+          this.hooks?.setTourShowAnalyze(false);
+          this.hooks?.setResultsTab('characteristics');
+        },
       },
       {
         popover: {
@@ -576,7 +590,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Analysed checkmark',
           description:
-            'When an event is analysed, a green <strong>done</strong> tick appears next to the event label, the same pattern as Visual Analysis. Analyse every event, then use <strong>Analyze</strong> at the bottom to continue.',
+            'When an event is analysed, a green <strong>done</strong> tick appears next to the event label, the same pattern as Visual Analysis. Analyse every event in the dataset, then use <strong>Analyze</strong> at the bottom to open the <strong>R<sub>AA</sub> Analysis</strong> tab.',
           side: 'right',
           align: 'start',
         },
@@ -586,7 +600,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'You are ready',
           description:
-            'Explore events, keep building intuition from the histograms, and finish the dataset. Spectrum Analysis is waiting when the red Analyze bar appears.',
+            'Explore events, watch the Event Characteristics histograms fill, and check R<sub>AA</sub> Analysis after Pb–Pb publishes. When the red Analyze bar appears, open that tab and continue to Spectrum Analysis.',
           side: 'over',
         },
       },

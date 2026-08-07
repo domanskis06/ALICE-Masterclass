@@ -86,7 +86,6 @@
                   data-testid="nmf-secondary-tracks-toggle"
                 >{{ 'EVENT_DISPLAY.SECONDARY_TRACKS' | translate }}</mat-slide-toggle>
               }
-              <mat-slide-toggle [(ngModel)]="decaysShown">{{ 'EVENT_DISPLAY.DECAYS' | translate }}</mat-slide-toggle>
             </div>
           </div>
 
@@ -175,23 +174,66 @@
     [class.nmf-characteristics-col--fullscreen]="charPanelFullscreen"
     data-testid="nmf-characteristics-panel"
   >
-    <div class="nmf-char-col-header">
-      <button
-        type="button"
-        mat-icon-button
-        class="nmf-char-fullscreen-btn"
-        data-testid="nmf-characteristics-fullscreen-toggle"
-        [attr.aria-label]="(charPanelFullscreen ? 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_EXIT_FULLSCREEN' : 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_FULLSCREEN') | translate"
-        (click)="onToggleFullscreen()"
+    <div class="nmf-results-toolbar">
+      <mat-tab-group
+        class="nmf-results-tabs"
+        animationDuration="0ms"
+        [(selectedIndex)]="resultsTabIndex"
+        data-testid="nmf-results-tabs"
       >
-        <mat-icon>{{ charPanelFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-      </button>
-    </div>
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <span id="nmf-tour-tab-characteristics">
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.TAB_CHARACTERISTICS' | translate }}
+            </span>
+          </ng-template>
+          <app-nmf-event-characteristics
+            [event]="event"
+            [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
+            [showTitle]="false"
+          ></app-nmf-event-characteristics>
+        </mat-tab>
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <span
+              id="nmf-tour-tab-raa"
+              [innerHTML]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.TAB_RAA_ANALYSIS' | translate"
+            ></span>
+          </ng-template>
+          <app-nmf-analysis-panel
+            [records]="analysisRecordsList"
+            [nCollPart1]="nCollPart1"
+            [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
+            [showGoSpectrum]="allEventsAnalyzed && !tourShowAnalyze"
+            (goSpectrum)="onGoSpectrum()"
+          ></app-nmf-analysis-panel>
+        </mat-tab>
+      </mat-tab-group>
 
-    <app-nmf-event-characteristics
-      [event]="event"
-      [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
-    ></app-nmf-event-characteristics>
+      <div class="nmf-results-toolbar-actions">
+        <button
+          type="button"
+          mat-icon-button
+          id="nmf-tour-hist-help"
+          class="nmf-char-help-btn"
+          data-testid="nmf-hist-help"
+          aria-label="Histogram help"
+          (click)="onHistogramHelp()"
+        >
+          <mat-icon>help_outline</mat-icon>
+        </button>
+        <button
+          type="button"
+          mat-icon-button
+          class="nmf-char-fullscreen-btn"
+          data-testid="nmf-characteristics-fullscreen-toggle"
+          [attr.aria-label]="(charPanelFullscreen ? 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_EXIT_FULLSCREEN' : 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_FULLSCREEN') | translate"
+          (click)="onToggleFullscreen()"
+        >
+          <mat-icon>{{ charPanelFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </div>
   </aside>
   </div>
 

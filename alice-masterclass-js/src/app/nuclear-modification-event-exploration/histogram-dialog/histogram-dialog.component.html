@@ -1,6 +1,42 @@
 <div class="nmf-hist-dialog" data-testid="nmf-histogram-dialog">
   <div class="nmf-hist-dialog-header">
     <h2 mat-dialog-title class="nmf-hist-dialog-title">{{ data.spec.titleKey | translate }}</h2>
+    @if (allowBinControl) {
+      <div
+        class="bin-control"
+        role="group"
+        [attr.aria-label]="'STRANGENESS.HISTOGRAMS.BINS' | translate"
+      >
+        <span class="bin-control__caption">{{ 'STRANGENESS.HISTOGRAMS.BINS' | translate }}</span>
+        <input
+          id="nmf-hist-dialog-bins"
+          class="bin-control__slider"
+          type="range"
+          [min]="binMin"
+          [max]="binMax"
+          step="1"
+          [(ngModel)]="bins"
+          [ngModelOptions]="{ standalone: true }"
+          [style.--bin-fill]="binFillPercent"
+          (ngModelChange)="clampBins()"
+          aria-label="Bin count slider"
+          data-testid="nmf-histogram-bins-slider"
+        />
+        <input
+          class="bin-control__input"
+          type="number"
+          [min]="binMin"
+          [max]="binMax"
+          step="1"
+          [ngModel]="bins"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onBinsInput($event)"
+          (blur)="clampBins()"
+          aria-label="Bin count"
+          data-testid="nmf-histogram-bins-input"
+        />
+      </div>
+    }
     <button
       type="button"
       mat-icon-button
@@ -15,17 +51,25 @@
 
   <mat-dialog-content class="nmf-hist-dialog-content">
     <div class="nmf-hist-dialog-stats">
-      <span>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}: {{ data.stats.entries }}</span>
-      <span>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}: {{ data.stats.mean | number: '1.2-2' }}</span>
+      <span class="nmf-hist-stat-badge">
+        {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}:
+        {{ data.stats.entries }}
+      </span>
+      <span class="nmf-hist-stat-badge">
+        {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}:
+        {{ data.stats.mean | number: '1.2-2' }}
+      </span>
     </div>
 
     <div class="nmf-hist-dialog-plot">
       <app-histogram
         [data]="data.spec.data"
         [xDomain]="data.spec.xDomain"
-        [bins]="data.spec.bins"
+        [bins]="bins"
+        [discreteValues]="data.spec.discreteValues ?? null"
         [barColor]="data.spec.barColor"
         [expandDomainToData]="data.spec.expandDomainToData"
+        [stretchFill]="true"
       >
         <svg:text xAxisLabel>{{ data.spec.xAxisLabelKey | translate }}</svg:text>
         <svg:text yAxisLabel>{{ data.spec.yAxisLabelKey | translate }}</svg:text>
@@ -34,7 +78,7 @@
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">
-    <button mat-raised-button color="primary" type="button" mat-dialog-close (click)="close($event)">
+    <button mat-raised-button color="primary" type="button" (click)="close($event)">
       {{ 'INSTRUCTIONS_DIALOG.BUTTON_DISMISS' | translate }}
     </button>
   </mat-dialog-actions>

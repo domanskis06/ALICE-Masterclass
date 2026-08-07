@@ -14,7 +14,7 @@ import { NmfFilterBuilderComponent } from './filter-builder/filter-builder.compo
 import { NmfEeTutorialService } from './ee-tutorial/ee-tutorial.service';
 import { NmfEeTutorialWelcomeDialogComponent } from './ee-tutorial/ee-tutorial-welcome-dialog.component';
 import { NmfHistogramHelpDialogComponent } from './histogram-help-dialog/histogram-help-dialog.component';
-import { NmfAnalysisDialogComponent } from './analysis-dialog/analysis-dialog.component';
+import { NmfAnalysisPanelComponent } from './analysis-panel/analysis-panel.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +22,7 @@ import { NmfAnalysisDialogComponent } from './analysis-dialog/analysis-dialog.co
     InstructionsComponent,
     NmfEventCharacteristicsComponent,
     NmfHistogramDialogComponent,
-    NmfAnalysisDialogComponent,
+    NmfAnalysisPanelComponent,
     NmfQuickRaaComponent,
     NmfFilterBuilderComponent,
   ],

@@ -1,10 +1,10 @@
 <mat-card appearance="outlined" class="nmf-panel">
   <mat-card-header>
-    <mat-card-title>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_TITLE' | translate }}</mat-card-title>
+    <mat-card-title [innerHTML]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_TITLE' | translate"></mat-card-title>
   </mat-card-header>
   <mat-card-content>
     @if (entries.length === 0) {
-      <p class="muted">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_HINT' | translate }}</p>
+      <p class="muted" [innerHTML]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_HINT' | translate"></p>
     } @else {
       <table class="raa-table">
         <thead>
@@ -28,7 +28,7 @@
       </table>
     }
     @if (!checkpointDone) {
-      <p class="muted hint">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_HINT' | translate }}</p>
+      <p class="muted hint" [innerHTML]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.QUICK_RAA_HINT' | translate"></p>
     }
   </mat-card-content>
   <mat-card-actions align="end">
