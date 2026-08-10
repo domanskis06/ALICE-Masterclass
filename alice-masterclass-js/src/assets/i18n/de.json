@@ -444,7 +444,8 @@
     "MENU": "J/psi-Analyse",
     "DATASET": {
       "PP": "Proton-Proton",
-      "PPB": "Proton-Blei"
+      "PPB": "Proton-Blei",
+      "PBPB": "Blei-Blei"
     },
     "TOOLBAR": {
       "DATASET": "Kollisionssystem",
@@ -506,17 +507,17 @@
       "UPLOAD_SOON": "Das Senden der Ergebnisse an die Lehrkraft wird bald verfügbar sein."
     },
     "COMPARE": {
-      "TITLE": "Vergleiche die beiden Kollisionssysteme",
-      "LOCKED": "Übernimm ein Ergebnis für beide Kollisionssysteme, um sie zu vergleichen.",
-      "HINT": "In Proton-Blei entstehen viel mehr Teilchen, also gibt es viel mehr zufällige Paare. Der Untergrund ist größer und das Signal ist schwerer herauszuholen.",
-      "CONCLUSION": "Dein Verhältnis von Signal zu Untergrund ist in Proton-Blei schlechter. Ein seltenes Teilchen in einer vollen Kollision zu finden ist schwieriger. Genau deshalb brauchen Physikerinnen und Physiker eine sehr gute Teilchenidentifikation und riesige Datenmengen.",
-      "WARN_STATISTICS": "Du hast in beiden Systemen sehr unterschiedlich viele Ereignisse analysiert. Die Signifikanz wächst mit der Anzahl der Ereignisse, vergleiche daher lieber das Verhältnis von Signal zu Untergrund.",
-      "WARN_WINDOW": "Die beiden Ergebnisse nutzen unterschiedliche Massenfenster. Miss beide im gleichen Fenster, damit der Vergleich fair ist."
+      "TITLE": "Vergleiche die Kollisionssysteme",
+      "LOCKED": "Übernimm ein Ergebnis für mindestens zwei Kollisionssysteme, um sie zu vergleichen.",
+      "HINT": "In volleren Kollisionen entstehen viel mehr Teilchen, also gibt es viel mehr zufällige Paare. Der Untergrund ist größer und das Signal ist schwerer herauszuholen.",
+      "CONCLUSION": "Dein Verhältnis von Signal zu Untergrund wird schlechter, je voller die Kollision ist. Ein seltenes Teilchen in einer vollen Kollision zu finden ist schwieriger. Genau deshalb brauchen Physikerinnen und Physiker eine sehr gute Teilchenidentifikation und riesige Datenmengen.",
+      "WARN_STATISTICS": "Du hast in diesen Kollisionssystemen sehr unterschiedlich viele Ereignisse analysiert. Die Signifikanz wächst mit der Anzahl der Ereignisse, vergleiche daher lieber das Verhältnis von Signal zu Untergrund.",
+      "WARN_WINDOW": "Diese Ergebnisse nutzen unterschiedliche Massenfenster. Miss sie im gleichen Fenster, damit der Vergleich fair ist."
     },
     "WELCOME": {
       "TITLE": "Auf der Suche nach dem J/psi",
       "P1": "Das J/psi ist ein seltenes Teilchen aus einem Charm-Quark und seinem Antiquark. Es lebt nur den Bruchteil einer Sekunde und zerfällt manchmal in ein Elektron und ein Positron.",
-      "P2": "Du analysierst echte ALICE-Daten aus zwei Kollisionssystemen. Zuerst Proton-Proton, danach Proton-Blei, wo viel mehr Teilchen entstehen.",
+      "P2": "Du analysierst echte ALICE-Daten aus drei Kollisionssystemen: Proton-Proton, Proton-Blei und Blei-Blei, wobei bei jedem weiteren mehr Teilchen entstehen als beim vorherigen.",
       "P3": "Deine Aufgabe ist es, Elektronen auszuwählen, die invariante Masse der Paare zu berechnen und das J/psi-Signal vom zufälligen Untergrund zu trennen.",
       "SKIP": "Ich schaue selbst",
       "START": "Geführte Tour starten"
@@ -548,10 +549,10 @@
       "STEP_WINDOW_BODY": "Ziehe das Fenster über den Peak. Alles darin wird gezählt. Achte darauf, wie ein zu breites Fenster Untergrund hinzufügt und das Verhältnis von Signal zu Untergrund verschlechtert.",
       "STEP_ACCEPT_TITLE": "Ergebnis speichern",
       "STEP_ACCEPT_BODY": "<strong>Ergebnis übernehmen</strong> speichert diese Messung in deiner Tabelle. Du kannst das Fenster jederzeit ändern und erneut übernehmen.",
-      "STEP_DATASET_TITLE": "Das zweite Kollisionssystem",
-      "STEP_DATASET_BODY": "Wechsle jetzt zu Proton-Blei und wiederhole die ganze Analyse. Deine Proton-Proton-Arbeit bleibt genau so, wie du sie verlassen hast.",
+      "STEP_DATASET_TITLE": "Probiere die anderen Kollisionssysteme",
+      "STEP_DATASET_BODY": "Wechsle jetzt zu den anderen Kollisionssystemen und wiederhole die ganze Analyse. Frühere Ergebnisse bleiben genau so, wie du sie verlassen hast.",
       "STEP_COMPARE_TITLE": "Vergleichen",
-      "STEP_COMPARE_BODY": "Mit beiden Ergebnissen in der Tabelle siehst du, wie viel schwieriger die Messung wird, wenn eine Kollision mehr Teilchen erzeugt."
+      "STEP_COMPARE_BODY": "Mit den Ergebnissen in der Tabelle siehst du, wie viel schwieriger die Messung wird, wenn eine Kollision mehr Teilchen erzeugt."
     },
     "ERRORS": {
       "MANIFEST": "Die Liste der Datensätze konnte nicht geladen werden.",

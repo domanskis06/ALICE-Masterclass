@@ -7,6 +7,7 @@ import {
   createMassHistograms,
   DatasetAnalysisState,
   DatasetId,
+  DATASET_ORDER,
   DEFAULT_PID_CUT,
   PID_DEDX_BINS,
   PID_DEDX_MAX,
@@ -25,17 +26,18 @@ const LOG_P_MIN = Math.log(PID_P_MIN);
 const LOG_P_SPAN = Math.log(PID_P_MAX) - LOG_P_MIN;
 
 /**
- * Owns the analysis state of both datasets.
+ * Owns the analysis state of every dataset.
  *
- * pp and p-Pb are analysed independently and both states live in memory at the same time,
- * so switching datasets mid-exercise never loses progress. Nothing is persisted: a reload
- * starts the exercise over.
+ * All datasets are analysed independently and their states live in memory at the same
+ * time, so switching datasets mid-exercise never loses progress. Nothing is persisted: a
+ * reload starts the exercise over.
  */
 @Injectable()
 export class JpsiAnalysisStateService {
   private readonly states: Record<DatasetId, DatasetAnalysisState> = {
     pp: createDatasetState('pp'),
     pPb: createDatasetState('pPb'),
+    pbPb: createDatasetState('pbPb'),
   };
 
   private _activeDataset: DatasetId = 'pp';
@@ -62,13 +64,14 @@ export class JpsiAnalysisStateService {
   }
 
   get rows(): SummaryRow[] {
-    return (['pp', 'pPb'] as DatasetId[])
-      .map((id) => this.states[id].tableRow)
-      .filter((row): row is SummaryRow => row !== null);
+    return DATASET_ORDER.map((id) => this.states[id].tableRow).filter(
+      (row): row is SummaryRow => row !== null
+    );
   }
 
-  get hasBothResults(): boolean {
-    return this.states.pp.tableRow !== null && this.states.pPb.tableRow !== null;
+  /** Comparison needs at least two finished datasets; three is fine, one is not. */
+  get hasComparableResults(): boolean {
+    return this.rows.length >= 2;
   }
 
   selectDataset(datasetId: DatasetId): void {

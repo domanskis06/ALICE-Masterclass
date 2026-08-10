@@ -35,6 +35,9 @@ alice-masterclass-js/src/assets/models/blender/
 # J/psi VSD inputs (~33 MB, fetched on demand; see data/jpsi/README.md)
 alice-masterclass-js/data/jpsi/vsd/
 
+# J/psi Pb-Pb AO2D input (~230 MB, not fetched automatically; see data/jpsi/README.md)
+alice-masterclass-js/data/jpsi/ao2d/
+
 # cursor ide
 .cursorignore
 .cursorrules

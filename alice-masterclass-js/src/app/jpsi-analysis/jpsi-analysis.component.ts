@@ -107,14 +107,6 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     return this.state.rows;
   }
 
-  get ppRow(): SummaryRow | null {
-    return this.state.stateOf('pp').tableRow;
-  }
-
-  get pPbRow(): SummaryRow | null {
-    return this.state.stateOf('pPb').tableRow;
-  }
-
   get hasData(): boolean {
     return this.state.state.processedCount > 0;
   }

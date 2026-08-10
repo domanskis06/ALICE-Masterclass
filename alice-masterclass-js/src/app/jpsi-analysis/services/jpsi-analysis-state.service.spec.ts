@@ -101,7 +101,7 @@ describe('JpsiAnalysisStateService', () => {
     expect(service.canAccept).toBeFalse();
   });
 
-  it('keeps the two datasets independent', () => {
+  it('keeps the three datasets independent', () => {
     service.appendEvents([makePairEvent(), makePairEvent()]);
     service.setCut({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
 
@@ -112,9 +112,42 @@ describe('JpsiAnalysisStateService', () => {
     service.appendEvents([makePairEvent()]);
     expect(service.state.processedCount).toBe(1);
 
+    service.selectDataset('pbPb');
+    expect(service.state.processedCount).toBe(0);
+    expect(service.state.cut.dedxMin).toBe(DEFAULT_PID_CUT.dedxMin);
+
+    service.appendEvents([makePairEvent(), makePairEvent(), makePairEvent()]);
+    expect(service.state.processedCount).toBe(3);
+
     service.selectDataset('pp');
     expect(service.state.processedCount).toBe(2);
     expect(service.state.cut.dedxMin).toBe(70);
+
+    service.selectDataset('pPb');
+    expect(service.state.processedCount).toBe(1);
+  });
+
+  it('reports comparable results only once at least two datasets have an accepted row', () => {
+    expect(service.hasComparableResults).toBeFalse();
+    expect(service.rows).toEqual([]);
+
+    service.appendEvents([makePairEvent()]);
+    service.subtractBackground();
+    service.setMassWindow([2.9, 3.1]);
+    service.acceptResult();
+
+    expect(service.hasComparableResults).toBeFalse();
+    expect(service.rows.length).toBe(1);
+
+    service.selectDataset('pbPb');
+    service.appendEvents([makePairEvent()]);
+    service.subtractBackground();
+    service.setMassWindow([2.9, 3.1]);
+    service.acceptResult();
+
+    expect(service.hasComparableResults).toBeTrue();
+    // rows follow DATASET_ORDER (pp, pPb, pbPb), regardless of acceptance order.
+    expect(service.rows.map((row) => row.datasetId)).toEqual(['pp', 'pbPb']);
   });
 
   it('does not subtract while the selection is too wide', () => {

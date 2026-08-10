@@ -444,7 +444,8 @@
     "MENU": "J/psi analysis",
     "DATASET": {
       "PP": "proton-proton",
-      "PPB": "proton-lead"
+      "PPB": "proton-lead",
+      "PBPB": "lead-lead"
     },
     "TOOLBAR": {
       "DATASET": "Collision system",
@@ -506,17 +507,17 @@
       "UPLOAD_SOON": "Sending results to your teacher will be available soon."
     },
     "COMPARE": {
-      "TITLE": "Compare the two collision systems",
-      "LOCKED": "Accept a result for both collision systems to compare them.",
-      "HINT": "In proton-lead many more particles are produced, so there are many more random pairs. The background is larger and the signal is harder to extract.",
-      "CONCLUSION": "Your signal to background ratio is worse in proton-lead. Finding a rare particle in a crowded collision is harder, which is why physicists need excellent particle identification and very large datasets.",
-      "WARN_STATISTICS": "You analysed a very different number of events in the two systems. Significance grows with the number of events, so compare the signal to background ratio instead.",
-      "WARN_WINDOW": "The two results use different mass windows. Measure both in the same window to compare them fairly."
+      "TITLE": "Compare the collision systems",
+      "LOCKED": "Accept a result for at least two collision systems to compare them.",
+      "HINT": "Busier collisions produce many more particles, so there are many more random pairs. The background is larger and the signal is harder to extract.",
+      "CONCLUSION": "Your signal to background ratio gets worse as the collision system gets busier. Finding a rare particle in a crowded collision is harder, which is why physicists need excellent particle identification and very large datasets.",
+      "WARN_STATISTICS": "You analysed a very different number of events in these collision systems. Significance grows with the number of events, so compare the signal to background ratio instead.",
+      "WARN_WINDOW": "These results use different mass windows. Measure them in the same window to compare them fairly."
     },
     "WELCOME": {
       "TITLE": "Looking for the J/psi particle",
       "P1": "The J/psi is a rare particle made of a charm quark and its antiquark. It lives for a tiny fraction of a second and sometimes decays into an electron and a positron.",
-      "P2": "You will analyse real ALICE data from two collision systems. First proton-proton collisions, then proton-lead collisions, which produce many more particles.",
+      "P2": "You will analyse real ALICE data from three collision systems: proton-proton, proton-lead, and lead-lead, each producing more particles than the last.",
       "P3": "Your task is to select electrons, build the invariant mass of pairs, and separate the J/psi signal from the random background.",
       "SKIP": "Explore on my own",
       "START": "Start the guided tour"
@@ -548,10 +549,10 @@
       "STEP_WINDOW_BODY": "Drag the window over the peak. Everything inside it is counted. Notice how a window that is too wide adds background and makes the signal to background ratio worse.",
       "STEP_ACCEPT_TITLE": "Save your result",
       "STEP_ACCEPT_BODY": "<strong>Accept result</strong> stores this measurement in your table. You can always change the window and accept again.",
-      "STEP_DATASET_TITLE": "The second collision system",
-      "STEP_DATASET_BODY": "Now switch to proton-lead and repeat the whole analysis. Your proton-proton work stays exactly as you left it.",
+      "STEP_DATASET_TITLE": "Try the other collision systems",
+      "STEP_DATASET_BODY": "Now switch to the other collision systems and repeat the whole analysis. Earlier results stay exactly as you left them.",
       "STEP_COMPARE_TITLE": "Compare",
-      "STEP_COMPARE_BODY": "With both results in the table you can see how much harder the measurement becomes when a collision produces more particles."
+      "STEP_COMPARE_BODY": "With results in the table you can see how much harder the measurement becomes when a collision produces more particles."
     },
     "ERRORS": {
       "MANIFEST": "Could not load the dataset list.",

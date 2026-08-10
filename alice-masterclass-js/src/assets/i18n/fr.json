@@ -446,7 +446,8 @@
     "MENU": "Analyse J/psi",
     "DATASET": {
       "PP": "proton-proton",
-      "PPB": "proton-plomb"
+      "PPB": "proton-plomb",
+      "PBPB": "plomb-plomb"
     },
     "TOOLBAR": {
       "DATASET": "Système de collision",
@@ -508,17 +509,17 @@
       "UPLOAD_SOON": "L'envoi des résultats à ton enseignant sera bientôt disponible."
     },
     "COMPARE": {
-      "TITLE": "Compare les deux systèmes de collision",
-      "LOCKED": "Valide un résultat pour les deux systèmes de collision afin de les comparer.",
-      "HINT": "En proton-plomb beaucoup plus de particules sont produites, il y a donc beaucoup plus de paires aléatoires. Le bruit de fond est plus grand et le signal est plus difficile à extraire.",
-      "CONCLUSION": "Ton rapport signal sur bruit est moins bon en proton-plomb. Trouver une particule rare dans une collision chargée est plus difficile. C'est pour cela que les physiciens ont besoin d'une excellente identification des particules et de très grands jeux de données.",
-      "WARN_STATISTICS": "Tu as analysé un nombre très différent d'événements dans les deux systèmes. La significativité augmente avec le nombre d'événements, compare plutôt le rapport signal sur bruit.",
-      "WARN_WINDOW": "Les deux résultats utilisent des fenêtres de masse différentes. Mesure-les dans la même fenêtre pour comparer de façon juste."
+      "TITLE": "Compare les systèmes de collision",
+      "LOCKED": "Valide un résultat pour au moins deux systèmes de collision afin de les comparer.",
+      "HINT": "Dans les collisions plus chargées, beaucoup plus de particules sont produites, il y a donc beaucoup plus de paires aléatoires. Le bruit de fond est plus grand et le signal est plus difficile à extraire.",
+      "CONCLUSION": "Ton rapport signal sur bruit se dégrade à mesure que la collision est plus chargée. Trouver une particule rare dans une collision chargée est plus difficile. C'est pour cela que les physiciens ont besoin d'une excellente identification des particules et de très grands jeux de données.",
+      "WARN_STATISTICS": "Tu as analysé un nombre très différent d'événements dans ces systèmes de collision. La significativité augmente avec le nombre d'événements, compare plutôt le rapport signal sur bruit.",
+      "WARN_WINDOW": "Ces résultats utilisent des fenêtres de masse différentes. Mesure-les dans la même fenêtre pour comparer de façon juste."
     },
     "WELCOME": {
       "TITLE": "À la recherche de la particule J/psi",
       "P1": "Le J/psi est une particule rare formée d'un quark charmé et de son antiquark. Il vit une infime fraction de seconde et se désintègre parfois en un électron et un positron.",
-      "P2": "Tu vas analyser de vraies données d'ALICE issues de deux systèmes de collision. D'abord proton-proton, puis proton-plomb, où beaucoup plus de particules sont produites.",
+      "P2": "Tu vas analyser de vraies données d'ALICE issues de trois systèmes de collision : proton-proton, proton-plomb et plomb-plomb, chacun produisant plus de particules que le précédent.",
       "P3": "Ta tâche est de sélectionner les électrons, de calculer la masse invariante des paires et de séparer le signal J/psi du bruit de fond aléatoire.",
       "SKIP": "Je regarde seul",
       "START": "Commencer la visite guidée"
@@ -550,10 +551,10 @@
       "STEP_WINDOW_BODY": "Fais glisser la fenêtre sur le pic. Tout ce qui est à l'intérieur est compté. Remarque comment une fenêtre trop large ajoute du bruit de fond et dégrade le rapport signal sur bruit.",
       "STEP_ACCEPT_TITLE": "Enregistrer ton résultat",
       "STEP_ACCEPT_BODY": "<strong>Valider le résultat</strong> enregistre cette mesure dans ton tableau. Tu peux toujours changer la fenêtre et valider de nouveau.",
-      "STEP_DATASET_TITLE": "Le deuxième système de collision",
-      "STEP_DATASET_BODY": "Passe maintenant à proton-plomb et refais toute l'analyse. Ton travail sur proton-proton reste exactement où tu l'as laissé.",
+      "STEP_DATASET_TITLE": "Essaie les autres systèmes de collision",
+      "STEP_DATASET_BODY": "Passe maintenant aux autres systèmes de collision et refais toute l'analyse. Les résultats précédents restent exactement où tu les as laissés.",
       "STEP_COMPARE_TITLE": "Comparer",
-      "STEP_COMPARE_BODY": "Avec les deux résultats dans le tableau, tu vois à quel point la mesure devient plus difficile quand une collision produit plus de particules."
+      "STEP_COMPARE_BODY": "Avec les résultats dans le tableau, tu vois à quel point la mesure devient plus difficile quand une collision produit plus de particules."
     },
     "ERRORS": {
       "MANIFEST": "Impossible de charger la liste des jeux de données.",

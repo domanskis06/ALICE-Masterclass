@@ -446,7 +446,8 @@
     "MENU": "Analiza J/psi",
     "DATASET": {
       "PP": "proton-proton",
-      "PPB": "proton-ołów"
+      "PPB": "proton-ołów",
+      "PBPB": "ołów-ołów"
     },
     "TOOLBAR": {
       "DATASET": "Układ zderzenia",
@@ -508,17 +509,17 @@
       "UPLOAD_SOON": "Wysyłanie wyników do nauczyciela będzie dostępne wkrótce."
     },
     "COMPARE": {
-      "TITLE": "Porównaj oba układy zderzeń",
-      "LOCKED": "Zaakceptuj wynik dla obu układów zderzeń, żeby je porównać.",
-      "HINT": "W zderzeniach proton-ołów powstaje dużo więcej cząstek, więc jest dużo więcej przypadkowych par. Tło jest większe i sygnał trudniej wyciągnąć.",
-      "CONCLUSION": "Twój stosunek sygnału do tła jest gorszy w zderzeniach proton-ołów. Znalezienie rzadkiej cząstki w zatłoczonym zderzeniu jest trudniejsze. Właśnie dlatego fizycy potrzebują bardzo dobrej identyfikacji cząstek i ogromnych zbiorów danych.",
-      "WARN_STATISTICS": "Przeanalizowałeś bardzo różną liczbę zdarzeń w obu układach. Istotność rośnie z liczbą zdarzeń, więc porównuj raczej stosunek sygnału do tła.",
-      "WARN_WINDOW": "Oba wyniki policzono w innych oknach masy. Zmierz je w tym samym oknie, żeby porównanie było uczciwe."
+      "TITLE": "Porównaj układy zderzeń",
+      "LOCKED": "Zaakceptuj wynik dla co najmniej dwóch układów zderzeń, żeby je porównać.",
+      "HINT": "W bardziej zatłoczonych zderzeniach powstaje dużo więcej cząstek, więc jest dużo więcej przypadkowych par. Tło jest większe i sygnał trudniej wyciągnąć.",
+      "CONCLUSION": "Twój stosunek sygnału do tła jest gorszy, im bardziej zatłoczone jest zderzenie. Znalezienie rzadkiej cząstki w zatłoczonym zderzeniu jest trudniejsze. Właśnie dlatego fizycy potrzebują bardzo dobrej identyfikacji cząstek i ogromnych zbiorów danych.",
+      "WARN_STATISTICS": "Przeanalizowałeś bardzo różną liczbę zdarzeń w tych układach zderzeń. Istotność rośnie z liczbą zdarzeń, więc porównuj raczej stosunek sygnału do tła.",
+      "WARN_WINDOW": "Te wyniki policzono w innych oknach masy. Zmierz je w tym samym oknie, żeby porównanie było uczciwe."
     },
     "WELCOME": {
       "TITLE": "Szukamy cząstki J/psi",
       "P1": "J/psi to rzadka cząstka zbudowana z kwarka powabnego i jego antykwarka. Żyje ułamek sekundy i czasem rozpada się na elektron i pozyton.",
-      "P2": "Przeanalizujesz prawdziwe dane z eksperymentu ALICE z dwóch układów zderzeń. Najpierw proton-proton, potem proton-ołów, w których powstaje dużo więcej cząstek.",
+      "P2": "Przeanalizujesz prawdziwe dane z eksperymentu ALICE z trzech układów zderzeń: proton-proton, proton-ołów i ołów-ołów — w każdym kolejnym powstaje więcej cząstek niż w poprzednim.",
       "P3": "Twoje zadanie to wybrać elektrony, policzyć masę niezmienniczą par i oddzielić sygnał J/psi od przypadkowego tła.",
       "SKIP": "Poradzę sobie sam",
       "START": "Zacznij przewodnik"
@@ -550,10 +551,10 @@
       "STEP_WINDOW_BODY": "Przesuń okno na pik. Liczy się wszystko, co jest w środku. Zwróć uwagę, jak zbyt szerokie okno dokłada tło i psuje stosunek sygnału do tła.",
       "STEP_ACCEPT_TITLE": "Zapisz wynik",
       "STEP_ACCEPT_BODY": "<strong>Zaakceptuj wynik</strong> zapisuje ten pomiar w twojej tabeli. Zawsze możesz zmienić okno i zaakceptować ponownie.",
-      "STEP_DATASET_TITLE": "Drugi układ zderzenia",
-      "STEP_DATASET_BODY": "Teraz przełącz się na proton-ołów i powtórz całą analizę. Twoja praca nad zderzeniami proton-proton zostaje dokładnie tam, gdzie ją zostawiłeś.",
+      "STEP_DATASET_TITLE": "Wypróbuj pozostałe układy zderzeń",
+      "STEP_DATASET_BODY": "Teraz przełącz się na kolejne układy zderzeń i powtórz całą analizę. Wcześniejsze wyniki zostają dokładnie tam, gdzie je zostawiłeś.",
       "STEP_COMPARE_TITLE": "Porównaj",
-      "STEP_COMPARE_BODY": "Mając oba wyniki w tabeli, zobaczysz, o ile trudniejszy staje się pomiar, gdy w zderzeniu powstaje więcej cząstek."
+      "STEP_COMPARE_BODY": "Mając wyniki w tabeli, zobaczysz, o ile trudniejszy staje się pomiar, gdy w zderzeniu powstaje więcej cząstek."
     },
     "ERRORS": {
       "MANIFEST": "Nie udało się wczytać listy zbiorów danych.",

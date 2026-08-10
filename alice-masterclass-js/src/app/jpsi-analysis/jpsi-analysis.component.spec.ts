@@ -15,6 +15,7 @@ const MANIFEST: JpsiManifest = {
   datasets: [
     { id: 'pp', labelKey: 'JPSI.DATASET.PP', nEvents: 3800, batches: 38 },
     { id: 'pPb', labelKey: 'JPSI.DATASET.PPB', nEvents: 2300, batches: 23 },
+    { id: 'pbPb', labelKey: 'JPSI.DATASET.PBPB', nEvents: 1400, batches: 14 },
   ],
 };
 
@@ -77,6 +78,11 @@ describe('JpsiAnalysisComponent', () => {
     component.onDatasetChange('pPb');
 
     expect(component.totalEvents).toBe(2300);
+
+    component.onDatasetChange('pbPb');
+
+    expect(component.totalEvents).toBe(1400);
+    expect(component.eventsLeft).toBe(1400);
   });
 
   it('shows the welcome dialog only on the first visit of a tab', () => {
@@ -114,6 +120,14 @@ describe('JpsiAnalysisComponent', () => {
     expect(tutorial.notifyCutsChanged).toHaveBeenCalled();
 
     component.onDatasetChange('pPb');
+    expect(tutorial.notifyDatasetSwitched).toHaveBeenCalled();
+  });
+
+  it('switches to the pbPb dataset from the manifest', () => {
+    component.onDatasetChange('pbPb');
+
+    expect(component.activeDataset).toBe('pbPb');
+    expect(component.totalEvents).toBe(1400);
     expect(tutorial.notifyDatasetSwitched).toHaveBeenCalled();
   });
 

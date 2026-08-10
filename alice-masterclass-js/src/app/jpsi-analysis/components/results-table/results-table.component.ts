@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { ApiService } from '../../../shared/services/api.service';
-import { SummaryRow } from '../../models/jpsi.models';
+import { DATASET_LABEL_KEYS, SummaryRow } from '../../models/jpsi.models';
 
 @Component({
   selector: 'app-jpsi-results-table',
@@ -27,7 +27,7 @@ export class ResultsTableComponent {
   constructor(public readonly apiService: ApiService) {}
 
   datasetLabelKey(row: SummaryRow): string {
-    return row.datasetId === 'pp' ? 'JPSI.DATASET.PP' : 'JPSI.DATASET.PPB';
+    return DATASET_LABEL_KEYS[row.datasetId];
   }
 
   formatRatio(value: number | null): string {

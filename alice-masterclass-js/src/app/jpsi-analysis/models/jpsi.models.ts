@@ -26,15 +26,29 @@ export const PID_DEDX_BINS = PID_DEDX_MAX - PID_DEDX_MIN;
 
 /**
  * Above this many candidate pairs the histograms are not built at all. The widest
- * possible selection on p-Pb sits near three million pairs, so this only guards against
- * a future dataset that is far larger than the ones shipped today.
+ * possible selection on p-Pb sits near three million pairs; Pb-Pb is busier still and can
+ * exceed this guard on a wide selection (isSelectionTooWide() is expected to trigger there
+ * more often than on pp/p-Pb -- that is the point of the guard, not a bug).
  */
 export const MAX_PAIRS = 5_000_000;
 
 /** Events pulled per network request; must match the converter. */
 export const BATCH_SIZE = 100;
 
-export type DatasetId = 'pp' | 'pPb';
+export type DatasetId = 'pp' | 'pPb' | 'pbPb';
+
+/**
+ * Collision systems ordered from least to most dense. Used wherever the order carries a
+ * pedagogical meaning (table rows, compare-panel columns): each step should make the
+ * combinatorial background worse.
+ */
+export const DATASET_ORDER: DatasetId[] = ['pp', 'pPb', 'pbPb'];
+
+export const DATASET_LABEL_KEYS: Record<DatasetId, string> = {
+  pp: 'JPSI.DATASET.PP',
+  pPb: 'JPSI.DATASET.PPB',
+  pbPb: 'JPSI.DATASET.PBPB',
+};
 
 export interface PidCut {
   pMin: number;

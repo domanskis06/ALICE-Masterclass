@@ -8,44 +8,30 @@
       </p>
     } @else {
       <div class="compare-panel__grid" data-testid="jpsi-compare-grid">
-        <div class="compare-panel__column">
-          <h3>{{ 'JPSI.DATASET.PP' | translate }}</h3>
-          <p class="compare-panel__metric">
-            <span>{{ 'JPSI.METRICS.SB' | translate }}</span>
-            <strong>{{ formatRatio(ppRow!.signalToBackground) }}</strong>
-          </p>
-          <p class="compare-panel__metric">
-            <span>{{ 'JPSI.METRICS.SIGNIFICANCE' | translate }}</span>
-            <strong>{{ ppRow!.significance | number: '1.1-1' }}</strong>
-          </p>
-          <p class="compare-panel__metric compare-panel__metric--muted">
-            <span>{{ 'JPSI.RESULTS.EVENTS' | translate }}</span>
-            <strong>{{ ppRow!.nEvents }}</strong>
-          </p>
-        </div>
-
-        <div class="compare-panel__column">
-          <h3>{{ 'JPSI.DATASET.PPB' | translate }}</h3>
-          <p class="compare-panel__metric">
-            <span>{{ 'JPSI.METRICS.SB' | translate }}</span>
-            <strong>{{ formatRatio(pPbRow!.signalToBackground) }}</strong>
-          </p>
-          <p class="compare-panel__metric">
-            <span>{{ 'JPSI.METRICS.SIGNIFICANCE' | translate }}</span>
-            <strong>{{ pPbRow!.significance | number: '1.1-1' }}</strong>
-          </p>
-          <p class="compare-panel__metric compare-panel__metric--muted">
-            <span>{{ 'JPSI.RESULTS.EVENTS' | translate }}</span>
-            <strong>{{ pPbRow!.nEvents }}</strong>
-          </p>
-        </div>
+        @for (row of rows; track row.datasetId) {
+          <div class="compare-panel__column">
+            <h3>{{ datasetLabelKey(row) | translate }}</h3>
+            <p class="compare-panel__metric">
+              <span>{{ 'JPSI.METRICS.SB' | translate }}</span>
+              <strong>{{ formatRatio(row.signalToBackground) }}</strong>
+            </p>
+            <p class="compare-panel__metric">
+              <span>{{ 'JPSI.METRICS.SIGNIFICANCE' | translate }}</span>
+              <strong>{{ row.significance | number: '1.1-1' }}</strong>
+            </p>
+            <p class="compare-panel__metric compare-panel__metric--muted">
+              <span>{{ 'JPSI.RESULTS.EVENTS' | translate }}</span>
+              <strong>{{ row.nEvents }}</strong>
+            </p>
+          </div>
+        }
       </div>
 
       <p class="compare-panel__conclusion" data-testid="jpsi-compare-conclusion">
         {{ 'JPSI.COMPARE.HINT' | translate }}
       </p>
 
-      @if (backgroundGrew) {
+      @if (backgroundGrowsWithMultiplicity) {
         <p class="compare-panel__conclusion">{{ 'JPSI.COMPARE.CONCLUSION' | translate }}</p>
       }
 

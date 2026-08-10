@@ -2,6 +2,7 @@
   "batchSize": 100,
   "datasets": [
     { "id": "pp", "labelKey": "JPSI.DATASET.PP", "nEvents": 3800, "batches": 38 },
-    { "id": "pPb", "labelKey": "JPSI.DATASET.PPB", "nEvents": 2300, "batches": 23 }
+    { "id": "pPb", "labelKey": "JPSI.DATASET.PPB", "nEvents": 2300, "batches": 23 },
+    { "id": "pbPb", "labelKey": "JPSI.DATASET.PBPB", "nEvents": 1400, "batches": 14 }
   ]
 }
