@@ -120,11 +120,12 @@ A run that fails mid-way keeps the events already appended, and the component su
 
 ### Performance guard
 
-A wide selection on p-Pb can produce tens of millions of pairs and freeze the tab. Pair counts
-are quadratic in track multiplicity but can be **counted** in linear time, so before every
-filling pass `JpsiPairingService.isSelectionTooWide` checks the total against `MAX_PAIRS`
-(1.5 million). Above it the histograms are left empty, subtraction is disabled, and the panel
-asks the student to narrow the selection.
+Pair counts are quadratic in track multiplicity but can be **counted** in linear time, so
+before every filling pass `JpsiPairingService.isSelectionTooWide` checks the total against
+`MAX_PAIRS` (5 million). Above it the histograms are left empty, subtraction is disabled, and
+the panel asks the student to narrow the selection. The widest selection the shipped datasets
+allow is about three million pairs on p-Pb, so this is a guard against a future, larger
+dataset rather than something a student can trigger today.
 
 ### Charts
 
@@ -132,10 +133,17 @@ Both charts measure their container with a `ResizeObserver` and let the observer
 first size. Measuring synchronously in `ngAfterViewInit` would write width and height after
 Angular checked the bindings that read them, which is an `NG0100` in dev mode.
 
-The heatmap paints its 120x100 cells on a canvas — that many SVG rectangles could not be
-repainted fast enough while a run is in progress — and keeps axes and the cut rectangle in an
-SVG overlay so they stay crisp. Cell colour is `log1p`-scaled, otherwise the dense pion band
-would be the only visible feature.
+The heatmap paints its 120x120 cells on a canvas — that many SVG rectangles could not be
+repainted fast enough while a run is in progress — and keeps axes, the colour bar and the cut
+rectangle in an SVG overlay so they stay crisp. Colour uses a fixed 20-step palette (violet → red) sampled from the ROOT MasterClass PID
+colour bar, indexed as `floor(0.01 + count/max * 20)`. The colours never change; as
+`maxCount` grows, each colour simply covers a wider count range.
+
+The dE/dx axis uses one bin per unit because the VSD stores dE/dx as whole numbers. The
+earlier 100 bins over a range of 120 gave a bin width of 1.2, which made every fifth bin
+collect two dE/dx values and its neighbours one, and painted periodic bright rows over the
+whole plot. Any change to `PID_DEDX_MIN`, `PID_DEDX_MAX` or `PID_DEDX_BINS` has to keep the
+bin width at a whole number.
 
 The mass panel draws bars rather than smooth densities: the whole lesson is that these are
 counts being subtracted from each other.

@@ -25,6 +25,12 @@
   }
 }
 
+.pid-heatmap__colour-bar-frame {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 1;
+}
+
 .pid-heatmap__cut {
   fill: rgba(255, 255, 255, 0.08);
   stroke: #ff5252;

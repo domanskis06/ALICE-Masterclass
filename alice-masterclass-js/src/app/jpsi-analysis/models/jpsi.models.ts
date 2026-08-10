@@ -12,18 +12,24 @@ export const DEFAULT_MASS_WINDOW: [number, number] = [2.9, 3.3];
 export const MASS_WINDOW_LIMITS: [number, number] = [1.5, 5.0];
 
 /** Axis ranges of the dE/dx vs p heatmap. The p axis is logarithmic. */
-export const PID_P_MIN = 0.6;
+export const PID_P_MIN = 0.1;
 export const PID_P_MAX = 10;
 export const PID_DEDX_MIN = 20;
 export const PID_DEDX_MAX = 140;
 export const PID_P_BINS = 120;
-export const PID_DEDX_BINS = 100;
+/**
+ * One bin per unit of dE/dx. The VSD stores dE/dx as whole numbers, so any bin width
+ * other than an integer makes some bins swallow two values and their neighbours one,
+ * which paints periodic bright rows across the whole plot.
+ */
+export const PID_DEDX_BINS = PID_DEDX_MAX - PID_DEDX_MIN;
 
 /**
- * Above this many candidate pairs the histograms are not built at all. A wide selection
- * on p-Pb would otherwise produce tens of millions of pairs and freeze the tab.
+ * Above this many candidate pairs the histograms are not built at all. The widest
+ * possible selection on p-Pb sits near three million pairs, so this only guards against
+ * a future dataset that is far larger than the ones shipped today.
  */
-export const MAX_PAIRS = 1_500_000;
+export const MAX_PAIRS = 5_000_000;
 
 /** Events pulled per network request; must match the converter. */
 export const BATCH_SIZE = 100;

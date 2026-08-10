@@ -119,8 +119,8 @@ describe('JpsiPairingService', () => {
 
   it('flags a selection that would produce too many pairs', () => {
     const wide = makeEvent([
-      ...Array.from({ length: 1400 }, (_, i) => track(1, 1 + i * 0.001)),
-      ...Array.from({ length: 1400 }, (_, i) => track(-1, -1 - i * 0.001)),
+      ...Array.from({ length: 1800 }, (_, i) => track(1, 1 + i * 0.001)),
+      ...Array.from({ length: 1800 }, (_, i) => track(-1, -1 - i * 0.001)),
     ]);
 
     expect(service.isSelectionTooWide([wide], cut)).toBeTrue();

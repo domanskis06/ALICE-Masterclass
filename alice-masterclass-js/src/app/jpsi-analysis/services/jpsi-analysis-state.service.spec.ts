@@ -118,13 +118,14 @@ describe('JpsiAnalysisStateService', () => {
   });
 
   it('does not subtract while the selection is too wide', () => {
+    const nTracks = 4000;
     const crowded: CompactEvent = {
-      px: Float32Array.from(Array.from({ length: 3000 }, (_, i) => 1 + i * 0.001)),
-      py: new Float32Array(3000),
-      pz: new Float32Array(3000),
-      p: Float32Array.from(Array.from({ length: 3000 }, (_, i) => 1 + i * 0.001)),
-      dedx: Float32Array.from(new Array(3000).fill(80)),
-      sign: Int8Array.from(Array.from({ length: 3000 }, (_, i) => (i % 2 === 0 ? 1 : -1))),
+      px: Float32Array.from(Array.from({ length: nTracks }, (_, i) => 1 + i * 0.001)),
+      py: new Float32Array(nTracks),
+      pz: new Float32Array(nTracks),
+      p: Float32Array.from(Array.from({ length: nTracks }, (_, i) => 1 + i * 0.001)),
+      dedx: Float32Array.from(new Array(nTracks).fill(80)),
+      sign: Int8Array.from(Array.from({ length: nTracks }, (_, i) => (i % 2 === 0 ? 1 : -1))),
     };
 
     service.appendEvents([crowded]);

@@ -20,7 +20,58 @@ import {
   PidCut,
 } from '../../models/jpsi.models';
 
-const MARGIN = { top: 8, right: 12, bottom: 42, left: 52 };
+const COLOUR_BAR = { gap: 12, width: 14, axis: 34 };
+const MARGIN = {
+  top: 8,
+  right: COLOUR_BAR.gap + COLOUR_BAR.width + COLOUR_BAR.axis,
+  bottom: 42,
+  left: 52,
+};
+
+/**
+ * Twenty fixed colours for the PID heatmap (violet at the bottom → red at the top). The
+ * palette never changes; only the count→index mapping moves as more tracks fill the
+ * heatmap.
+ */
+const PID_PALETTE: readonly string[] = [
+  '#3300FF',
+  '#0014FF',
+  '#0044FF',
+  '#008BFF',
+  '#00A3FF',
+  '#00BBFF',
+  '#00FFFC',
+  '#00FFCC',
+  '#00FF85',
+  '#00FF55',
+  '#00FF0D',
+  '#22FF00',
+  '#69FF00',
+  '#99FF00',
+  '#E1FF00',
+  '#FFEE00',
+  '#FFA700',
+  '#FF7700',
+  '#FF2F00',
+  '#FF0000',
+];
+
+/**
+ * Map a bin count onto the fixed 20-colour palette. As maxCount grows, each colour covers
+ * a wider count range — the colour steps stay put, the binning slides across them.
+ */
+function paletteColour(count: number, maxCount: number): string {
+  if (count <= 0 || maxCount <= 0) {
+    return '#ffffff';
+  }
+
+  const nColors = PID_PALETTE.length;
+  const index = Math.min(
+    nColors - 1,
+    Math.max(0, Math.floor(0.01 + (count / maxCount) * nColors))
+  );
+  return PID_PALETTE[index];
+}
 
 /**
  * dE/dx versus momentum density plot.
@@ -136,31 +187,54 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
       return;
     }
 
-    // Counts span orders of magnitude between the dense pion band and the sparse tails,
-    // so a linear colour ramp would leave everything but the band invisible.
-    const colour = d3
-      .scaleSequential(d3.interpolateViridis)
-      .domain([0, Math.log1p(this.maxCount)]);
-
-    const cellWidth = this.plotWidth / PID_P_BINS;
-    const cellHeight = this.plotHeight / PID_DEDX_BINS;
-
     for (let dedxBin = 0; dedxBin < PID_DEDX_BINS; dedxBin++) {
+      // Cell edges are snapped to whole pixels so neighbouring cells neither overlap nor
+      // leave seams, which would show up as stripes over the dense bands.
+      const yTop = Math.round((this.plotHeight * (PID_DEDX_BINS - dedxBin - 1)) / PID_DEDX_BINS);
+      const yBottom = Math.round((this.plotHeight * (PID_DEDX_BINS - dedxBin)) / PID_DEDX_BINS);
+
       for (let pBin = 0; pBin < PID_P_BINS; pBin++) {
         const count = this.bins[dedxBin * PID_P_BINS + pBin];
         if (count === 0) {
           continue;
         }
 
-        context.fillStyle = colour(Math.log1p(count));
+        const xLeft = Math.round((this.plotWidth * pBin) / PID_P_BINS);
+        const xRight = Math.round((this.plotWidth * (pBin + 1)) / PID_P_BINS);
+
+        context.fillStyle = paletteColour(count, this.maxCount);
         context.fillRect(
-          pBin * cellWidth,
-          this.plotHeight - (dedxBin + 1) * cellHeight,
-          Math.ceil(cellWidth),
-          Math.ceil(cellHeight)
+          xLeft,
+          yTop,
+          Math.max(1, xRight - xLeft),
+          Math.max(1, yBottom - yTop)
         );
       }
     }
+  }
+
+  get colourBar(): { x: number; y: number; width: number; height: number } {
+    return {
+      x: MARGIN.left + this.plotWidth + COLOUR_BAR.gap,
+      y: MARGIN.top,
+      width: COLOUR_BAR.width,
+      height: this.plotHeight,
+    };
+  }
+
+  /** Discrete colour-bar bands, bottom (violet) to top (red), fixed palette order. */
+  get colourBarBands(): { y: number; height: number; colour: string }[] {
+    const bar = this.colourBar;
+    const n = PID_PALETTE.length;
+    return PID_PALETTE.map((colour, i) => {
+      const yTop = Math.round(bar.y + (bar.height * (n - i - 1)) / n);
+      const yBottom = Math.round(bar.y + (bar.height * (n - i)) / n);
+      return {
+        y: yTop,
+        height: Math.max(1, yBottom - yTop),
+        colour,
+      };
+    });
   }
 
   private drawAxes(): void {
@@ -172,7 +246,7 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
       .call(
         d3
           .axisBottom(this.xScale)
-          .tickValues([0.6, 1, 2, 3, 5, 10])
+          .tickValues([0.1, 0.2, 0.5, 1, 2, 5, 10])
           .tickFormat((value) => String(value)) as never
       );
 
@@ -180,6 +254,17 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
       .select<SVGGElement>('.y-axis')
       .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top})`)
       .call(d3.axisLeft(this.yScale).ticks(6) as never);
+
+    const bar = this.colourBar;
+    const countScale = d3
+      .scaleLinear()
+      .domain([0, Math.max(1, this.maxCount)])
+      .range([this.plotHeight, 0]);
+
+    svg
+      .select<SVGGElement>('.count-axis')
+      .attr('transform', `translate(${bar.x + bar.width}, ${MARGIN.top})`)
+      .call(d3.axisRight(countScale).ticks(6) as never);
   }
 
   /** Selection rectangle in pixels, for the SVG overlay. */

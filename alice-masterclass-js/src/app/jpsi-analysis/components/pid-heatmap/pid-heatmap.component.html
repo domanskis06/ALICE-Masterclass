@@ -10,6 +10,28 @@
   <svg #svg class="pid-heatmap__overlay" [attr.width]="width" [attr.height]="height">
     <g class="x-axis"></g>
     <g class="y-axis"></g>
+    <g class="count-axis"></g>
+
+    @if (maxCount > 0) {
+      <g class="pid-heatmap__colour-bar">
+        @for (band of colourBarBands; track band.y) {
+          <rect
+            [attr.x]="colourBar.x"
+            [attr.y]="band.y"
+            [attr.width]="colourBar.width"
+            [attr.height]="band.height"
+            [attr.fill]="band.colour"
+          ></rect>
+        }
+        <rect
+          class="pid-heatmap__colour-bar-frame"
+          [attr.x]="colourBar.x"
+          [attr.y]="colourBar.y"
+          [attr.width]="colourBar.width"
+          [attr.height]="colourBar.height"
+        ></rect>
+      </g>
+    }
 
     @if (cutRect; as rect) {
       <rect
