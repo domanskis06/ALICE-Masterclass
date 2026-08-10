@@ -28,16 +28,28 @@ const MARGIN = {
   left: 52,
 };
 
+/** Major p-axis labels; everything else is tick-only. */
+const X_LABELLED_TICKS = new Set([0.1, 0.2, 0.5, 1, 2, 5, 10]);
+
+/**
+ * Log-decade tick marks on [PID_P_MIN, PID_P_MAX]. Uneven pixel spacing within each
+ * decade is what makes the logarithmic scale readable; only {@link X_LABELLED_TICKS}
+ * keep numeric labels.
+ */
+const X_AXIS_TICKS: readonly number[] = [
+  0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+];
+
 /**
  * Twenty fixed colours for the PID heatmap (violet at the bottom → red at the top). The
  * palette never changes; only the count→index mapping moves as more tracks fill the
  * heatmap.
  */
 const PID_PALETTE: readonly string[] = [
-  '#3300FF',
-  '#0014FF',
-  '#0044FF',
-  '#008BFF',
+  '#2200FF',
+  '#1427FF',
+  '#1453FF',
+  '#1494FF',
   '#00A3FF',
   '#00BBFF',
   '#00FFFC',
@@ -240,15 +252,25 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
   private drawAxes(): void {
     const svg = d3.select(this.svgRef.nativeElement);
 
-    svg
+    const xAxis = svg
       .select<SVGGElement>('.x-axis')
-      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top + this.plotHeight})`)
-      .call(
-        d3
-          .axisBottom(this.xScale)
-          .tickValues([0.1, 0.2, 0.5, 1, 2, 5, 10])
-          .tickFormat((value) => String(value)) as never
-      );
+      .attr('transform', `translate(${MARGIN.left}, ${MARGIN.top + this.plotHeight})`);
+
+    xAxis.call(
+      d3
+        .axisBottom(this.xScale)
+        .tickValues(X_AXIS_TICKS as number[])
+        .tickFormat((value) =>
+          X_LABELLED_TICKS.has(+value) ? String(+value) : ''
+        ) as never
+    );
+
+    // Shorter marks for unlabelled decade ticks so the labelled ones stay dominant.
+    xAxis.selectAll<SVGGElement, number>('.tick').each(function (value) {
+      if (!X_LABELLED_TICKS.has(+value)) {
+        d3.select(this).select('line').attr('y2', 4);
+      }
+    });
 
     svg
       .select<SVGGElement>('.y-axis')
