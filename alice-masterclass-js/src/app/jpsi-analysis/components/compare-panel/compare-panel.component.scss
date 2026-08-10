@@ -1,5 +1,8 @@
 .compare-panel__title {
   font-size: 16px;
+  // Match mat-card-content horizontal inset (same as the opposite-charge pairs button).
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .compare-panel__locked {

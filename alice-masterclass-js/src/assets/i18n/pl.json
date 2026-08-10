@@ -446,7 +446,9 @@
     "MENU": "Analiza J/psi",
     "DATASET": {
       "PP": "proton-proton",
-      "PPB": "proton-ołów"
+      "PPB": "proton-ołów",
+      "PP_SHORT": "pp",
+      "PPB_SHORT": "p-Pb"
     },
     "TOOLBAR": {
       "DATASET": "Układ zderzenia",
@@ -466,13 +468,15 @@
     "CUTS": {
       "MOMENTUM": "Zakres pędu",
       "DEDX": "Zakres straty energii",
+      "ACCEPT": "Zaakceptuj wybrany zakres",
+      "HOWTO": "How to select a range?",
       "RESET": "Wyczyść zaznaczenie"
     },
     "MASS": {
       "TITLE": "Masa niezmiennicza",
       "X_AXIS": "Masa niezmiennicza (GeV/c²)",
       "Y_AXIS": "Pary",
-      "EMPTY": "Przeanalizuj zdarzenia, żeby zbudować histogramy masy.",
+      "EMPTY": "Wybierz pasmo elektronów na wykresie PID i naciśnij Zaakceptuj wybrany zakres.",
       "SERIES": {
         "UNLIKE": "Pary przeciwnego znaku",
         "POSPOS": "Pary tego samego znaku, dodatnie",
@@ -527,7 +531,9 @@
       "TITLE": "Produkcja J/psi",
       "SUBTITLE": "Jak znaleźć rzadki sygnał w zatłoczonym zderzeniu",
       "P1": "Naładowane cząstki tracą energię, przechodząc przez detektor. Ile jej tracą, zależy od ich pędu i od tego, jaką są cząstką. Wykres po lewej pokazuje tę stratę energii w funkcji pędu, więc różne cząstki tworzą różne pasy.",
-      "P2": "Elektrony i pozytony leżą w wąskim pasie. Zaznacz go suwakami. Każdy zaznaczony tor traktujemy jak elektron.",
+      "PID_IMG_ALT": "Wykres PID ALICE: strata energii względem pędu z podpisanymi pasami cząstek",
+      "PID_IMG_CAPTION": "Referencyjny wykres PID: szukaj prawie płaskiego pasa elektronów oznaczonego e, nad mocnym pasem pionów.",
+      "P2": "Na tym referencyjnym wykresie elektrony tworzą prawie poziomy pas oznaczony e, wokół dE/dx ≈ 80. Ustaw suwaki pędu i straty energii tak, żeby czerwony prostokąt objął ten pas — dobry start to strata energii między około 70 a 90 — a potem naciśnij Zaakceptuj wybrany zakres. Każdy zaznaczony tor traktujemy jak elektron.",
       "P3": "Aplikacja łączy potem zaznaczone tory w pary wewnątrz każdego zderzenia i liczy masę niezmienniczą każdej pary. Rozpad J/psi daje elektron i pozyton, więc widać go jako pik w okolicy 3,1 GeV/c² wśród par przeciwnego znaku.",
       "P4": "Pary tego samego znaku nie mogą pochodzić z rozpadu J/psi, więc mierzą przypadkowe tło. Odejmij je, a to, co zostanie, jest twoim sygnałem.",
       "START_TUTORIAL": "Odtwórz przewodnik"
@@ -536,12 +542,14 @@
       "NEXT": "Dalej",
       "PREVIOUS": "Wstecz",
       "DONE": "Gotowe",
+      "STEP_START_DATASET_TITLE": "Układ zderzenia",
+      "STEP_START_DATASET_BODY": "Wybierz, który układ zderzenia analizujesz najpierw. Zacznij od <strong>pp</strong> (proton-proton). Później przejdziesz do proton-ołów.",
       "STEP_RUN_TITLE": "Analizuj zdarzenia",
-      "STEP_RUN_BODY": "Wybierz, ile zderzeń przeanalizować, i naciśnij <strong>Analizuj</strong>. Możesz nacisnąć ponownie później, żeby doliczać kolejne zdarzenia do tych, które już masz.",
+      "STEP_RUN_BODY": "Wybierz, ile zderzeń przeanalizować, i naciśnij <strong>Analizuj</strong>. Przewodnik przechodzi dalej od razu po naciśnięciu. Możesz nacisnąć Analizuj ponownie później, żeby doliczać kolejne zdarzenia.",
       "STEP_HEATMAP_TITLE": "Identyfikacja cząstek",
       "STEP_HEATMAP_BODY": "Każdy tor trafia tutaj zgodnie ze swoim pędem i stratą energii. Cząstki tego samego rodzaju tworzą pasy. Elektrony leżą w dość płaskim pasie nad mocnym pasem pionów.",
       "STEP_CUTS_TITLE": "Zaznacz elektrony",
-      "STEP_CUTS_BODY": "Ustaw suwaki tak, żeby czerwony prostokąt objął pas elektronów. Dobry punkt startu to strata energii między 70 a 90. Wszystko wewnątrz prostokąta trafia do histogramów masy.",
+      "STEP_CUTS_BODY": "Ustaw suwaki tak, żeby czerwony prostokąt objął pas elektronów. Dobry punkt startu to strata energii między 70 a 90. Potem naciśnij <strong>Zaakceptuj wybrany zakres</strong>, żeby wypełnić histogramy masy.",
       "STEP_SERIES_TITLE": "Trzy rodzaje par",
       "STEP_SERIES_BODY": "Czerwony pokazuje pary przeciwnego znaku, które mogą pochodzić z J/psi. Niebieski i zielony pokazują pary tego samego znaku, które nie mogą. Włączaj i wyłączaj serie, żeby porównać ich kształty, a przełącznik <strong>Tło kombinatoryczne</strong> pokaże obie serie tego samego znaku razem.",
       "STEP_SUBTRACT_TITLE": "Odejmij tło",

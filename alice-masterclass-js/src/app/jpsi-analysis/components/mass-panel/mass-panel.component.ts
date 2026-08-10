@@ -14,6 +14,7 @@ import { Options } from '@angular-slider/ngx-slider';
 import * as d3 from 'd3';
 
 import {
+  DEFAULT_MASS_WINDOW,
   MASS_BINS,
   MASS_BIN_WIDTH,
   MASS_WINDOW_LIMITS,
@@ -31,7 +32,7 @@ export const SERIES_COLOURS = {
   unlike: '#e53935',
   posPos: '#1e88e5',
   negNeg: '#43a047',
-  background: '#8e24aa',
+  background: '#f9a825',
   residual: '#fb8c00',
 };
 
@@ -69,7 +70,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() mode: MassPanelMode = 'explore';
   @Input() visibility: SeriesVisibility = { unlike: true, posPos: true, negNeg: true };
   @Input() showBackgroundSum = false;
-  @Input() massWindow: [number, number] = [2.9, 3.3];
+  @Input() massWindow: [number, number] = [...DEFAULT_MASS_WINDOW];
   @Input() liveResult: SignalResult | null = null;
   @Input() canSubtract = false;
   @Input() canAccept = false;

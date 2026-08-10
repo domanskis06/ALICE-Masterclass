@@ -444,7 +444,9 @@
     "MENU": "J/psi analysis",
     "DATASET": {
       "PP": "proton-proton",
-      "PPB": "proton-lead"
+      "PPB": "proton-lead",
+      "PP_SHORT": "pp",
+      "PPB_SHORT": "p-Pb"
     },
     "TOOLBAR": {
       "DATASET": "Collision system",
@@ -464,13 +466,15 @@
     "CUTS": {
       "MOMENTUM": "Momentum range",
       "DEDX": "Energy loss range",
+      "ACCEPT": "Accept selected range",
+      "HOWTO": "How to select a range?",
       "RESET": "Reset selection"
     },
     "MASS": {
       "TITLE": "Invariant mass",
       "X_AXIS": "Invariant mass (GeV/c²)",
       "Y_AXIS": "Pairs",
-      "EMPTY": "Analyse some events to build the mass histograms.",
+      "EMPTY": "Choose an electron band on the PID plot and press Accept selected range.",
       "SERIES": {
         "UNLIKE": "Opposite-charge pairs",
         "POSPOS": "Same-charge pairs, positive",
@@ -525,7 +529,9 @@
       "TITLE": "J/psi production",
       "SUBTITLE": "Finding a rare signal in a busy collision",
       "P1": "Charged particles lose energy as they cross the detector. How much they lose depends on their momentum and on what kind of particle they are. The plot on the left shows this energy loss against momentum, so different particles form different bands.",
-      "P2": "Electrons and positrons sit in a narrow band. Use the sliders to select it. Every track you keep is treated as an electron.",
+      "PID_IMG_ALT": "ALICE PID plot of energy loss versus momentum with labelled particle bands",
+      "PID_IMG_CAPTION": "Reference PID plot: look for the nearly flat electron band labelled e, above the strong pion band.",
+      "P2": "On that reference plot, electrons form the almost horizontal band labelled e, around dE/dx ≈ 80. Move the momentum and energy-loss sliders so the red rectangle covers that band — a good start is an energy loss between about 70 and 90 — then press Accept selected range. Every track you keep is treated as an electron.",
       "P3": "The app then pairs the selected tracks inside each collision and computes the invariant mass of every pair. A J/psi decay gives an electron and a positron, so it shows up as a peak near 3.1 GeV/c² among the opposite-charge pairs.",
       "P4": "Pairs of the same charge cannot come from a J/psi decay, so they measure the random background. Subtract them and what is left is your signal.",
       "START_TUTORIAL": "Replay the guided tour"
@@ -534,12 +540,14 @@
       "NEXT": "Next",
       "PREVIOUS": "Back",
       "DONE": "Done",
+      "STEP_START_DATASET_TITLE": "Collision system",
+      "STEP_START_DATASET_BODY": "Choose which collision system to analyse first. Start with <strong>pp</strong> (proton-proton). You will switch to proton-lead later.",
       "STEP_RUN_TITLE": "Analyse events",
-      "STEP_RUN_BODY": "Pick how many collisions to analyse and press <strong>Analyse</strong>. You can press it again later to add more events on top of what you already have.",
+      "STEP_RUN_BODY": "Pick how many collisions to analyse and press <strong>Analyse</strong>. The tour continues as soon as you press it. You can press Analyse again later to add more events.",
       "STEP_HEATMAP_TITLE": "Particle identification",
       "STEP_HEATMAP_BODY": "Every track lands here according to its momentum and its energy loss. Particles of the same type form bands. Electrons sit in a fairly flat band above the strong pion band.",
       "STEP_CUTS_TITLE": "Select the electrons",
-      "STEP_CUTS_BODY": "Move the sliders so the red rectangle covers the electron band. A good starting point is an energy loss between 70 and 90. Everything inside the rectangle is used to build the mass histograms.",
+      "STEP_CUTS_BODY": "Move the sliders so the red rectangle covers the electron band. A good starting point is an energy loss between 70 and 90. Then press <strong>Accept selected range</strong> to fill the mass histograms.",
       "STEP_SERIES_TITLE": "Three kinds of pairs",
       "STEP_SERIES_BODY": "Red shows pairs of opposite charge, which can come from a J/psi. Blue and green show pairs of the same charge, which cannot. Turn the series on and off to compare their shapes, and switch on <strong>Combinatorial background</strong> to see the two same-charge series added together.",
       "STEP_SUBTRACT_TITLE": "Subtract the background",

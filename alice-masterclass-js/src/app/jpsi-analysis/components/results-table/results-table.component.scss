@@ -3,6 +3,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  // Match mat-card-content horizontal inset (same as the opposite-charge pairs button).
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .results-table__title {

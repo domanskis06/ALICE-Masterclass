@@ -41,16 +41,22 @@ describe('JpsiAnalysisStateService', () => {
     expect(service.state.nextEventIndex).toBe(3);
   });
 
-  it('fills the mass histograms and the heatmap while appending', () => {
+  it('fills the heatmap while appending but waits for Accept selected range before mass', () => {
     service.appendEvents([makePairEvent()]);
+
+    expect(service.state.pidMax).toBeGreaterThan(0);
+    expect(service.state.mass.unlike.reduce((sum, v) => sum + v, 0)).toBe(0);
+
+    service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
 
     const totalUnlike = service.state.mass.unlike.reduce((sum, v) => sum + v, 0);
     expect(totalUnlike).toBe(1);
-    expect(service.state.pidMax).toBeGreaterThan(0);
+    expect(service.state.appliedCut?.dedxMin).toBe(70);
   });
 
   it('returns to explore mode after every operation that changes the histograms', () => {
     service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
     service.subtractBackground();
     expect(service.state.panelMode).toBe('subtracted');
 
@@ -59,16 +65,18 @@ describe('JpsiAnalysisStateService', () => {
     expect(service.state.liveResult).toBeNull();
 
     service.subtractBackground();
-    service.setCut({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
+    service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
     expect(service.state.panelMode).toBe('explore');
 
     service.subtractBackground();
     service.resetCuts();
     expect(service.state.panelMode).toBe('explore');
+    expect(service.state.appliedCut).toBeNull();
   });
 
   it('keeps the accepted table row when the histograms are reset', () => {
     service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
     service.subtractBackground();
     service.setMassWindow([2.9, 3.1]);
     service.acceptResult();
@@ -82,6 +90,7 @@ describe('JpsiAnalysisStateService', () => {
     expect(service.state.nextEventIndex).toBe(0);
     expect(service.state.pidMax).toBe(0);
     expect(service.state.panelMode).toBe('explore');
+    expect(service.state.appliedCut).toBeNull();
     // The row is a frozen measurement, so it outlives the data it came from.
     expect(service.state.tableRow?.nEvents).toBe(acceptedEvents);
   });
@@ -92,6 +101,7 @@ describe('JpsiAnalysisStateService', () => {
     service.appendEvents([makePairEvent()]);
     expect(service.canAccept).toBeFalse();
 
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
     service.subtractBackground();
     service.setMassWindow([2.9, 3.1]);
     expect(service.canAccept).toBeTrue();
@@ -103,11 +113,12 @@ describe('JpsiAnalysisStateService', () => {
 
   it('keeps the two datasets independent', () => {
     service.appendEvents([makePairEvent(), makePairEvent()]);
-    service.setCut({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
+    service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
 
     service.selectDataset('pPb');
     expect(service.state.processedCount).toBe(0);
     expect(service.state.cut.dedxMin).toBe(DEFAULT_PID_CUT.dedxMin);
+    expect(service.state.appliedCut).toBeNull();
 
     service.appendEvents([makePairEvent()]);
     expect(service.state.processedCount).toBe(1);
@@ -115,6 +126,7 @@ describe('JpsiAnalysisStateService', () => {
     service.selectDataset('pp');
     expect(service.state.processedCount).toBe(2);
     expect(service.state.cut.dedxMin).toBe(70);
+    expect(service.state.appliedCut?.dedxMin).toBe(70);
   });
 
   it('does not subtract while the selection is too wide', () => {
@@ -129,8 +141,19 @@ describe('JpsiAnalysisStateService', () => {
     };
 
     service.appendEvents([crowded]);
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
 
     expect(service.state.tooWideSelection).toBeTrue();
     expect(service.canSubtract).toBeFalse();
+  });
+
+  it('rebuilds mass when Accept selected range is pressed again', () => {
+    service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
+    expect(service.state.mass.unlike.reduce((sum, v) => sum + v, 0)).toBe(1);
+
+    // A cut that excludes the tracks leaves the mass empty.
+    service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 120, dedxMax: 140 });
+    expect(service.state.mass.unlike.reduce((sum, v) => sum + v, 0)).toBe(0);
   });
 });

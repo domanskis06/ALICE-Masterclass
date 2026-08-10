@@ -13,29 +13,30 @@
     ></app-jpsi-dataset-toolbar>
 
     <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
-      <mat-card appearance="outlined" fxFlex="40" id="jpsi-tour-heatmap">
+      <mat-card appearance="outlined" fxFlex="50" id="jpsi-tour-heatmap">
         <mat-card-title class="jpsi__card-title">
           {{ 'JPSI.PID.TITLE' | translate }}
         </mat-card-title>
         <mat-card-content>
-          <app-jpsi-pid-heatmap
-            [bins]="state.state.pidBins"
-            [maxCount]="state.state.pidMax"
-            [cut]="state.state.cut"
-            [revision]="revision"
-          ></app-jpsi-pid-heatmap>
-
           <app-jpsi-pid-cut-controls
             [cut]="state.state.cut"
             [disabled]="quickAnalysis.isRunning || !hasData"
-            (cutChange)="onCutChange($event)"
+            (cutPreview)="onCutPreview($event)"
+            (acceptRange)="onAcceptSelectedRange($event)"
             (resetCuts)="onResetCuts()"
-          ></app-jpsi-pid-cut-controls>
+          >
+            <app-jpsi-pid-heatmap
+              [bins]="state.state.pidBins"
+              [maxCount]="state.state.pidMax"
+              [cut]="previewCut"
+              [revision]="revision"
+            ></app-jpsi-pid-heatmap>
+          </app-jpsi-pid-cut-controls>
         </mat-card-content>
       </mat-card>
 
       <app-jpsi-mass-panel
-        fxFlex="60"
+        fxFlex="50"
         [mass]="state.state.mass"
         [residual]="residual"
         [background]="background"
@@ -47,7 +48,7 @@
         [canSubtract]="state.canSubtract"
         [canAccept]="state.canAccept"
         [tooWideSelection]="state.state.tooWideSelection"
-        [hasData]="hasData"
+        [hasData]="hasMassData"
         [revision]="revision"
         (toggleSeries)="onToggleSeries($event)"
         (showBackgroundSumChange)="onShowBackgroundSum($event)"

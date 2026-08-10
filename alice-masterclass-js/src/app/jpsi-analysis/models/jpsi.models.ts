@@ -2,21 +2,37 @@
 export const M_ELECTRON = 0.000511;
 
 /** Shared binning of the three mass histograms, in GeV/c^2. */
-export const MASS_XMIN = 0;
-export const MASS_XMAX = 6;
-export const MASS_BINS = 120;
+export const MASS_XMIN = 1;
+export const MASS_XMAX = 5;
+/** Keep 50 MeV bins: (5 − 1) GeV / 0.05 GeV = 80. */
+export const MASS_BINS = 80;
 export const MASS_BIN_WIDTH = (MASS_XMAX - MASS_XMIN) / MASS_BINS;
 
-/** Default signal window and the range the student may drag it within. */
-export const DEFAULT_MASS_WINDOW: [number, number] = [2.9, 3.3];
-export const MASS_WINDOW_LIMITS: [number, number] = [1.5, 5.0];
+/** Signal-window drag limits; match the histogram axis and start at both ends. */
+export const MASS_WINDOW_LIMITS: [number, number] = [MASS_XMIN, MASS_XMAX];
+export const DEFAULT_MASS_WINDOW: [number, number] = [
+  MASS_WINDOW_LIMITS[0],
+  MASS_WINDOW_LIMITS[1],
+];
 
 /** Axis ranges of the dE/dx vs p heatmap. The p axis is logarithmic. */
 export const PID_P_MIN = 0.1;
 export const PID_P_MAX = 10;
+/** Log-space endpoints of the momentum axis — slider units match pixel motion. */
+export const PID_LOG_P_MIN = Math.log(PID_P_MIN);
+export const PID_LOG_P_MAX = Math.log(PID_P_MAX);
 export const PID_DEDX_MIN = 20;
 export const PID_DEDX_MAX = 140;
 export const PID_P_BINS = 120;
+
+/** SVG/canvas margins of the PID heatmap — shared so the momentum slider can align. */
+export const PID_HEATMAP_MARGIN = {
+  top: 8,
+  /** Colour-bar gap + bar + count-axis. */
+  right: 12 + 14 + 34,
+  bottom: 42,
+  left: 52,
+} as const;
 /**
  * One bin per unit of dE/dx. The VSD stores dE/dx as whole numbers, so any bin width
  * other than an integer makes some bins swallow two values and their neighbours one,
@@ -119,7 +135,13 @@ export interface DatasetAnalysisState {
   pidBins: Uint32Array;
   /** Highest single-cell count, kept for the heatmap colour scale. */
   pidMax: number;
+  /** Draft cut mirrored by the PID sliders (does not rebuild mass until accepted). */
   cut: PidCut;
+  /**
+   * Cut last applied with Accept selected range. Null until the student accepts once;
+   * mass histograms stay empty until then.
+   */
+  appliedCut: PidCut | null;
   mass: MassHistograms;
   panelMode: MassPanelMode;
   visibility: SeriesVisibility;
@@ -166,6 +188,7 @@ export function createDatasetState(datasetId: DatasetId): DatasetAnalysisState {
     pidBins: new Uint32Array(PID_P_BINS * PID_DEDX_BINS),
     pidMax: 0,
     cut: { ...DEFAULT_PID_CUT },
+    appliedCut: null,
     mass: createMassHistograms(),
     panelMode: 'explore',
     visibility: { unlike: true, posPos: true, negNeg: true },

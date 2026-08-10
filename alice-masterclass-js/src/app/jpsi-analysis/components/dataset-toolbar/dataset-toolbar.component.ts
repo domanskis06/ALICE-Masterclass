@@ -28,6 +28,11 @@ export class DatasetToolbarComponent {
     return preset === 'all' ? 'JPSI.TOOLBAR.PRESET_ALL' : String(preset);
   }
 
+  /** Compact collision-system labels for the dropdown (pp, p-Pb, …). */
+  shortLabelKey(datasetId: DatasetId): string {
+    return datasetId === 'pp' ? 'JPSI.DATASET.PP_SHORT' : 'JPSI.DATASET.PPB_SHORT';
+  }
+
   get progressPercent(): number {
     return this.totalEvents > 0 ? (this.processedCount / this.totalEvents) * 100 : 0;
   }

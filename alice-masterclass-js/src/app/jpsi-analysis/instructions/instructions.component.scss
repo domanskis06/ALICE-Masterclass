@@ -1,3 +1,11 @@
+/* Match the default Material instructions dialog width used by other exercises (80vw). */
+:host {
+  display: block;
+  width: 80vw;
+  max-width: 80vw;
+  box-sizing: border-box;
+}
+
 h1 {
   font-size: 20px;
   margin-bottom: 4px;
@@ -12,5 +20,23 @@ h2 {
 
 p {
   line-height: 1.55;
-  max-width: 60ch;
+}
+
+.jpsi-instructions__figure {
+  margin: 12px 0 16px;
+  max-width: 720px;
+}
+
+.jpsi-instructions__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.jpsi-instructions__figure figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.65);
 }

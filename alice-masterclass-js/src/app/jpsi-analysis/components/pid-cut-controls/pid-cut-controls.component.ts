@@ -1,16 +1,29 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { Options } from '@angular-slider/ngx-slider';
 
 import {
   PID_DEDX_MAX,
   PID_DEDX_MIN,
+  PID_HEATMAP_MARGIN,
+  PID_LOG_P_MAX,
+  PID_LOG_P_MIN,
   PID_P_MAX,
   PID_P_MIN,
   PidCut,
 } from '../../models/jpsi.models';
+import { JpsiTutorialService } from '../../services/jpsi-tutorial.service';
 
-/** Debounce for slider dragging; long enough to avoid rebuilding on every pixel. */
-const CHANGE_DEBOUNCE_MS = 150;
+/** Width of the vertical dE/dx column (label + slider), kept in sync with the SCSS. */
+const DEDX_COLUMN_WIDTH_PX = 92;
+const PLOT_ROW_GAP_PX = 12;
+/**
+ * ngx-slider pointer is 32×32; the model value sits at the pointer centre, so the track
+ * must overhang each plot edge by this half-size for the min/max thumbs to land on the axes.
+ */
+const SLIDER_THUMB_HALF_PX = 16;
+
+/** Fine enough that thumbs feel continuous; equal Δu ⇒ equal Δx on the log heatmap. */
+const LOG_P_STEP = (PID_LOG_P_MAX - PID_LOG_P_MIN) / 400;
 
 @Component({
   selector: 'app-jpsi-pid-cut-controls',
@@ -22,87 +35,96 @@ export class PidCutControlsComponent implements OnChanges {
   @Input() cut!: PidCut;
   @Input() disabled = false;
 
-  @Output() cutChange = new EventEmitter<PidCut>();
+  /** Immediate cut while dragging — drives the PID selection rectangle only. */
+  @Output() cutPreview = new EventEmitter<PidCut>();
+  /** Commits the current slider selection into the mass histograms. */
+  @Output() acceptRange = new EventEmitter<PidCut>();
   @Output() resetCuts = new EventEmitter<void>();
 
-  pMin = PID_P_MIN;
-  pMax = PID_P_MAX;
+  constructor(private readonly tutorial: JpsiTutorialService) {}
+
+  /** Momentum thumbs live in log(p) so motion matches the heatmap's log-x axis. */
+  logPMin = PID_LOG_P_MIN;
+  logPMax = PID_LOG_P_MAX;
   dedxMin = PID_DEDX_MIN;
   dedxMax = PID_DEDX_MAX;
 
-  readonly pOptions: Options = {
-    floor: PID_P_MIN,
-    ceil: PID_P_MAX,
-    step: 0.1,
-    translate: (value: number) => value.toFixed(1),
-  };
+  pOptions: Options = this.buildPOptions(false);
+  dedxOptions: Options = this.buildDedxOptions(false);
 
-  readonly dedxOptions: Options = {
-    floor: PID_DEDX_MIN,
-    ceil: PID_DEDX_MAX,
-    step: 1,
-    translate: (value: number) => value.toFixed(0),
-  };
+  readonly dedxColumnWidth = DEDX_COLUMN_WIDTH_PX;
+  /**
+   * Align momentum thumbs with the plot edges: inset to the canvas, then overhang by half
+   * a thumb so the min/max centres sit on the Y-axis / right plot edge.
+   */
+  readonly momentumInsetLeft =
+    DEDX_COLUMN_WIDTH_PX + PLOT_ROW_GAP_PX + PID_HEATMAP_MARGIN.left - SLIDER_THUMB_HALF_PX;
+  readonly momentumInsetRight = PID_HEATMAP_MARGIN.right - SLIDER_THUMB_HALF_PX;
+  /**
+   * Vertical slider fills the heatmap host; pad so min/max thumb centres sit on the X-axis
+   * and the top of the plot (host includes axis label margins).
+   */
+  readonly dedxPadTop = Math.max(0, SLIDER_THUMB_HALF_PX - PID_HEATMAP_MARGIN.top);
+  readonly dedxPadBottom = PID_HEATMAP_MARGIN.bottom - SLIDER_THUMB_HALF_PX;
 
-  readonly limits = {
-    pMin: PID_P_MIN,
-    pMax: PID_P_MAX,
-    dedxMin: PID_DEDX_MIN,
-    dedxMax: PID_DEDX_MAX,
-  };
-
-  private emitTimeout: number | null = null;
-
-  ngOnChanges(): void {
-    if (this.cut === undefined) {
-      return;
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['cut'] && this.cut !== undefined) {
+      this.logPMin = Math.log(this.clampP(this.cut.pMin));
+      this.logPMax = Math.log(this.clampP(this.cut.pMax));
+      this.dedxMin = this.cut.dedxMin;
+      this.dedxMax = this.cut.dedxMax;
     }
-    this.pMin = this.cut.pMin;
-    this.pMax = this.cut.pMax;
-    this.dedxMin = this.cut.dedxMin;
-    this.dedxMax = this.cut.dedxMax;
+
+    if (changes['disabled']) {
+      this.pOptions = this.buildPOptions(this.disabled);
+      this.dedxOptions = this.buildDedxOptions(this.disabled);
+    }
   }
 
   onSliderChange(): void {
-    this.scheduleEmit();
+    this.cutPreview.emit(this.currentCut());
   }
 
-  /** Number inputs are authoritative but must stay inside the axis and stay ordered. */
-  onNumberChange(): void {
-    this.pMin = this.clamp(this.pMin, PID_P_MIN, PID_P_MAX);
-    this.pMax = this.clamp(this.pMax, PID_P_MIN, PID_P_MAX);
-    this.dedxMin = this.clamp(this.dedxMin, PID_DEDX_MIN, PID_DEDX_MAX);
-    this.dedxMax = this.clamp(this.dedxMax, PID_DEDX_MIN, PID_DEDX_MAX);
-
-    if (this.pMin > this.pMax) {
-      [this.pMin, this.pMax] = [this.pMax, this.pMin];
-    }
-    if (this.dedxMin > this.dedxMax) {
-      [this.dedxMin, this.dedxMax] = [this.dedxMax, this.dedxMin];
-    }
-
-    this.scheduleEmit();
+  onAcceptRange(): void {
+    this.acceptRange.emit(this.currentCut());
   }
 
-  private clamp(value: number, min: number, max: number): number {
-    if (!Number.isFinite(value)) {
-      return min;
-    }
-    return Math.min(max, Math.max(min, value));
+  openHowToSelectRange(): void {
+    this.tutorial.openInstructionsDialog();
   }
 
-  private scheduleEmit(): void {
-    if (this.emitTimeout !== null) {
-      window.clearTimeout(this.emitTimeout);
-    }
-    this.emitTimeout = window.setTimeout(() => {
-      this.emitTimeout = null;
-      this.cutChange.emit({
-        pMin: this.pMin,
-        pMax: this.pMax,
-        dedxMin: this.dedxMin,
-        dedxMax: this.dedxMax,
-      });
-    }, CHANGE_DEBOUNCE_MS);
+  private currentCut(): PidCut {
+    return {
+      pMin: this.clampP(Math.exp(this.logPMin)),
+      pMax: this.clampP(Math.exp(this.logPMax)),
+      dedxMin: this.dedxMin,
+      dedxMax: this.dedxMax,
+    };
+  }
+
+  private clampP(value: number): number {
+    return Math.min(PID_P_MAX, Math.max(PID_P_MIN, value));
+  }
+
+  private buildPOptions(disabled: boolean): Options {
+    return {
+      floor: PID_LOG_P_MIN,
+      ceil: PID_LOG_P_MAX,
+      step: LOG_P_STEP,
+      disabled,
+      // Show physical momentum; the model value stays in log-space.
+      translate: (logP: number) => Math.exp(logP).toFixed(1),
+    };
+  }
+
+  private buildDedxOptions(disabled: boolean): Options {
+    return {
+      floor: PID_DEDX_MIN,
+      ceil: PID_DEDX_MAX,
+      step: 1,
+      vertical: true,
+      disabled,
+      translate: (value: number) => value.toFixed(0),
+    };
   }
 }

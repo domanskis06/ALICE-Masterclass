@@ -39,7 +39,7 @@ describe('JpsiAnalysisComponent', () => {
       'startMainTour',
       'destroyDriver',
       'notifyDatasetSwitched',
-      'notifyRunFinished',
+      'notifyRunStarted',
       'notifyCutsChanged',
       'notifySubtracted',
       'notifyAccepted',
@@ -104,13 +104,19 @@ describe('JpsiAnalysisComponent', () => {
         sign: Int8Array.from([1, -1]),
       },
     ]);
+    component.onAcceptSelectedRange({
+      pMin: 0.1,
+      pMax: 10,
+      dedxMin: 20,
+      dedxMax: 140,
+    });
 
     expect(component.revision).toBeGreaterThan(before);
     expect(component.residual.reduce((sum, v) => sum + v, 0)).toBe(1);
   });
 
   it('tells the tour about the steps the student completes', () => {
-    component.onCutChange({ pMin: 0.6, pMax: 10, dedxMin: 70, dedxMax: 90 });
+    component.onAcceptSelectedRange({ pMin: 0.6, pMax: 10, dedxMin: 70, dedxMax: 90 });
     expect(tutorial.notifyCutsChanged).toHaveBeenCalled();
 
     component.onDatasetChange('pPb');

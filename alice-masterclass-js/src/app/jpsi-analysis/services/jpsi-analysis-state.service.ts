@@ -82,8 +82,9 @@ export class JpsiAnalysisStateService {
   // --- Quick Analysis -------------------------------------------------------
 
   /**
-   * Appends freshly loaded events: bins them into the PID heatmap and pairs only the new
-   * ones into the mass histograms, so repeated runs stay cheap.
+   * Appends freshly loaded events: bins them into the PID heatmap. Mass histograms are
+   * filled only once the student has accepted a PID range (and then only for new events,
+   * under that applied cut).
    */
   appendEvents(events: CompactEvent[]): void {
     const state = this.state;
@@ -95,12 +96,15 @@ export class JpsiAnalysisStateService {
     state.processedCount = state.processedEvents.length;
     state.nextEventIndex += events.length;
 
-    if (this.pairing.isSelectionTooWide(state.processedEvents, state.cut)) {
-      state.tooWideSelection = true;
-      state.mass = createMassHistograms();
-    } else {
-      state.tooWideSelection = false;
-      this.pairing.fillMassHistograms(events, state.cut, state.mass);
+    const cut = state.appliedCut;
+    if (cut !== null) {
+      if (this.pairing.isSelectionTooWide(state.processedEvents, cut)) {
+        state.tooWideSelection = true;
+        state.mass = createMassHistograms();
+      } else {
+        state.tooWideSelection = false;
+        this.pairing.fillMassHistograms(events, cut, state.mass);
+      }
     }
 
     this.returnToExplore(state);
@@ -115,6 +119,7 @@ export class JpsiAnalysisStateService {
     state.nextEventIndex = 0;
     state.pidBins = new Uint32Array(PID_P_BINS * PID_DEDX_BINS);
     state.pidMax = 0;
+    state.appliedCut = null;
     state.mass = createMassHistograms();
     state.tooWideSelection = false;
 
@@ -125,9 +130,19 @@ export class JpsiAnalysisStateService {
 
   // --- Cuts -----------------------------------------------------------------
 
-  setCut(cut: PidCut): void {
+  /** Stores the draft cut while sliders move; does not rebuild mass. */
+  setDraftCut(cut: PidCut): void {
+    this.state.cut = { ...cut };
+  }
+
+  /**
+   * Commits the PID selection and rebuilds mass histograms from all processed events.
+   * Safe to call repeatedly after the student adjusts the band.
+   */
+  acceptSelectedRange(cut: PidCut): void {
     const state = this.state;
     state.cut = { ...cut };
+    state.appliedCut = { ...cut };
     this.rebuildMass(state);
     this.emit();
   }
@@ -135,18 +150,27 @@ export class JpsiAnalysisStateService {
   resetCuts(): void {
     const state = this.state;
     state.cut = { ...DEFAULT_PID_CUT };
-    this.rebuildMass(state);
+    state.appliedCut = null;
+    state.mass = createMassHistograms();
+    state.tooWideSelection = false;
+    this.returnToExplore(state);
     this.emit();
   }
 
   private rebuildMass(state: DatasetAnalysisState): void {
     state.mass = createMassHistograms();
+    const cut = state.appliedCut;
+    if (cut === null) {
+      state.tooWideSelection = false;
+      this.returnToExplore(state);
+      return;
+    }
 
-    if (this.pairing.isSelectionTooWide(state.processedEvents, state.cut)) {
+    if (this.pairing.isSelectionTooWide(state.processedEvents, cut)) {
       state.tooWideSelection = true;
     } else {
       state.tooWideSelection = false;
-      this.pairing.fillMassHistograms(state.processedEvents, state.cut, state.mass);
+      this.pairing.fillMassHistograms(state.processedEvents, cut, state.mass);
     }
 
     this.returnToExplore(state);
@@ -168,7 +192,10 @@ export class JpsiAnalysisStateService {
   get canSubtract(): boolean {
     const state = this.state;
     return (
-      state.panelMode === 'explore' && state.processedCount > 0 && !state.tooWideSelection
+      state.panelMode === 'explore' &&
+      state.processedCount > 0 &&
+      state.appliedCut !== null &&
+      !state.tooWideSelection
     );
   }
 

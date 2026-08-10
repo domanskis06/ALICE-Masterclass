@@ -444,7 +444,9 @@
     "MENU": "J/psi-Analyse",
     "DATASET": {
       "PP": "Proton-Proton",
-      "PPB": "Proton-Blei"
+      "PPB": "Proton-Blei",
+      "PP_SHORT": "pp",
+      "PPB_SHORT": "p-Pb"
     },
     "TOOLBAR": {
       "DATASET": "Kollisionssystem",
@@ -464,13 +466,15 @@
     "CUTS": {
       "MOMENTUM": "Impulsbereich",
       "DEDX": "Bereich des Energieverlusts",
+      "ACCEPT": "Ausgewählten Bereich übernehmen",
+      "HOWTO": "How to select a range?",
       "RESET": "Auswahl zurücksetzen"
     },
     "MASS": {
       "TITLE": "Invariante Masse",
       "X_AXIS": "Invariante Masse (GeV/c²)",
       "Y_AXIS": "Paare",
-      "EMPTY": "Analysiere Ereignisse, um die Massenhistogramme zu erstellen.",
+      "EMPTY": "Wähle ein Elektronenband im PID-Diagramm und drücke Ausgewählten Bereich übernehmen.",
       "SERIES": {
         "UNLIKE": "Paare mit entgegengesetzter Ladung",
         "POSPOS": "Paare gleicher Ladung, positiv",
@@ -525,7 +529,9 @@
       "TITLE": "J/psi-Produktion",
       "SUBTITLE": "Ein seltenes Signal in einer vollen Kollision finden",
       "P1": "Geladene Teilchen verlieren Energie, wenn sie den Detektor durchqueren. Wie viel sie verlieren, hängt von ihrem Impuls ab und davon, welches Teilchen sie sind. Das Diagramm links zeigt diesen Energieverlust gegen den Impuls, deshalb bilden verschiedene Teilchen verschiedene Bänder.",
-      "P2": "Elektronen und Positronen liegen in einem schmalen Band. Wähle es mit den Reglern aus. Jede behaltene Spur wird als Elektron behandelt.",
+      "PID_IMG_ALT": "ALICE-PID-Diagramm: Energieverlust gegen Impuls mit beschrifteten Teilchenbändern",
+      "PID_IMG_CAPTION": "Referenz-PID-Diagramm: suche das fast flache Elektronenband mit der Beschriftung e über dem starken Pionenband.",
+      "P2": "Auf diesem Referenzdiagramm bilden Elektronen das fast horizontale Band mit der Beschriftung e, etwa bei dE/dx ≈ 80. Stelle Impuls- und Energieverlustregler so ein, dass das rote Rechteck dieses Band abdeckt — ein guter Start ist ein Energieverlust zwischen etwa 70 und 90 — und klicke dann auf Ausgewählten Bereich übernehmen. Jede behaltene Spur wird als Elektron behandelt.",
       "P3": "Die App bildet dann Paare aus den ausgewählten Spuren innerhalb jeder Kollision und berechnet die invariante Masse jedes Paares. Ein J/psi-Zerfall liefert ein Elektron und ein Positron und erscheint daher als Peak nahe 3,1 GeV/c² bei den Paaren mit entgegengesetzter Ladung.",
       "P4": "Paare gleicher Ladung können nicht aus einem J/psi-Zerfall stammen und messen so den zufälligen Untergrund. Ziehe sie ab, und was übrig bleibt, ist dein Signal.",
       "START_TUTORIAL": "Geführte Tour wiederholen"
@@ -534,12 +540,14 @@
       "NEXT": "Weiter",
       "PREVIOUS": "Zurück",
       "DONE": "Fertig",
+      "STEP_START_DATASET_TITLE": "Kollisionssystem",
+      "STEP_START_DATASET_BODY": "Wähle zuerst das Kollisionssystem. Beginne mit <strong>pp</strong> (Proton-Proton). Später wechselst du zu Proton-Blei.",
       "STEP_RUN_TITLE": "Ereignisse analysieren",
-      "STEP_RUN_BODY": "Wähle, wie viele Kollisionen analysiert werden sollen, und klicke auf <strong>Analysieren</strong>. Du kannst später erneut klicken, um weitere Ereignisse hinzuzufügen.",
+      "STEP_RUN_BODY": "Wähle, wie viele Kollisionen analysiert werden sollen, und klicke auf <strong>Analysieren</strong>. Die Tour geht sofort nach dem Klick weiter. Später kannst du erneut klicken, um weitere Ereignisse hinzuzufügen.",
       "STEP_HEATMAP_TITLE": "Teilchenidentifikation",
       "STEP_HEATMAP_BODY": "Jede Spur landet hier gemäß ihrem Impuls und ihrem Energieverlust. Teilchen derselben Art bilden Bänder. Elektronen liegen in einem recht flachen Band über dem starken Pionenband.",
       "STEP_CUTS_TITLE": "Elektronen auswählen",
-      "STEP_CUTS_BODY": "Stelle die Regler so ein, dass das rote Rechteck das Elektronenband abdeckt. Ein guter Startpunkt ist ein Energieverlust zwischen 70 und 90. Alles im Rechteck geht in die Massenhistogramme ein.",
+      "STEP_CUTS_BODY": "Stelle die Regler so ein, dass das rote Rechteck das Elektronenband abdeckt. Ein guter Startpunkt ist ein Energieverlust zwischen 70 und 90. Danach klicke auf <strong>Ausgewählten Bereich übernehmen</strong>, um die Massenhistogramme zu füllen.",
       "STEP_SERIES_TITLE": "Drei Arten von Paaren",
       "STEP_SERIES_BODY": "Rot zeigt Paare mit entgegengesetzter Ladung, die aus einem J/psi stammen können. Blau und Grün zeigen Paare gleicher Ladung, die das nicht können. Schalte die Serien an und aus, um ihre Formen zu vergleichen, und aktiviere <strong>Kombinatorischer Untergrund</strong>, um beide Serien gleicher Ladung zusammen zu sehen.",
       "STEP_SUBTRACT_TITLE": "Untergrund abziehen",

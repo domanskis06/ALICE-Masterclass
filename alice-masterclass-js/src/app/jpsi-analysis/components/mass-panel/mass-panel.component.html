@@ -61,72 +61,76 @@
       </p>
     }
 
-    <div class="mass-panel__chart" #host [style.height.px]="height">
-      <svg #svg [attr.width]="width" [attr.height]="height">
-        @if (windowRect; as rect) {
-          <rect
-            class="mass-panel__window"
-            [attr.x]="rect.x"
-            [attr.y]="margin.top"
-            [attr.width]="rect.width"
-            [attr.height]="plotHeight"
-          ></rect>
+    <div id="jpsi-tour-mass-signal">
+      <div class="mass-panel__chart" #host [style.height.px]="height">
+        <svg #svg [attr.width]="width" [attr.height]="height">
+          @if (windowRect; as rect) {
+            <rect
+              class="mass-panel__window"
+              [attr.x]="rect.x"
+              [attr.y]="margin.top"
+              [attr.width]="rect.width"
+              [attr.height]="plotHeight"
+            ></rect>
+          }
+
+          @for (entry of series; track entry.key) {
+            <g class="mass-panel__series" [attr.data-series]="entry.key">
+              @for (bar of entry.bars; track $index) {
+                <rect
+                  [attr.x]="bar.x"
+                  [attr.y]="bar.y"
+                  [attr.width]="bar.width"
+                  [attr.height]="bar.height"
+                  [attr.fill]="entry.colour"
+                ></rect>
+              }
+            </g>
+          }
+
+          <g class="x-axis"></g>
+          <g class="y-axis"></g>
+
+          <text
+            class="mass-panel__axis-label"
+            [attr.x]="margin.left + plotWidth / 2"
+            [attr.y]="height - 6"
+            text-anchor="middle"
+          >
+            {{ 'JPSI.MASS.X_AXIS' | translate }}
+          </text>
+          <text
+            class="mass-panel__axis-label"
+            [attr.transform]="'rotate(-90) translate(' + -(margin.top + plotHeight / 2) + ', 14)'"
+            text-anchor="middle"
+          >
+            {{ 'JPSI.MASS.Y_AXIS' | translate }}
+          </text>
+        </svg>
+
+        @if (tooWideSelection) {
+          <p class="mass-panel__notice" data-testid="jpsi-too-wide">
+            {{ 'JPSI.MASS.TOO_WIDE' | translate }}
+          </p>
+        } @else if (!hasData) {
+          <p class="mass-panel__notice">{{ 'JPSI.MASS.EMPTY' | translate }}</p>
         }
+      </div>
 
-        @for (entry of series; track entry.key) {
-          <g class="mass-panel__series" [attr.data-series]="entry.key">
-            @for (bar of entry.bars; track $index) {
-              <rect
-                [attr.x]="bar.x"
-                [attr.y]="bar.y"
-                [attr.width]="bar.width"
-                [attr.height]="bar.height"
-                [attr.fill]="entry.colour"
-              ></rect>
-            }
-          </g>
-        }
-
-        <g class="x-axis"></g>
-        <g class="y-axis"></g>
-
-        <text
-          class="mass-panel__axis-label"
-          [attr.x]="margin.left + plotWidth / 2"
-          [attr.y]="height - 6"
-          text-anchor="middle"
-        >
-          {{ 'JPSI.MASS.X_AXIS' | translate }}
-        </text>
-        <text
-          class="mass-panel__axis-label"
-          [attr.transform]="'rotate(-90) translate(' + -(margin.top + plotHeight / 2) + ', 14)'"
-          text-anchor="middle"
-        >
-          {{ 'JPSI.MASS.Y_AXIS' | translate }}
-        </text>
-      </svg>
-
-      @if (tooWideSelection) {
-        <p class="mass-panel__notice" data-testid="jpsi-too-wide">
-          {{ 'JPSI.MASS.TOO_WIDE' | translate }}
-        </p>
-      } @else if (!hasData) {
-        <p class="mass-panel__notice">{{ 'JPSI.MASS.EMPTY' | translate }}</p>
+      @if (mode === 'subtracted') {
+        <div class="mass-panel__window-controls" id="jpsi-tour-mass-window">
+          <span class="mass-panel__window-label">{{ 'JPSI.MASS.WINDOW' | translate }}</span>
+          <ngx-slider
+            [(value)]="windowStart"
+            [(highValue)]="windowEnd"
+            [options]="windowOptions"
+            (userChange)="onWindowChange()"
+          ></ngx-slider>
+        </div>
       }
     </div>
 
     @if (mode === 'subtracted') {
-      <div class="mass-panel__window-controls" id="jpsi-tour-mass-window">
-        <span class="mass-panel__window-label">{{ 'JPSI.MASS.WINDOW' | translate }}</span>
-        <ngx-slider
-          [(value)]="windowStart"
-          [(highValue)]="windowEnd"
-          [options]="windowOptions"
-          (userChange)="onWindowChange()"
-        ></ngx-slider>
-      </div>
-
       @if (liveResult; as result) {
         <div class="mass-panel__result" data-testid="jpsi-live-result">
           <div class="mass-panel__metric">

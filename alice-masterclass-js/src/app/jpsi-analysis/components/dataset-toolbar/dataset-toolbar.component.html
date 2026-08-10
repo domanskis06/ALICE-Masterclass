@@ -1,24 +1,26 @@
 <mat-card appearance="outlined" class="dataset-toolbar" id="jpsi-tour-toolbar">
   <mat-card-content class="dataset-toolbar__content">
     <div class="dataset-toolbar__group" id="jpsi-tour-dataset">
-      <span class="dataset-toolbar__label">{{ 'JPSI.TOOLBAR.DATASET' | translate }}</span>
-      <mat-button-toggle-group
-        [value]="activeDataset"
-        [disabled]="isRunning"
-        data-testid="jpsi-dataset-group"
-        (change)="datasetChange.emit($event.value)"
-      >
-        @for (dataset of datasets; track dataset.id) {
-          <mat-button-toggle [value]="dataset.id" [attr.data-testid]="'jpsi-dataset-' + dataset.id">
-            {{ dataset.labelKey | translate }}
-          </mat-button-toggle>
-        }
-      </mat-button-toggle-group>
+      <mat-form-field appearance="outline" class="dataset-toolbar__dataset">
+        <mat-label>{{ 'JPSI.TOOLBAR.DATASET' | translate }}</mat-label>
+        <mat-select
+          [value]="activeDataset"
+          [disabled]="isRunning"
+          data-testid="jpsi-dataset-group"
+          (selectionChange)="datasetChange.emit($event.value)"
+        >
+          @for (dataset of datasets; track dataset.id) {
+            <mat-option [value]="dataset.id" [attr.data-testid]="'jpsi-dataset-' + dataset.id">
+              {{ shortLabelKey(dataset.id) | translate }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
 
     <div class="dataset-toolbar__group" id="jpsi-tour-quick-analysis">
-      <span class="dataset-toolbar__label">{{ 'JPSI.TOOLBAR.EVENTS' | translate }}</span>
       <mat-form-field appearance="outline" class="dataset-toolbar__preset">
+        <mat-label>{{ 'JPSI.TOOLBAR.EVENTS' | translate }}</mat-label>
         <mat-select [(value)]="selectedPreset" [disabled]="isRunning" data-testid="jpsi-preset">
           @for (preset of presets; track preset) {
             <mat-option [value]="preset">{{ presetLabel(preset) | translate }}</mat-option>

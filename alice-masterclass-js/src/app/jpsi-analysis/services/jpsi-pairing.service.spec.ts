@@ -5,6 +5,7 @@ import {
   createMassHistograms,
   DEFAULT_PID_CUT,
   MASS_BIN_WIDTH,
+  MASS_XMIN,
   MassHistograms,
   PidCut,
 } from '../models/jpsi.models';
@@ -89,7 +90,7 @@ describe('JpsiPairingService', () => {
 
     service.fillMassHistograms([event], cut, mass);
 
-    const expectedBin = Math.floor(3.0 / MASS_BIN_WIDTH);
+    const expectedBin = Math.floor((3.0 - MASS_XMIN) / MASS_BIN_WIDTH);
     expect(mass.unlike[expectedBin]).toBe(1);
     expect(total(mass.unlike)).toBe(1);
   });

@@ -1,89 +1,71 @@
 <div class="pid-cuts" id="jpsi-tour-cuts">
-  <div class="pid-cuts__row">
-    <span class="pid-cuts__label">{{ 'JPSI.CUTS.MOMENTUM' | translate }}</span>
-    <div class="pid-cuts__numbers">
-      <mat-form-field appearance="outline" class="pid-cuts__number">
-        <input
-          matInput
-          type="number"
-          [min]="limits.pMin"
-          [max]="limits.pMax"
-          step="0.1"
-          [disabled]="disabled"
-          [(ngModel)]="pMin"
-          data-testid="jpsi-cut-pmin"
-          (change)="onNumberChange()"
-        />
-      </mat-form-field>
-      <span class="pid-cuts__dash">&ndash;</span>
-      <mat-form-field appearance="outline" class="pid-cuts__number">
-        <input
-          matInput
-          type="number"
-          [min]="limits.pMin"
-          [max]="limits.pMax"
-          step="0.1"
-          [disabled]="disabled"
-          [(ngModel)]="pMax"
-          data-testid="jpsi-cut-pmax"
-          (change)="onNumberChange()"
-        />
-      </mat-form-field>
+  <div class="pid-cuts__plot-row">
+    <div class="pid-cuts__dedx" [style.width.px]="dedxColumnWidth">
+      <span class="pid-cuts__label pid-cuts__label--vertical">{{ 'JPSI.CUTS.DEDX' | translate }}</span>
+      <div
+        class="pid-cuts__dedx-slider"
+        [style.margin-top.px]="-dedxPadTop"
+        [style.padding-bottom.px]="dedxPadBottom"
+      >
+        <ngx-slider
+          [(value)]="dedxMin"
+          [(highValue)]="dedxMax"
+          [options]="dedxOptions"
+          (userChange)="onSliderChange()"
+        ></ngx-slider>
+      </div>
+    </div>
+
+    <div class="pid-cuts__heatmap">
+      <ng-content></ng-content>
     </div>
   </div>
-  <ngx-slider
-    [(value)]="pMin"
-    [(highValue)]="pMax"
-    [options]="pOptions"
-    (userChange)="onSliderChange()"
-  ></ngx-slider>
 
-  <div class="pid-cuts__row">
-    <span class="pid-cuts__label">{{ 'JPSI.CUTS.DEDX' | translate }}</span>
-    <div class="pid-cuts__numbers">
-      <mat-form-field appearance="outline" class="pid-cuts__number">
-        <input
-          matInput
-          type="number"
-          [min]="limits.dedxMin"
-          [max]="limits.dedxMax"
-          step="1"
-          [disabled]="disabled"
-          [(ngModel)]="dedxMin"
-          data-testid="jpsi-cut-dedxmin"
-          (change)="onNumberChange()"
-        />
-      </mat-form-field>
-      <span class="pid-cuts__dash">&ndash;</span>
-      <mat-form-field appearance="outline" class="pid-cuts__number">
-        <input
-          matInput
-          type="number"
-          [min]="limits.dedxMin"
-          [max]="limits.dedxMax"
-          step="1"
-          [disabled]="disabled"
-          [(ngModel)]="dedxMax"
-          data-testid="jpsi-cut-dedxmax"
-          (change)="onNumberChange()"
-        />
-      </mat-form-field>
-    </div>
-  </div>
-  <ngx-slider
-    [(value)]="dedxMin"
-    [(highValue)]="dedxMax"
-    [options]="dedxOptions"
-    (userChange)="onSliderChange()"
-  ></ngx-slider>
-
-  <button
-    mat-stroked-button
-    class="pid-cuts__reset"
-    [disabled]="disabled"
-    data-testid="jpsi-reset-cuts"
-    (click)="resetCuts.emit()"
+  <div
+    class="pid-cuts__momentum"
+    [style.margin-left.px]="momentumInsetLeft"
+    [style.margin-right.px]="momentumInsetRight"
   >
-    {{ 'JPSI.CUTS.RESET' | translate }}
-  </button>
+    <span class="pid-cuts__label">{{ 'JPSI.CUTS.MOMENTUM' | translate }}</span>
+    <ngx-slider
+      [(value)]="logPMin"
+      [(highValue)]="logPMax"
+      [options]="pOptions"
+      (userChange)="onSliderChange()"
+    ></ngx-slider>
+  </div>
+
+  <div class="pid-cuts__actions">
+    <div class="pid-cuts__accept-wrap">
+      <button
+        mat-raised-button
+        color="primary"
+        class="pid-cuts__accept"
+        [disabled]="disabled"
+        data-testid="jpsi-accept-range"
+        (click)="onAcceptRange()"
+      >
+        {{ 'JPSI.CUTS.ACCEPT' | translate }}
+      </button>
+
+      <button
+        type="button"
+        class="pid-cuts__howto"
+        data-testid="jpsi-howto-range"
+        (click)="openHowToSelectRange()"
+      >
+        {{ 'JPSI.CUTS.HOWTO' | translate }}
+      </button>
+    </div>
+
+    <button
+      mat-stroked-button
+      class="pid-cuts__reset"
+      [disabled]="disabled"
+      data-testid="jpsi-reset-cuts"
+      (click)="resetCuts.emit()"
+    >
+      {{ 'JPSI.CUTS.RESET' | translate }}
+    </button>
+  </div>
 </div>

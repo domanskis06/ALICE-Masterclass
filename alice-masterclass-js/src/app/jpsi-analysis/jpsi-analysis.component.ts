@@ -17,6 +17,7 @@ import { InstructionsComponent } from './instructions/instructions.component';
 import {
   DatasetDescriptor,
   DatasetId,
+  DEFAULT_PID_CUT,
   MASS_BINS,
   PidCut,
   SummaryRow,
@@ -50,6 +51,9 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   residual: Float64Array = new Float64Array(MASS_BINS);
   background: Float64Array = new Float64Array(MASS_BINS);
+
+  /** Live PID cut while sliders move; mass rebuilds only after Accept selected range. */
+  previewCut: PidCut = { ...DEFAULT_PID_CUT };
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -119,6 +123,11 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     return this.state.state.processedCount > 0;
   }
 
+  /** Mass panel is empty until the student accepts a PID range at least once. */
+  get hasMassData(): boolean {
+    return this.hasData && this.state.state.appliedCut !== null && !this.state.state.tooWideSelection;
+  }
+
   // --- Toolbar --------------------------------------------------------------
 
   onDatasetChange(datasetId: DatasetId): void {
@@ -130,9 +139,10 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   }
 
   async onRunAnalysis(preset: QuickAnalysisPreset): Promise<void> {
+    // Advance the tour immediately on click; do not wait for the run to finish.
+    this.tutorial.notifyRunStarted();
     try {
       await this.quickAnalysis.run(preset, this.totalEvents);
-      this.tutorial.notifyRunFinished();
     } catch {
       this.notify('JPSI.ERRORS.BATCH');
     } finally {
@@ -146,8 +156,14 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   // --- Cuts -----------------------------------------------------------------
 
-  onCutChange(cut: PidCut): void {
-    this.state.setCut(cut);
+  onCutPreview(cut: PidCut): void {
+    this.previewCut = cut;
+    this.state.setDraftCut(cut);
+  }
+
+  onAcceptSelectedRange(cut: PidCut): void {
+    this.previewCut = cut;
+    this.state.acceptSelectedRange(cut);
     this.tutorial.notifyCutsChanged();
   }
 
@@ -197,6 +213,7 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   private onStateChanged(): void {
     const state = this.state.state;
+    this.previewCut = { ...state.cut };
     this.residual = this.signal.residualSeries(state.mass);
     this.background = this.signal.backgroundSeries(state.mass);
     this.revision++;

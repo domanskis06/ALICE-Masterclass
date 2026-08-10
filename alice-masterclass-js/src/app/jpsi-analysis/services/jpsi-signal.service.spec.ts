@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import {
   createMassHistograms,
   MASS_BIN_WIDTH,
+  MASS_XMIN,
   MassHistograms,
   snapToBinEdge,
 } from '../models/jpsi.models';
@@ -10,7 +11,7 @@ import { JpsiSignalService } from './jpsi-signal.service';
 
 /** Bin index of a mass value, matching the service's own convention. */
 function binOf(mass: number): number {
-  return Math.round(mass / MASS_BIN_WIDTH);
+  return Math.round((mass - MASS_XMIN) / MASS_BIN_WIDTH);
 }
 
 describe('JpsiSignalService', () => {

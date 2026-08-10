@@ -6,6 +6,7 @@ import {
   Input,
   OnChanges,
   OnDestroy,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import * as d3 from 'd3';
@@ -14,19 +15,14 @@ import {
   PID_DEDX_BINS,
   PID_DEDX_MAX,
   PID_DEDX_MIN,
+  PID_HEATMAP_MARGIN,
   PID_P_BINS,
   PID_P_MAX,
   PID_P_MIN,
   PidCut,
 } from '../../models/jpsi.models';
 
-const COLOUR_BAR = { gap: 12, width: 14, axis: 34 };
-const MARGIN = {
-  top: 8,
-  right: COLOUR_BAR.gap + COLOUR_BAR.width + COLOUR_BAR.axis,
-  bottom: 42,
-  left: 52,
-};
+const MARGIN = PID_HEATMAP_MARGIN;
 
 /** Major p-axis labels; everything else is tick-only. */
 const X_LABELLED_TICKS = new Set([0.1, 0.2, 0.5, 1, 2, 5, 10]);
@@ -131,8 +127,12 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
     this.resizeObserver.observe(this.hostRef.nativeElement);
   }
 
-  ngOnChanges(): void {
-    if (this.viewReady) {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.viewReady) {
+      return;
+    }
+    // Cut-only updates move the dashed rectangle via the template; skip a full redraw.
+    if (changes['bins'] || changes['maxCount'] || changes['revision']) {
       this.draw();
     }
   }
@@ -226,10 +226,12 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
   }
 
   get colourBar(): { x: number; y: number; width: number; height: number } {
+    const gap = 12;
+    const width = 14;
     return {
-      x: MARGIN.left + this.plotWidth + COLOUR_BAR.gap,
+      x: MARGIN.left + this.plotWidth + gap,
       y: MARGIN.top,
-      width: COLOUR_BAR.width,
+      width,
       height: this.plotHeight,
     };
   }

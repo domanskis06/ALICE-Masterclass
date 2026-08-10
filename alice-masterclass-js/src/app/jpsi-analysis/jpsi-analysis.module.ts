@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { AngularModule } from '../shared/angular.module';
@@ -37,8 +36,7 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     CommonModule,
     SharedModule,
     AngularModule,
-    // Not part of the shared AngularModule barrel; only this exercise needs them.
-    MatButtonToggleModule,
+    // Not part of the shared AngularModule barrel; only this exercise needs it.
     MatProgressBarModule,
     JpsiWelcomeDialogComponent,
   ],
