@@ -15,24 +15,30 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 8px;
+}
+
+.pbpb-minv-panel__toggle {
+  --series-colour: #999;
+  border-color: var(--series-colour) !important;
+  color: rgba(0, 0, 0, 0.82);
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.72);
+  line-height: 30px;
+}
+
+.pbpb-minv-panel__toggle--off {
+  opacity: 0.45;
 }
 
 .pbpb-minv-panel__swatch {
   display: inline-block;
   width: 11px;
   height: 11px;
-  margin-left: 10px;
+  margin-right: 6px;
   border-radius: 2px;
   background: var(--series-colour);
   vertical-align: -1px;
-
-  &:first-child {
-    margin-left: 0;
-  }
 }
 
 .pbpb-minv-panel__chart {

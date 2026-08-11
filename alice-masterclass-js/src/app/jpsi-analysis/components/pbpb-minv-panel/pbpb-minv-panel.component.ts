@@ -31,12 +31,18 @@ interface RenderedSeries {
   bars: Bar[];
 }
 
+/** Which of the two raw series are currently drawn — lets the student isolate one at a time. */
+export interface PbPbSeriesVisibility {
+  unlike: boolean;
+  like: boolean;
+}
+
 /**
  * Left panel for the published Pb-Pb datasets: the raw digitized histogram from Fig. 15,
- * unlike-sign (red) and like-sign (yellow) always shown together — there is no toggle,
- * since comparing the two is the whole point before subtracting. Binning comes entirely
- * from the histogram (43 bins, 2.0–3.72 GeV/c² today), not from the fixed MASS_* constants
- * used by the track-based mass panel.
+ * unlike-sign (red) and like-sign (blue) shown together by default, with a toggle each so the
+ * student can isolate one series at a time. Binning comes entirely from the histogram (43
+ * bins, 2.0–3.72 GeV/c² today), not from the fixed MASS_* constants used by the track-based
+ * mass panel.
  */
 @Component({
   selector: 'app-jpsi-pbpb-minv-panel',
@@ -52,6 +58,9 @@ export class PbPbMinvPanelComponent implements AfterViewInit, OnChanges, OnDestr
   @Input() revision = 0;
 
   @Output() subtract = new EventEmitter<void>();
+
+  /** Purely local display preference — both series start visible. */
+  visibility: PbPbSeriesVisibility = { unlike: true, like: true };
 
   @ViewChild('host') private hostRef!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') private svgRef!: ElementRef<SVGSVGElement>;
@@ -127,14 +136,27 @@ export class PbPbMinvPanelComponent implements AfterViewInit, OnChanges, OnDestr
 
     this.xScale.domain([histogram.xmin, histogram.xmax]);
 
-    const yMax = Math.max(this.maxOf(histogram.unlike), this.maxOf(histogram.like), 1);
+    const yMax = Math.max(
+      this.visibility.unlike ? this.maxOf(histogram.unlike) : 0,
+      this.visibility.like ? this.maxOf(histogram.like) : 0,
+      1
+    );
     this.yScale.domain([0, yMax]);
 
-    // Yellow (background) first, red (unlike) on top — matches Fig. 15's presentation.
-    this.series = [
-      { key: 'like', colour: this.colours.background, bars: this.toBars(histogram, histogram.like) },
-      { key: 'unlike', colour: this.colours.unlike, bars: this.toBars(histogram, histogram.unlike) },
-    ];
+    const active: Array<{ key: 'like' | 'unlike'; colour: string; values: number[] }> = [];
+    // Blue (like-sign) first, red (unlike-sign) on top — matches Fig. 15's presentation.
+    if (this.visibility.like) {
+      active.push({ key: 'like', colour: this.colours.posPos, values: histogram.like });
+    }
+    if (this.visibility.unlike) {
+      active.push({ key: 'unlike', colour: this.colours.unlike, values: histogram.unlike });
+    }
+
+    this.series = active.map((entry) => ({
+      key: entry.key,
+      colour: entry.colour,
+      bars: this.toBars(histogram, entry.values),
+    }));
 
     this.renderAxes();
   }
@@ -187,5 +209,12 @@ export class PbPbMinvPanelComponent implements AfterViewInit, OnChanges, OnDestr
 
   onSubtractClick(): void {
     this.subtract.emit();
+  }
+
+  onToggle(key: 'unlike' | 'like'): void {
+    this.visibility = { ...this.visibility, [key]: !this.visibility[key] };
+    if (this.viewReady) {
+      this.render();
+    }
   }
 }

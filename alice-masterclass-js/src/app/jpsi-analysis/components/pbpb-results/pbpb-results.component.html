@@ -22,21 +22,14 @@
         <td mat-cell *matCellDef="let row">{{ row.fit.background | number: '1.0-0' }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="publishedNJpsi">
-        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.PUBLISHED_NJPSI' | translate }}</th>
-        <td mat-cell *matCellDef="let row">
-          {{ row.published.nJpsi | number: '1.0-0' }} &plusmn; {{ row.published.nJpsiErr | number: '1.0-0' }}
-        </td>
+      <ng-container matColumnDef="signalToBackground">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.SB' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ formatRatio(signalToBackground(row)) }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="publishedSOverB">
-        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.PUBLISHED_SB' | translate }}</th>
-        <td mat-cell *matCellDef="let row">{{ row.published.sOverB | number: '1.2-2' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="publishedSignificance">
-        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.PUBLISHED_SIGNIFICANCE' | translate }}</th>
-        <td mat-cell *matCellDef="let row">{{ row.published.significance | number: '1.1-1' }}</td>
+      <ng-container matColumnDef="significance">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.SIGNIFICANCE' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ significance(row) | number: '1.1-1' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="actions">

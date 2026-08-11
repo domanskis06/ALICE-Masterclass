@@ -4,11 +4,30 @@
   </mat-card-title>
 
   <mat-card-content>
-    <div class="pbpb-minv-panel__legend">
-      <span class="pbpb-minv-panel__swatch" [style.--series-colour]="colours.unlike"></span>
-      {{ 'JPSI.PBPB.MINV.UNLIKE' | translate }}
-      <span class="pbpb-minv-panel__swatch" [style.--series-colour]="colours.background"></span>
-      {{ 'JPSI.PBPB.MINV.LIKE' | translate }}
+    <div class="pbpb-minv-panel__legend" id="jpsi-tour-pbpb-series-toggles">
+      <button
+        mat-stroked-button
+        class="pbpb-minv-panel__toggle"
+        [class.pbpb-minv-panel__toggle--off]="!visibility.unlike"
+        [style.--series-colour]="colours.unlike"
+        data-testid="jpsi-pbpb-toggle-unlike"
+        (click)="onToggle('unlike')"
+      >
+        <span class="pbpb-minv-panel__swatch"></span>
+        {{ 'JPSI.PBPB.MINV.UNLIKE' | translate }}
+      </button>
+
+      <button
+        mat-stroked-button
+        class="pbpb-minv-panel__toggle"
+        [class.pbpb-minv-panel__toggle--off]="!visibility.like"
+        [style.--series-colour]="colours.posPos"
+        data-testid="jpsi-pbpb-toggle-like"
+        (click)="onToggle('like')"
+      >
+        <span class="pbpb-minv-panel__swatch"></span>
+        {{ 'JPSI.PBPB.MINV.LIKE' | translate }}
+      </button>
     </div>
 
     <div class="pbpb-minv-panel__chart" #host [style.height.px]="height">
