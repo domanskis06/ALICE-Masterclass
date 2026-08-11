@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.pid-ref {
+  // Let the dialog grow with the image instead of the default Material max-height scroll area.
+  max-height: none !important;
+  margin: 0;
+  padding: 16px 16px 0;
+  overflow: visible;
+}
+
+.pid-ref__img {
+  display: block;
+  width: auto;
+  height: auto;
+  // Prefer native resolution; grow a bit on large screens for readability, never crop.
+  max-width: min(1100px, 92vw);
+  max-height: min(800px, 82vh);
+  margin: 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+}
+
+.pid-ref__caption {
+  margin: 10px 0 0;
+  max-width: min(1100px, 92vw);
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.65);
+  text-align: center;
+}

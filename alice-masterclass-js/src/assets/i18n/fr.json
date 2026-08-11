@@ -530,10 +530,10 @@
     "INSTRUCTIONS": {
       "TITLE": "Production de J/psi",
       "SUBTITLE": "Trouver un signal rare dans une collision chargée",
-      "P1": "Les particules chargées perdent de l'énergie en traversant le détecteur. La perte dépend de leur impulsion et du type de particule. Le graphique de gauche montre cette perte d'énergie en fonction de l'impulsion, si bien que les particules différentes forment des bandes différentes.",
+      "P1": "Les particules chargées perdent de l'énergie en traversant le détecteur. La perte dépend de leur impulsion et du type de particule. Le graphique ci-dessous montre cette perte d'énergie en fonction de l'impulsion, si bien que les particules différentes forment des bandes différentes.",
       "PID_IMG_ALT": "Graphique PID ALICE : perte d'énergie en fonction de l'impulsion avec les bandes de particules étiquetées",
       "PID_IMG_CAPTION": "Graphique PID de référence : cherche la bande d'électrons presque plate étiquetée e, au-dessus de la forte bande des pions.",
-      "P2": "Sur ce graphique de référence, les électrons forment la bande presque horizontale étiquetée e, autour de dE/dx ≈ 80. Règle les curseurs d'impulsion et de perte d'énergie pour que le rectangle rouge couvre cette bande — un bon départ est une perte d'énergie entre environ 70 et 90 — puis appuie sur Valider la plage sélectionnée. Chaque trace conservée est traitée comme un électron.",
+      "P2": "Sur ce graphique de référence, les électrons forment la bande presque horizontale étiquetée e, autour de dE/dx ≈ 80. Règle les curseurs d'impulsion et de perte d'énergie pour que le rectangle rouge couvre cette bande. Un bon départ est une perte d'énergie entre environ 70 et 90. Puis appuie sur Valider la plage sélectionnée. Chaque trace conservée est traitée comme un électron.",
       "P3": "L'application forme ensuite des paires à partir des traces sélectionnées dans chaque collision et calcule la masse invariante de chaque paire. Une désintégration de J/psi donne un électron et un positron, elle apparaît donc comme un pic près de 3,1 GeV/c² parmi les paires de charges opposées.",
       "P4": "Les paires de même charge ne peuvent pas venir d'une désintégration de J/psi, elles mesurent donc le bruit de fond aléatoire. Soustrais-les et ce qui reste est ton signal.",
       "START_TUTORIAL": "Revoir la visite guidée"

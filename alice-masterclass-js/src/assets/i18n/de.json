@@ -528,10 +528,10 @@
     "INSTRUCTIONS": {
       "TITLE": "J/psi-Produktion",
       "SUBTITLE": "Ein seltenes Signal in einer vollen Kollision finden",
-      "P1": "Geladene Teilchen verlieren Energie, wenn sie den Detektor durchqueren. Wie viel sie verlieren, hängt von ihrem Impuls ab und davon, welches Teilchen sie sind. Das Diagramm links zeigt diesen Energieverlust gegen den Impuls, deshalb bilden verschiedene Teilchen verschiedene Bänder.",
+      "P1": "Geladene Teilchen verlieren Energie, wenn sie den Detektor durchqueren. Wie viel sie verlieren, hängt von ihrem Impuls ab und davon, welches Teilchen sie sind. Das Diagramm unten zeigt diesen Energieverlust gegen den Impuls, deshalb bilden verschiedene Teilchen verschiedene Bänder.",
       "PID_IMG_ALT": "ALICE-PID-Diagramm: Energieverlust gegen Impuls mit beschrifteten Teilchenbändern",
       "PID_IMG_CAPTION": "Referenz-PID-Diagramm: suche das fast flache Elektronenband mit der Beschriftung e über dem starken Pionenband.",
-      "P2": "Auf diesem Referenzdiagramm bilden Elektronen das fast horizontale Band mit der Beschriftung e, etwa bei dE/dx ≈ 80. Stelle Impuls- und Energieverlustregler so ein, dass das rote Rechteck dieses Band abdeckt — ein guter Start ist ein Energieverlust zwischen etwa 70 und 90 — und klicke dann auf Ausgewählten Bereich übernehmen. Jede behaltene Spur wird als Elektron behandelt.",
+      "P2": "Auf diesem Referenzdiagramm bilden Elektronen das fast horizontale Band mit der Beschriftung e, etwa bei dE/dx ≈ 80. Stelle Impuls- und Energieverlustregler so ein, dass das rote Rechteck dieses Band abdeckt. Ein guter Start ist ein Energieverlust zwischen etwa 70 und 90. Klicke dann auf Ausgewählten Bereich übernehmen. Jede behaltene Spur wird als Elektron behandelt.",
       "P3": "Die App bildet dann Paare aus den ausgewählten Spuren innerhalb jeder Kollision und berechnet die invariante Masse jedes Paares. Ein J/psi-Zerfall liefert ein Elektron und ein Positron und erscheint daher als Peak nahe 3,1 GeV/c² bei den Paaren mit entgegengesetzter Ladung.",
       "P4": "Paare gleicher Ladung können nicht aus einem J/psi-Zerfall stammen und messen so den zufälligen Untergrund. Ziehe sie ab, und was übrig bleibt, ist dein Signal.",
       "START_TUTORIAL": "Geführte Tour wiederholen"

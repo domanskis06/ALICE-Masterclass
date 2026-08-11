@@ -90,7 +90,7 @@ export class PidCutControlsComponent implements OnChanges {
   }
 
   openHowToSelectRange(): void {
-    this.tutorial.openInstructionsDialog();
+    this.tutorial.openPidReferenceDialog();
   }
 
   private currentCut(): PidCut {

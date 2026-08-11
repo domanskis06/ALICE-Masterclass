@@ -528,10 +528,10 @@
     "INSTRUCTIONS": {
       "TITLE": "J/psi production",
       "SUBTITLE": "Finding a rare signal in a busy collision",
-      "P1": "Charged particles lose energy as they cross the detector. How much they lose depends on their momentum and on what kind of particle they are. The plot on the left shows this energy loss against momentum, so different particles form different bands.",
+      "P1": "Charged particles lose energy as they cross the detector. How much they lose depends on their momentum and on what kind of particle they are. The plot below shows this energy loss against momentum, so different particles form different bands.",
       "PID_IMG_ALT": "ALICE PID plot of energy loss versus momentum with labelled particle bands",
       "PID_IMG_CAPTION": "Reference PID plot: look for the nearly flat electron band labelled e, above the strong pion band.",
-      "P2": "On that reference plot, electrons form the almost horizontal band labelled e, around dE/dx ≈ 80. Move the momentum and energy-loss sliders so the red rectangle covers that band — a good start is an energy loss between about 70 and 90 — then press Accept selected range. Every track you keep is treated as an electron.",
+      "P2": "On that reference plot, electrons form the almost horizontal band labelled e, around dE/dx ≈ 80. Move the momentum and energy-loss sliders so the red rectangle covers that band. A good start is an energy loss between about 70 and 90. Then press Accept selected range. Every track you keep is treated as an electron.",
       "P3": "The app then pairs the selected tracks inside each collision and computes the invariant mass of every pair. A J/psi decay gives an electron and a positron, so it shows up as a peak near 3.1 GeV/c² among the opposite-charge pairs.",
       "P4": "Pairs of the same charge cannot come from a J/psi decay, so they measure the random background. Subtract them and what is left is your signal.",
       "START_TUTORIAL": "Replay the guided tour"

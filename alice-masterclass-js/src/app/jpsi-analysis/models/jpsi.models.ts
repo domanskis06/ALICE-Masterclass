@@ -33,6 +33,26 @@ export const PID_HEATMAP_MARGIN = {
   bottom: 42,
   left: 52,
 } as const;
+
+/** Height / width targets used while the panel is still under the viewport cap. */
+export const PID_CHART_ASPECT = 0.72;
+export const MASS_CHART_ASPECT = 0.55;
+
+/**
+ * Chart host height from panel width. Preserves the aspect ratio on wide layouts and
+ * only stops growing when the plot would dominate the viewport (large monitors).
+ */
+export function jpsiResponsiveChartHeight(
+  widthPx: number,
+  heightOverWidth: number,
+  minHeightPx: number,
+): number {
+  const fromAspect = widthPx * heightOverWidth;
+  const viewportCap =
+    typeof window !== 'undefined' ? Math.max(420, window.innerHeight * 0.55) : 420;
+  const absoluteMax = 780;
+  return Math.round(Math.max(minHeightPx, Math.min(fromAspect, viewportCap, absoluteMax)));
+}
 /**
  * One bin per unit of dE/dx. The VSD stores dE/dx as whole numbers, so any bin width
  * other than an integer makes some bins swallow two values and their neighbours one,

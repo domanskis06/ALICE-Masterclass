@@ -1,0 +1,13 @@
+<mat-dialog-content class="pid-ref">
+  <img
+    class="pid-ref__img"
+    [src]="imageSrc"
+    [alt]="'JPSI.INSTRUCTIONS.PID_IMG_ALT' | translate"
+  />
+  <p class="pid-ref__caption">{{ 'JPSI.INSTRUCTIONS.PID_IMG_CAPTION' | translate }}</p>
+</mat-dialog-content>
+<mat-dialog-actions align="center">
+  <button mat-raised-button color="primary" type="button" (click)="close()">
+    {{ 'INSTRUCTIONS_DIALOG.BUTTON_DISMISS' | translate }}
+  </button>
+</mat-dialog-actions>

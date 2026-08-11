@@ -33,8 +33,8 @@ function makeEvent(tracks: TrackSpec[]): CompactEvent {
   };
 }
 
-function track(sign: number, px: number, dedx = 80): TrackSpec {
-  return { px, py: 0, pz: 0, dedx, sign };
+function track(sign: number, px: number, dedx = 80, py = 0, pz = 0): TrackSpec {
+  return { px, py, pz, dedx, sign };
 }
 
 function total(histogram: Float64Array): number {
@@ -58,12 +58,14 @@ describe('JpsiPairingService', () => {
 
   it('produces the expected number of pairs per combination', () => {
     // 3 positive and 2 negative tracks: 6 unlike, 3 pos-pos, 1 neg-neg.
+    // Orthogonal momenta keep every pair mass inside [MASS_XMIN, MASS_XMAX); collinear
+    // same-sign tracks would sit near m ≈ 0 and fall below the histogram axis.
     const event = makeEvent([
-      track(1, 1),
-      track(1, 2),
-      track(1, 3),
-      track(-1, -1),
-      track(-1, -2),
+      track(1, 2, 80, 0, 0),
+      track(1, 0, 80, 2, 0),
+      track(1, 0, 80, 0, 2),
+      track(-1, -2, 80, 0, 0),
+      track(-1, 0, 80, -2, 0),
     ]);
 
     service.fillMassHistograms([event], cut, mass);

@@ -530,10 +530,10 @@
     "INSTRUCTIONS": {
       "TITLE": "Produkcja J/psi",
       "SUBTITLE": "Jak znaleźć rzadki sygnał w zatłoczonym zderzeniu",
-      "P1": "Naładowane cząstki tracą energię, przechodząc przez detektor. Ile jej tracą, zależy od ich pędu i od tego, jaką są cząstką. Wykres po lewej pokazuje tę stratę energii w funkcji pędu, więc różne cząstki tworzą różne pasy.",
+      "P1": "Naładowane cząstki tracą energię, przechodząc przez detektor. Ile jej tracą, zależy od ich pędu i od tego, jaką są cząstką. Wykres poniżej pokazuje tę stratę energii w funkcji pędu, więc różne cząstki tworzą różne pasy.",
       "PID_IMG_ALT": "Wykres PID ALICE: strata energii względem pędu z podpisanymi pasami cząstek",
       "PID_IMG_CAPTION": "Referencyjny wykres PID: szukaj prawie płaskiego pasa elektronów oznaczonego e, nad mocnym pasem pionów.",
-      "P2": "Na tym referencyjnym wykresie elektrony tworzą prawie poziomy pas oznaczony e, wokół dE/dx ≈ 80. Ustaw suwaki pędu i straty energii tak, żeby czerwony prostokąt objął ten pas — dobry start to strata energii między około 70 a 90 — a potem naciśnij Zaakceptuj wybrany zakres. Każdy zaznaczony tor traktujemy jak elektron.",
+      "P2": "Na tym referencyjnym wykresie elektrony tworzą prawie poziomy pas oznaczony e, wokół dE/dx ≈ 80. Ustaw suwaki pędu i straty energii tak, żeby czerwony prostokąt objął ten pas. Dobry start to strata energii między około 70 a 90. Potem naciśnij Zaakceptuj wybrany zakres. Każdy zaznaczony tor traktujemy jak elektron.",
       "P3": "Aplikacja łączy potem zaznaczone tory w pary wewnątrz każdego zderzenia i liczy masę niezmienniczą każdej pary. Rozpad J/psi daje elektron i pozyton, więc widać go jako pik w okolicy 3,1 GeV/c² wśród par przeciwnego znaku.",
       "P4": "Pary tego samego znaku nie mogą pochodzić z rozpadu J/psi, więc mierzą przypadkowe tło. Odejmij je, a to, co zostanie, jest twoim sygnałem.",
       "START_TUTORIAL": "Odtwórz przewodnik"

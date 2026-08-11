@@ -12,6 +12,7 @@ import {
 import * as d3 from 'd3';
 
 import {
+  PID_CHART_ASPECT,
   PID_DEDX_BINS,
   PID_DEDX_MAX,
   PID_DEDX_MIN,
@@ -20,6 +21,7 @@ import {
   PID_P_MAX,
   PID_P_MIN,
   PidCut,
+  jpsiResponsiveChartHeight,
 } from '../../models/jpsi.models';
 
 const MARGIN = PID_HEATMAP_MARGIN;
@@ -109,6 +111,7 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
   height = 0;
   private resizeObserver: ResizeObserver | null = null;
   private viewReady = false;
+  private readonly onWindowResize = (): void => this.measureAndDraw();
 
   private readonly xScale = d3.scaleLog().domain([PID_P_MIN, PID_P_MAX]);
   private readonly yScale = d3.scaleLinear().domain([PID_DEDX_MIN, PID_DEDX_MAX]);
@@ -125,6 +128,8 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
 
     this.resizeObserver = new ResizeObserver(() => this.measureAndDraw());
     this.resizeObserver.observe(this.hostRef.nativeElement);
+    // Viewport height can change without the host width changing (tall monitors).
+    window.addEventListener('resize', this.onWindowResize);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -140,6 +145,7 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    window.removeEventListener('resize', this.onWindowResize);
   }
 
   private measureAndDraw(): void {
@@ -149,7 +155,7 @@ export class PidHeatmapComponent implements AfterViewInit, OnChanges, OnDestroy 
     }
 
     this.width = rect.width;
-    this.height = Math.max(240, Math.min(420, rect.width * 0.72));
+    this.height = jpsiResponsiveChartHeight(rect.width, PID_CHART_ASPECT, 240);
 
     this.xScale.range([0, this.plotWidth]);
     this.yScale.range([this.plotHeight, 0]);

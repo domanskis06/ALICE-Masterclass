@@ -17,6 +17,7 @@ import {
   DEFAULT_MASS_WINDOW,
   MASS_BINS,
   MASS_BIN_WIDTH,
+  MASS_CHART_ASPECT,
   MASS_WINDOW_LIMITS,
   MASS_XMAX,
   MASS_XMIN,
@@ -24,6 +25,7 @@ import {
   MassPanelMode,
   SeriesVisibility,
   SignalResult,
+  jpsiResponsiveChartHeight,
 } from '../../models/jpsi.models';
 
 const MARGIN = { top: 10, right: 14, bottom: 40, left: 56 };
@@ -103,6 +105,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private resizeObserver: ResizeObserver | null = null;
   private viewReady = false;
+  private readonly onWindowResize = (): void => this.measureAndRender();
 
   private readonly xScale = d3.scaleLinear().domain([MASS_XMIN, MASS_XMAX]);
   private readonly yScale = d3.scaleLinear();
@@ -130,6 +133,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.viewReady = true;
     this.resizeObserver = new ResizeObserver(() => this.measureAndRender());
     this.resizeObserver.observe(this.hostRef.nativeElement);
+    window.addEventListener('resize', this.onWindowResize);
   }
 
   ngOnChanges(): void {
@@ -143,6 +147,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    window.removeEventListener('resize', this.onWindowResize);
   }
 
   private measureAndRender(): void {
@@ -152,7 +157,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
 
     this.width = rect.width;
-    this.height = Math.max(280, Math.min(460, rect.width * 0.55));
+    this.height = jpsiResponsiveChartHeight(rect.width, MASS_CHART_ASPECT, 280);
 
     this.xScale.range([0, this.plotWidth]);
     this.yScale.range([this.plotHeight, 0]);

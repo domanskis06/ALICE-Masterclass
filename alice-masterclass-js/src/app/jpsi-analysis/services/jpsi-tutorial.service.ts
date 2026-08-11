@@ -4,6 +4,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { driver, type DriveStep, type Driver } from 'driver.js';
 
 import { InstructionsDialogComponent } from '../../instructions-dialog/instructions-dialog.component';
+import {
+  PID_ELECTRON_BANDS_IMG,
+  PidReferenceDialogComponent,
+} from '../components/pid-reference-dialog/pid-reference-dialog.component';
 import { InstructionsComponent } from '../instructions/instructions.component';
 
 const SELECTOR_DATASET = '#jpsi-tour-dataset';
@@ -15,8 +19,6 @@ const SELECTOR_SUBTRACT = '#jpsi-tour-subtract-button';
 const SELECTOR_MASS_SIGNAL = '#jpsi-tour-mass-signal';
 const SELECTOR_ACCEPT = '#jpsi-tour-accept-button';
 const SELECTOR_COMPARE = '#jpsi-tour-compare';
-
-const PID_ELECTRON_BANDS_IMG = 'assets/exercises/jpsi/pid-electron-bands.png';
 
 /**
  * Guided tour of the J/psi exercise, built on driver.js like the strangeness tutorials.
@@ -66,6 +68,20 @@ export class JpsiTutorialService {
 
     document.body.classList.add('jpsi-tour-instructions-open');
     const dialogRef = this.dialog.open(InstructionsDialogComponent, dialogConfig);
+    dialogRef.afterClosed().subscribe(() => {
+      document.body.classList.remove('jpsi-tour-instructions-open');
+    });
+  }
+
+  /** Full-size PID reference plot (from "How to select a range?"). */
+  openPidReferenceDialog(): void {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.maxWidth = '95vw';
+    dialogConfig.autoFocus = false;
+    dialogConfig.panelClass = 'jpsi-pid-reference-dialog-panel';
+
+    document.body.classList.add('jpsi-tour-instructions-open');
+    const dialogRef = this.dialog.open(PidReferenceDialogComponent, dialogConfig);
     dialogRef.afterClosed().subscribe(() => {
       document.body.classList.remove('jpsi-tour-instructions-open');
     });

@@ -10,6 +10,7 @@ import { DatasetToolbarComponent } from './components/dataset-toolbar/dataset-to
 import { MassPanelComponent } from './components/mass-panel/mass-panel.component';
 import { PidCutControlsComponent } from './components/pid-cut-controls/pid-cut-controls.component';
 import { PidHeatmapComponent } from './components/pid-heatmap/pid-heatmap.component';
+import { PidReferenceDialogComponent } from './components/pid-reference-dialog/pid-reference-dialog.component';
 import { ResultsTableComponent } from './components/results-table/results-table.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { JpsiAnalysisComponent } from './jpsi-analysis.component';
@@ -39,6 +40,7 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     // Not part of the shared AngularModule barrel; only this exercise needs it.
     MatProgressBarModule,
     JpsiWelcomeDialogComponent,
+    PidReferenceDialogComponent,
   ],
   providers: [
     JpsiDataService,

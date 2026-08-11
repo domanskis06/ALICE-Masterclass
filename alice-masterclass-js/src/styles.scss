@@ -89,6 +89,15 @@ body.jpsi-tour-instructions-open .cdk-overlay-container {
   z-index: 10050;
 }
 
+.jpsi-pid-reference-dialog-panel {
+  .mat-mdc-dialog-container,
+  .mdc-dialog__container,
+  .mdc-dialog__surface {
+    max-width: 95vw;
+    overflow: visible;
+  }
+}
+
 /*
  * Real controls under the transparent expanding-stage proxy (LSA signal /
  * background steps). The proxy is the driver.js target (pointer-events: none);
