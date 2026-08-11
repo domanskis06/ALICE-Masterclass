@@ -1,0 +1,14 @@
+{
+  "histograms": [
+    {
+      "id": "pbPb_50_70",
+      "file": "pbPb_50_70.json",
+      "centrality": "50_70"
+    },
+    {
+      "id": "pbPb_70_90",
+      "file": "pbPb_70_90.json",
+      "centrality": "70_90"
+    }
+  ]
+}
