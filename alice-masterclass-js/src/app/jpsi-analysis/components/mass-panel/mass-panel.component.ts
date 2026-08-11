@@ -8,6 +8,7 @@ import {
   OnChanges,
   OnDestroy,
   Output,
+  SimpleChanges,
   ViewChild,
 } from '@angular/core';
 import { Options } from '@angular-slider/ngx-slider';
@@ -101,6 +102,12 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private resizeObserver: ResizeObserver | null = null;
   private viewReady = false;
+  /**
+   * While the student drags a thumb, parent snaps massWindow to bin edges and pushes it
+   * back via @Input. Writing those snapped values into [(value)]/[(highValue)] mid-drag
+   * makes ngx-slider fight the pointer (classic right-thumb oscillation).
+   */
+  private windowDragging = false;
   private readonly onWindowResize = (): void => this.measureAndRender();
 
   private readonly xScale = d3.scaleLinear().domain([MASS_XMIN, MASS_XMAX]);
@@ -132,9 +139,11 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     window.addEventListener('resize', this.onWindowResize);
   }
 
-  ngOnChanges(): void {
-    this.windowStart = this.massWindow[0];
-    this.windowEnd = this.massWindow[1];
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['massWindow'] && !this.windowDragging) {
+      this.windowStart = this.massWindow[0];
+      this.windowEnd = this.massWindow[1];
+    }
     if (this.viewReady) {
       this.render();
     }
@@ -271,13 +280,20 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
       return null;
     }
 
-    const x0 = this.xScale(this.massWindow[0]);
-    const x1 = this.xScale(this.massWindow[1]);
+    // Follow the live thumbs, not the snapped @Input, so the shade stays glued to the drag.
+    const x0 = this.xScale(this.windowStart);
+    const x1 = this.xScale(this.windowEnd);
 
     return { x: MARGIN.left + x0, width: Math.max(0, x1 - x0) };
   }
 
   onWindowChange(): void {
+    this.windowDragging = true;
+    this.massWindowChange.emit([this.windowStart, this.windowEnd]);
+  }
+
+  onWindowChangeEnd(): void {
+    this.windowDragging = false;
     this.massWindowChange.emit([this.windowStart, this.windowEnd]);
   }
 

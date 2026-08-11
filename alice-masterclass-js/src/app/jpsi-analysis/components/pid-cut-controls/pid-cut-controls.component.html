@@ -12,6 +12,7 @@
           [(highValue)]="dedxMax"
           [options]="dedxOptions"
           (userChange)="onSliderChange()"
+          (userChangeEnd)="onSliderChangeEnd()"
         ></ngx-slider>
       </div>
     </div>
@@ -32,6 +33,7 @@
       [(highValue)]="logPMax"
       [options]="pOptions"
       (userChange)="onSliderChange()"
+      (userChangeEnd)="onSliderChangeEnd()"
     ></ngx-slider>
   </div>
 

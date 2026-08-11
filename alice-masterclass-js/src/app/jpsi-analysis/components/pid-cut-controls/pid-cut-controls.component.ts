@@ -52,6 +52,9 @@ export class PidCutControlsComponent implements OnChanges {
   pOptions: Options = this.buildPOptions(false);
   dedxOptions: Options = this.buildDedxOptions(false);
 
+  /** True between userChange and userChangeEnd — blocks cut→thumb echo. */
+  private sliderDragging = false;
+
   readonly dedxColumnWidth = DEDX_COLUMN_WIDTH_PX;
   /**
    * Align momentum thumbs with the plot edges: inset to the canvas, then overhang by half
@@ -68,7 +71,15 @@ export class PidCutControlsComponent implements OnChanges {
   readonly dedxPadBottom = PID_HEATMAP_MARGIN.bottom - SLIDER_THUMB_HALF_PX;
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['cut'] && this.cut !== undefined) {
+    // Never push an echoed draft cut back into the thumbs while dragging: parent stores
+    // physical p = exp(logP), and re-applying Math.log(p) fights ngx-slider (especially
+    // near the right-hand floor/ceil) and makes the high thumb oscillate.
+    if (
+      changes['cut'] &&
+      this.cut !== undefined &&
+      !this.sliderDragging &&
+      !this.cutsMatch(this.cut, this.currentCut())
+    ) {
       this.logPMin = Math.log(this.clampP(this.cut.pMin));
       this.logPMax = Math.log(this.clampP(this.cut.pMax));
       this.dedxMin = this.cut.dedxMin;
@@ -82,6 +93,12 @@ export class PidCutControlsComponent implements OnChanges {
   }
 
   onSliderChange(): void {
+    this.sliderDragging = true;
+    this.cutPreview.emit(this.currentCut());
+  }
+
+  onSliderChangeEnd(): void {
+    this.sliderDragging = false;
     this.cutPreview.emit(this.currentCut());
   }
 
@@ -100,6 +117,15 @@ export class PidCutControlsComponent implements OnChanges {
       dedxMin: this.dedxMin,
       dedxMax: this.dedxMax,
     };
+  }
+
+  private cutsMatch(a: PidCut, b: PidCut): boolean {
+    return (
+      a.pMin === b.pMin &&
+      a.pMax === b.pMax &&
+      a.dedxMin === b.dedxMin &&
+      a.dedxMax === b.dedxMax
+    );
   }
 
   private clampP(value: number): number {
