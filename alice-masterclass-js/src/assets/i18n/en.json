@@ -193,6 +193,17 @@
   "INSTRUCTIONS_DIALOG": {
     "BUTTON_DISMISS": "Dismiss"
   },
+  "SHARED": {
+    "FIT_SELECTOR": {
+      "TITLE": "Fit Selector",
+      "SIGNAL": "Signal",
+      "BACKGROUND": "Background",
+      "FIT": "Fit",
+      "ACCEPT": "Accept",
+      "CLEAR_FIT": "Clear fit",
+      "UNDO": "Undo"
+    }
+  },
   "STRANGENESS": {
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Strange Particle Production",
@@ -290,15 +301,6 @@
       "CENTRALITY": "Centrality",
       "SIGNAL": "Signal",
       "DELETE": "Delete fit"
-    },
-    "FIT_SELECTOR": {
-      "TITLE": "Fit Selector",
-      "SIGNAL": "Signal",
-      "BACKGROUND": "Background",
-      "FIT": "Fit",
-      "ACCEPT": "Accept",
-      "CLEAR_FIT": "Clear fit",
-      "UNDO": "Undo"
     },
     "ENHANCEMENT": {
       "TITLE": "Results",
@@ -446,7 +448,11 @@
       "PP": "proton-proton",
       "PPB": "proton-lead",
       "PP_SHORT": "pp",
-      "PPB_SHORT": "p-Pb"
+      "PPB_SHORT": "p-Pb",
+      "GROUP_TRACK": "Track data",
+      "GROUP_PUBLISHED": "Published Pb-Pb (ALICE)",
+      "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
+      "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
     "TOOLBAR": {
       "DATASET": "Collision system",
@@ -496,6 +502,36 @@
       "BACKGROUND": "Background",
       "SB": "Signal to background",
       "SIGNIFICANCE": "Significance"
+    },
+    "PBPB": {
+      "MINV": {
+        "TITLE": "Invariant mass (published, ALICE Pb-Pb)",
+        "UNLIKE": "Unlike-sign pairs",
+        "LIKE": "Like-sign pairs (background)",
+        "SUBTRACT": "Subtract background",
+        "AFTER_SUBTRACT": "See the fit panel on the right.",
+        "EMPTY": "Could not load this histogram."
+      },
+      "FIT": {
+        "TITLE": "Signal fit",
+        "EMPTY_HINT": "Press \"Subtract background\" on the left to reveal the signal.",
+        "TOTAL": "Total",
+        "SIGNAL": "J/psi signal",
+        "BACKGROUND": "Background",
+        "SHOW_UL": "Show unlike/like-sign",
+        "NO_SIGNAL_HINT": "No fit yet. Press Fit after choosing a signal and background range."
+      },
+      "RESULTS": {
+        "TITLE": "Pb-Pb J/psi yields",
+        "CENTRALITY": "Centrality",
+        "SIGNAL": "J/psi signal (your fit)",
+        "BACKGROUND": "Background (your fit)",
+        "PUBLISHED_NJPSI": "Published N(J/psi)",
+        "PUBLISHED_SB": "Published S/B",
+        "PUBLISHED_SIGNIFICANCE": "Published significance",
+        "DELETE": "Remove this result",
+        "EMPTY": "Accept a fit to add it here."
+      }
     },
     "RESULTS": {
       "TITLE": "Your results",

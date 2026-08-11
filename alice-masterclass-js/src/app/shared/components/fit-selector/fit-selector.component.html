@@ -1,10 +1,10 @@
 <mat-card appearance="outlined" id="lsa-tour-fit-selector">
-  <mat-card-title class="title">{{ 'STRANGENESS.FIT_SELECTOR.TITLE' | translate }}</mat-card-title>
+  <mat-card-title class="title">{{ 'SHARED.FIT_SELECTOR.TITLE' | translate }}</mat-card-title>
   <mat-card-content>
     <div fxLayout="row" fxLayoutGap="10px">
       <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px">
         <div id="lsa-tour-signal-group" class="lsa-slider-group lsa-slider-group--signal" fxLayout="column">
-          <span class="lsa-slider-label">{{ 'STRANGENESS.FIT_SELECTOR.SIGNAL' | translate }}</span>
+          <span class="lsa-slider-label">{{ 'SHARED.FIT_SELECTOR.SIGNAL' | translate }}</span>
           <ngx-slider
             [(value)]="signal.start"
             [(highValue)]="signal.end"
@@ -13,7 +13,7 @@
           ></ngx-slider>
         </div>
         <div id="lsa-tour-background-group" class="lsa-slider-group lsa-slider-group--background" fxLayout="column">
-          <span class="lsa-slider-label">{{ 'STRANGENESS.FIT_SELECTOR.BACKGROUND' | translate }}</span>
+          <span class="lsa-slider-label">{{ 'SHARED.FIT_SELECTOR.BACKGROUND' | translate }}</span>
           <ngx-slider
             [(value)]="background.start"
             [(highValue)]="background.end"
@@ -23,13 +23,13 @@
         </div>
       </div>
       <div fxFlex="grow" fxLayout="column" fxLayoutGap="10px">
-        <button id="lsa-tour-fit-button" mat-raised-button color="primary" [disabled]="fitService.data.data.length === 0" (click)="onFitButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.FIT' | translate }}</button>
+        <button id="lsa-tour-fit-button" mat-raised-button color="primary" [disabled]="fitService.data.data.length === 0" (click)="onFitButtonClicked()">{{ 'SHARED.FIT_SELECTOR.FIT' | translate }}</button>
         <div id="lsa-tour-result-actions" fxLayout="column" fxLayoutGap="10px">
-          <button id="lsa-tour-accept-button" mat-raised-button color="primary" [disabled]="fitService.result === null" (click)="onAcceptButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.ACCEPT' | translate }}</button>
+          <button id="lsa-tour-accept-button" mat-raised-button color="primary" [disabled]="fitService.result === null" (click)="onAcceptButtonClicked()">{{ 'SHARED.FIT_SELECTOR.ACCEPT' | translate }}</button>
           @if (demo) {
-            <button id="lsa-demo-undo-button" mat-stroked-button [disabled]="undoDisabled" (click)="onUndoButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.UNDO' | translate }}</button>
+            <button id="lsa-demo-undo-button" mat-stroked-button [disabled]="undoDisabled" (click)="onUndoButtonClicked()">{{ 'SHARED.FIT_SELECTOR.UNDO' | translate }}</button>
           }
-          <button id="lsa-tour-clear-fit-button" mat-stroked-button [disabled]="fitService.result === null" (click)="onClearFitButtonClicked()">{{ 'STRANGENESS.FIT_SELECTOR.CLEAR_FIT' | translate }}</button>
+          <button id="lsa-tour-clear-fit-button" mat-stroked-button [disabled]="fitService.result === null" (click)="onClearFitButtonClicked()">{{ 'SHARED.FIT_SELECTOR.CLEAR_FIT' | translate }}</button>
         </div>
       </div>
     </div>

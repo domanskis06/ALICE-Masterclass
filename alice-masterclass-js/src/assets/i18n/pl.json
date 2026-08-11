@@ -195,6 +195,17 @@
   "INSTRUCTIONS_DIALOG": {
     "BUTTON_DISMISS": "Zamknij"
   },
+  "SHARED": {
+    "FIT_SELECTOR": {
+      "TITLE": "Wybór dopasowania",
+      "SIGNAL": "Sygnał",
+      "BACKGROUND": "Tło",
+      "FIT": "Dopasuj",
+      "ACCEPT": "Zaakceptuj",
+      "CLEAR_FIT": "Wyczyść dopasowanie",
+      "UNDO": "Cofnij"
+    }
+  },
   "STRANGENESS": {
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Produkcja cząstek dziwnych",
@@ -292,15 +303,6 @@
       "CENTRALITY": "Centralność",
       "SIGNAL": "Sygnał",
       "DELETE": "Usuń dopasowanie"
-    },
-    "FIT_SELECTOR": {
-      "TITLE": "Wybór dopasowania",
-      "SIGNAL": "Sygnał",
-      "BACKGROUND": "Tło",
-      "FIT": "Dopasuj",
-      "ACCEPT": "Zaakceptuj",
-      "CLEAR_FIT": "Wyczyść dopasowanie",
-      "UNDO": "Cofnij"
     },
     "ENHANCEMENT": {
       "TITLE": "Wyniki",
@@ -448,7 +450,11 @@
       "PP": "proton-proton",
       "PPB": "proton-ołów",
       "PP_SHORT": "pp",
-      "PPB_SHORT": "p-Pb"
+      "PPB_SHORT": "p-Pb",
+      "GROUP_TRACK": "Dane z torów",
+      "GROUP_PUBLISHED": "Opublikowane Pb-Pb (ALICE)",
+      "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
+      "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
     "TOOLBAR": {
       "DATASET": "Układ zderzenia",
@@ -498,6 +504,36 @@
       "BACKGROUND": "Tło",
       "SB": "Sygnał do tła",
       "SIGNIFICANCE": "Istotność"
+    },
+    "PBPB": {
+      "MINV": {
+        "TITLE": "Masa niezmiennicza (opublikowane dane ALICE Pb-Pb)",
+        "UNLIKE": "Pary o różnych znakach",
+        "LIKE": "Pary o tych samych znakach (tło)",
+        "SUBTRACT": "Odejmij tło",
+        "AFTER_SUBTRACT": "Zobacz panel dopasowania po prawej.",
+        "EMPTY": "Nie udało się wczytać tego histogramu."
+      },
+      "FIT": {
+        "TITLE": "Dopasowanie sygnału",
+        "EMPTY_HINT": "Kliknij „Odejmij tło” po lewej, aby odkryć sygnał.",
+        "TOTAL": "Suma",
+        "SIGNAL": "Sygnał J/psi",
+        "BACKGROUND": "Tło",
+        "SHOW_UL": "Pokaż pary różne/tego samego znaku",
+        "NO_SIGNAL_HINT": "Brak dopasowania. Kliknij Dopasuj po wybraniu zakresów sygnału i tła."
+      },
+      "RESULTS": {
+        "TITLE": "Yield J/psi w Pb-Pb",
+        "CENTRALITY": "Centralność",
+        "SIGNAL": "Sygnał J/psi (Twoje dopasowanie)",
+        "BACKGROUND": "Tło (Twoje dopasowanie)",
+        "PUBLISHED_NJPSI": "Opublikowane N(J/psi)",
+        "PUBLISHED_SB": "Opublikowane S/B",
+        "PUBLISHED_SIGNIFICANCE": "Opublikowana istotność",
+        "DELETE": "Usuń ten wynik",
+        "EMPTY": "Zaakceptuj dopasowanie, aby dodać je tutaj."
+      }
     },
     "RESULTS": {
       "TITLE": "Twoje wyniki",

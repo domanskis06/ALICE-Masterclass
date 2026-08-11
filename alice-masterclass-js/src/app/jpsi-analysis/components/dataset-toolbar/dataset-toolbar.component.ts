@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { DatasetDescriptor, DatasetId } from '../../models/jpsi.models';
+import { CollisionSystemId, PbPbCentralityDescriptor } from '../../models/pbpb-minv.models';
 import { QuickAnalysisPreset, QUICK_ANALYSIS_PRESETS } from '../../services/jpsi-quick-analysis.service';
 
 @Component({
@@ -11,13 +12,16 @@ import { QuickAnalysisPreset, QUICK_ANALYSIS_PRESETS } from '../../services/jpsi
 })
 export class DatasetToolbarComponent {
   @Input() datasets: DatasetDescriptor[] = [];
-  @Input() activeDataset: DatasetId = 'pp';
+  @Input() publishedOptions: PbPbCentralityDescriptor[] = [];
+  @Input() activeDataset: CollisionSystemId = 'pp';
+  /** Hides the event count / Run analysis / progress / Reset histograms controls. */
+  @Input() isPublishedActive = false;
   @Input() processedCount = 0;
   @Input() totalEvents = 0;
   @Input() isRunning = false;
   @Input() eventsLeft = 0;
 
-  @Output() datasetChange = new EventEmitter<DatasetId>();
+  @Output() datasetChange = new EventEmitter<CollisionSystemId>();
   @Output() runAnalysis = new EventEmitter<QuickAnalysisPreset>();
   @Output() resetHistograms = new EventEmitter<void>();
 

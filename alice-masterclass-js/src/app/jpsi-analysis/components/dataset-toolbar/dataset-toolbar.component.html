@@ -9,56 +9,69 @@
           data-testid="jpsi-dataset-group"
           (selectionChange)="datasetChange.emit($event.value)"
         >
-          @for (dataset of datasets; track dataset.id) {
-            <mat-option [value]="dataset.id" [attr.data-testid]="'jpsi-dataset-' + dataset.id">
-              {{ shortLabelKey(dataset.id) | translate }}
-            </mat-option>
+          <mat-optgroup [label]="'JPSI.DATASET.GROUP_TRACK' | translate">
+            @for (dataset of datasets; track dataset.id) {
+              <mat-option [value]="dataset.id" [attr.data-testid]="'jpsi-dataset-' + dataset.id">
+                {{ shortLabelKey(dataset.id) | translate }}
+              </mat-option>
+            }
+          </mat-optgroup>
+          @if (publishedOptions.length > 0) {
+            <mat-optgroup [label]="'JPSI.DATASET.GROUP_PUBLISHED' | translate">
+              @for (option of publishedOptions; track option.id) {
+                <mat-option [value]="option.id" [attr.data-testid]="'jpsi-dataset-' + option.id">
+                  {{ option.shortLabelKey | translate }}
+                </mat-option>
+              }
+            </mat-optgroup>
           }
         </mat-select>
       </mat-form-field>
     </div>
 
-    <div class="dataset-toolbar__group" id="jpsi-tour-quick-analysis">
-      <mat-form-field appearance="outline" class="dataset-toolbar__preset">
-        <mat-label>{{ 'JPSI.TOOLBAR.EVENTS' | translate }}</mat-label>
-        <mat-select [(value)]="selectedPreset" [disabled]="isRunning" data-testid="jpsi-preset">
-          @for (preset of presets; track preset) {
-            <mat-option [value]="preset">{{ presetLabel(preset) | translate }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+    @if (!isPublishedActive) {
+      <div class="dataset-toolbar__group" id="jpsi-tour-quick-analysis">
+        <mat-form-field appearance="outline" class="dataset-toolbar__preset">
+          <mat-label>{{ 'JPSI.TOOLBAR.EVENTS' | translate }}</mat-label>
+          <mat-select [(value)]="selectedPreset" [disabled]="isRunning" data-testid="jpsi-preset">
+            @for (preset of presets; track preset) {
+              <mat-option [value]="preset">{{ presetLabel(preset) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
 
-      <span
-        [matTooltipDisabled]="!exhausted"
-        [matTooltip]="'JPSI.TOOLBAR.EXHAUSTED' | translate"
-      >
-        <button
-          mat-raised-button
-          color="primary"
-          data-testid="jpsi-run"
-          [disabled]="isRunning || exhausted"
-          (click)="runAnalysis.emit(selectedPreset)"
+        <span
+          [matTooltipDisabled]="!exhausted"
+          [matTooltip]="'JPSI.TOOLBAR.EXHAUSTED' | translate"
         >
-          <mat-icon>{{ isRunning ? 'hourglass_top' : 'play_arrow' }}</mat-icon>
-          {{ 'JPSI.TOOLBAR.RUN' | translate }}
-        </button>
-      </span>
-    </div>
+          <button
+            mat-raised-button
+            color="primary"
+            data-testid="jpsi-run"
+            [disabled]="isRunning || exhausted"
+            (click)="runAnalysis.emit(selectedPreset)"
+          >
+            <mat-icon>{{ isRunning ? 'hourglass_top' : 'play_arrow' }}</mat-icon>
+            {{ 'JPSI.TOOLBAR.RUN' | translate }}
+          </button>
+        </span>
+      </div>
 
-    <div class="dataset-toolbar__progress">
-      <span class="dataset-toolbar__count" data-testid="jpsi-progress">
-        {{ 'JPSI.TOOLBAR.PROCESSED' | translate }}: {{ processedCount }} / {{ totalEvents }}
-      </span>
-      <mat-progress-bar mode="determinate" [value]="progressPercent"></mat-progress-bar>
-    </div>
+      <div class="dataset-toolbar__progress">
+        <span class="dataset-toolbar__count" data-testid="jpsi-progress">
+          {{ 'JPSI.TOOLBAR.PROCESSED' | translate }}: {{ processedCount }} / {{ totalEvents }}
+        </span>
+        <mat-progress-bar mode="determinate" [value]="progressPercent"></mat-progress-bar>
+      </div>
 
-    <button
-      mat-stroked-button
-      data-testid="jpsi-reset-histograms"
-      [disabled]="isRunning || processedCount === 0"
-      (click)="resetHistograms.emit()"
-    >
-      {{ 'JPSI.TOOLBAR.RESET_HISTOGRAMS' | translate }}
-    </button>
+      <button
+        mat-stroked-button
+        data-testid="jpsi-reset-histograms"
+        [disabled]="isRunning || processedCount === 0"
+        (click)="resetHistograms.emit()"
+      >
+        {{ 'JPSI.TOOLBAR.RESET_HISTOGRAMS' | translate }}
+      </button>
+    }
   </mat-card-content>
 </mat-card>

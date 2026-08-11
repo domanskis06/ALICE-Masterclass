@@ -193,6 +193,17 @@
   "INSTRUCTIONS_DIALOG": {
     "BUTTON_DISMISS": "Schließen"
   },
+  "SHARED": {
+    "FIT_SELECTOR": {
+      "TITLE": "Fit-Auswahl",
+      "SIGNAL": "Signal",
+      "BACKGROUND": "Untergrund",
+      "FIT": "Fit",
+      "ACCEPT": "Übernehmen",
+      "CLEAR_FIT": "Fit löschen",
+      "UNDO": "Rückgängig"
+    }
+  },
   "STRANGENESS": {
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Produktion seltsamer Teilchen",
@@ -290,15 +301,6 @@
       "CENTRALITY": "Zentralität",
       "SIGNAL": "Signal",
       "DELETE": "Fit löschen"
-    },
-    "FIT_SELECTOR": {
-      "TITLE": "Fit-Auswahl",
-      "SIGNAL": "Signal",
-      "BACKGROUND": "Untergrund",
-      "FIT": "Fit",
-      "ACCEPT": "Übernehmen",
-      "CLEAR_FIT": "Fit löschen",
-      "UNDO": "Rückgängig"
     },
     "ENHANCEMENT": {
       "TITLE": "Ergebnisse",
@@ -446,7 +448,11 @@
       "PP": "Proton-Proton",
       "PPB": "Proton-Blei",
       "PP_SHORT": "pp",
-      "PPB_SHORT": "p-Pb"
+      "PPB_SHORT": "p-Pb",
+      "GROUP_TRACK": "Spurdaten",
+      "GROUP_PUBLISHED": "Veröffentlichte Pb-Pb-Daten (ALICE)",
+      "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
+      "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
     "TOOLBAR": {
       "DATASET": "Kollisionssystem",
@@ -496,6 +502,36 @@
       "BACKGROUND": "Untergrund",
       "SB": "Signal zu Untergrund",
       "SIGNIFICANCE": "Signifikanz"
+    },
+    "PBPB": {
+      "MINV": {
+        "TITLE": "Invariante Masse (veröffentlicht, ALICE Pb-Pb)",
+        "UNLIKE": "Paare mit ungleichem Vorzeichen",
+        "LIKE": "Paare mit gleichem Vorzeichen (Untergrund)",
+        "SUBTRACT": "Untergrund abziehen",
+        "AFTER_SUBTRACT": "Siehe das Fit-Panel rechts.",
+        "EMPTY": "Dieses Histogramm konnte nicht geladen werden."
+      },
+      "FIT": {
+        "TITLE": "Signal-Fit",
+        "EMPTY_HINT": "Klicke links auf „Untergrund abziehen“, um das Signal freizulegen.",
+        "TOTAL": "Gesamt",
+        "SIGNAL": "J/psi-Signal",
+        "BACKGROUND": "Untergrund",
+        "SHOW_UL": "Paare mit gleichem/ungleichem Vorzeichen anzeigen",
+        "NO_SIGNAL_HINT": "Noch kein Fit. Klicke auf Fit, nachdem du Signal- und Untergrundbereich gewählt hast."
+      },
+      "RESULTS": {
+        "TITLE": "J/psi-Ausbeute in Pb-Pb",
+        "CENTRALITY": "Zentralität",
+        "SIGNAL": "J/psi-Signal (dein Fit)",
+        "BACKGROUND": "Untergrund (dein Fit)",
+        "PUBLISHED_NJPSI": "Veröffentlichtes N(J/psi)",
+        "PUBLISHED_SB": "Veröffentlichtes S/B",
+        "PUBLISHED_SIGNIFICANCE": "Veröffentlichte Signifikanz",
+        "DELETE": "Dieses Ergebnis entfernen",
+        "EMPTY": "Akzeptiere einen Fit, um ihn hier hinzuzufügen."
+      }
     },
     "RESULTS": {
       "TITLE": "Deine Ergebnisse",

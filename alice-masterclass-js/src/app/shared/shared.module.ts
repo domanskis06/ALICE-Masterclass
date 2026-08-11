@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { TranslateModule } from '@ngx-translate/core';
 
-import { PageNotFoundComponent, CernToolbarComponent, EventDisplayComponent, SpinnerContainerComponent, HistogramComponent, FitHistogramComponent } from './components/';
+import { PageNotFoundComponent, CernToolbarComponent, EventDisplayComponent, SpinnerContainerComponent, HistogramComponent, FitHistogramComponent, FitSelectorComponent } from './components/';
 import { WebviewDirective } from './directives/';
 import { AngularModule } from './angular.module';
 
@@ -15,7 +15,8 @@ import { AngularModule } from './angular.module';
     EventDisplayComponent,
     SpinnerContainerComponent,
     HistogramComponent,
-    FitHistogramComponent
+    FitHistogramComponent,
+    FitSelectorComponent
   ],
   imports: [
     CommonModule,
@@ -29,7 +30,8 @@ import { AngularModule } from './angular.module';
     EventDisplayComponent,
     SpinnerContainerComponent,
     HistogramComponent,
-    FitHistogramComponent
+    FitHistogramComponent,
+    FitSelectorComponent
   ]
 })
 export class SharedModule {}

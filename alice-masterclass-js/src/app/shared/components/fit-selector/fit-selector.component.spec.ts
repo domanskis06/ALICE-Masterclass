@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { AngularModule } from '../../shared/angular.module';
-import { FitService } from '../../shared/services/fit.service';
-import { SharedModule } from '../../shared/shared.module';
+import { AngularModule } from '../../angular.module';
+import { FitService } from '../../services/fit.service';
+import { SharedModule } from '../../shared.module';
 
 import { FitSelectorComponent } from './fit-selector.component';
 

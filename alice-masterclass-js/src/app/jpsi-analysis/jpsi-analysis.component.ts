@@ -13,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 
 import { InstructionsProvider } from '../shared/interfaces';
+import { FitService } from '../shared/services/fit.service';
 import { InstructionsComponent } from './instructions/instructions.component';
 import {
   DatasetDescriptor,
@@ -22,6 +23,14 @@ import {
   PidCut,
   SummaryRow,
 } from './models/jpsi.models';
+import {
+  CollisionSystemId,
+  isPbPbCentralityId,
+  PbPbCentralityDescriptor,
+  PbPbCentralityId,
+  PbPbYieldRow,
+  PBPB_CENTRALITY_DESCRIPTORS,
+} from './models/pbpb-minv.models';
 import { JpsiAnalysisStateService } from './services/jpsi-analysis-state.service';
 import { JpsiDataService } from './services/jpsi-data.service';
 import {
@@ -30,6 +39,7 @@ import {
 } from './services/jpsi-quick-analysis.service';
 import { JpsiSignalService } from './services/jpsi-signal.service';
 import { JpsiTutorialService } from './services/jpsi-tutorial.service';
+import { PbPbMinvStateService } from './services/pbpb-minv-state.service';
 import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.component';
 
 const WELCOME_SEEN_STORAGE_KEY = 'alice_mc_jpsi_welcomeSeen_v1';
@@ -40,6 +50,10 @@ const SNACKBAR_DURATION_MS = 3000;
   templateUrl: './jpsi-analysis.component.html',
   styleUrls: ['./jpsi-analysis.component.scss'],
   standalone: false,
+  // Own FitService instance: both StrangenessLargeScaleAnalysisModule and JpsiAnalysisModule
+  // are eagerly loaded into AppModule, so a module-level FitService provider would collapse
+  // into one app-wide singleton shared with LSA. Component-level providers avoid that.
+  providers: [FitService, PbPbMinvStateService],
 })
 export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsProvider {
   instructionsComponent: Type<unknown> = InstructionsComponent;
@@ -55,11 +69,17 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   /** Live PID cut while sliders move; mass rebuilds only after Accept selected range. */
   previewCut: PidCut = { ...DEFAULT_PID_CUT };
 
+  /** Which branch of the layout is shown; independent of (and persists across) both sub-states. */
+  activeCollisionSystem: CollisionSystemId = 'pp';
+
+  readonly pbPbCentralityDescriptors: readonly PbPbCentralityDescriptor[] = PBPB_CENTRALITY_DESCRIPTORS;
+
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly data: JpsiDataService,
     public readonly state: JpsiAnalysisStateService,
+    public readonly pbPbState: PbPbMinvStateService,
     public readonly quickAnalysis: JpsiQuickAnalysisService,
     private readonly signal: JpsiSignalService,
     private readonly tutorial: JpsiTutorialService,
@@ -73,6 +93,10 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     this.state.changes$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.onStateChanged());
+
+    this.pbPbState.changes$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.changeDetector.markForCheck());
 
     this.data
       .getManifest()
@@ -128,14 +152,27 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     return this.hasData && this.state.state.appliedCut !== null && !this.state.state.tooWideSelection;
   }
 
+  isPublished(id: CollisionSystemId): boolean {
+    return isPbPbCentralityId(id);
+  }
+
+  get pbPbRows(): PbPbYieldRow[] {
+    return this.pbPbState.rows;
+  }
+
   // --- Toolbar --------------------------------------------------------------
 
-  onDatasetChange(datasetId: DatasetId): void {
+  onDatasetChange(id: CollisionSystemId): void {
     if (this.quickAnalysis.isRunning) {
       return;
     }
-    this.state.selectDataset(datasetId);
-    this.tutorial.notifyDatasetSwitched();
+    this.activeCollisionSystem = id;
+    if (isPbPbCentralityId(id)) {
+      this.pbPbState.selectCentrality(id);
+    } else {
+      this.state.selectDataset(id);
+      this.tutorial.notifyDatasetSwitched();
+    }
   }
 
   async onRunAnalysis(preset: QuickAnalysisPreset): Promise<void> {
@@ -197,6 +234,24 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   onAcceptResult(): void {
     this.state.acceptResult();
     this.tutorial.notifyAccepted();
+  }
+
+  // --- Pb-Pb Minv panel -------------------------------------------------------
+
+  onSubtractPbPb(): void {
+    this.pbPbState.subtractBackground();
+  }
+
+  onShowComponentsPbPb(): void {
+    this.pbPbState.showComponents();
+  }
+
+  onAcceptPbPbResult(): void {
+    this.pbPbState.acceptResult();
+  }
+
+  onRemovePbPbResult(id: PbPbCentralityId): void {
+    this.pbPbState.removeResult(id);
   }
 
   // --- Upload ---------------------------------------------------------------

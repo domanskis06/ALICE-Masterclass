@@ -15,7 +15,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
-import { LSAData } from '../shared/models';
+import { FitHistogramEntry, LSAData } from '../shared/models';
 
 import { InstructionsProvider } from '../shared/interfaces';
 import { InstructionsComponent } from './instructions/instructions.component';
@@ -31,17 +31,12 @@ import { DemoConfig } from '../shared/demo/demo-config.service';
 import { FitService } from '../shared/services/fit.service';
 import { LsaTutorialService } from './lsa-tutorial/lsa-tutorial.service';
 import { LsaTutorialWelcomeDialogComponent } from './lsa-tutorial/lsa-tutorial-welcome-dialog.component';
-import { FitSelectorComponent } from './fit-selector/fit-selector.component';
+import { FitSelectorComponent } from '../shared/components/fit-selector/fit-selector.component';
 
 export interface OpenHistogramEntry {
   particle: ParticleType;
   collision: CollisionType;
   centrality: CentralityType;
-}
-
-export interface FitHistogramEntry {
-  signalFitRange: [number, number]
-  backgroundFitRange: [number, number]
 }
 
 export interface AddToHistogramEntry {

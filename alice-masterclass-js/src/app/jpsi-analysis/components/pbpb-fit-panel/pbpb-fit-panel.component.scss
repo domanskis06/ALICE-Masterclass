@@ -1,0 +1,122 @@
+.pbpb-fit-panel {
+  position: relative;
+}
+
+/* Equal inset from the card's top and right edges for the action buttons. */
+$panel-action-inset: 12px;
+
+.pbpb-fit-panel__title {
+  display: block;
+  min-height: 40px;
+  line-height: 40px;
+  margin-bottom: 4px;
+  padding-left: 16px;
+  // Keep the title clear of the absolute action cluster.
+  padding-right: 240px;
+}
+
+.pbpb-fit-panel__title-text {
+  display: inline-block;
+}
+
+.pbpb-fit-panel__title-actions {
+  position: absolute;
+  top: $panel-action-inset;
+  right: $panel-action-inset;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  line-height: normal;
+  z-index: 3;
+}
+
+.panel-action-button {
+  flex-shrink: 0;
+  color: #c62828 !important;
+  border-color: rgba(198, 40, 40, 0.45) !important;
+
+  &:disabled {
+    color: rgba(198, 40, 40, 0.38) !important;
+    border-color: rgba(198, 40, 40, 0.2) !important;
+  }
+}
+
+.pbpb-fit-panel__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+  padding: 0 32px;
+}
+
+.plot-stage {
+  --plot-h: max(300px, 44vh);
+  position: relative;
+  width: min(100%, calc(var(--plot-h) * 400 / 224));
+  aspect-ratio: 400 / 224;
+  margin: 0 auto;
+}
+
+app-fit-histogram {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+
+  ::ng-deep figure {
+    height: 100%;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
+
+  ::ng-deep svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+#info {
+  position: absolute;
+  right: calc(100% * 10 / 400 + 14px);
+  top: 20px;
+  z-index: 2;
+  min-width: 11.5rem;
+  max-width: 48%;
+  text-align: end;
+  pointer-events: none;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  box-sizing: border-box;
+
+  p {
+    margin: 3px 0;
+    font-size: 0.95em;
+    line-height: 1.35;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-shadow:
+      0 0 3px rgba(255, 255, 255, 0.95),
+      0 0 6px rgba(255, 255, 255, 0.85),
+      0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+}
+
+.pbpb-fit-panel__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pbpb-fit-panel__accept-hint {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+}

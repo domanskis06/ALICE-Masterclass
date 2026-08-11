@@ -2,9 +2,9 @@ import { Component, OnInit, Input, Output, EventEmitter, inject } from '@angular
 
 import { LabelType, Options } from '@angular-slider/ngx-slider';
 
-import { FitHistogramEntry } from '../strangeness-large-scale-analysis.component';
-import { DemoConfig } from '../../shared/demo/demo-config.service';
-import { FitService } from '../../shared/services/fit.service';
+import { FitHistogramEntry } from '../../models';
+import { DemoConfig } from '../../demo/demo-config.service';
+import { FitService } from '../../services/fit.service';
 
 export interface Slider {
   start: number;
@@ -56,6 +56,15 @@ export class FitSelectorComponent implements OnInit {
 
   private _selectionsInitialized = false;
 
+  /**
+   * One-shot override applied on init only, e.g. to restore a previously chosen range after
+   * this component is unmounted and remounted (LSA never needs this — it always resets to the
+   * full domain on a new histogram — but a persisted analysis like Pb-Pb centralities does).
+   * Ignored after the first render; from then on the student's own dragging is authoritative.
+   */
+  @Input()
+  initialSelection: FitHistogramEntry | null = null;
+
   @Output()
   tryFitEvent: EventEmitter<FitHistogramEntry> = new EventEmitter<FitHistogramEntry>();
 
@@ -103,6 +112,15 @@ export class FitSelectorComponent implements OnInit {
   constructor(public fitService: FitService) {}
 
   ngOnInit(): void {
+    // Runs after every bound @Input setter (axisRange included), so this always wins over
+    // the full-domain default that axisRange applies on first assignment.
+    if (this.initialSelection !== null) {
+      this.signal.start = this.initialSelection.signalFitRange[0];
+      this.signal.end = this.initialSelection.signalFitRange[1];
+      this.background.start = this.initialSelection.backgroundFitRange[0];
+      this.background.end = this.initialSelection.backgroundFitRange[1];
+      this._selectionsInitialized = true;
+    }
   }
 
   private sliderOptions(range: [number, number]): Options {

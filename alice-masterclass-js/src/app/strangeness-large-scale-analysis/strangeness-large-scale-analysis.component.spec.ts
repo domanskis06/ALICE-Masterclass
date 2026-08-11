@@ -12,7 +12,6 @@ import { SharedModule } from '../shared/shared.module';
 
 import { InstructionsComponent } from './instructions/instructions.component';
 import { HistogramSelectorComponent } from './histogram-selector/histogram-selector.component';
-import { FitSelectorComponent } from './fit-selector/fit-selector.component';
 import { HistogramDisplayComponent } from './histogram-display/histogram-display.component';
 import { ResultsComponent } from './results/results.component';
 
@@ -45,7 +44,6 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
         StrangenessLargeScaleAnalysisComponent,
         InstructionsComponent,
         HistogramSelectorComponent,
-        FitSelectorComponent,
         HistogramDisplayComponent,
         ResultsComponent
     ],

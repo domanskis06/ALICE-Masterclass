@@ -28,15 +28,11 @@ import {
   jpsiResponsiveChartHeight,
 } from '../../models/jpsi.models';
 
+import { SERIES_COLOURS } from '../../models/series-colours';
+
 const MARGIN = { top: 10, right: 14, bottom: 40, left: 56 };
 
-export const SERIES_COLOURS = {
-  unlike: '#e53935',
-  posPos: '#1e88e5',
-  negNeg: '#43a047',
-  background: '#f9a825',
-  residual: '#fb8c00',
-};
+export { SERIES_COLOURS };
 
 interface Bar {
   x: number;

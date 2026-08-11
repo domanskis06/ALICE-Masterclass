@@ -1,0 +1,67 @@
+<mat-card appearance="outlined" id="jpsi-tour-pbpb-results">
+  <mat-card-title class="pbpb-results__title">
+    {{ 'JPSI.PBPB.RESULTS.TITLE' | translate }}
+  </mat-card-title>
+
+  <mat-card-content>
+    <table mat-table [dataSource]="rows" class="pbpb-results__table" data-testid="jpsi-pbpb-results-table">
+      <ng-container matColumnDef="centrality">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.CENTRALITY' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.centralityLabel }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="signal">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.SIGNAL' | translate }}</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.fit.signal | number: '1.0-0' }} &plusmn; {{ row.fit.signalError | number: '1.0-0' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="background">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.BACKGROUND' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.fit.background | number: '1.0-0' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="publishedNJpsi">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.PUBLISHED_NJPSI' | translate }}</th>
+        <td mat-cell *matCellDef="let row">
+          {{ row.published.nJpsi | number: '1.0-0' }} &plusmn; {{ row.published.nJpsiErr | number: '1.0-0' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="publishedSOverB">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.PUBLISHED_SB' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.published.sOverB | number: '1.2-2' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="publishedSignificance">
+        <th mat-header-cell *matHeaderCellDef>{{ 'JPSI.PBPB.RESULTS.PUBLISHED_SIGNIFICANCE' | translate }}</th>
+        <td mat-cell *matCellDef="let row">{{ row.published.significance | number: '1.1-1' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <button
+            type="button"
+            mat-icon-button
+            color="warn"
+            class="pbpb-results__remove-button"
+            [attr.aria-label]="'JPSI.PBPB.RESULTS.DELETE' | translate"
+            [matTooltip]="'JPSI.PBPB.RESULTS.DELETE' | translate"
+            (click)="onRemoveClick(row)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    @if (rows.length === 0) {
+      <p class="pbpb-results__empty">{{ 'JPSI.PBPB.RESULTS.EMPTY' | translate }}</p>
+    }
+  </mat-card-content>
+</mat-card>

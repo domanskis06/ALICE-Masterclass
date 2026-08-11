@@ -195,6 +195,17 @@
   "INSTRUCTIONS_DIALOG": {
     "BUTTON_DISMISS": "Fermer"
   },
+  "SHARED": {
+    "FIT_SELECTOR": {
+      "TITLE": "Sélecteur d’ajustement",
+      "SIGNAL": "Signal",
+      "BACKGROUND": "Fond",
+      "FIT": "Ajuster",
+      "ACCEPT": "Accepter",
+      "CLEAR_FIT": "Effacer l’ajustement",
+      "UNDO": "Annuler"
+    }
+  },
   "STRANGENESS": {
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Production de particules étranges",
@@ -292,15 +303,6 @@
       "CENTRALITY": "Centralité",
       "SIGNAL": "Signal",
       "DELETE": "Supprimer l’ajustement"
-    },
-    "FIT_SELECTOR": {
-      "TITLE": "Sélecteur d’ajustement",
-      "SIGNAL": "Signal",
-      "BACKGROUND": "Fond",
-      "FIT": "Ajuster",
-      "ACCEPT": "Accepter",
-      "CLEAR_FIT": "Effacer l’ajustement",
-      "UNDO": "Annuler"
     },
     "ENHANCEMENT": {
       "TITLE": "Résultats",
@@ -448,7 +450,11 @@
       "PP": "proton-proton",
       "PPB": "proton-plomb",
       "PP_SHORT": "pp",
-      "PPB_SHORT": "p-Pb"
+      "PPB_SHORT": "p-Pb",
+      "GROUP_TRACK": "Données de traces",
+      "GROUP_PUBLISHED": "Pb-Pb publié (ALICE)",
+      "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
+      "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
     "TOOLBAR": {
       "DATASET": "Système de collision",
@@ -498,6 +504,36 @@
       "BACKGROUND": "Bruit de fond",
       "SB": "Signal sur bruit",
       "SIGNIFICANCE": "Significativité"
+    },
+    "PBPB": {
+      "MINV": {
+        "TITLE": "Masse invariante (publiée, ALICE Pb-Pb)",
+        "UNLIKE": "Paires de signes opposés",
+        "LIKE": "Paires de même signe (bruit de fond)",
+        "SUBTRACT": "Soustraire le bruit de fond",
+        "AFTER_SUBTRACT": "Voir le panneau d'ajustement à droite.",
+        "EMPTY": "Impossible de charger cet histogramme."
+      },
+      "FIT": {
+        "TITLE": "Ajustement du signal",
+        "EMPTY_HINT": "Cliquez sur « Soustraire le bruit de fond » à gauche pour révéler le signal.",
+        "TOTAL": "Total",
+        "SIGNAL": "Signal J/psi",
+        "BACKGROUND": "Bruit de fond",
+        "SHOW_UL": "Afficher signes opposés/mêmes signes",
+        "NO_SIGNAL_HINT": "Pas encore d'ajustement. Cliquez sur Ajuster après avoir choisi les plages de signal et de fond."
+      },
+      "RESULTS": {
+        "TITLE": "Rendement J/psi en Pb-Pb",
+        "CENTRALITY": "Centralité",
+        "SIGNAL": "Signal J/psi (votre ajustement)",
+        "BACKGROUND": "Bruit de fond (votre ajustement)",
+        "PUBLISHED_NJPSI": "N(J/psi) publié",
+        "PUBLISHED_SB": "S/B publié",
+        "PUBLISHED_SIGNIFICANCE": "Significativité publiée",
+        "DELETE": "Supprimer ce résultat",
+        "EMPTY": "Acceptez un ajustement pour l'ajouter ici."
+      }
     },
     "RESULTS": {
       "TITLE": "Tes résultats",

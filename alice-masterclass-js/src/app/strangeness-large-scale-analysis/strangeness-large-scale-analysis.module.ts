@@ -6,7 +6,6 @@ import { AngularModule } from '../shared/angular.module';
 import { StrangenessLargeScaleAnalysisComponent } from './strangeness-large-scale-analysis.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { HistogramSelectorComponent } from './histogram-selector/histogram-selector.component';
-import { FitSelectorComponent } from './fit-selector/fit-selector.component';
 import { HistogramDisplayComponent } from './histogram-display/histogram-display.component';
 import { ResultsComponent } from './results/results.component'
 import { EnhancementResultsComponent } from './enhancement-results/enhancement-results.component';
@@ -20,7 +19,6 @@ import { LsaTutorialWelcomeDialogComponent } from './lsa-tutorial/lsa-tutorial-w
     StrangenessLargeScaleAnalysisComponent,
     InstructionsComponent,
     HistogramSelectorComponent,
-    FitSelectorComponent,
     HistogramDisplayComponent,
     ResultsComponent,
     EnhancementResultsComponent,

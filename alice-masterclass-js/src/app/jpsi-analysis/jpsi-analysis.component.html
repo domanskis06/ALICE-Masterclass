@@ -2,7 +2,9 @@
   <div class="jpsi container" fxFlex="grow" fxLayout="column" fxLayoutGap="10px">
     <app-jpsi-dataset-toolbar
       [datasets]="datasets"
-      [activeDataset]="activeDataset"
+      [publishedOptions]="pbPbCentralityDescriptors"
+      [activeDataset]="activeCollisionSystem"
+      [isPublishedActive]="isPublished(activeCollisionSystem)"
       [processedCount]="state.state.processedCount"
       [totalEvents]="totalEvents"
       [eventsLeft]="eventsLeft"
@@ -12,58 +14,85 @@
       (resetHistograms)="onResetHistograms()"
     ></app-jpsi-dataset-toolbar>
 
-    <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
-      <mat-card appearance="outlined" fxFlex="50" id="jpsi-tour-heatmap">
-        <mat-card-title class="jpsi__card-title">
-          {{ 'JPSI.PID.TITLE' | translate }}
-        </mat-card-title>
-        <mat-card-content>
-          <app-jpsi-pid-cut-controls
-            [cut]="state.state.cut"
-            [disabled]="quickAnalysis.isRunning || !hasData"
-            (cutPreview)="onCutPreview($event)"
-            (acceptRange)="onAcceptSelectedRange($event)"
-            (resetCuts)="onResetCuts()"
-          >
-            <app-jpsi-pid-heatmap
-              [bins]="state.state.pidBins"
-              [maxCount]="state.state.pidMax"
-              [cut]="previewCut"
-              [revision]="revision"
-            ></app-jpsi-pid-heatmap>
-          </app-jpsi-pid-cut-controls>
-        </mat-card-content>
-      </mat-card>
+    @if (isPublished(activeCollisionSystem)) {
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
+        <app-jpsi-pbpb-minv-panel
+          fxFlex="50"
+          [histogram]="pbPbState.state.histogram"
+          [mode]="pbPbState.state.panelMode"
+          [loading]="pbPbState.state.loading"
+          [canSubtract]="pbPbState.canSubtract"
+          (subtract)="onSubtractPbPb()"
+        ></app-jpsi-pbpb-minv-panel>
 
-      <app-jpsi-mass-panel
-        fxFlex="50"
-        [mass]="state.state.mass"
-        [residual]="residual"
-        [background]="background"
-        [mode]="state.state.panelMode"
-        [visibility]="state.state.visibility"
-        [showBackgroundSum]="state.state.showBackgroundSum"
-        [massWindow]="state.state.massWindow"
-        [liveResult]="state.state.liveResult"
-        [canSubtract]="state.canSubtract"
-        [canAccept]="state.canAccept"
-        [tooWideSelection]="state.state.tooWideSelection"
-        [hasData]="hasMassData"
-        [revision]="revision"
-        (toggleSeries)="onToggleSeries($event)"
-        (showBackgroundSumChange)="onShowBackgroundSum($event)"
-        (subtract)="onSubtract()"
-        (showComponents)="onShowComponents()"
-        (massWindowChange)="onMassWindowChange($event)"
-        (acceptResult)="onAcceptResult()"
-      ></app-jpsi-mass-panel>
-    </div>
+        <app-jpsi-pbpb-fit-panel
+          fxFlex="50"
+          [mode]="pbPbState.state.panelMode"
+          [histogram]="pbPbState.state.histogram"
+          [canAccept]="pbPbState.canAccept"
+          (acceptResult)="onAcceptPbPbResult()"
+          (showComponents)="onShowComponentsPbPb()"
+        ></app-jpsi-pbpb-fit-panel>
+      </div>
 
-    <app-jpsi-results-table
-      [rows]="rows"
-      (uploadResults)="onUploadResults()"
-    ></app-jpsi-results-table>
+      <app-jpsi-pbpb-results
+        [rows]="pbPbRows"
+        (removeResult)="onRemovePbPbResult($event)"
+      ></app-jpsi-pbpb-results>
+    } @else {
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
+        <mat-card appearance="outlined" fxFlex="50" id="jpsi-tour-heatmap">
+          <mat-card-title class="jpsi__card-title">
+            {{ 'JPSI.PID.TITLE' | translate }}
+          </mat-card-title>
+          <mat-card-content>
+            <app-jpsi-pid-cut-controls
+              [cut]="state.state.cut"
+              [disabled]="quickAnalysis.isRunning || !hasData"
+              (cutPreview)="onCutPreview($event)"
+              (acceptRange)="onAcceptSelectedRange($event)"
+              (resetCuts)="onResetCuts()"
+            >
+              <app-jpsi-pid-heatmap
+                [bins]="state.state.pidBins"
+                [maxCount]="state.state.pidMax"
+                [cut]="previewCut"
+                [revision]="revision"
+              ></app-jpsi-pid-heatmap>
+            </app-jpsi-pid-cut-controls>
+          </mat-card-content>
+        </mat-card>
 
-    <app-jpsi-compare-panel [ppRow]="ppRow" [pPbRow]="pPbRow"></app-jpsi-compare-panel>
+        <app-jpsi-mass-panel
+          fxFlex="50"
+          [mass]="state.state.mass"
+          [residual]="residual"
+          [background]="background"
+          [mode]="state.state.panelMode"
+          [visibility]="state.state.visibility"
+          [showBackgroundSum]="state.state.showBackgroundSum"
+          [massWindow]="state.state.massWindow"
+          [liveResult]="state.state.liveResult"
+          [canSubtract]="state.canSubtract"
+          [canAccept]="state.canAccept"
+          [tooWideSelection]="state.state.tooWideSelection"
+          [hasData]="hasMassData"
+          [revision]="revision"
+          (toggleSeries)="onToggleSeries($event)"
+          (showBackgroundSumChange)="onShowBackgroundSum($event)"
+          (subtract)="onSubtract()"
+          (showComponents)="onShowComponents()"
+          (massWindowChange)="onMassWindowChange($event)"
+          (acceptResult)="onAcceptResult()"
+        ></app-jpsi-mass-panel>
+      </div>
+
+      <app-jpsi-results-table
+        [rows]="rows"
+        (uploadResults)="onUploadResults()"
+      ></app-jpsi-results-table>
+
+      <app-jpsi-compare-panel [ppRow]="ppRow" [pPbRow]="pPbRow"></app-jpsi-compare-panel>
+    }
   </div>
 </div>
