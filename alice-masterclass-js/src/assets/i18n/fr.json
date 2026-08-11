@@ -451,8 +451,12 @@
       "PPB": "proton-plomb",
       "PP_SHORT": "pp",
       "PPB_SHORT": "p-Pb",
-      "GROUP_TRACK": "Données de traces",
-      "GROUP_PUBLISHED": "Pb-Pb publié (ALICE)",
+      "PBPB_0_5_SHORT": "Pb-Pb 0-5%",
+      "PBPB_5_10_SHORT": "Pb-Pb 5-10%",
+      "PBPB_10_20_SHORT": "Pb-Pb 10-20%",
+      "PBPB_20_30_SHORT": "Pb-Pb 20-30%",
+      "PBPB_30_40_SHORT": "Pb-Pb 30-40%",
+      "PBPB_40_50_SHORT": "Pb-Pb 40-50%",
       "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
       "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
@@ -507,7 +511,7 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Masse invariante (publiée, ALICE Pb-Pb)",
+        "TITLE": "Masse invariante",
         "UNLIKE": "Paires de signes opposés",
         "LIKE": "Paires de même signe (bruit de fond)",
         "SUBTRACT": "Soustraire le bruit de fond",
@@ -521,16 +525,17 @@
         "SIGNAL": "Signal J/psi",
         "BACKGROUND": "Bruit de fond",
         "SHOW_UL": "Afficher signes opposés/mêmes signes",
-        "NO_SIGNAL_HINT": "Pas encore d'ajustement. Cliquez sur Ajuster après avoir choisi les plages de signal et de fond."
+        "NO_SIGNAL_HINT": "Pas encore d'ajustement. Cliquez sur Ajuster après avoir choisi les plages de signal et de fond.",
+        "RESET_ZOOM": "Réinitialiser le zoom",
+        "RESET_RANGE": "Réinitialiser la plage"
       },
       "RESULTS": {
         "TITLE": "Rendement J/psi en Pb-Pb",
         "CENTRALITY": "Centralité",
         "SIGNAL": "Signal J/psi (votre ajustement)",
         "BACKGROUND": "Bruit de fond (votre ajustement)",
-        "PUBLISHED_NJPSI": "N(J/psi) publié",
-        "PUBLISHED_SB": "S/B publié",
-        "PUBLISHED_SIGNIFICANCE": "Significativité publiée",
+        "SB": "S/B",
+        "SIGNIFICANCE": "Significativité",
         "DELETE": "Supprimer ce résultat",
         "EMPTY": "Acceptez un ajustement pour l'ajouter ici."
       }

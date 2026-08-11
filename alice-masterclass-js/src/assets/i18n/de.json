@@ -449,8 +449,12 @@
       "PPB": "Proton-Blei",
       "PP_SHORT": "pp",
       "PPB_SHORT": "p-Pb",
-      "GROUP_TRACK": "Spurdaten",
-      "GROUP_PUBLISHED": "Veröffentlichte Pb-Pb-Daten (ALICE)",
+      "PBPB_0_5_SHORT": "Pb-Pb 0-5%",
+      "PBPB_5_10_SHORT": "Pb-Pb 5-10%",
+      "PBPB_10_20_SHORT": "Pb-Pb 10-20%",
+      "PBPB_20_30_SHORT": "Pb-Pb 20-30%",
+      "PBPB_30_40_SHORT": "Pb-Pb 30-40%",
+      "PBPB_40_50_SHORT": "Pb-Pb 40-50%",
       "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
       "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
@@ -505,7 +509,7 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Invariante Masse (veröffentlicht, ALICE Pb-Pb)",
+        "TITLE": "Invariante Masse",
         "UNLIKE": "Paare mit ungleichem Vorzeichen",
         "LIKE": "Paare mit gleichem Vorzeichen (Untergrund)",
         "SUBTRACT": "Untergrund abziehen",
@@ -519,16 +523,17 @@
         "SIGNAL": "J/psi-Signal",
         "BACKGROUND": "Untergrund",
         "SHOW_UL": "Paare mit gleichem/ungleichem Vorzeichen anzeigen",
-        "NO_SIGNAL_HINT": "Noch kein Fit. Klicke auf Fit, nachdem du Signal- und Untergrundbereich gewählt hast."
+        "NO_SIGNAL_HINT": "Noch kein Fit. Klicke auf Fit, nachdem du Signal- und Untergrundbereich gewählt hast.",
+        "RESET_ZOOM": "Zoom zurücksetzen",
+        "RESET_RANGE": "Bereich zurücksetzen"
       },
       "RESULTS": {
         "TITLE": "J/psi-Ausbeute in Pb-Pb",
         "CENTRALITY": "Zentralität",
         "SIGNAL": "J/psi-Signal (dein Fit)",
         "BACKGROUND": "Untergrund (dein Fit)",
-        "PUBLISHED_NJPSI": "Veröffentlichtes N(J/psi)",
-        "PUBLISHED_SB": "Veröffentlichtes S/B",
-        "PUBLISHED_SIGNIFICANCE": "Veröffentlichte Signifikanz",
+        "SB": "S/U",
+        "SIGNIFICANCE": "Signifikanz",
         "DELETE": "Dieses Ergebnis entfernen",
         "EMPTY": "Akzeptiere einen Fit, um ihn hier hinzuzufügen."
       }

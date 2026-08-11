@@ -170,6 +170,7 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     if (isPbPbCentralityId(id)) {
       this.pbPbState.selectCentrality(id);
     } else {
+      this.pbPbState.leavePublishedView();
       this.state.selectDataset(id);
       this.tutorial.notifyDatasetSwitched();
     }

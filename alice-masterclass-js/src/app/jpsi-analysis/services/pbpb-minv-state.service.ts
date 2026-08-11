@@ -5,6 +5,7 @@ import { FitService } from '../../shared/services/fit.service';
 import {
   createPbPbCentralityState,
   defaultFitRange,
+  emptyFitSnapshot,
   FitSnapshot,
   PbPbCentralityId,
   PbPbCentralityState,
@@ -15,22 +16,26 @@ import {
 import { JpsiMinvDataService } from './jpsi-minv-data.service';
 
 /**
- * Owns the analysis state of the two published Pb-Pb centralities.
+ * Owns the analysis state of all eight published Pb-Pb centralities.
  *
- * Both centralities are analysed independently and both states live in memory at the same
- * time (mirrors `JpsiAnalysisStateService` for pp/p-Pb), so switching between them mid-fit
- * never loses progress. `FitService` itself is a single shared instance — the only thing
- * that actually "switches" on `selectCentrality` — so its data/ranges/hints/result are
- * snapshotted into `states[...].fitSnapshot` on every switch and restored on return.
+ * Unlike `JpsiAnalysisStateService` (pp/p-Pb), in-progress work on a centrality is *not* kept
+ * alive across dataset changes: with eight centralities on top of pp/p-Pb, silently piling up
+ * eight independent fit sessions forever does not scale and mostly hides forgotten, half-done
+ * work. Instead, every dataset change resets any centrality that was never accepted back to a
+ * blank 'explore' view (see `leaveCurrentCentrality`). Once a fit is accepted, though, its row
+ * — and the exact fit state behind it — is frozen and survives every future switch, because
+ * accepted results are the baseline the student needs later for R_AA.
+ *
+ * `FitService` itself is a single shared instance, so whatever a centrality "remembers" lives
+ * in its own `fitSnapshot`, restored into `FitService` whenever that centrality becomes active.
  */
 @Injectable()
 export class PbPbMinvStateService {
-  private readonly states: Record<PbPbCentralityId, PbPbCentralityState> = {
-    pbPb_50_70: createPbPbCentralityState('pbPb_50_70'),
-    pbPb_70_90: createPbPbCentralityState('pbPb_70_90'),
-  };
+  private readonly states: Record<PbPbCentralityId, PbPbCentralityState> = Object.fromEntries(
+    PBPB_CENTRALITY_IDS.map((id) => [id, createPbPbCentralityState(id)])
+  ) as Record<PbPbCentralityId, PbPbCentralityState>;
 
-  private _activeCentrality: PbPbCentralityId = 'pbPb_50_70';
+  private _activeCentrality: PbPbCentralityId = PBPB_CENTRALITY_IDS[0];
 
   private readonly changesSubject = new Subject<void>();
   readonly changes$: Observable<void> = this.changesSubject.asObservable();
@@ -72,11 +77,41 @@ export class PbPbMinvStateService {
     if (id === this._activeCentrality) {
       return;
     }
-    this.snapshotFitService(this._activeCentrality);
+    this.leaveCurrentCentrality();
     this._activeCentrality = id;
     this.ensureHistogramLoaded(id);
     this.restoreFitService(id);
     this.emit();
+  }
+
+  /**
+   * Called by `JpsiAnalysisComponent.onDatasetChange` when the toolbar switches to a
+   * track-based dataset (pp/p-Pb), which never calls `selectCentrality` itself. The Pb-Pb
+   * centrality left behind still needs the same "reset unless accepted" treatment as any
+   * other dataset change, otherwise it would keep its in-progress fit alive forever just
+   * because the student briefly detoured through pp or p-Pb.
+   */
+  leavePublishedView(): void {
+    this.leaveCurrentCentrality();
+    this.restoreFitService(this._activeCentrality);
+    this.emit();
+  }
+
+  /**
+   * Every dataset change resets the departing centrality back to a blank 'explore' view —
+   * unless it already has an accepted result, in which case its live fit state is snapshotted
+   * first so any edits made after accepting are not lost, and the centrality is left exactly
+   * as the student saw it.
+   */
+  private leaveCurrentCentrality(): void {
+    const id = this._activeCentrality;
+    const state = this.states[id];
+    if (state.tableRow !== null) {
+      this.snapshotFitService(id);
+    } else {
+      state.panelMode = 'explore';
+      state.fitSnapshot = emptyFitSnapshot();
+    }
   }
 
   private ensureHistogramLoaded(id: PbPbCentralityId): void {

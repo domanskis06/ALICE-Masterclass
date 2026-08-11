@@ -5,6 +5,8 @@ import {
   defaultFitRange,
   emptyFitSnapshot,
   isPbPbCentralityId,
+  PBPB_CENTRALITY_DESCRIPTORS,
+  PBPB_CENTRALITY_IDS,
   PublishedMinvHistogram,
   rawResidual,
   residualToLsaData,
@@ -57,11 +59,42 @@ function makeHistogram(overrides: Partial<PublishedMinvHistogram> = {}): Publish
 }
 
 describe('isPbPbCentralityId', () => {
-  it('recognises the two published centralities and rejects track-based dataset ids', () => {
+  it('recognises all eight published centralities and rejects track-based dataset ids', () => {
+    expect(isPbPbCentralityId('pbPb_0_5')).toBeTrue();
+    expect(isPbPbCentralityId('pbPb_5_10')).toBeTrue();
+    expect(isPbPbCentralityId('pbPb_10_20')).toBeTrue();
+    expect(isPbPbCentralityId('pbPb_20_30')).toBeTrue();
+    expect(isPbPbCentralityId('pbPb_30_40')).toBeTrue();
+    expect(isPbPbCentralityId('pbPb_40_50')).toBeTrue();
     expect(isPbPbCentralityId('pbPb_50_70')).toBeTrue();
     expect(isPbPbCentralityId('pbPb_70_90')).toBeTrue();
     expect(isPbPbCentralityId('pp')).toBeFalse();
     expect(isPbPbCentralityId('pPb')).toBeFalse();
+  });
+});
+
+describe('PBPB_CENTRALITY_DESCRIPTORS', () => {
+  it('lists all eight centralities in ascending order, one per dropdown entry', () => {
+    expect(PBPB_CENTRALITY_IDS).toEqual([
+      'pbPb_0_5',
+      'pbPb_5_10',
+      'pbPb_10_20',
+      'pbPb_20_30',
+      'pbPb_30_40',
+      'pbPb_40_50',
+      'pbPb_50_70',
+      'pbPb_70_90',
+    ]);
+    expect(PBPB_CENTRALITY_DESCRIPTORS.map((d) => d.id)).toEqual(PBPB_CENTRALITY_IDS);
+  });
+
+  it('derives each shortLabelKey from its id', () => {
+    expect(PBPB_CENTRALITY_DESCRIPTORS.find((d) => d.id === 'pbPb_0_5')?.shortLabelKey).toBe(
+      'JPSI.DATASET.PBPB_0_5_SHORT'
+    );
+    expect(PBPB_CENTRALITY_DESCRIPTORS.find((d) => d.id === 'pbPb_70_90')?.shortLabelKey).toBe(
+      'JPSI.DATASET.PBPB_70_90_SHORT'
+    );
   });
 });
 

@@ -2,27 +2,46 @@ import { LSAData } from '../../shared/models';
 import { FitResult } from '../../shared/services/fit.service';
 import { DatasetId } from './jpsi.models';
 
-/** The two Pb-Pb centrality classes published in Fig. 15 — each is its own "collision system". */
-export type PbPbCentralityId = 'pbPb_50_70' | 'pbPb_70_90';
+/** All eight Pb-Pb centrality classes digitized from Figs. 14–15 — each is its own "collision system". */
+export type PbPbCentralityId =
+  | 'pbPb_0_5'
+  | 'pbPb_5_10'
+  | 'pbPb_10_20'
+  | 'pbPb_20_30'
+  | 'pbPb_30_40'
+  | 'pbPb_40_50'
+  | 'pbPb_50_70'
+  | 'pbPb_70_90';
 
-export const PBPB_CENTRALITY_IDS: readonly PbPbCentralityId[] = ['pbPb_50_70', 'pbPb_70_90'];
+/** Ascending centrality order, i.e. the order they appear in the collision-system dropdown. */
+export const PBPB_CENTRALITY_IDS: readonly PbPbCentralityId[] = [
+  'pbPb_0_5',
+  'pbPb_5_10',
+  'pbPb_10_20',
+  'pbPb_20_30',
+  'pbPb_30_40',
+  'pbPb_40_50',
+  'pbPb_50_70',
+  'pbPb_70_90',
+];
 
-/** Drives the second `<mat-optgroup>` of the collision-system dropdown. */
+/** Drives the Pb-Pb portion of the flat collision-system dropdown. */
 export interface PbPbCentralityDescriptor {
   id: PbPbCentralityId;
   shortLabelKey: string;
 }
 
-export const PBPB_CENTRALITY_DESCRIPTORS: readonly PbPbCentralityDescriptor[] = [
-  { id: 'pbPb_50_70', shortLabelKey: 'JPSI.DATASET.PBPB_50_70_SHORT' },
-  { id: 'pbPb_70_90', shortLabelKey: 'JPSI.DATASET.PBPB_70_90_SHORT' },
-];
+export const PBPB_CENTRALITY_DESCRIPTORS: readonly PbPbCentralityDescriptor[] = PBPB_CENTRALITY_IDS.map(
+  (id) => ({ id, shortLabelKey: `JPSI.DATASET.${id.toUpperCase()}_SHORT` })
+);
 
 /** Everything selectable in the toolbar dropdown: track-based datasets plus published Pb-Pb centralities. */
 export type CollisionSystemId = DatasetId | PbPbCentralityId;
 
+const PBPB_CENTRALITY_ID_SET: ReadonlySet<string> = new Set(PBPB_CENTRALITY_IDS);
+
 export function isPbPbCentralityId(id: CollisionSystemId): id is PbPbCentralityId {
-  return id === 'pbPb_50_70' || id === 'pbPb_70_90';
+  return PBPB_CENTRALITY_ID_SET.has(id);
 }
 
 export interface PublishedMinvSource {

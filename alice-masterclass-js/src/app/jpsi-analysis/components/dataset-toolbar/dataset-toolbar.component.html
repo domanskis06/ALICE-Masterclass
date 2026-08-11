@@ -9,21 +9,15 @@
           data-testid="jpsi-dataset-group"
           (selectionChange)="datasetChange.emit($event.value)"
         >
-          <mat-optgroup [label]="'JPSI.DATASET.GROUP_TRACK' | translate">
-            @for (dataset of datasets; track dataset.id) {
-              <mat-option [value]="dataset.id" [attr.data-testid]="'jpsi-dataset-' + dataset.id">
-                {{ shortLabelKey(dataset.id) | translate }}
-              </mat-option>
-            }
-          </mat-optgroup>
-          @if (publishedOptions.length > 0) {
-            <mat-optgroup [label]="'JPSI.DATASET.GROUP_PUBLISHED' | translate">
-              @for (option of publishedOptions; track option.id) {
-                <mat-option [value]="option.id" [attr.data-testid]="'jpsi-dataset-' + option.id">
-                  {{ option.shortLabelKey | translate }}
-                </mat-option>
-              }
-            </mat-optgroup>
+          @for (dataset of datasets; track dataset.id) {
+            <mat-option [value]="dataset.id" [attr.data-testid]="'jpsi-dataset-' + dataset.id">
+              {{ shortLabelKey(dataset.id) | translate }}
+            </mat-option>
+          }
+          @for (option of publishedOptions; track option.id) {
+            <mat-option [value]="option.id" [attr.data-testid]="'jpsi-dataset-' + option.id">
+              {{ option.shortLabelKey | translate }}
+            </mat-option>
           }
         </mat-select>
       </mat-form-field>

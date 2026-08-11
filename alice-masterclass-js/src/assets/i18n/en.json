@@ -449,8 +449,12 @@
       "PPB": "proton-lead",
       "PP_SHORT": "pp",
       "PPB_SHORT": "p-Pb",
-      "GROUP_TRACK": "Track data",
-      "GROUP_PUBLISHED": "Published Pb-Pb (ALICE)",
+      "PBPB_0_5_SHORT": "Pb-Pb 0-5%",
+      "PBPB_5_10_SHORT": "Pb-Pb 5-10%",
+      "PBPB_10_20_SHORT": "Pb-Pb 10-20%",
+      "PBPB_20_30_SHORT": "Pb-Pb 20-30%",
+      "PBPB_30_40_SHORT": "Pb-Pb 30-40%",
+      "PBPB_40_50_SHORT": "Pb-Pb 40-50%",
       "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
       "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
@@ -505,7 +509,7 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Invariant mass (published, ALICE Pb-Pb)",
+        "TITLE": "Invariant mass",
         "UNLIKE": "Unlike-sign pairs",
         "LIKE": "Like-sign pairs (background)",
         "SUBTRACT": "Subtract background",
@@ -519,16 +523,17 @@
         "SIGNAL": "J/psi signal",
         "BACKGROUND": "Background",
         "SHOW_UL": "Show unlike/like-sign",
-        "NO_SIGNAL_HINT": "No fit yet. Press Fit after choosing a signal and background range."
+        "NO_SIGNAL_HINT": "No fit yet. Press Fit after choosing a signal and background range.",
+        "RESET_ZOOM": "Reset zoom",
+        "RESET_RANGE": "Reset range"
       },
       "RESULTS": {
         "TITLE": "Pb-Pb J/psi yields",
         "CENTRALITY": "Centrality",
         "SIGNAL": "J/psi signal (your fit)",
         "BACKGROUND": "Background (your fit)",
-        "PUBLISHED_NJPSI": "Published N(J/psi)",
-        "PUBLISHED_SB": "Published S/B",
-        "PUBLISHED_SIGNIFICANCE": "Published significance",
+        "SB": "S/B",
+        "SIGNIFICANCE": "Significance",
         "DELETE": "Remove this result",
         "EMPTY": "Accept a fit to add it here."
       }

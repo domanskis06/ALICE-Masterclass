@@ -451,8 +451,12 @@
       "PPB": "proton-ołów",
       "PP_SHORT": "pp",
       "PPB_SHORT": "p-Pb",
-      "GROUP_TRACK": "Dane z torów",
-      "GROUP_PUBLISHED": "Opublikowane Pb-Pb (ALICE)",
+      "PBPB_0_5_SHORT": "Pb-Pb 0-5%",
+      "PBPB_5_10_SHORT": "Pb-Pb 5-10%",
+      "PBPB_10_20_SHORT": "Pb-Pb 10-20%",
+      "PBPB_20_30_SHORT": "Pb-Pb 20-30%",
+      "PBPB_30_40_SHORT": "Pb-Pb 30-40%",
+      "PBPB_40_50_SHORT": "Pb-Pb 40-50%",
       "PBPB_50_70_SHORT": "Pb-Pb 50-70%",
       "PBPB_70_90_SHORT": "Pb-Pb 70-90%"
     },
@@ -507,7 +511,7 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Masa niezmiennicza (opublikowane dane ALICE Pb-Pb)",
+        "TITLE": "Masa niezmiennicza",
         "UNLIKE": "Pary o różnych znakach",
         "LIKE": "Pary o tych samych znakach (tło)",
         "SUBTRACT": "Odejmij tło",
@@ -521,16 +525,17 @@
         "SIGNAL": "Sygnał J/psi",
         "BACKGROUND": "Tło",
         "SHOW_UL": "Pokaż pary różne/tego samego znaku",
-        "NO_SIGNAL_HINT": "Brak dopasowania. Kliknij Dopasuj po wybraniu zakresów sygnału i tła."
+        "NO_SIGNAL_HINT": "Brak dopasowania. Kliknij Dopasuj po wybraniu zakresów sygnału i tła.",
+        "RESET_ZOOM": "Resetuj powiększenie",
+        "RESET_RANGE": "Resetuj zakres"
       },
       "RESULTS": {
         "TITLE": "Yield J/psi w Pb-Pb",
         "CENTRALITY": "Centralność",
         "SIGNAL": "Sygnał J/psi (Twoje dopasowanie)",
         "BACKGROUND": "Tło (Twoje dopasowanie)",
-        "PUBLISHED_NJPSI": "Opublikowane N(J/psi)",
-        "PUBLISHED_SB": "Opublikowane S/B",
-        "PUBLISHED_SIGNIFICANCE": "Opublikowana istotność",
+        "SB": "S/B",
+        "SIGNIFICANCE": "Istotność",
         "DELETE": "Usuń ten wynik",
         "EMPTY": "Zaakceptuj dopasowanie, aby dodać je tutaj."
       }
