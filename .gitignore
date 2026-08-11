@@ -39,3 +39,9 @@ alice-masterclass-js/data/jpsi/vsd/
 .cursorignore
 .cursorrules
 tmp_*.png
+
+# J/psi Minv digitization workspace (keep only digitize_minv.py tracked)
+alice-masterclass-js/data/jpsi/minv_digitize/*.csv
+alice-masterclass-js/data/jpsi/minv_digitize/*.png
+alice-masterclass-js/data/jpsi/minv_digitize/*.pdf
+alice-masterclass-js/data/jpsi/minv_digitize/digitize_raw.json
