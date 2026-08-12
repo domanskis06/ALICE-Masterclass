@@ -488,21 +488,22 @@
       "Y_AXIS": "Pary",
       "EMPTY": "Wybierz pasmo elektronów na wykresie PID i naciśnij Zaakceptuj wybrany zakres.",
       "SERIES": {
-        "UNLIKE": "Pary przeciwnego znaku",
-        "POSPOS": "Pary tego samego znaku, dodatnie",
-        "NEGNEG": "Pary tego samego znaku, ujemne",
+        "UNLIKE": "Pary o różnych znakach",
+        "POSPOS": "Pary o tym samym znaku (pozytony)",
+        "NEGNEG": "Pary o tym samym znaku (elektrony)",
         "BACKGROUND": "Tło kombinatoryczne"
       },
       "SUBTRACT": "Odejmij tło",
       "SUBTRACT_HELP": "Pary tego samego znaku nie mogą pochodzić z rozpadu J/psi, więc pokazują przypadkowe kombinacje. Odejmij je od par przeciwnego znaku, żeby odsłonić sygnał.",
-      "AFTER_SUBTRACT": "Zostaje rezydualny sygnał: pik J/psi na tle, które nie jest idealnie płaskie. Dopasuj do niego prostą poza pikiem, a następnie zlicz nadwyżkę wewnątrz okna.",
       "SHOW_COMPONENTS": "Pokaż składowe",
-      "BACKGROUND_RANGE": "Zakres dopasowania tła",
-      "WINDOW": "Okno masy sygnału",
+      "BACKGROUND_RANGE": "Tło",
+      "WINDOW": "Sygnał",
       "FIT": "Dopasuj",
       "FIT_HINT": "Naciśnij Dopasuj, aby dopasować tło i zliczyć sygnał w oknie.",
       "ACCEPT": "Zaakceptuj wynik",
-      "NEGATIVE_BINS_NOTE": "Losowe fluktuacje mogą zepchnąć bin lekko poniżej zera. Takie biny pokazujemy jako zero.",
+      "RESET_RANGE": "Resetuj zakres",
+      "RESET_ZOOM": "Resetuj powiększenie",
+      "CLEAR_FIT": "Wyczyść dopasowanie",
       "TOO_WIDE": "Twoje zaznaczenie zawiera za dużo torów. Najpierw zawęż pas elektronów.",
       "NO_SIGNAL_HINT": "Brak sygnału w tym oknie. Poszerz je albo przesuń na pik i dopasuj ponownie."
     },
@@ -519,10 +520,10 @@
         "EMPTY": "Nie udało się wczytać tego histogramu."
       },
       "RESULTS": {
-        "TITLE": "Yield J/psi w Pb-Pb",
+        "TITLE": "Twoje wyniki",
         "CENTRALITY": "Centralność",
-        "SIGNAL": "Sygnał J/psi (Twoje dopasowanie)",
-        "BACKGROUND": "Tło (Twoje dopasowanie)",
+        "SIGNAL": "Sygnał J/psi",
+        "BACKGROUND": "Tło",
         "SB": "S/B",
         "SIGNIFICANCE": "Istotność",
         "DELETE": "Usuń ten wynik",
@@ -538,16 +539,9 @@
       "SB": "S/B",
       "SIGNIFICANCE": "Istotność",
       "WINDOW": "Okno masy",
+      "DELETE": "Usuń ten wynik",
       "EMPTY": "Zaakceptuj wynik, żeby dodać go tutaj.",
       "UPLOAD_SOON": "Wysyłanie wyników do nauczyciela będzie dostępne wkrótce."
-    },
-    "COMPARE": {
-      "TITLE": "Porównaj oba układy zderzeń",
-      "LOCKED": "Zaakceptuj wynik dla obu układów zderzeń, żeby je porównać.",
-      "HINT": "W zderzeniach proton-ołów powstaje dużo więcej cząstek, więc jest dużo więcej przypadkowych par. Tło jest większe i sygnał trudniej wyciągnąć.",
-      "CONCLUSION": "Twój stosunek sygnału do tła jest gorszy w zderzeniach proton-ołów. Znalezienie rzadkiej cząstki w zatłoczonym zderzeniu jest trudniejsze. Właśnie dlatego fizycy potrzebują bardzo dobrej identyfikacji cząstek i ogromnych zbiorów danych.",
-      "WARN_STATISTICS": "Przeanalizowałeś bardzo różną liczbę zdarzeń w obu układach. Istotność rośnie z liczbą zdarzeń, więc porównuj raczej stosunek sygnału do tła.",
-      "WARN_WINDOW": "Oba wyniki policzono w innych oknach masy. Zmierz je w tym samym oknie, żeby porównanie było uczciwe."
     },
     "WELCOME": {
       "TITLE": "Szukamy cząstki J/psi",
@@ -583,15 +577,15 @@
       "STEP_SERIES_TITLE": "Trzy rodzaje par",
       "STEP_SERIES_BODY": "Czerwony pokazuje pary przeciwnego znaku, które mogą pochodzić z J/psi. Niebieski i zielony pokazują pary tego samego znaku, które nie mogą. Włączaj i wyłączaj serie, żeby porównać ich kształty, a przełącznik <strong>Tło kombinatoryczne</strong> pokaże obie serie tego samego znaku razem.",
       "STEP_SUBTRACT_TITLE": "Odejmij tło",
-      "STEP_SUBTRACT_BODY": "Pary tego samego znaku mierzą przypadkowe kombinacje wprost z danych. Odejmij je bin po binie od par przeciwnego znaku, a pokaże się pik J/psi.",
+      "STEP_SUBTRACT_BODY": "Pary tego samego znaku mierzą przypadkowe kombinacje wprost z danych. Odejmij je bin po binie od par przeciwnego znaku, a zostanie rezydualny sygnał: pik J/psi na tle, które nie jest idealnie płaskie. Losowe fluktuacje mogą też zepchnąć bin lekko poniżej zera — takie biny pokazujemy jako zero.",
       "STEP_WINDOW_TITLE": "Policz sygnał",
       "STEP_WINDOW_BODY": "Przesuń zakres dopasowania tła na płaskie fragmenty poza pikiem i naciśnij <strong>Dopasuj</strong>, aby poprowadzić przez nie prostą. Przesuń okno sygnału na sam pik: liczy się wszystko powyżej prostej, co jest w środku. Zwróć uwagę, jak zbyt szerokie okno dokłada tło i psuje stosunek sygnału do tła.",
       "STEP_ACCEPT_TITLE": "Zapisz wynik",
       "STEP_ACCEPT_BODY": "<strong>Zaakceptuj wynik</strong> zapisuje ten pomiar w twojej tabeli. Zawsze możesz zmienić okno i zaakceptować ponownie.",
+      "STEP_RESULTS_TITLE": "Twoje wyniki",
+      "STEP_RESULTS_BODY": "Każde zaakceptowane dopasowanie pojawia się tu jako wiersz z sygnałem, tłem i metrykami jakości. Możesz usunąć wiersz i zaakceptować ponownie, jeśli chcesz lepsze okno.",
       "STEP_DATASET_TITLE": "Drugi układ zderzenia",
-      "STEP_DATASET_BODY": "Teraz przełącz się na proton-ołów i powtórz całą analizę. Twoja praca nad zderzeniami proton-proton zostaje dokładnie tam, gdzie ją zostawiłeś.",
-      "STEP_COMPARE_TITLE": "Porównaj",
-      "STEP_COMPARE_BODY": "Mając oba wyniki w tabeli, zobaczysz, o ile trudniejszy staje się pomiar, gdy w zderzeniu powstaje więcej cząstek."
+      "STEP_DATASET_BODY": "Teraz przełącz się na proton-ołów i powtórz całą analizę. Twoja praca nad zderzeniami proton-proton zostaje dokładnie tam, gdzie ją zostawiłeś."
     },
     "ERRORS": {
       "MANIFEST": "Nie udało się wczytać listy zbiorów danych.",

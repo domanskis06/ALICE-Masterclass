@@ -9,16 +9,19 @@ import {
   PidReferenceDialogComponent,
 } from '../components/pid-reference-dialog/pid-reference-dialog.component';
 import { InstructionsComponent } from '../instructions/instructions.component';
+import { CollisionSystemId, isPbPbCentralityId } from '../models/pbpb-minv.models';
 
 const SELECTOR_DATASET = '#jpsi-tour-dataset';
 const SELECTOR_QUICK_ANALYSIS = '#jpsi-tour-quick-analysis';
 const SELECTOR_HEATMAP = '#jpsi-tour-heatmap';
-const SELECTOR_SERIES_TOGGLES = '#jpsi-tour-series-toggles';
-const SELECTOR_SUBTRACT = '#jpsi-tour-subtract-button';
-/** Chart + signal-window slider together (wider than the slider alone). */
-const SELECTOR_MASS_SIGNAL = '#jpsi-tour-mass-signal';
-const SELECTOR_ACCEPT = '#jpsi-tour-accept-button';
-const SELECTOR_COMPARE = '#jpsi-tour-compare';
+/**
+ * Whole invariant-mass card: chart, series toggles / sliders, and the action
+ * row (Subtract / Fit / Accept). Consecutive mass steps share this target so
+ * the driver.js stage does not jump between a tiny button and the chart, and
+ * so Fit / Subtract stay clickable inside the highlight.
+ */
+const SELECTOR_MASS_PANEL = '#jpsi-tour-mass-panel';
+const SELECTOR_RESULTS = '#jpsi-tour-results';
 
 /**
  * Guided tour of the J/psi exercise, built on driver.js like the strangeness tutorials.
@@ -40,6 +43,17 @@ export class JpsiTutorialService {
   /** Second collision-system step (switch to p-Pb), not the intro pick. */
   private stepIndexDatasetSwitch = -1;
 
+  /**
+   * Every step's target element (PID heatmap, quick analysis, series toggles...) only exists
+   * in the pp/p-Pb layout — Pb-Pb's own view is a single Minv panel with no heatmap or cuts —
+   * so the tour cannot run while a Pb-Pb centrality is on screen. Mirrored here by the host
+   * (`JpsiAnalysisComponent.onDatasetChange`) so `startMainTour` knows whether it must hop back
+   * to pp first; Pb-Pb's analysis is a subset of pp's anyway (same fit, no PID step), so replaying
+   * the pp tour there loses nothing.
+   */
+  private activeCollisionSystem: CollisionSystemId = 'pp';
+  private viewSwitcher: (() => void) | null = null;
+
   constructor(
     private readonly translate: TranslateService,
     private readonly dialog: MatDialog
@@ -59,6 +73,16 @@ export class JpsiTutorialService {
 
   clearDismissFlag(): void {
     this.dismissedThisSession = false;
+  }
+
+  /** Called by the host whenever the toolbar's collision-system selector changes. */
+  setActiveCollisionSystem(id: CollisionSystemId): void {
+    this.activeCollisionSystem = id;
+  }
+
+  /** Registered once by the host: switches the toolbar back to pp. */
+  registerViewSwitcher(switchToPp: () => void): void {
+    this.viewSwitcher = switchToPp;
   }
 
   /** Same help dialog as the top-bar question mark (`NavComponent`). */
@@ -89,6 +113,14 @@ export class JpsiTutorialService {
 
   startMainTour(): void {
     this.destroyDriver(true);
+
+    // The tour's steps only exist in the pp/p-Pb layout (see `activeCollisionSystem` doc);
+    // hop back to pp first so `buildSteps()` below finds every element it targets. The switch
+    // itself updates `activeCollisionSystem` synchronously, so by the time this returns the
+    // pp view is already what the next change-detection pass will render.
+    if (isPbPbCentralityId(this.activeCollisionSystem)) {
+      this.viewSwitcher?.();
+    }
 
     const steps = this.buildSteps();
     const t = (key: string) => this.t(key);
@@ -157,11 +189,17 @@ export class JpsiTutorialService {
     if (this.driverInstance.getActiveIndex() !== stepIndex) {
       return;
     }
-    // The DOM often changes with the action itself, so refresh before moving on.
+    // Wait a tick for Angular to swap explore ↔ subtracted controls (or update
+    // the results table) before remeasuring the shared mass-panel stage.
     setTimeout(() => {
       this.driverInstance?.refresh();
       this.driverInstance?.moveNext();
-    }, 0);
+    }, 80);
+  }
+
+  /** Remeasure the active stage after layout settles (sliders, fit metrics, scroll). */
+  private refreshStageSoon(): void {
+    setTimeout(() => this.driverInstance?.refresh(), 80);
   }
 
   private t(key: string): string {
@@ -232,44 +270,66 @@ export class JpsiTutorialService {
       },
     });
 
+    // Steps 5–8 share the mass card so the spotlight stays put while the student
+    // toggles series, subtracts, fits, and accepts — and the bottom buttons stay
+    // inside the interactive stage.
     push({
-      element: SELECTOR_SERIES_TOGGLES,
+      element: SELECTOR_MASS_PANEL,
+      disableActiveInteraction: false,
       popover: {
         title: t('STEP_SERIES_TITLE'),
         description: t('STEP_SERIES_BODY'),
-        side: 'bottom',
+        side: 'left',
         align: 'start',
       },
     });
 
     this.stepIndexSubtract = push({
-      element: SELECTOR_SUBTRACT,
+      element: SELECTOR_MASS_PANEL,
+      disableActiveInteraction: false,
       popover: {
         title: t('STEP_SUBTRACT_TITLE'),
         description: t('STEP_SUBTRACT_BODY'),
-        side: 'top',
+        side: 'left',
         align: 'start',
       },
     });
 
     push({
-      element: SELECTOR_MASS_SIGNAL,
+      element: SELECTOR_MASS_PANEL,
+      disableActiveInteraction: false,
       popover: {
         title: t('STEP_WINDOW_TITLE'),
         description: t('STEP_WINDOW_BODY'),
         side: 'left',
         align: 'start',
       },
+      // After Subtract the card grows (sliders + Fit row); remeasure so the stage
+      // still wraps the whole panel and Fit stays inside the interactive cutout.
+      onHighlighted: () => this.refreshStageSoon(),
     });
 
     this.stepIndexAccept = push({
-      element: SELECTOR_ACCEPT,
+      element: SELECTOR_MASS_PANEL,
+      disableActiveInteraction: false,
       popover: {
         title: t('STEP_ACCEPT_TITLE'),
         description: t('STEP_ACCEPT_BODY'),
+        side: 'left',
+        align: 'start',
+      },
+      onHighlighted: () => this.refreshStageSoon(),
+    });
+
+    push({
+      element: SELECTOR_RESULTS,
+      popover: {
+        title: t('STEP_RESULTS_TITLE'),
+        description: t('STEP_RESULTS_BODY'),
         side: 'top',
         align: 'start',
       },
+      onHighlighted: () => this.refreshStageSoon(),
     });
 
     this.stepIndexDatasetSwitch = push({
@@ -278,16 +338,6 @@ export class JpsiTutorialService {
         title: t('STEP_DATASET_TITLE'),
         description: t('STEP_DATASET_BODY'),
         side: 'bottom',
-        align: 'start',
-      },
-    });
-
-    push({
-      element: SELECTOR_COMPARE,
-      popover: {
-        title: t('STEP_COMPARE_TITLE'),
-        description: t('STEP_COMPARE_BODY'),
-        side: 'top',
         align: 'start',
       },
     });

@@ -486,21 +486,22 @@
       "Y_AXIS": "Pairs",
       "EMPTY": "Choose an electron band on the PID plot and press Accept selected range.",
       "SERIES": {
-        "UNLIKE": "Opposite-charge pairs",
-        "POSPOS": "Same-charge pairs, positive",
-        "NEGNEG": "Same-charge pairs, negative",
+        "UNLIKE": "Unlike-sign pairs",
+        "POSPOS": "Like-sign pairs (positrons)",
+        "NEGNEG": "Like-sign pairs (electrons)",
         "BACKGROUND": "Combinatorial background"
       },
       "SUBTRACT": "Subtract background",
       "SUBTRACT_HELP": "Same-charge pairs cannot come from a J/psi decay, so they show you the random combinations. Subtract them from the opposite-charge pairs to reveal the signal.",
-      "AFTER_SUBTRACT": "What remains is the residual: a J/psi peak sitting on top of a background that is not perfectly flat. Fit a straight line to it outside the peak, then count the excess inside the window.",
       "SHOW_COMPONENTS": "Show components",
-      "BACKGROUND_RANGE": "Background fit range",
-      "WINDOW": "Signal mass window",
+      "BACKGROUND_RANGE": "Background",
+      "WINDOW": "Signal",
       "FIT": "Fit",
       "FIT_HINT": "Press Fit to fit the background and count the signal in the window.",
       "ACCEPT": "Accept result",
-      "NEGATIVE_BINS_NOTE": "Random fluctuations can push a bin slightly below zero. We show those bins as zero.",
+      "RESET_RANGE": "Reset range",
+      "RESET_ZOOM": "Reset zoom",
+      "CLEAR_FIT": "Clear fit",
       "TOO_WIDE": "Your selection contains too many tracks. Narrow the electron band first.",
       "NO_SIGNAL_HINT": "No signal in this window. Widen it or move it over the peak, then fit again."
     },
@@ -517,10 +518,10 @@
         "EMPTY": "Could not load this histogram."
       },
       "RESULTS": {
-        "TITLE": "Pb-Pb J/psi yields",
+        "TITLE": "Your results",
         "CENTRALITY": "Centrality",
-        "SIGNAL": "J/psi signal (your fit)",
-        "BACKGROUND": "Background (your fit)",
+        "SIGNAL": "J/psi signal",
+        "BACKGROUND": "Background",
         "SB": "S/B",
         "SIGNIFICANCE": "Significance",
         "DELETE": "Remove this result",
@@ -536,16 +537,9 @@
       "SB": "S/B",
       "SIGNIFICANCE": "Significance",
       "WINDOW": "Mass window",
+      "DELETE": "Remove this result",
       "EMPTY": "Accept a result to add it here.",
       "UPLOAD_SOON": "Sending results to your teacher will be available soon."
-    },
-    "COMPARE": {
-      "TITLE": "Compare the two collision systems",
-      "LOCKED": "Accept a result for both collision systems to compare them.",
-      "HINT": "In proton-lead many more particles are produced, so there are many more random pairs. The background is larger and the signal is harder to extract.",
-      "CONCLUSION": "Your signal to background ratio is worse in proton-lead. Finding a rare particle in a crowded collision is harder, which is why physicists need excellent particle identification and very large datasets.",
-      "WARN_STATISTICS": "You analysed a very different number of events in the two systems. Significance grows with the number of events, so compare the signal to background ratio instead.",
-      "WARN_WINDOW": "The two results use different mass windows. Measure both in the same window to compare them fairly."
     },
     "WELCOME": {
       "TITLE": "Looking for the J/psi particle",
@@ -581,15 +575,15 @@
       "STEP_SERIES_TITLE": "Three kinds of pairs",
       "STEP_SERIES_BODY": "Red shows pairs of opposite charge, which can come from a J/psi. Blue and green show pairs of the same charge, which cannot. Turn the series on and off to compare their shapes, and switch on <strong>Combinatorial background</strong> to see the two same-charge series added together.",
       "STEP_SUBTRACT_TITLE": "Subtract the background",
-      "STEP_SUBTRACT_BODY": "Same-charge pairs measure the random combinations directly from the data. Subtract them bin by bin from the opposite-charge pairs and the J/psi peak appears.",
+      "STEP_SUBTRACT_BODY": "Same-charge pairs measure the random combinations directly from the data. Subtract them bin by bin from the opposite-charge pairs and what remains is the residual: a J/psi peak sitting on top of a background that is not perfectly flat. Random fluctuations can also push a bin slightly below zero — we show those bins as zero.",
       "STEP_WINDOW_TITLE": "Count the signal",
       "STEP_WINDOW_BODY": "Drag the background fit range over the flat parts outside the peak and press <strong>Fit</strong> to draw a straight line through them. Drag the signal window over the peak itself: everything above the line inside it is your signal. Notice how a window that is too wide adds background and makes the signal to background ratio worse.",
       "STEP_ACCEPT_TITLE": "Save your result",
       "STEP_ACCEPT_BODY": "<strong>Accept result</strong> stores this measurement in your table. You can always change the window and accept again.",
+      "STEP_RESULTS_TITLE": "Your results",
+      "STEP_RESULTS_BODY": "Every accepted fit lands here as a row with the signal, background, and quality metrics. You can delete a row and accept again if you want a better window.",
       "STEP_DATASET_TITLE": "The second collision system",
-      "STEP_DATASET_BODY": "Now switch to proton-lead and repeat the whole analysis. Your proton-proton work stays exactly as you left it.",
-      "STEP_COMPARE_TITLE": "Compare",
-      "STEP_COMPARE_BODY": "With both results in the table you can see how much harder the measurement becomes when a collision produces more particles."
+      "STEP_DATASET_BODY": "Now switch to proton-lead and repeat the whole analysis. Your proton-proton work stays exactly as you left it."
     },
     "ERRORS": {
       "MANIFEST": "Could not load the dataset list.",

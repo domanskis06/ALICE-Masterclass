@@ -488,21 +488,22 @@
       "Y_AXIS": "Paires",
       "EMPTY": "Choisis une bande d'électrons sur le graphique PID et appuie sur Valider la plage sélectionnée.",
       "SERIES": {
-        "UNLIKE": "Paires de charges opposées",
-        "POSPOS": "Paires de même charge, positives",
-        "NEGNEG": "Paires de même charge, négatives",
+        "UNLIKE": "Paires de signes opposés",
+        "POSPOS": "Paires de même signe (positons)",
+        "NEGNEG": "Paires de même signe (électrons)",
         "BACKGROUND": "Bruit de fond combinatoire"
       },
       "SUBTRACT": "Soustraire le bruit de fond",
       "SUBTRACT_HELP": "Les paires de même charge ne peuvent pas venir d'une désintégration de J/psi, elles te montrent donc les combinaisons aléatoires. Soustrais-les des paires de charges opposées pour révéler le signal.",
-      "AFTER_SUBTRACT": "Ce qui reste est le résidu : un pic de J/psi sur un fond qui n'est pas parfaitement plat. Ajuste-y une droite en dehors du pic, puis compte l'excès à l'intérieur de la fenêtre.",
       "SHOW_COMPONENTS": "Afficher les composantes",
-      "BACKGROUND_RANGE": "Plage d'ajustement du fond",
-      "WINDOW": "Fenêtre de masse du signal",
+      "BACKGROUND_RANGE": "Fond",
+      "WINDOW": "Signal",
       "FIT": "Ajuster",
       "FIT_HINT": "Appuie sur Ajuster pour ajuster le fond et compter le signal dans la fenêtre.",
       "ACCEPT": "Valider le résultat",
-      "NEGATIVE_BINS_NOTE": "Les fluctuations aléatoires peuvent faire passer une case légèrement sous zéro. Ces cases sont affichées à zéro.",
+      "RESET_RANGE": "Réinitialiser la plage",
+      "RESET_ZOOM": "Réinitialiser le zoom",
+      "CLEAR_FIT": "Effacer l'ajustement",
       "TOO_WIDE": "Ta sélection contient trop de traces. Resserre d'abord la bande des électrons.",
       "NO_SIGNAL_HINT": "Pas de signal dans cette fenêtre. Élargis-la ou déplace-la sur le pic, puis ajuste à nouveau."
     },
@@ -519,10 +520,10 @@
         "EMPTY": "Impossible de charger cet histogramme."
       },
       "RESULTS": {
-        "TITLE": "Rendement J/psi en Pb-Pb",
+        "TITLE": "Tes résultats",
         "CENTRALITY": "Centralité",
-        "SIGNAL": "Signal J/psi (votre ajustement)",
-        "BACKGROUND": "Bruit de fond (votre ajustement)",
+        "SIGNAL": "Signal J/psi",
+        "BACKGROUND": "Bruit de fond",
         "SB": "S/B",
         "SIGNIFICANCE": "Significativité",
         "DELETE": "Supprimer ce résultat",
@@ -538,16 +539,9 @@
       "SB": "S/B",
       "SIGNIFICANCE": "Significativité",
       "WINDOW": "Fenêtre de masse",
+      "DELETE": "Supprimer ce résultat",
       "EMPTY": "Valide un résultat pour l'ajouter ici.",
       "UPLOAD_SOON": "L'envoi des résultats à ton enseignant sera bientôt disponible."
-    },
-    "COMPARE": {
-      "TITLE": "Compare les deux systèmes de collision",
-      "LOCKED": "Valide un résultat pour les deux systèmes de collision afin de les comparer.",
-      "HINT": "En proton-plomb beaucoup plus de particules sont produites, il y a donc beaucoup plus de paires aléatoires. Le bruit de fond est plus grand et le signal est plus difficile à extraire.",
-      "CONCLUSION": "Ton rapport signal sur bruit est moins bon en proton-plomb. Trouver une particule rare dans une collision chargée est plus difficile. C'est pour cela que les physiciens ont besoin d'une excellente identification des particules et de très grands jeux de données.",
-      "WARN_STATISTICS": "Tu as analysé un nombre très différent d'événements dans les deux systèmes. La significativité augmente avec le nombre d'événements, compare plutôt le rapport signal sur bruit.",
-      "WARN_WINDOW": "Les deux résultats utilisent des fenêtres de masse différentes. Mesure-les dans la même fenêtre pour comparer de façon juste."
     },
     "WELCOME": {
       "TITLE": "À la recherche de la particule J/psi",
@@ -583,15 +577,15 @@
       "STEP_SERIES_TITLE": "Trois sortes de paires",
       "STEP_SERIES_BODY": "Le rouge montre les paires de charges opposées, qui peuvent venir d'un J/psi. Le bleu et le vert montrent les paires de même charge, qui ne le peuvent pas. Active et désactive les séries pour comparer leurs formes, et active <strong>Bruit de fond combinatoire</strong> pour voir les deux séries de même charge additionnées.",
       "STEP_SUBTRACT_TITLE": "Soustraire le bruit de fond",
-      "STEP_SUBTRACT_BODY": "Les paires de même charge mesurent les combinaisons aléatoires directement dans les données. Soustrais-les case par case des paires de charges opposées et le pic du J/psi apparaît.",
+      "STEP_SUBTRACT_BODY": "Les paires de même charge mesurent les combinaisons aléatoires directement dans les données. Soustrais-les case par case des paires de charges opposées et ce qui reste est le résidu : un pic de J/psi sur un fond qui n'est pas parfaitement plat. Les fluctuations aléatoires peuvent aussi faire passer une case légèrement sous zéro — ces cases sont affichées à zéro.",
       "STEP_WINDOW_TITLE": "Compter le signal",
       "STEP_WINDOW_BODY": "Fais glisser la plage d'ajustement du bruit de fond sur les parties plates en dehors du pic et clique sur <strong>Ajuster</strong> pour tracer une droite à travers elles. Fais glisser la fenêtre de signal sur le pic lui-même : tout ce qui est au-dessus de la droite à l'intérieur est ton signal. Remarque comment une fenêtre trop large ajoute du bruit de fond et dégrade le rapport signal sur bruit.",
       "STEP_ACCEPT_TITLE": "Enregistrer ton résultat",
       "STEP_ACCEPT_BODY": "<strong>Valider le résultat</strong> enregistre cette mesure dans ton tableau. Tu peux toujours changer la fenêtre et valider de nouveau.",
+      "STEP_RESULTS_TITLE": "Tes résultats",
+      "STEP_RESULTS_BODY": "Chaque ajustement validé apparaît ici comme une ligne avec le signal, le bruit de fond et les métriques de qualité. Tu peux supprimer une ligne et valider à nouveau si tu veux une meilleure fenêtre.",
       "STEP_DATASET_TITLE": "Le deuxième système de collision",
-      "STEP_DATASET_BODY": "Passe maintenant à proton-plomb et refais toute l'analyse. Ton travail sur proton-proton reste exactement où tu l'as laissé.",
-      "STEP_COMPARE_TITLE": "Comparer",
-      "STEP_COMPARE_BODY": "Avec les deux résultats dans le tableau, tu vois à quel point la mesure devient plus difficile quand une collision produit plus de particules."
+      "STEP_DATASET_BODY": "Passe maintenant à proton-plomb et refais toute l'analyse. Ton travail sur proton-proton reste exactement où tu l'as laissé."
     },
     "ERRORS": {
       "MANIFEST": "Impossible de charger la liste des jeux de données.",
