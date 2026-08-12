@@ -524,6 +524,7 @@
         "BACKGROUND": "Background",
         "SB": "S/B",
         "SIGNIFICANCE": "Significance",
+        "WINDOW": "Mass window",
         "DELETE": "Remove this result",
         "EMPTY": "Accept a fit to add it here."
       }

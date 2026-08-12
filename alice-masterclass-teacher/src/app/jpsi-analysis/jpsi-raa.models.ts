@@ -56,15 +56,17 @@ export function collisionSystemLabel(system: CollisionSystemId): string {
 
 /**
  * What a student ultimately submits per collision system: the fitted J/psi signal (and its
- * Poisson error) from the residual-fit yield extraction, plus the number of analysed events.
- * This mirrors `SummaryRow`/`PbPbYieldRow` from the student app, reduced to the few numbers
- * the teacher-side R_AA calculation actually needs.
+ * Poisson error) from the residual-fit yield extraction, the mass window used to extract it,
+ * and the number of analysed events. This mirrors `SummaryRow`/`PbPbYieldRow` from the student
+ * app, reduced to the few numbers the teacher-side R_AA calculation actually needs.
  */
 export interface JpsiRawSignal {
   system: CollisionSystemId;
   signal: number;
   signalError: number;
   nEvents: number;
+  /** [low, high] mass window (GeV/c^2) the signal was extracted from - see `windowEfficiencyFactor`. */
+  massWindow: [number, number];
 }
 
 /** One row of the teacher Results table: a raw signal enriched with everything derived from it. */
@@ -76,7 +78,10 @@ export interface JpsiResultRow {
   nEvents: number;
   signal: number;
   signalError: number;
+  /** Base Acc x epsilon for this system/centrality, BEFORE the mass-window correction. */
   efficiency: number;
+  /** Mass-window efficiency factor actually applied on top of `efficiency` (1 = reference window). */
+  windowFactor: number;
   correctedYield: number;
   raa: number | null;
   raaError: number | null;

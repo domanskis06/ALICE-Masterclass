@@ -33,7 +33,7 @@ export class InstructionsComponent implements AfterViewInit, OnDestroy {
   private renderFormulas(): void {
     if (this.yieldFormula) {
       katex.render(
-        String.raw`Y = \dfrac{N_{\mathrm{J/\psi}}}{(A\times\varepsilon)\, N_{\mathrm{ev}}}`,
+        String.raw`Y = \dfrac{N_{\mathrm{J/\psi}}}{(A\times\varepsilon)\cdot \varepsilon_{\mathrm{window}}\cdot BR_{ee}\, N_{\mathrm{ev}}}`,
         this.yieldFormula.nativeElement,
         { displayMode: true, throwOnError: false, output: 'html' }
       );
@@ -41,7 +41,7 @@ export class InstructionsComponent implements AfterViewInit, OnDestroy {
 
     if (this.raaFormula) {
       katex.render(
-        String.raw`R_{AA} = \dfrac{Y_{\mathrm{Pb-Pb}}}{N_{\mathrm{coll}} \cdot Y_{\mathrm{pp}}^{\mathrm{ref}}},\quad Y_{\mathrm{pp}}^{\mathrm{ref}} = Y_{\mathrm{pp}}^{(7\,\mathrm{TeV})}\cdot f_{7\to 5.02}`,
+        String.raw`R_{AA} = \dfrac{Y_{\mathrm{Pb-Pb}}}{N_{\mathrm{coll}} \cdot Y_{\mathrm{pp}}^{\mathrm{ref}}},\quad Y_{\mathrm{pp}}^{\mathrm{ref}} = \dfrac{\sigma_{\mathrm{J}/\psi}(5.02\,\mathrm{TeV})}{\sigma_{\mathrm{INEL}}(5.02\,\mathrm{TeV})}\ \text{(fixed)}`,
         this.raaFormula.nativeElement,
         { displayMode: true, throwOnError: false, output: 'html' }
       );

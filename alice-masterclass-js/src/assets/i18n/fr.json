@@ -526,6 +526,7 @@
         "BACKGROUND": "Bruit de fond",
         "SB": "S/B",
         "SIGNIFICANCE": "Significativité",
+        "WINDOW": "Fenêtre de masse",
         "DELETE": "Supprimer ce résultat",
         "EMPTY": "Acceptez un ajustement pour l'ajouter ici."
       }

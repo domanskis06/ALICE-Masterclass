@@ -4,7 +4,7 @@
       <div class="results-header">
         <span class="title">{{ 'JPSI_ANALYSIS.RESULTS' | translate }}</span>
         <div class="subtitle">{{ 'JPSI_ANALYSIS.SAMPLE_DATA_NOTE' | translate }}</div>
-        <div class="subtitle">{{ 'JPSI_ANALYSIS.ENERGY_SCALE_NOTE' | translate }}</div>
+        <div class="subtitle">{{ 'JPSI_ANALYSIS.PP_REFERENCE_NOTE' | translate }}</div>
       </div>
       <button mat-icon-button (click)="reloadButtonClicked()">
         <mat-icon>refresh</mat-icon>
@@ -35,7 +35,9 @@
 
         <ng-container matColumnDef="efficiency">
           <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.EFFICIENCY' | translate }}</th>
-          <td mat-cell *matCellDef="let element;"> {{ element.efficiency | number:'1.2-2' }} </td>
+          <td mat-cell *matCellDef="let element;" [title]="('JPSI_ANALYSIS.EFFICIENCY_TOOLTIP' | translate) + ' ' + (element.efficiency | number:'1.3-3') + ' × ' + (element.windowFactor | number:'1.2-2')">
+            {{ (element.efficiency * element.windowFactor) | number:'1.2-2' }}
+          </td>
         </ng-container>
 
         <ng-container matColumnDef="yield">
