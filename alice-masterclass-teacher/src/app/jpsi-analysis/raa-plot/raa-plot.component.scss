@@ -1,0 +1,58 @@
+.plot-body {
+  gap: 12px;
+}
+
+.plot-header {
+  width: 100%;
+}
+
+.plot-frame {
+  width: 100%;
+  position: relative;
+}
+
+svg {
+  width: 60vw;
+}
+
+.plot-tooltip {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  transform: translate(12px, -100%);
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: rgba(33, 33, 33, 0.92);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.plot-tooltip__title {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+:host ::ng-deep svg {
+  #dots circle {
+    fill: #1f78b4;
+    cursor: pointer;
+  }
+
+  #errorBars line {
+    stroke: #1f78b4;
+    stroke-width: 1.5;
+  }
+
+  #yAxisLabel, #xAxisLabel {
+    font-size: 0.8em;
+  }
+
+  #referenceLine {
+    stroke: gray;
+    stroke-dasharray: 5;
+  }
+}

@@ -1,0 +1,47 @@
+<h1>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.TITLE' | translate }}</h1>
+
+<p [innerHtml]="'JPSI_ANALYSIS.INSTRUCTIONS.INTRO' | translate"></p>
+
+<h2>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.HOW_TO_USE' | translate }}</h2>
+<ol>
+  <li>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.STEP_1' | translate }}</li>
+  <li>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.STEP_2' | translate }}</li>
+  <li>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.STEP_3' | translate }}</li>
+</ol>
+
+<h2>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.HOW_TO_INTERPRET' | translate }}</h2>
+<ul>
+  <li>
+    <strong>{{ 'JPSI_ANALYSIS.NO_JPSI' | translate }}</strong>
+    - {{ 'JPSI_ANALYSIS.INSTRUCTIONS.NO_JPSI_DEF' | translate }}
+  </li>
+  <li>
+    <strong>{{ 'JPSI_ANALYSIS.EFFICIENCY' | translate }}</strong>
+    - {{ 'JPSI_ANALYSIS.INSTRUCTIONS.EFFICIENCY_DEF' | translate }}
+  </li>
+  <li>
+    <strong>{{ 'JPSI_ANALYSIS.YIELD' | translate }}</strong>
+    - {{ 'JPSI_ANALYSIS.INSTRUCTIONS.YIELD_DEF' | translate }}
+    <div #yieldFormula class="formula"></div>
+  </li>
+  <li>
+    <strong>N<sub>coll</sub></strong>
+    - {{ 'JPSI_ANALYSIS.INSTRUCTIONS.NCOLL_DEF' | translate }}
+  </li>
+  <li>
+    <strong>R<sub>AA</sub></strong>
+    - {{ 'JPSI_ANALYSIS.INSTRUCTIONS.RAA_DEF' | translate }}
+    <div #raaFormula class="formula"></div>
+  </li>
+</ul>
+
+<h2>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.ENERGY_NOTE_TITLE' | translate }}</h2>
+<p [innerHtml]="'JPSI_ANALYSIS.INSTRUCTIONS.ENERGY_NOTE' | translate"></p>
+
+<h2>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.WHAT_TO_LOOK_FOR' | translate }}</h2>
+<p>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.LOOK_FOR' | translate }}</p>
+
+<p>
+  <strong>{{ 'JPSI_ANALYSIS.INSTRUCTIONS.TIP_LABEL' | translate }}</strong>
+  {{ 'JPSI_ANALYSIS.INSTRUCTIONS.TIP' | translate }}
+</p>

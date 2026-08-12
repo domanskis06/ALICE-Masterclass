@@ -154,8 +154,12 @@ counts being subtracted from each other.
 
 The results table follows the usual workshop pattern, but **Upload data currently performs no
 request** — there is no J/psi endpoint in the Django API yet. The button stays disabled
-without a session and otherwise shows `JPSI.RESULTS.UPLOAD_SOON`. The teacher module and the
-API are deliberately out of scope for this iteration.
+without a session and otherwise shows `JPSI.RESULTS.UPLOAD_SOON`. The API is deliberately out
+of scope for this iteration.
+
+A teacher-side module now exists as **layout only**, combining sample pp/p-Pb/Pb-Pb yields into
+R_AA vs. Pb-Pb centrality — see [`jpsi-analysis-teacher.md`](jpsi-analysis-teacher.md) for the
+calculation, the constants and why it still runs on sample data rather than real submissions.
 
 ---
 

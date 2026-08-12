@@ -20,7 +20,9 @@
     "SESSION": "Session",
     "STRANGENESS": "Strangeness",
     "VISUAL_ANALYSIS": "Visual Analysis",
-    "LARGE_SCALE_ANALYSIS": "Large Scale Analysis"
+    "LARGE_SCALE_ANALYSIS": "Large Scale Analysis",
+    "JPSI": "J/psi",
+    "JPSI_ANALYSIS": "R_AA Analysis"
   },
   "SESSION": {
     "TITLE": "Events",
@@ -119,6 +121,39 @@
       "TIP": "Use the coloured markers in the table together with the plot to connect a specific centrality class to its point on the graph.",
       "FORMULA_ENHANCEMENT": "Enhancement",
       "FORMULA_YIELD": "Yield"
+    }
+  },
+  "JPSI_ANALYSIS": {
+    "EVENT": "Event",
+    "RESULTS": "Results",
+    "SAMPLE_DATA_NOTE": "Sample data - student submission API not connected yet",
+    "ENERGY_SCALE_NOTE": "R_AA uses the student pp yield rescaled from 7 TeV to 5.02 TeV (factor ≈ 0.82) so the absolute scale matches the Pb-Pb energy",
+    "COLLISION_SYSTEM": "Collision system",
+    "NO_PARTICIPANTS": "No. participants",
+    "NO_EVENTS": "No. events",
+    "NO_JPSI": "No. J/psi particles",
+    "EFFICIENCY": "A × ε",
+    "YIELD": "Yield",
+    "NOT_APPLICABLE": "reference / not applicable",
+    "INSTRUCTIONS": {
+      "TITLE": "About R_AA Analysis",
+      "INTRO": "This module combines the J/psi yields students measured in pp, p-Pb and Pb-Pb collisions into the <strong>nuclear modification factor R<sub>AA</sub></strong> - a measure of how J/psi production in Pb-Pb collisions is suppressed or enhanced relative to a simple superposition of independent proton-proton collisions.",
+      "HOW_TO_USE": "How to use it",
+      "STEP_1": "Choose an event from the dropdown above the plot.",
+      "STEP_2": "The plot shows R_AA as a function of collision centrality, measured by <strong>No. participants</strong>, for the eight Pb-Pb centrality classes.",
+      "STEP_3": "The Results table lists every collision system a student analysed, with the raw signal, Acc × ε, corrected yield and, for Pb-Pb, R_AA.",
+      "HOW_TO_INTERPRET": "How to interpret the quantities",
+      "NO_JPSI_DEF": "the fitted J/psi signal from the residual-fit yield extraction (unlike-sign minus like-sign pairs), with its Poisson error",
+      "EFFICIENCY_DEF": "the full acceptance × efficiency (A × ε, including PID) for that collision system - centrality-dependent for Pb-Pb, flat for pp and p-Pb",
+      "YIELD_DEF": "the Acc × ε-corrected yield per event (as measured by the student; for pp this is still at 7 TeV):",
+      "NCOLL_DEF": "average number of binary nucleon-nucleon collisions in that centrality class (Glauber Monte Carlo)",
+      "RAA_DEF": "the Pb-Pb yield divided by what Ncoll independent pp collisions would have produced, using an energy-rescaled pp reference:",
+      "ENERGY_NOTE_TITLE": "pp energy rescaling",
+      "ENERGY_NOTE": "The student pp sample is at <strong>7 TeV</strong>, while Pb-Pb is at <strong>5.02 TeV</strong>. The Yield column still shows the student Acc × ε-corrected pp yield. For R<sub>AA</sub> only, that yield is multiplied by <em>f</em><sub>7→5.02</sub> ≈ 0.82 (ratio of published midrapidity J/ψ cross sections at 5.02 and 7 TeV), so student results still drive event-to-event differences while the absolute R<sub>AA</sub> scale matches a same-energy reference.",
+      "WHAT_TO_LOOK_FOR": "What to look for",
+      "LOOK_FOR": "R_AA below 1 indicates suppression of J/psi production in Pb-Pb collisions (e.g. from colour screening in the quark-gluon plasma); R_AA above 1 would indicate enhancement. The p-Pb row is shown for reference only and does not enter the R_AA calculation.",
+      "TIP_LABEL": "Tip:",
+      "TIP": "The dashed line on the plot marks R_AA = 1, i.e. no nuclear modification."
     }
   },
   "PAGINATOR": {

@@ -1,0 +1,17 @@
+<div fxFlex="grow">
+  <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
+    <app-raa-plot [xDomain]="[0, 400]" [data]="plotData">
+      <mat-form-field cardTitle appearance="outline" class="selector" color="primary">
+        <mat-label>{{ 'JPSI_ANALYSIS.EVENT' | translate }}</mat-label>
+        <mat-select [(ngModel)]="eventID" (selectionChange)="onEventChange()">
+          @for (e of events; track e.id) {
+            <mat-option [value]="e.id">{{ e.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <svg:text xAxisLabel>{{ 'JPSI_ANALYSIS.NO_PARTICIPANTS' | translate }}</svg:text>
+      <svg:text yAxisLabel>R_AA</svg:text>
+    </app-raa-plot>
+    <app-jpsi-results [resultsData]="rows" (reloadClickedEvent)="onReload()"></app-jpsi-results>
+  </div>
+</div>

@@ -20,7 +20,9 @@
     "SESSION": "Sitzung",
     "STRANGENESS": "Strangeness",
     "VISUAL_ANALYSIS": "Visuelle Analyse",
-    "LARGE_SCALE_ANALYSIS": "Großskalige Analyse"
+    "LARGE_SCALE_ANALYSIS": "Großskalige Analyse",
+    "JPSI": "J/psi",
+    "JPSI_ANALYSIS": "R_AA-Analyse"
   },
   "SESSION": {
     "TITLE": "Ereignisse",
@@ -119,6 +121,39 @@
       "TIP": "Nutzen Sie die farbigen Markierungen in der Tabelle zusammen mit dem Diagramm, um eine bestimmte Zentralitätsklasse mit ihrem Punkt im Graphen zu verbinden.",
       "FORMULA_ENHANCEMENT": "Verstärkung",
       "FORMULA_YIELD": "Ausbeute"
+    }
+  },
+  "JPSI_ANALYSIS": {
+    "EVENT": "Ereignis",
+    "RESULTS": "Ergebnisse",
+    "SAMPLE_DATA_NOTE": "Beispieldaten - Schüler-API noch nicht verbunden",
+    "ENERGY_SCALE_NOTE": "R_AA verwendet die Schüler-pp-Ausbeute, skaliert von 7 TeV auf 5.02 TeV (Faktor ≈ 0.82), damit die absolute Skala zur Pb-Pb-Energie passt",
+    "COLLISION_SYSTEM": "Kollisionssystem",
+    "NO_PARTICIPANTS": "Anz. Teilnehmer",
+    "NO_EVENTS": "Anz. Ereignisse",
+    "NO_JPSI": "Anz. J/psi-Teilchen",
+    "EFFICIENCY": "A × ε",
+    "YIELD": "Ausbeute",
+    "NOT_APPLICABLE": "Referenz / nicht anwendbar",
+    "INSTRUCTIONS": {
+      "TITLE": "Über die R_AA-Analyse",
+      "INTRO": "Dieses Modul kombiniert die von den Schülern in pp-, p-Pb- und Pb-Pb-Kollisionen gemessenen J/psi-Ausbeuten zum <strong>nuklearen Modifikationsfaktor R<sub>AA</sub></strong> - einem Maß dafür, wie die J/psi-Produktion in Pb-Pb-Kollisionen im Vergleich zu einer einfachen Überlagerung unabhängiger Proton-Proton-Kollisionen unterdrückt oder verstärkt wird.",
+      "HOW_TO_USE": "So funktioniert es",
+      "STEP_1": "Wählen Sie ein Ereignis aus dem Dropdown-Menü oberhalb des Diagramms.",
+      "STEP_2": "Das Diagramm zeigt R_AA als Funktion der Kollisionszentralität, gemessen über die <strong>Anz. Teilnehmer</strong>, für die acht Pb-Pb-Zentralitätsklassen.",
+      "STEP_3": "Die Ergebnistabelle listet jedes vom Schüler analysierte Kollisionssystem mit Rohsignal, Acc × ε, korrigierter Ausbeute und, für Pb-Pb, R_AA auf.",
+      "HOW_TO_INTERPRET": "So interpretiert man die Größen",
+      "NO_JPSI_DEF": "das angepasste J/psi-Signal aus der Restuntergrund-Fit-Ausbeuteextraktion (Paare mit ungleichem Vorzeichen minus Paare mit gleichem Vorzeichen), mit Poisson-Fehler",
+      "EFFICIENCY_DEF": "die volle Acceptance × Effizienz (A × ε, inklusive PID) für dieses Kollisionssystem - zentralitätsabhängig für Pb-Pb, flach für pp und p-Pb",
+      "YIELD_DEF": "die um A × ε korrigierte Ausbeute pro Ereignis (wie vom Schüler gemessen; für pp weiterhin bei 7 TeV):",
+      "NCOLL_DEF": "durchschnittliche Anzahl binärer Nukleon-Nukleon-Kollisionen in dieser Zentralitätsklasse (Glauber-Monte-Carlo)",
+      "RAA_DEF": "die Pb-Pb-Ausbeute geteilt durch das, was Ncoll unabhängige pp-Kollisionen erzeugt hätten, mit energetisch umskalierter pp-Referenz:",
+      "ENERGY_NOTE_TITLE": "pp-Energie-Umskalierung",
+      "ENERGY_NOTE": "Die Schüler-pp-Stichprobe liegt bei <strong>7 TeV</strong>, Pb-Pb bei <strong>5.02 TeV</strong>. Die Yield-Spalte zeigt weiterhin die um A × ε korrigierte Schüler-pp-Ausbeute. Nur für R<sub>AA</sub> wird diese Ausbeute mit <em>f</em><sub>7→5.02</sub> ≈ 0.82 multipliziert (Verhältnis der veröffentlichten Midrapidity-J/ψ-Wirkungsquerschnitte bei 5.02 und 7 TeV), sodass Schülerergebnisse weiterhin Ereignis-zu-Ereignis-Unterschiede erzeugen, die absolute R<sub>AA</sub>-Skala aber einer Referenz bei gleicher Energie entspricht.",
+      "WHAT_TO_LOOK_FOR": "Worauf Sie achten sollten",
+      "LOOK_FOR": "R_AA unter 1 deutet auf eine Unterdrückung der J/psi-Produktion in Pb-Pb-Kollisionen hin (z. B. durch Farbabschirmung im Quark-Gluon-Plasma); R_AA über 1 würde auf eine Verstärkung hindeuten. Die p-Pb-Zeile wird nur zur Referenz angezeigt und geht nicht in die R_AA-Berechnung ein.",
+      "TIP_LABEL": "Tipp:",
+      "TIP": "Die gestrichelte Linie im Diagramm markiert R_AA = 1, also keine nukleare Modifikation."
     }
   },
   "PAGINATOR": {

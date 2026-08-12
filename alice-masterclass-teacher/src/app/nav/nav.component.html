@@ -8,6 +8,9 @@
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/strangeness-visual-analysis" routerLinkActive #rlaVisual="routerLinkActive" [activated]="rlaVisual.isActive">{{ 'NAV.VISUAL_ANALYSIS' | translate }}</a>
         <a mat-list-item routerLink="/strangeness-large-scale-analysis" routerLinkActive #rlaLsa="routerLinkActive" [activated]="rlaLsa.isActive">{{ 'NAV.LARGE_SCALE_ANALYSIS' | translate }}</a>
+        <h1 matSubheader>{{ 'NAV.JPSI' | translate }}</h1>
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/jpsi-analysis" routerLinkActive #rlaJpsi="routerLinkActive" [activated]="rlaJpsi.isActive">{{ 'NAV.JPSI_ANALYSIS' | translate }}</a>
       </mat-nav-list>
     </div>
   </mat-sidenav>

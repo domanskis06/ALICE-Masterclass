@@ -1,0 +1,67 @@
+<mat-card fxFill fxLayout="column">
+  <mat-card-content fxFlex="grow" fxLayout="column" class="results-body">
+    <div class="results-toolbar" fxLayout="row" fxLayoutAlign="space-between start">
+      <div class="results-header">
+        <span class="title">{{ 'JPSI_ANALYSIS.RESULTS' | translate }}</span>
+        <div class="subtitle">{{ 'JPSI_ANALYSIS.SAMPLE_DATA_NOTE' | translate }}</div>
+        <div class="subtitle">{{ 'JPSI_ANALYSIS.ENERGY_SCALE_NOTE' | translate }}</div>
+      </div>
+      <button mat-icon-button (click)="reloadButtonClicked()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <div class="mat-elevation-z2 results-frame">
+      <table mat-table [dataSource]="tableRows">
+
+        <ng-container matColumnDef="system">
+          <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.COLLISION_SYSTEM' | translate }}</th>
+          <td mat-cell *matCellDef="let element;"> {{ element.systemLabel }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nParticipants">
+          <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.NO_PARTICIPANTS' | translate }}</th>
+          <td mat-cell *matCellDef="let element;"> {{ element.nParticipants !== null ? (element.nParticipants | number:'1.0-1') : '\u2014' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nEvents">
+          <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.NO_EVENTS' | translate }}</th>
+          <td mat-cell *matCellDef="let element;"> {{ element.nEvents | number }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="signal">
+          <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.NO_JPSI' | translate }}</th>
+          <td mat-cell *matCellDef="let element;"> <strong>{{ element.signal | number }}</strong> &plusmn; {{ element.signalError | number }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="efficiency">
+          <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.EFFICIENCY' | translate }}</th>
+          <td mat-cell *matCellDef="let element;"> {{ element.efficiency | number:'1.2-2' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="yield">
+          <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.YIELD' | translate }}</th>
+          <td mat-cell *matCellDef="let element;"> {{ element.correctedYield | number:'1.2-4' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nColl">
+          <th mat-header-cell *matHeaderCellDef>N<sub>coll</sub></th>
+          <td mat-cell *matCellDef="let element;"> {{ element.nColl !== null ? (element.nColl | number:'1.0-1') : '\u2014' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="raa">
+          <th mat-header-cell *matHeaderCellDef>R<sub>AA</sub></th>
+          <td mat-cell *matCellDef="let element;">
+            @if (element.raa !== null) {
+              <strong>{{ element.raa | number:'1.3-3' }}</strong> &plusmn; {{ element.raaError | number:'1.3-3' }}
+            } @else {
+              <span class="reference-note">{{ 'JPSI_ANALYSIS.NOT_APPLICABLE' | translate }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>

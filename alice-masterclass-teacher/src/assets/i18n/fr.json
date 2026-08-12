@@ -20,7 +20,9 @@
     "SESSION": "Session",
     "STRANGENESS": "Strangeness",
     "VISUAL_ANALYSIS": "Analyse visuelle",
-    "LARGE_SCALE_ANALYSIS": "Analyse à grande échelle"
+    "LARGE_SCALE_ANALYSIS": "Analyse à grande échelle",
+    "JPSI": "J/psi",
+    "JPSI_ANALYSIS": "Analyse R_AA"
   },
   "SESSION": {
     "TITLE": "Événements",
@@ -119,6 +121,39 @@
       "TIP": "Utilisez les marqueurs colorés du tableau avec le graphique pour relier une classe de centralité spécifique à son point sur le graphique.",
       "FORMULA_ENHANCEMENT": "Augmentation",
       "FORMULA_YIELD": "Taux de production"
+    }
+  },
+  "JPSI_ANALYSIS": {
+    "EVENT": "Événement",
+    "RESULTS": "Résultats",
+    "SAMPLE_DATA_NOTE": "Données d’exemple - l’API de soumission des élèves n’est pas encore connectée",
+    "ENERGY_SCALE_NOTE": "R_AA utilise le taux de production pp des élèves rescale de 7 TeV à 5.02 TeV (facteur ≈ 0.82) pour que l’échelle absolue corresponde à l’énergie Pb-Pb",
+    "COLLISION_SYSTEM": "Système de collision",
+    "NO_PARTICIPANTS": "Nb. de participants",
+    "NO_EVENTS": "Nb. d’événements",
+    "NO_JPSI": "Nb. de particules J/psi",
+    "EFFICIENCY": "A × ε",
+    "YIELD": "Taux de production",
+    "NOT_APPLICABLE": "référence / non applicable",
+    "INSTRUCTIONS": {
+      "TITLE": "À propos de l’analyse R_AA",
+      "INTRO": "Ce module combine les taux de production de J/psi mesurés par les élèves dans les collisions pp, p-Pb et Pb-Pb pour obtenir le <strong>facteur de modification nucléaire R<sub>AA</sub></strong> - une mesure de la suppression ou de l’augmentation de la production de J/psi dans les collisions Pb-Pb par rapport à une simple superposition de collisions proton-proton indépendantes.",
+      "HOW_TO_USE": "Comment l’utiliser",
+      "STEP_1": "Choisissez un événement dans la liste déroulante au-dessus du graphique.",
+      "STEP_2": "Le graphique montre R_AA en fonction de la centralité de la collision, mesurée par le <strong>Nb. de participants</strong>, pour les huit classes de centralité Pb-Pb.",
+      "STEP_3": "Le tableau Résultats liste chaque système de collision analysé par un élève, avec le signal brut, Acc × ε, le taux de production corrigé et, pour Pb-Pb, R_AA.",
+      "HOW_TO_INTERPRET": "Comment interpréter les grandeurs",
+      "NO_JPSI_DEF": "le signal J/psi ajusté issu de l’extraction du taux de production par ajustement du fond résiduel (paires de signe opposé moins paires de même signe), avec son erreur de Poisson",
+      "EFFICIENCY_DEF": "l’acceptance × efficacité complète (A × ε, PID inclus) pour ce système de collision - dépendante de la centralité pour Pb-Pb, constante pour pp et p-Pb",
+      "YIELD_DEF": "le taux de production par événement corrigé de A × ε (tel que mesuré par l’élève ; pour pp toujours à 7 TeV) :",
+      "NCOLL_DEF": "nombre moyen de collisions binaires nucléon-nucléon dans cette classe de centralité (Monte-Carlo de Glauber)",
+      "RAA_DEF": "le taux de production Pb-Pb divisé par ce que Ncoll collisions pp indépendantes auraient produit, avec une référence pp rescalee en énergie :",
+      "ENERGY_NOTE_TITLE": "Rescaling en énergie du pp",
+      "ENERGY_NOTE": "L’échantillon pp des élèves est à <strong>7 TeV</strong>, tandis que Pb-Pb est à <strong>5.02 TeV</strong>. La colonne Yield montre toujours le taux de production pp de l’élève corrigé de A × ε. Pour R<sub>AA</sub> uniquement, ce taux est multiplié par <em>f</em><sub>7→5.02</sub> ≈ 0.82 (rapport des sections efficaces J/ψ à midrapidity publiées à 5.02 et 7 TeV), de sorte que les résultats des élèves continuent de faire varier R<sub>AA</sub> d’une session à l’autre, tandis que l’échelle absolue correspond à une référence à la même énergie que Pb-Pb.",
+      "WHAT_TO_LOOK_FOR": "Que rechercher",
+      "LOOK_FOR": "Un R_AA inférieur à 1 indique une suppression de la production de J/psi dans les collisions Pb-Pb (p. ex. par écrantage de couleur dans le plasma quarks-gluons) ; un R_AA supérieur à 1 indiquerait une augmentation. La ligne p-Pb n’est affichée qu’à titre de référence et n’entre pas dans le calcul de R_AA.",
+      "TIP_LABEL": "Astuce :",
+      "TIP": "La ligne pointillée sur le graphique marque R_AA = 1, c’est-à-dire l’absence de modification nucléaire."
     }
   },
   "PAGINATOR": {
