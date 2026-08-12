@@ -90,6 +90,24 @@
   stroke-dasharray: 4 3;
 }
 
+.mass-panel__fit-range-guide {
+  stroke: rgba(63, 81, 181, 0.6);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+
+.mass-panel__pol1-line {
+  stroke: #3f51b5;
+  stroke-width: 2;
+  fill: none;
+}
+
+.mass-panel__spinner {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .mass-panel__axis-label {
   font-size: 11px;
   fill: rgba(0, 0, 0, 0.72);

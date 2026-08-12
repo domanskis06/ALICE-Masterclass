@@ -36,8 +36,8 @@ export class ComparePanelComponent {
       return false;
     }
     return (
-      this.ppRow!.windowMin !== this.pPbRow!.windowMin ||
-      this.ppRow!.windowMax !== this.pPbRow!.windowMax
+      this.ppRow!.signalWindow[0] !== this.pPbRow!.signalWindow[0] ||
+      this.ppRow!.signalWindow[1] !== this.pPbRow!.signalWindow[1]
     );
   }
 

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { FitResult, FitService } from '../../shared/services/fit.service';
 import { PbPbCentralityId, PublishedMinvHistogram } from '../models/pbpb-minv.models';
 import { JpsiMinvDataService } from './jpsi-minv-data.service';
+import { JpsiResidualFitService } from './jpsi-residual-fit.service';
 import { PbPbMinvStateService } from './pbpb-minv-state.service';
 
 const LABELS: Record<PbPbCentralityId, string> = {
@@ -56,22 +56,8 @@ function makeHistogram(centralityId: PbPbCentralityId, nJpsi: number): Published
   };
 }
 
-function fakeFitResult(signal: number): FitResult {
-  return {
-    total: 100,
-    signal,
-    signalError: 5,
-    background: 100 - signal,
-    p1Gauss: [signal, 2.5, 0.3],
-    p1Polynomial: [1, 0, 0],
-  };
-}
-
 describe('PbPbMinvStateService', () => {
   let service: PbPbMinvStateService;
-  let fitService: FitService;
-  const histogram0_5 = makeHistogram('pbPb_0_5', 100);
-  const histogram5_10 = makeHistogram('pbPb_5_10', 40);
 
   beforeEach(() => {
     const dataStub: Partial<JpsiMinvDataService> = {
@@ -81,12 +67,11 @@ describe('PbPbMinvStateService', () => {
     TestBed.configureTestingModule({
       providers: [
         PbPbMinvStateService,
-        FitService,
+        JpsiResidualFitService,
         { provide: JpsiMinvDataService, useValue: dataStub },
       ],
     });
     service = TestBed.inject(PbPbMinvStateService);
-    fitService = TestBed.inject(FitService);
   });
 
   it('should be created', () => {
@@ -106,67 +91,82 @@ describe('PbPbMinvStateService', () => {
 
   it('selectCentrality is a no-op when the id is already active', () => {
     service.subtractBackground();
-    fitService.result = fakeFitResult(50);
+    service.runFit();
+    const before = service.state.fitSnapshot.fitResult;
     service.selectCentrality('pbPb_0_5');
 
     expect(service.state.panelMode).toBe('subtracted');
-    expect(fitService.result).toEqual(fakeFitResult(50));
+    expect(service.state.fitSnapshot.fitResult).toEqual(before);
   });
 
   describe('subtractBackground', () => {
-    it('builds the pseudo-unbinned residual with blank fit ranges (student starts from full range)', () => {
+    it('starts both sliders on the full histogram axis (student starts from full range)', () => {
       service.subtractBackground();
 
       expect(service.state.panelMode).toBe('subtracted');
-      expect(fitService.data.xmin).toBe(histogram0_5.xmin);
-      expect(fitService.data.xmax).toBe(histogram0_5.xmax);
-      expect(fitService.data.bins).toBe(histogram0_5.bins);
-      expect(fitService.data.data.length).toBe(100); // 0 + 5 + 90 + 5 + 0
-      expect(fitService.signalFitRange).toEqual([histogram0_5.xmin, histogram0_5.xmax]);
-      expect(fitService.backgroundFitRange).toEqual([histogram0_5.xmin, histogram0_5.xmax]);
-      // Not a slider default — the Nelder-Mead seed for the Gaussian, same role as LSA's
-      // hardcoded per-particle guess. Without it mu=0 never converges to the real peak.
-      expect(fitService.aGaussHint).toEqual(histogram0_5.fitHint.aGaussHint);
-      expect(fitService.aPolyHint).toEqual([0, 0, 0]);
+      expect(service.state.fitSnapshot.massWindow).toEqual([0, 5]);
+      expect(service.state.fitSnapshot.backgroundFitRange).toEqual([0, 5]);
+      expect(service.state.fitSnapshot.fitResult).toBeNull();
     });
 
     it('is guarded by canSubtract and does nothing once already in subtracted mode', () => {
       service.subtractBackground();
-      const dataBefore = fitService.data;
+      service.setBackgroundFitRange([1, 4]);
 
       service.subtractBackground();
 
-      expect(fitService.data).toBe(dataBefore);
+      expect(service.state.fitSnapshot.backgroundFitRange).toEqual([1, 4]);
       expect(service.state.panelMode).toBe('subtracted');
+    });
+  });
+
+  describe('runFit', () => {
+    it('fits the Pol1 residual background and reports a signal in the window', () => {
+      service.subtractBackground();
+      service.setMassWindow([2, 3]);
+
+      service.runFit();
+
+      const result = service.state.fitSnapshot.fitResult;
+      expect(result).not.toBeNull();
+      expect(result!.signal).toBeGreaterThan(0);
+    });
+
+    it('does nothing while still in explore mode', () => {
+      service.runFit();
+      expect(service.state.fitSnapshot.fitResult).toBeNull();
     });
   });
 
   describe('showComponents', () => {
     it('returns to explore mode without touching the fit result', () => {
       service.subtractBackground();
-      fitService.result = fakeFitResult(42);
+      service.runFit();
+      const result = service.state.fitSnapshot.fitResult;
 
       service.showComponents();
 
       expect(service.state.panelMode).toBe('explore');
-      expect(fitService.result).toEqual(fakeFitResult(42));
+      expect(service.state.fitSnapshot.fitResult).toEqual(result);
     });
   });
 
   describe('canAccept / acceptResult / removeResult', () => {
-    it('only allows accepting once subtracted and fit', () => {
+    it('only allows accepting once subtracted and fit with a positive signal', () => {
       expect(service.canAccept).toBeFalse();
 
       service.subtractBackground();
       expect(service.canAccept).toBeFalse();
 
-      fitService.result = fakeFitResult(88);
+      service.setMassWindow([2, 3]);
+      service.runFit();
       expect(service.canAccept).toBeTrue();
     });
 
     it('freezes the fit result and published metadata into the table row', () => {
       service.subtractBackground();
-      fitService.result = fakeFitResult(88);
+      service.setMassWindow([2, 3]);
+      service.runFit();
 
       service.acceptResult();
 
@@ -174,19 +174,21 @@ describe('PbPbMinvStateService', () => {
       expect(row).not.toBeNull();
       expect(row?.centralityId).toBe('pbPb_0_5');
       expect(row?.centralityLabel).toBe('0-5%');
-      expect(row?.fit).toEqual(fakeFitResult(88));
-      expect(row?.published).toEqual(histogram0_5.published);
+      expect(row?.fit).toEqual(service.state.fitSnapshot.fitResult!);
+      expect(row?.published.nJpsi).toBe(100);
       expect(service.rows.length).toBe(1);
     });
 
     it('removeResult clears only the targeted centrality', () => {
       service.subtractBackground();
-      fitService.result = fakeFitResult(88);
+      service.setMassWindow([2, 3]);
+      service.runFit();
       service.acceptResult();
 
       service.selectCentrality('pbPb_5_10');
       service.subtractBackground();
-      fitService.result = fakeFitResult(33);
+      service.setMassWindow([2, 3]);
+      service.runFit();
       service.acceptResult();
 
       expect(service.rows.length).toBe(2);
@@ -202,80 +204,85 @@ describe('PbPbMinvStateService', () => {
   describe('selectCentrality reset semantics', () => {
     it('resets an unaccepted centrality back to explore/blank as soon as the student leaves it', () => {
       service.subtractBackground();
-      fitService.signalFitRange = [2, 3];
-      fitService.result = fakeFitResult(70);
+      service.setBackgroundFitRange([2, 3]);
+      service.runFit();
 
       service.selectCentrality('pbPb_5_10');
 
       // The new centrality starts fresh, unsubtracted.
       expect(service.activeCentrality).toBe('pbPb_5_10');
       expect(service.state.panelMode).toBe('explore');
-      expect(fitService.result).toBeNull();
+      expect(service.state.fitSnapshot.fitResult).toBeNull();
 
       // And the one just left was wiped too — it was never accepted.
       expect(service.stateOf('pbPb_0_5').panelMode).toBe('explore');
-      expect(service.stateOf('pbPb_0_5').fitSnapshot.result).toBeNull();
+      expect(service.stateOf('pbPb_0_5').fitSnapshot.fitResult).toBeNull();
 
       service.selectCentrality('pbPb_0_5');
 
       // Coming back finds a blank slate, not the earlier in-progress fit.
       expect(service.state.panelMode).toBe('explore');
-      expect(fitService.result).toBeNull();
+      expect(service.state.fitSnapshot.fitResult).toBeNull();
     });
 
     it('keeps an accepted centrality exactly as it was, even across other dataset switches', () => {
       service.subtractBackground();
-      fitService.signalFitRange = [2, 3];
-      fitService.result = fakeFitResult(70);
+      service.setMassWindow([2, 3]);
+      service.runFit();
       service.acceptResult();
+      const acceptedResult = service.state.fitSnapshot.fitResult;
 
       service.selectCentrality('pbPb_5_10');
       service.selectCentrality('pbPb_10_20');
       service.selectCentrality('pbPb_0_5');
 
-      // Accepted centrality's fit view survives round trips through other datasets.
+      // Accepted centrality's fit view survives round trips through other centralities.
       expect(service.state.panelMode).toBe('subtracted');
-      expect(fitService.signalFitRange).toEqual([2, 3]);
-      expect(fitService.result).toEqual(fakeFitResult(70));
+      expect(service.state.fitSnapshot.massWindow).toEqual([2, 3]);
+      expect(service.state.fitSnapshot.fitResult).toEqual(acceptedResult);
       expect(service.state.tableRow).not.toBeNull();
     });
 
-    it('still snapshots further edits made to an accepted centrality before leaving it', () => {
+    it('still keeps further edits made to an accepted centrality before leaving it', () => {
       service.subtractBackground();
-      fitService.result = fakeFitResult(70);
+      service.setMassWindow([2, 3]);
+      service.runFit();
       service.acceptResult();
 
       // Student keeps tweaking the fit after accepting, without re-accepting.
-      fitService.signalFitRange = [1, 4];
-      fitService.result = fakeFitResult(80);
+      service.setMassWindow([1, 4]);
+      service.runFit();
+      const editedResult = service.state.fitSnapshot.fitResult;
 
       service.selectCentrality('pbPb_5_10');
       service.selectCentrality('pbPb_0_5');
 
-      expect(fitService.signalFitRange).toEqual([1, 4]);
-      expect(fitService.result).toEqual(fakeFitResult(80));
+      expect(service.state.fitSnapshot.massWindow).toEqual([1, 4]);
+      expect(service.state.fitSnapshot.fitResult).toEqual(editedResult);
     });
 
     it('leavePublishedView resets the active centrality just like switching to another one, unless accepted', () => {
       service.subtractBackground();
-      fitService.result = fakeFitResult(55);
+      service.setMassWindow([2, 3]);
+      service.runFit();
 
       service.leavePublishedView();
 
       expect(service.stateOf('pbPb_0_5').panelMode).toBe('explore');
-      expect(service.stateOf('pbPb_0_5').fitSnapshot.result).toBeNull();
-      expect(fitService.result).toBeNull();
+      expect(service.stateOf('pbPb_0_5').fitSnapshot.fitResult).toBeNull();
     });
 
     it('leavePublishedView does not touch an accepted centrality', () => {
       service.subtractBackground();
-      fitService.result = fakeFitResult(55);
+      service.setMassWindow([2, 3]);
+      service.runFit();
       service.acceptResult();
+      const acceptedResult = service.state.fitSnapshot.fitResult;
 
       service.leavePublishedView();
 
       expect(service.stateOf('pbPb_0_5').panelMode).toBe('subtracted');
-      expect(fitService.result).toEqual(fakeFitResult(55));
+      expect(service.stateOf('pbPb_0_5').fitSnapshot.fitResult).toEqual(acceptedResult);
     });
   });
 });

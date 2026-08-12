@@ -15,19 +15,15 @@ import { Options } from '@angular-slider/ngx-slider';
 import * as d3 from 'd3';
 
 import {
-  DEFAULT_MASS_WINDOW,
   MASS_BINS,
-  MASS_BIN_WIDTH,
   MASS_CHART_ASPECT,
-  MASS_WINDOW_LIMITS,
   MASS_XMAX,
   MASS_XMIN,
-  MassHistograms,
   MassPanelMode,
   SeriesVisibility,
-  SignalResult,
   jpsiResponsiveChartHeight,
 } from '../../models/jpsi.models';
+import { ResidualFitResult } from '../../services/jpsi-residual-fit.service';
 
 import { SERIES_COLOURS } from '../../models/series-colours';
 
@@ -48,13 +44,26 @@ export interface RenderedSeries {
   bars: Bar[];
 }
 
+/** One drawable series: pp/p-Pb passes unlike/posPos/negNeg, Pb-Pb passes unlike/like. */
+export interface SeriesEntry {
+  key: string;
+  colour: string;
+  values: Float64Array | number[];
+  labelKey: string;
+}
+
 /**
- * The invariant mass panel.
+ * The invariant mass panel, shared by pp, p-Pb and Pb-Pb (decision: one colourful chart
+ * everywhere, see the plan doc "jeden panel Minv z Pol1 residual fit").
  *
- * One chart, several overlaid series. In explore mode the student compares opposite-charge
- * pairs against same-charge pairs; after subtraction only the residual is drawn. Bars are
- * used rather than smooth densities because the whole lesson is that these are counts that
- * get subtracted from each other.
+ * In explore mode the student compares opposite-charge pairs against same-charge pairs; after
+ * subtraction only the residual is drawn, together with a Pol1 line fitted to the sidebands
+ * and two independent sliders: `backgroundFitRange` (what the line is fitted to) and
+ * `massWindow` (what gets counted as signal). Bars are used rather than smooth densities
+ * because the whole lesson is that these are counts that get subtracted from each other.
+ *
+ * All maths (the Pol1 fit itself, the yield) happens in `JpsiResidualFitService`, called by the
+ * host's state service — this component only draws whatever `fitResult` it is given.
  */
 @Component({
   selector: 'app-jpsi-mass-panel',
@@ -63,25 +72,39 @@ export interface RenderedSeries {
   standalone: false,
 })
 export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
-  @Input() mass!: MassHistograms;
+  /** Opposite-charge series (track: unlike; Pb-Pb: unlike). */
+  @Input() primarySeries: SeriesEntry | null = null;
+  /** Same-charge series (track: posPos + negNeg; Pb-Pb: like, alone). */
+  @Input() secondarySeries: SeriesEntry[] = [];
+  /** Precomputed sum of `secondarySeries`, shown instead of them when `showBackgroundSum`. */
+  @Input() mergedSeries: SeriesEntry | null = null;
+  /** Residual bars in 'subtracted' mode, clamped to zero for display (see `JpsiSignalService`). */
   @Input() residual: Float64Array = new Float64Array(MASS_BINS);
-  @Input() background: Float64Array = new Float64Array(MASS_BINS);
   @Input() mode: MassPanelMode = 'explore';
-  @Input() visibility: SeriesVisibility = { unlike: true, posPos: true, negNeg: true };
+  @Input() xmin = MASS_XMIN;
+  @Input() xmax = MASS_XMAX;
+  @Input() bins = MASS_BINS;
+  @Input() visibility: SeriesVisibility = {};
+  /** Only meaningful (and only rendered) when `secondarySeries.length > 1`. */
   @Input() showBackgroundSum = false;
-  @Input() massWindow: [number, number] = [...DEFAULT_MASS_WINDOW];
-  @Input() liveResult: SignalResult | null = null;
+  @Input() massWindow: [number, number] = [MASS_XMIN, MASS_XMAX];
+  @Input() backgroundFitRange: [number, number] = [MASS_XMIN, MASS_XMAX];
+  @Input() fitResult: ResidualFitResult | null = null;
   @Input() canSubtract = false;
   @Input() canAccept = false;
   @Input() tooWideSelection = false;
   @Input() hasData = false;
+  @Input() loading = false;
+  @Input() emptyHintKey = 'JPSI.MASS.EMPTY';
   @Input() revision = 0;
 
-  @Output() toggleSeries = new EventEmitter<'unlike' | 'posPos' | 'negNeg'>();
+  @Output() toggleSeries = new EventEmitter<string>();
   @Output() showBackgroundSumChange = new EventEmitter<boolean>();
   @Output() subtract = new EventEmitter<void>();
   @Output() showComponents = new EventEmitter<void>();
   @Output() massWindowChange = new EventEmitter<[number, number]>();
+  @Output() backgroundFitRangeChange = new EventEmitter<[number, number]>();
+  @Output() fit = new EventEmitter<void>();
   @Output() acceptResult = new EventEmitter<void>();
 
   @ViewChild('host') private hostRef!: ElementRef<HTMLDivElement>;
@@ -93,24 +116,24 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   windowStart = this.massWindow[0];
   windowEnd = this.massWindow[1];
-  windowOptions: Options = {
-    floor: MASS_WINDOW_LIMITS[0],
-    ceil: MASS_WINDOW_LIMITS[1],
-    step: MASS_BIN_WIDTH,
-    translate: (value: number) => value.toFixed(2),
-  };
+  backgroundStart = this.backgroundFitRange[0];
+  backgroundEnd = this.backgroundFitRange[1];
+
+  sliderOptions: Options = this.buildSliderOptions();
+  backgroundSliderOptions: Options = this.buildSliderOptions();
 
   private resizeObserver: ResizeObserver | null = null;
   private viewReady = false;
   /**
-   * While the student drags a thumb, parent snaps massWindow to bin edges and pushes it
-   * back via @Input. Writing those snapped values into [(value)]/[(highValue)] mid-drag
-   * makes ngx-slider fight the pointer (classic right-thumb oscillation).
+   * While the student drags a thumb, the parent snaps the range to bin edges and pushes it
+   * back via @Input. Writing those snapped values into [(value)]/[(highValue)] mid-drag makes
+   * ngx-slider fight the pointer (classic right-thumb oscillation).
    */
   private windowDragging = false;
+  private backgroundRangeDragging = false;
   private readonly onWindowResize = (): void => this.measureAndRender();
 
-  private readonly xScale = d3.scaleLinear().domain([MASS_XMIN, MASS_XMAX]);
+  private readonly xScale = d3.scaleLinear();
   private readonly yScale = d3.scaleLinear();
 
   get margin() {
@@ -140,9 +163,18 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['xmin'] || changes['xmax'] || changes['bins']) {
+      this.sliderOptions = this.buildSliderOptions();
+      this.backgroundSliderOptions = this.buildSliderOptions();
+      this.xScale.domain([this.xmin, this.xmax]);
+    }
     if (changes['massWindow'] && !this.windowDragging) {
       this.windowStart = this.massWindow[0];
       this.windowEnd = this.massWindow[1];
+    }
+    if (changes['backgroundFitRange'] && !this.backgroundRangeDragging) {
+      this.backgroundStart = this.backgroundFitRange[0];
+      this.backgroundEnd = this.backgroundFitRange[1];
     }
     if (this.viewReady) {
       this.render();
@@ -155,6 +187,15 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     window.removeEventListener('resize', this.onWindowResize);
   }
 
+  private buildSliderOptions(): Options {
+    return {
+      floor: this.xmin,
+      ceil: this.xmax,
+      step: (this.xmax - this.xmin) / this.bins,
+      translate: (value: number) => value.toFixed(2),
+    };
+  }
+
   private measureAndRender(): void {
     const rect = this.hostRef.nativeElement.getBoundingClientRect();
     if (rect.width <= 0) {
@@ -164,7 +205,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.width = rect.width;
     this.height = jpsiResponsiveChartHeight(rect.width, MASS_CHART_ASPECT, 280);
 
-    this.xScale.range([0, this.plotWidth]);
+    this.xScale.domain([this.xmin, this.xmax]).range([0, this.plotWidth]);
     this.yScale.range([this.plotHeight, 0]);
 
     this.render();
@@ -172,16 +213,13 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private render(): void {
-    if (this.plotWidth <= 0 || this.plotHeight <= 0 || this.mass === undefined) {
+    if (this.plotWidth <= 0 || this.plotHeight <= 0) {
       this.series = [];
       return;
     }
 
     const active = this.activeSeries();
-    const yMax = active.reduce(
-      (max, entry) => Math.max(max, this.maxOf(entry.values)),
-      0
-    );
+    const yMax = active.reduce((max, entry) => Math.max(max, this.maxOf(entry.values)), 0);
 
     this.yScale.domain([0, yMax > 0 ? yMax : 1]);
     this.series = active.map((entry) => ({
@@ -194,41 +232,45 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   /** Which series are drawn, given the mode and the student's toggles. */
-  private activeSeries(): Array<{ key: string; colour: string; values: Float64Array }> {
+  private activeSeries(): SeriesEntry[] {
     if (this.mode === 'subtracted') {
-      return [{ key: 'residual', colour: SERIES_COLOURS.residual, values: this.residual }];
+      return [
+        { key: 'residual', colour: SERIES_COLOURS.residual, values: this.residual, labelKey: '' },
+      ];
     }
 
-    const active: Array<{ key: string; colour: string; values: Float64Array }> = [];
+    const active: SeriesEntry[] = [];
 
-    if (this.visibility.unlike) {
-      active.push({ key: 'unlike', colour: SERIES_COLOURS.unlike, values: this.mass.unlike });
+    if (this.primarySeries !== null && this.isSeriesVisible(this.primarySeries.key)) {
+      active.push(this.primarySeries);
     }
 
-    // The two same-charge series are individually small; merging them shows the student
-    // the object that is actually going to be subtracted.
-    if (this.showBackgroundSum) {
-      if (this.visibility.posPos || this.visibility.negNeg) {
-        active.push({
-          key: 'background',
-          colour: SERIES_COLOURS.background,
-          values: this.background,
-        });
+    // Merging the same-charge series shows the student the object that is actually going to
+    // be subtracted. Only meaningful when there is more than one to merge (Pb-Pb has only one).
+    if (this.showBackgroundSum && this.secondarySeries.length > 1) {
+      if (
+        this.mergedSeries !== null &&
+        this.secondarySeries.some((s) => this.isSeriesVisible(s.key))
+      ) {
+        active.push(this.mergedSeries);
       }
       return active;
     }
 
-    if (this.visibility.posPos) {
-      active.push({ key: 'posPos', colour: SERIES_COLOURS.posPos, values: this.mass.posPos });
-    }
-    if (this.visibility.negNeg) {
-      active.push({ key: 'negNeg', colour: SERIES_COLOURS.negNeg, values: this.mass.negNeg });
+    for (const entry of this.secondarySeries) {
+      if (this.isSeriesVisible(entry.key)) {
+        active.push(entry);
+      }
     }
 
     return active;
   }
 
-  private maxOf(values: Float64Array): number {
+  isSeriesVisible(key: string): boolean {
+    return this.visibility[key] !== false;
+  }
+
+  private maxOf(values: Float64Array | number[]): number {
     let max = 0;
     for (let i = 0; i < values.length; i++) {
       if (values[i] > max) {
@@ -238,13 +280,13 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     return max;
   }
 
-  private toBars(values: Float64Array): Bar[] {
+  private toBars(values: Float64Array | number[]): Bar[] {
     const bars: Bar[] = [];
-    const barWidth = this.plotWidth / MASS_BINS;
+    const barWidth = this.plotWidth / this.bins;
 
-    for (let bin = 0; bin < MASS_BINS; bin++) {
+    for (let bin = 0; bin < this.bins; bin++) {
       const value = values[bin];
-      if (value <= 0) {
+      if (!(value > 0)) {
         continue;
       }
 
@@ -287,6 +329,28 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     return { x: MARGIN.left + x0, width: Math.max(0, x1 - x0) };
   }
 
+  /** Dashed guides marking the sidebands the Pol1 line is fitted to. */
+  get backgroundRangeGuides(): [number, number] | null {
+    if (this.mode !== 'subtracted' || this.plotWidth <= 0) {
+      return null;
+    }
+    return [MARGIN.left + this.xScale(this.backgroundStart), MARGIN.left + this.xScale(this.backgroundEnd)];
+  }
+
+  /** Pol1 line drawn across the whole visible axis, clamped to the chart's y >= 0 domain. */
+  get pol1Line(): { x1: number; y1: number; x2: number; y2: number } | null {
+    if (this.mode !== 'subtracted' || this.fitResult === null || this.plotWidth <= 0) {
+      return null;
+    }
+    const [a, b] = this.fitResult.pol1;
+    return {
+      x1: MARGIN.left + this.xScale(this.xmin),
+      y1: MARGIN.top + this.yScale(Math.max(0, a + b * this.xmin)),
+      x2: MARGIN.left + this.xScale(this.xmax),
+      y2: MARGIN.top + this.yScale(Math.max(0, a + b * this.xmax)),
+    };
+  }
+
   onWindowChange(): void {
     this.windowDragging = true;
     this.massWindowChange.emit([this.windowStart, this.windowEnd]);
@@ -297,8 +361,18 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.massWindowChange.emit([this.windowStart, this.windowEnd]);
   }
 
-  onToggle(series: 'unlike' | 'posPos' | 'negNeg'): void {
-    this.toggleSeries.emit(series);
+  onBackgroundRangeChange(): void {
+    this.backgroundRangeDragging = true;
+    this.backgroundFitRangeChange.emit([this.backgroundStart, this.backgroundEnd]);
+  }
+
+  onBackgroundRangeChangeEnd(): void {
+    this.backgroundRangeDragging = false;
+    this.backgroundFitRangeChange.emit([this.backgroundStart, this.backgroundEnd]);
+  }
+
+  onToggle(key: string): void {
+    this.toggleSeries.emit(key);
   }
 
   onBackgroundSumChange(show: boolean): void {

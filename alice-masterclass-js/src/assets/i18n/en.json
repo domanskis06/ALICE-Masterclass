@@ -493,13 +493,16 @@
       },
       "SUBTRACT": "Subtract background",
       "SUBTRACT_HELP": "Same-charge pairs cannot come from a J/psi decay, so they show you the random combinations. Subtract them from the opposite-charge pairs to reveal the signal.",
-      "AFTER_SUBTRACT": "What remains is the signal. The peak near 3.1 GeV/c² comes from J/psi decays.",
+      "AFTER_SUBTRACT": "What remains is the residual: a J/psi peak sitting on top of a background that is not perfectly flat. Fit a straight line to it outside the peak, then count the excess inside the window.",
       "SHOW_COMPONENTS": "Show components",
+      "BACKGROUND_RANGE": "Background fit range",
       "WINDOW": "Signal mass window",
+      "FIT": "Fit",
+      "FIT_HINT": "Press Fit to fit the background and count the signal in the window.",
       "ACCEPT": "Accept result",
       "NEGATIVE_BINS_NOTE": "Random fluctuations can push a bin slightly below zero. We show those bins as zero.",
       "TOO_WIDE": "Your selection contains too many tracks. Narrow the electron band first.",
-      "NO_SIGNAL_HINT": "No signal yet. Analyse more events or narrow the electron band."
+      "NO_SIGNAL_HINT": "No signal in this window. Widen it or move it over the peak, then fit again."
     },
     "METRICS": {
       "SIGNAL": "J/psi signal",
@@ -509,23 +512,9 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Invariant mass",
         "UNLIKE": "Unlike-sign pairs",
         "LIKE": "Like-sign pairs (background)",
-        "SUBTRACT": "Subtract background",
-        "AFTER_SUBTRACT": "See the fit panel on the right.",
         "EMPTY": "Could not load this histogram."
-      },
-      "FIT": {
-        "TITLE": "Signal fit",
-        "EMPTY_HINT": "Press \"Subtract background\" on the left to reveal the signal.",
-        "TOTAL": "Total",
-        "SIGNAL": "J/psi signal",
-        "BACKGROUND": "Background",
-        "SHOW_UL": "Show unlike/like-sign",
-        "NO_SIGNAL_HINT": "No fit yet. Press Fit after choosing a signal and background range.",
-        "RESET_ZOOM": "Reset zoom",
-        "RESET_RANGE": "Reset range"
       },
       "RESULTS": {
         "TITLE": "Pb-Pb J/psi yields",
@@ -594,7 +583,7 @@
       "STEP_SUBTRACT_TITLE": "Subtract the background",
       "STEP_SUBTRACT_BODY": "Same-charge pairs measure the random combinations directly from the data. Subtract them bin by bin from the opposite-charge pairs and the J/psi peak appears.",
       "STEP_WINDOW_TITLE": "Count the signal",
-      "STEP_WINDOW_BODY": "Drag the window over the peak. Everything inside it is counted. Notice how a window that is too wide adds background and makes the signal to background ratio worse.",
+      "STEP_WINDOW_BODY": "Drag the background fit range over the flat parts outside the peak and press <strong>Fit</strong> to draw a straight line through them. Drag the signal window over the peak itself: everything above the line inside it is your signal. Notice how a window that is too wide adds background and makes the signal to background ratio worse.",
       "STEP_ACCEPT_TITLE": "Save your result",
       "STEP_ACCEPT_BODY": "<strong>Accept result</strong> stores this measurement in your table. You can always change the window and accept again.",
       "STEP_DATASET_TITLE": "The second collision system",

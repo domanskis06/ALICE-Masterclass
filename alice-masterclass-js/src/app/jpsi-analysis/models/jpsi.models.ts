@@ -1,3 +1,5 @@
+import { ResidualFitResult } from '../services/jpsi-residual-fit.service';
+
 /** Electron mass in GeV/c^2. Every track the student selects is treated as an electron. */
 export const M_ELECTRON = 0.000511;
 
@@ -119,29 +121,11 @@ export function createMassHistograms(): MassHistograms {
 
 export type MassPanelMode = 'explore' | 'subtracted';
 
-export interface SeriesVisibility {
-  unlike: boolean;
-  posPos: boolean;
-  negNeg: boolean;
-}
+/** Keyed by series key ('unlike', 'posPos', 'negNeg', ...) rather than fixed fields, so the
+ * same shape works for track datasets (three raw series) and Pb-Pb (two: unlike/like). */
+export type SeriesVisibility = Record<string, boolean>;
 
-export interface SignalResult {
-  windowMin: number;
-  windowMax: number;
-  /** U: counts of opposite-charge pairs inside the window. */
-  unlikeSum: number;
-  /** L: counts of same-charge pairs inside the window; this is also the background B. */
-  likeSum: number;
-  /** max(0, U - L). */
-  signal: number;
-  /** sqrt(U + L), Poisson error of the difference. */
-  signalError: number;
-  /** null when the background is zero and the ratio is undefined. */
-  signalToBackground: number | null;
-  significance: number;
-}
-
-export interface SummaryRow extends SignalResult {
+export interface SummaryRow extends ResidualFitResult {
   datasetId: DatasetId;
   nEvents: number;
 }
@@ -167,8 +151,12 @@ export interface DatasetAnalysisState {
   visibility: SeriesVisibility;
   /** Replaces the two same-charge series with their sum while exploring. */
   showBackgroundSum: boolean;
+  /** Counting window: everything inside it, after the Pol1 background is subtracted, is the yield. */
   massWindow: [number, number];
-  liveResult: SignalResult | null;
+  /** Sidebands used to fit the Pol1 residual background (excludes massWindow). */
+  backgroundFitRange: [number, number];
+  /** Only set once the student presses Fit; null again after any range/data change. */
+  fitResult: ResidualFitResult | null;
   tableRow: SummaryRow | null;
   tooWideSelection: boolean;
 }
@@ -214,7 +202,8 @@ export function createDatasetState(datasetId: DatasetId): DatasetAnalysisState {
     visibility: { unlike: true, posPos: true, negNeg: true },
     showBackgroundSum: false,
     massWindow: [...DEFAULT_MASS_WINDOW] as [number, number],
-    liveResult: null,
+    backgroundFitRange: [...DEFAULT_MASS_WINDOW] as [number, number],
+    fitResult: null,
     tableRow: null,
     tooWideSelection: false,
   };

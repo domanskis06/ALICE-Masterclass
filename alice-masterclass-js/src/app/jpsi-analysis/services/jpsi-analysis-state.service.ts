@@ -8,6 +8,9 @@ import {
   DatasetAnalysisState,
   DatasetId,
   DEFAULT_PID_CUT,
+  MASS_BINS,
+  MASS_XMAX,
+  MASS_XMIN,
   PID_DEDX_BINS,
   PID_DEDX_MAX,
   PID_DEDX_MIN,
@@ -19,6 +22,7 @@ import {
   SummaryRow,
 } from '../models/jpsi.models';
 import { JpsiPairingService } from './jpsi-pairing.service';
+import { JpsiResidualFitService } from './jpsi-residual-fit.service';
 import { JpsiSignalService } from './jpsi-signal.service';
 
 const LOG_P_MIN = Math.log(PID_P_MIN);
@@ -46,7 +50,8 @@ export class JpsiAnalysisStateService {
 
   constructor(
     private readonly pairing: JpsiPairingService,
-    private readonly signal: JpsiSignalService
+    private readonly signal: JpsiSignalService,
+    private readonly residualFit: JpsiResidualFitService
   ) {}
 
   get activeDataset(): DatasetId {
@@ -178,7 +183,7 @@ export class JpsiAnalysisStateService {
 
   // --- Mass panel -----------------------------------------------------------
 
-  toggleSeries(series: 'unlike' | 'posPos' | 'negNeg'): void {
+  toggleSeries(series: string): void {
     const state = this.state;
     state.visibility[series] = !state.visibility[series];
     this.emit();
@@ -205,27 +210,55 @@ export class JpsiAnalysisStateService {
     }
     const state = this.state;
     state.panelMode = 'subtracted';
-    this.recomputeLiveResult(state);
+    state.fitResult = null;
     this.emit();
   }
 
   showComponents(): void {
     const state = this.state;
     state.panelMode = 'explore';
-    state.liveResult = null;
+    state.fitResult = null;
     this.emit();
   }
 
   setMassWindow(window: [number, number]): void {
     const state = this.state;
     state.massWindow = [snapToBinEdge(window[0]), snapToBinEdge(window[1])];
-    this.recomputeLiveResult(state);
+    state.fitResult = null;
+    this.emit();
+  }
+
+  setBackgroundFitRange(range: [number, number]): void {
+    const state = this.state;
+    state.backgroundFitRange = [snapToBinEdge(range[0]), snapToBinEdge(range[1])];
+    state.fitResult = null;
+    this.emit();
+  }
+
+  /**
+   * Fits the Pol1 residual background to the sidebands (excluding the signal window) and
+   * counts the excess inside the window. Pol1 is a closed-form fit — see
+   * `JpsiResidualFitService` — so this never fails to converge.
+   */
+  runFit(): void {
+    const state = this.state;
+    if (state.panelMode !== 'subtracted') {
+      return;
+    }
+    state.fitResult = this.residualFit.fitPol1(
+      this.signal.rawResidualSeries(state.mass),
+      MASS_XMIN,
+      MASS_XMAX,
+      MASS_BINS,
+      state.backgroundFitRange,
+      state.massWindow
+    );
     this.emit();
   }
 
   get canAccept(): boolean {
     const state = this.state;
-    return state.panelMode === 'subtracted' && (state.liveResult?.signal ?? 0) > 0;
+    return state.panelMode === 'subtracted' && (state.fitResult?.signal ?? 0) > 0;
   }
 
   acceptResult(): void {
@@ -234,18 +267,11 @@ export class JpsiAnalysisStateService {
     }
     const state = this.state;
     state.tableRow = {
-      ...(state.liveResult as NonNullable<typeof state.liveResult>),
+      ...(state.fitResult as NonNullable<typeof state.fitResult>),
       datasetId: state.datasetId,
       nEvents: state.processedCount,
     };
     this.emit();
-  }
-
-  private recomputeLiveResult(state: DatasetAnalysisState): void {
-    state.liveResult =
-      state.panelMode === 'subtracted'
-        ? this.signal.compute(state.mass, state.massWindow)
-        : null;
   }
 
   /**
@@ -255,7 +281,7 @@ export class JpsiAnalysisStateService {
    */
   private returnToExplore(state: DatasetAnalysisState): void {
     state.panelMode = 'explore';
-    state.liveResult = null;
+    state.fitResult = null;
   }
 
   // --- PID heatmap ----------------------------------------------------------

@@ -493,13 +493,16 @@
       },
       "SUBTRACT": "Untergrund abziehen",
       "SUBTRACT_HELP": "Paare gleicher Ladung können nicht aus einem J/psi-Zerfall stammen. Sie zeigen dir die zufälligen Kombinationen. Ziehe sie von den Paaren mit entgegengesetzter Ladung ab, um das Signal freizulegen.",
-      "AFTER_SUBTRACT": "Übrig bleibt das Signal. Der Peak nahe 3,1 GeV/c² stammt aus J/psi-Zerfällen.",
+      "AFTER_SUBTRACT": "Übrig bleibt das Residuum: ein J/psi-Peak auf einem Untergrund, der nicht perfekt flach ist. Fitte eine Gerade daran außerhalb des Peaks und zähle dann den Überschuss innerhalb des Fensters.",
       "SHOW_COMPONENTS": "Komponenten zeigen",
+      "BACKGROUND_RANGE": "Untergrund-Fitbereich",
       "WINDOW": "Massenfenster des Signals",
+      "FIT": "Fit",
+      "FIT_HINT": "Drücke Fit, um den Untergrund zu fitten und das Signal im Fenster zu zählen.",
       "ACCEPT": "Ergebnis übernehmen",
       "NEGATIVE_BINS_NOTE": "Zufällige Schwankungen können einen Bin leicht unter null drücken. Solche Bins zeigen wir als null.",
       "TOO_WIDE": "Deine Auswahl enthält zu viele Spuren. Grenze zuerst das Elektronenband ein.",
-      "NO_SIGNAL_HINT": "Noch kein Signal. Analysiere mehr Ereignisse oder grenze das Elektronenband ein."
+      "NO_SIGNAL_HINT": "Kein Signal in diesem Fenster. Erweitere es oder verschiebe es über den Peak und fitte erneut."
     },
     "METRICS": {
       "SIGNAL": "J/psi-Signal",
@@ -509,23 +512,9 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Invariante Masse",
         "UNLIKE": "Paare mit ungleichem Vorzeichen",
         "LIKE": "Paare mit gleichem Vorzeichen (Untergrund)",
-        "SUBTRACT": "Untergrund abziehen",
-        "AFTER_SUBTRACT": "Siehe das Fit-Panel rechts.",
         "EMPTY": "Dieses Histogramm konnte nicht geladen werden."
-      },
-      "FIT": {
-        "TITLE": "Signal-Fit",
-        "EMPTY_HINT": "Klicke links auf „Untergrund abziehen“, um das Signal freizulegen.",
-        "TOTAL": "Gesamt",
-        "SIGNAL": "J/psi-Signal",
-        "BACKGROUND": "Untergrund",
-        "SHOW_UL": "Paare mit gleichem/ungleichem Vorzeichen anzeigen",
-        "NO_SIGNAL_HINT": "Noch kein Fit. Klicke auf Fit, nachdem du Signal- und Untergrundbereich gewählt hast.",
-        "RESET_ZOOM": "Zoom zurücksetzen",
-        "RESET_RANGE": "Bereich zurücksetzen"
       },
       "RESULTS": {
         "TITLE": "J/psi-Ausbeute in Pb-Pb",
@@ -594,7 +583,7 @@
       "STEP_SUBTRACT_TITLE": "Untergrund abziehen",
       "STEP_SUBTRACT_BODY": "Paare gleicher Ladung messen die zufälligen Kombinationen direkt aus den Daten. Ziehe sie Bin für Bin von den Paaren mit entgegengesetzter Ladung ab, und der J/psi-Peak erscheint.",
       "STEP_WINDOW_TITLE": "Signal zählen",
-      "STEP_WINDOW_BODY": "Ziehe das Fenster über den Peak. Alles darin wird gezählt. Achte darauf, wie ein zu breites Fenster Untergrund hinzufügt und das Verhältnis von Signal zu Untergrund verschlechtert.",
+      "STEP_WINDOW_BODY": "Ziehe den Untergrund-Anpassungsbereich über die flachen Stellen außerhalb des Peaks und klicke auf <strong>Anpassen</strong>, um eine Gerade hindurchzulegen. Ziehe das Signalfenster über den Peak selbst: Alles darüber innerhalb des Fensters ist dein Signal. Achte darauf, wie ein zu breites Fenster Untergrund hinzufügt und das Verhältnis von Signal zu Untergrund verschlechtert.",
       "STEP_ACCEPT_TITLE": "Ergebnis speichern",
       "STEP_ACCEPT_BODY": "<strong>Ergebnis übernehmen</strong> speichert diese Messung in deiner Tabelle. Du kannst das Fenster jederzeit ändern und erneut übernehmen.",
       "STEP_DATASET_TITLE": "Das zweite Kollisionssystem",

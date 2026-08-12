@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { CompactEvent, DEFAULT_PID_CUT } from '../models/jpsi.models';
 import { JpsiAnalysisStateService } from './jpsi-analysis-state.service';
 import { JpsiPairingService } from './jpsi-pairing.service';
+import { JpsiResidualFitService } from './jpsi-residual-fit.service';
 import { JpsiSignalService } from './jpsi-signal.service';
 
 /** One positron and one electron, back to back, giving a pair mass close to 3.0. */
@@ -22,7 +23,12 @@ describe('JpsiAnalysisStateService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [JpsiAnalysisStateService, JpsiPairingService, JpsiSignalService],
+      providers: [
+        JpsiAnalysisStateService,
+        JpsiPairingService,
+        JpsiSignalService,
+        JpsiResidualFitService,
+      ],
     });
     service = TestBed.inject(JpsiAnalysisStateService);
   });
@@ -62,7 +68,7 @@ describe('JpsiAnalysisStateService', () => {
 
     service.appendEvents([makePairEvent()]);
     expect(service.state.panelMode).toBe('explore');
-    expect(service.state.liveResult).toBeNull();
+    expect(service.state.fitResult).toBeNull();
 
     service.subtractBackground();
     service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
@@ -79,6 +85,7 @@ describe('JpsiAnalysisStateService', () => {
     service.acceptSelectedRange(DEFAULT_PID_CUT);
     service.subtractBackground();
     service.setMassWindow([2.9, 3.1]);
+    service.runFit();
     service.acceptResult();
 
     expect(service.state.tableRow).not.toBeNull();
@@ -104,11 +111,25 @@ describe('JpsiAnalysisStateService', () => {
     service.acceptSelectedRange(DEFAULT_PID_CUT);
     service.subtractBackground();
     service.setMassWindow([2.9, 3.1]);
+    service.runFit();
     expect(service.canAccept).toBeTrue();
 
     // A window away from the pair contains no signal at all.
     service.setMassWindow([4.5, 5.0]);
+    service.runFit();
     expect(service.canAccept).toBeFalse();
+  });
+
+  it('clears any earlier fit result whenever a range changes, requiring a fresh Fit', () => {
+    service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
+    service.subtractBackground();
+    service.setMassWindow([2.9, 3.1]);
+    service.runFit();
+    expect(service.state.fitResult).not.toBeNull();
+
+    service.setBackgroundFitRange([1.5, 4.5]);
+    expect(service.state.fitResult).toBeNull();
   });
 
   it('keeps the two datasets independent', () => {

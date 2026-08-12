@@ -15,25 +15,31 @@
     ></app-jpsi-dataset-toolbar>
 
     @if (isPublished(activeCollisionSystem)) {
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
-        <app-jpsi-pbpb-minv-panel
-          fxFlex="50"
-          [histogram]="pbPbState.state.histogram"
-          [mode]="pbPbState.state.panelMode"
-          [loading]="pbPbState.state.loading"
-          [canSubtract]="pbPbState.canSubtract"
-          (subtract)="onSubtractPbPb()"
-        ></app-jpsi-pbpb-minv-panel>
-
-        <app-jpsi-pbpb-fit-panel
-          fxFlex="50"
-          [mode]="pbPbState.state.panelMode"
-          [histogram]="pbPbState.state.histogram"
-          [canAccept]="pbPbState.canAccept"
-          (acceptResult)="onAcceptPbPbResult()"
-          (showComponents)="onShowComponentsPbPb()"
-        ></app-jpsi-pbpb-fit-panel>
-      </div>
+      <app-jpsi-mass-panel
+        [primarySeries]="pbPbPrimarySeries"
+        [secondarySeries]="pbPbSecondarySeries"
+        [residual]="pbPbResidual"
+        [mode]="pbPbState.state.panelMode"
+        [xmin]="pbPbState.state.histogram?.xmin ?? 0"
+        [xmax]="pbPbState.state.histogram?.xmax ?? 1"
+        [bins]="pbPbState.state.histogram?.bins ?? 1"
+        [visibility]="pbPbVisibility"
+        [massWindow]="pbPbState.state.fitSnapshot.massWindow"
+        [backgroundFitRange]="pbPbState.state.fitSnapshot.backgroundFitRange"
+        [fitResult]="pbPbState.state.fitSnapshot.fitResult"
+        [canSubtract]="pbPbState.canSubtract"
+        [canAccept]="pbPbState.canAccept"
+        [hasData]="pbPbState.state.histogram !== null"
+        [loading]="pbPbState.state.loading"
+        emptyHintKey="JPSI.PBPB.MINV.EMPTY"
+        (toggleSeries)="onTogglePbPbSeries($event)"
+        (subtract)="onSubtractPbPb()"
+        (showComponents)="onShowComponentsPbPb()"
+        (massWindowChange)="onPbPbMassWindowChange($event)"
+        (backgroundFitRangeChange)="onPbPbBackgroundRangeChange($event)"
+        (fit)="onPbPbFit()"
+        (acceptResult)="onAcceptPbPbResult()"
+      ></app-jpsi-mass-panel>
 
       <app-jpsi-pbpb-results
         [rows]="pbPbRows"
@@ -65,14 +71,16 @@
 
         <app-jpsi-mass-panel
           fxFlex="50"
-          [mass]="state.state.mass"
+          [primarySeries]="trackPrimarySeries"
+          [secondarySeries]="trackSecondarySeries"
+          [mergedSeries]="trackMergedSeries"
           [residual]="residual"
-          [background]="background"
           [mode]="state.state.panelMode"
           [visibility]="state.state.visibility"
           [showBackgroundSum]="state.state.showBackgroundSum"
           [massWindow]="state.state.massWindow"
-          [liveResult]="state.state.liveResult"
+          [backgroundFitRange]="state.state.backgroundFitRange"
+          [fitResult]="state.state.fitResult"
           [canSubtract]="state.canSubtract"
           [canAccept]="state.canAccept"
           [tooWideSelection]="state.state.tooWideSelection"
@@ -83,6 +91,8 @@
           (subtract)="onSubtract()"
           (showComponents)="onShowComponents()"
           (massWindowChange)="onMassWindowChange($event)"
+          (backgroundFitRangeChange)="onBackgroundRangeChange($event)"
+          (fit)="onFit()"
           (acceptResult)="onAcceptResult()"
         ></app-jpsi-mass-panel>
       </div>

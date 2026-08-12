@@ -6,6 +6,7 @@ import { JpsiAnalysisStateService } from './jpsi-analysis-state.service';
 import { JpsiDataService } from './jpsi-data.service';
 import { JpsiPairingService } from './jpsi-pairing.service';
 import { JpsiQuickAnalysisService } from './jpsi-quick-analysis.service';
+import { JpsiResidualFitService } from './jpsi-residual-fit.service';
 import { JpsiSignalService } from './jpsi-signal.service';
 
 /** One positron and one electron, back to back, giving a pair mass close to 3.0. */
@@ -46,6 +47,7 @@ describe('JpsiQuickAnalysisService', () => {
         JpsiAnalysisStateService,
         JpsiPairingService,
         JpsiSignalService,
+        JpsiResidualFitService,
         { provide: JpsiDataService, useValue: data },
       ],
     });

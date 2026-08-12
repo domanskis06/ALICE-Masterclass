@@ -6,54 +6,49 @@
   <mat-card-content>
     @if (mode === 'explore') {
       <div class="mass-panel__legend" id="jpsi-tour-series-toggles">
-        <button
-          mat-stroked-button
-          class="mass-panel__toggle"
-          [class.mass-panel__toggle--off]="!visibility.unlike"
-          [style.--series-colour]="colours.unlike"
-          [disabled]="!hasData"
-          data-testid="jpsi-toggle-unlike"
-          (click)="onToggle('unlike')"
-        >
-          <span class="mass-panel__swatch"></span>
-          {{ 'JPSI.MASS.SERIES.UNLIKE' | translate }}
-        </button>
+        @if (primarySeries; as entry) {
+          <button
+            mat-stroked-button
+            class="mass-panel__toggle"
+            [class.mass-panel__toggle--off]="!isSeriesVisible(entry.key)"
+            [style.--series-colour]="entry.colour"
+            [disabled]="!hasData"
+            [attr.data-testid]="'jpsi-toggle-' + entry.key"
+            (click)="onToggle(entry.key)"
+          >
+            <span class="mass-panel__swatch"></span>
+            {{ entry.labelKey | translate }}
+          </button>
+        }
 
-        <button
-          mat-stroked-button
-          class="mass-panel__toggle"
-          [class.mass-panel__toggle--off]="!visibility.posPos"
-          [style.--series-colour]="showBackgroundSum ? colours.background : colours.posPos"
-          [disabled]="!hasData"
-          data-testid="jpsi-toggle-pospos"
-          (click)="onToggle('posPos')"
-        >
-          <span class="mass-panel__swatch"></span>
-          {{ 'JPSI.MASS.SERIES.POSPOS' | translate }}
-        </button>
+        @for (entry of secondarySeries; track entry.key) {
+          <button
+            mat-stroked-button
+            class="mass-panel__toggle"
+            [class.mass-panel__toggle--off]="!isSeriesVisible(entry.key)"
+            [style.--series-colour]="
+              showBackgroundSum && secondarySeries.length > 1 ? colours.background : entry.colour
+            "
+            [disabled]="!hasData"
+            [attr.data-testid]="'jpsi-toggle-' + entry.key"
+            (click)="onToggle(entry.key)"
+          >
+            <span class="mass-panel__swatch"></span>
+            {{ entry.labelKey | translate }}
+          </button>
+        }
 
-        <button
-          mat-stroked-button
-          class="mass-panel__toggle"
-          [class.mass-panel__toggle--off]="!visibility.negNeg"
-          [style.--series-colour]="showBackgroundSum ? colours.background : colours.negNeg"
-          [disabled]="!hasData"
-          data-testid="jpsi-toggle-negneg"
-          (click)="onToggle('negNeg')"
-        >
-          <span class="mass-panel__swatch"></span>
-          {{ 'JPSI.MASS.SERIES.NEGNEG' | translate }}
-        </button>
-
-        <mat-slide-toggle
-          class="mass-panel__sum-toggle"
-          [checked]="showBackgroundSum"
-          [disabled]="!hasData"
-          data-testid="jpsi-toggle-background-sum"
-          (change)="onBackgroundSumChange($event.checked)"
-        >
-          {{ 'JPSI.MASS.SERIES.BACKGROUND' | translate }}
-        </mat-slide-toggle>
+        @if (secondarySeries.length > 1) {
+          <mat-slide-toggle
+            class="mass-panel__sum-toggle"
+            [checked]="showBackgroundSum"
+            [disabled]="!hasData"
+            data-testid="jpsi-toggle-background-sum"
+            (change)="onBackgroundSumChange($event.checked)"
+          >
+            {{ 'JPSI.MASS.SERIES.BACKGROUND' | translate }}
+          </mat-slide-toggle>
+        }
       </div>
     } @else {
       <p class="mass-panel__after-subtract" data-testid="jpsi-after-subtract">
@@ -63,6 +58,12 @@
 
     <div id="jpsi-tour-mass-signal">
       <div class="mass-panel__chart" #host [style.height.px]="height">
+        @if (loading) {
+          <div class="mass-panel__spinner" fxLayout="column" fxLayoutAlign="center center">
+            <mat-spinner></mat-spinner>
+          </div>
+        }
+
         <svg #svg [attr.width]="width" [attr.height]="height">
           @if (windowRect; as rect) {
             <rect
@@ -86,6 +87,34 @@
                 ></rect>
               }
             </g>
+          }
+
+          @if (backgroundRangeGuides; as guides) {
+            <line
+              class="mass-panel__fit-range-guide"
+              [attr.x1]="guides[0]"
+              [attr.x2]="guides[0]"
+              [attr.y1]="margin.top"
+              [attr.y2]="margin.top + plotHeight"
+            ></line>
+            <line
+              class="mass-panel__fit-range-guide"
+              [attr.x1]="guides[1]"
+              [attr.x2]="guides[1]"
+              [attr.y1]="margin.top"
+              [attr.y2]="margin.top + plotHeight"
+            ></line>
+          }
+
+          @if (pol1Line; as line) {
+            <line
+              class="mass-panel__pol1-line"
+              [attr.x1]="line.x1"
+              [attr.y1]="line.y1"
+              [attr.x2]="line.x2"
+              [attr.y2]="line.y2"
+              data-testid="jpsi-pol1-line"
+            ></line>
           }
 
           <g class="x-axis"></g>
@@ -112,18 +141,29 @@
           <p class="mass-panel__notice" data-testid="jpsi-too-wide">
             {{ 'JPSI.MASS.TOO_WIDE' | translate }}
           </p>
-        } @else if (!hasData) {
-          <p class="mass-panel__notice">{{ 'JPSI.MASS.EMPTY' | translate }}</p>
+        } @else if (!hasData && !loading) {
+          <p class="mass-panel__notice">{{ emptyHintKey | translate }}</p>
         }
       </div>
 
       @if (mode === 'subtracted') {
+        <div class="mass-panel__window-controls" id="jpsi-tour-background-range">
+          <span class="mass-panel__window-label">{{ 'JPSI.MASS.BACKGROUND_RANGE' | translate }}</span>
+          <ngx-slider
+            [(value)]="backgroundStart"
+            [(highValue)]="backgroundEnd"
+            [options]="backgroundSliderOptions"
+            (userChange)="onBackgroundRangeChange()"
+            (userChangeEnd)="onBackgroundRangeChangeEnd()"
+          ></ngx-slider>
+        </div>
+
         <div class="mass-panel__window-controls" id="jpsi-tour-mass-window">
           <span class="mass-panel__window-label">{{ 'JPSI.MASS.WINDOW' | translate }}</span>
           <ngx-slider
             [(value)]="windowStart"
             [(highValue)]="windowEnd"
-            [options]="windowOptions"
+            [options]="sliderOptions"
             (userChange)="onWindowChange()"
             (userChangeEnd)="onWindowChangeEnd()"
           ></ngx-slider>
@@ -132,8 +172,8 @@
     </div>
 
     @if (mode === 'subtracted') {
-      @if (liveResult; as result) {
-        <div class="mass-panel__result" data-testid="jpsi-live-result">
+      @if (fitResult; as result) {
+        <div class="mass-panel__result" data-testid="jpsi-fit-result">
           <div class="mass-panel__metric">
             <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.SIGNAL' | translate }}</span>
             <span class="mass-panel__metric-value">
@@ -142,7 +182,7 @@
           </div>
           <div class="mass-panel__metric">
             <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.BACKGROUND' | translate }}</span>
-            <span class="mass-panel__metric-value">{{ result.likeSum | number: '1.0-0' }}</span>
+            <span class="mass-panel__metric-value">{{ result.background | number: '1.0-0' }}</span>
           </div>
           <div class="mass-panel__metric">
             <span class="mass-panel__metric-label">{{ 'JPSI.METRICS.SB' | translate }}</span>
@@ -176,6 +216,16 @@
       <button
         mat-raised-button
         color="primary"
+        id="jpsi-tour-fit-button"
+        data-testid="jpsi-fit"
+        [disabled]="!hasData"
+        (click)="fit.emit()"
+      >
+        {{ 'JPSI.MASS.FIT' | translate }}
+      </button>
+      <button
+        mat-raised-button
+        color="primary"
         id="jpsi-tour-accept-button"
         data-testid="jpsi-accept"
         [disabled]="!canAccept"
@@ -186,7 +236,9 @@
       <button mat-stroked-button data-testid="jpsi-show-components" (click)="showComponents.emit()">
         {{ 'JPSI.MASS.SHOW_COMPONENTS' | translate }}
       </button>
-      @if (!canAccept) {
+      @if (fitResult === null) {
+        <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.FIT_HINT' | translate }}</span>
+      } @else if (!canAccept) {
         <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.NO_SIGNAL_HINT' | translate }}</span>
       }
     }

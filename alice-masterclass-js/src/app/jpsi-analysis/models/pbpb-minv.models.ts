@@ -1,5 +1,4 @@
-import { LSAData } from '../../shared/models';
-import { FitResult } from '../../shared/services/fit.service';
+import { ResidualFitResult } from '../services/jpsi-residual-fit.service';
 import { DatasetId } from './jpsi.models';
 
 /** All eight Pb-Pb centrality classes digitized from Figs. 14–15 — each is its own "collision system". */
@@ -111,36 +110,28 @@ export type PbPbPanelMode = 'explore' | 'subtracted';
 export interface PbPbYieldRow {
   centralityId: PbPbCentralityId;
   centralityLabel: string;
-  fit: FitResult;
+  fit: ResidualFitResult;
   published: PublishedMinvPublished;
   acceptedAt: number;
 }
 
 /**
- * Everything `FitService` holds that must survive a switch to the other centrality and be
- * restored verbatim on return, since `FitService` itself is a single shared instance.
+ * Everything the shared mass panel needs for one centrality, kept alive so switching away and
+ * back restores it verbatim. Much simpler than the old FitService-backed snapshot (LSAData +
+ * Gauss/polynomial hints) now that the fit itself is a stateless, closed-form Pol1 call —
+ * there is no optimizer seed left to remember.
  */
-export interface FitSnapshot {
-  data: LSAData;
-  signalFitRange: [number, number];
+export interface PbPbFitSnapshot {
+  massWindow: [number, number];
   backgroundFitRange: [number, number];
-  aGaussHint: [number, number, number];
-  aPolyHint: [number, number, number];
-  result: FitResult | null;
-  signalFunction: (x: number) => number;
-  backgroundFunction: (x: number) => number;
+  fitResult: ResidualFitResult | null;
 }
 
-export function emptyFitSnapshot(): FitSnapshot {
+export function emptyFitSnapshot(range: [number, number] = [0, 1]): PbPbFitSnapshot {
   return {
-    data: { xmin: 0, xmax: 1, bins: 1, data: [] },
-    signalFitRange: [0, 1],
-    backgroundFitRange: [0, 1],
-    aGaussHint: [0, 0, 0],
-    aPolyHint: [0, 0, 0],
-    result: null,
-    signalFunction: (x: number) => 0,
-    backgroundFunction: (x: number) => 0,
+    massWindow: [...range],
+    backgroundFitRange: [...range],
+    fitResult: null,
   };
 }
 
@@ -150,7 +141,7 @@ export interface PbPbCentralityState {
   histogram: PublishedMinvHistogram | null;
   loading: boolean;
   panelMode: PbPbPanelMode;
-  fitSnapshot: FitSnapshot;
+  fitSnapshot: PbPbFitSnapshot;
   tableRow: PbPbYieldRow | null;
 }
 
@@ -168,7 +159,8 @@ export function createPbPbCentralityState(centralityId: PbPbCentralityId): PbPbC
 /**
  * Residual per bin, unclamped. Digitization noise can push a bin slightly negative after
  * U - L; the raw U/L chart never shows negatives (source counts are non-negative), so this is
- * only meaningful once the student has subtracted the background.
+ * only meaningful once the student has subtracted the background. This is what the Pol1 fit
+ * reads — clamping it before fitting would systematically bias the background upward.
  */
 export function rawResidual(histogram: PublishedMinvHistogram): Float64Array {
   const residual = new Float64Array(histogram.bins);
@@ -178,31 +170,11 @@ export function rawResidual(histogram: PublishedMinvHistogram): Float64Array {
   return residual;
 }
 
-/**
- * Bridge from a binned, published histogram to what the shared `FitService` expects: a flat
- * list of "unbinned" samples that it re-bins itself via d3.bin. Repeating each bin center
- * round(count) times reproduces the same per-bin counts after re-binning, as long as the
- * caller keeps xmin/xmax/bins identical to the source histogram — which this function does by
- * construction, so no separate "bridge test" of consistency is needed beyond that guarantee.
- *
- * Negative bins are clamped to 0 here: FitService has no notion of a negative count. They are
- * still shown, unclamped, on the raw U/L chart before this bridge ever runs.
- */
-export function residualToLsaData(histogram: PublishedMinvHistogram): LSAData {
-  const data: number[] = [];
+/** Same as `rawResidual`, clamped to zero — what the mass panel draws as bars. */
+export function clampedResidual(histogram: PublishedMinvHistogram): Float64Array {
   const residual = rawResidual(histogram);
-
-  for (let i = 0; i < histogram.bins; i++) {
-    const count = Math.max(0, Math.round(residual[i]));
-    for (let k = 0; k < count; k++) {
-      data.push(histogram.binCenters[i]);
-    }
+  for (let i = 0; i < residual.length; i++) {
+    residual[i] = Math.max(0, residual[i]);
   }
-
-  return { xmin: histogram.xmin, xmax: histogram.xmax, bins: histogram.bins, data };
-}
-
-/** Full histogram span — the starting point for both fit-range sliders, same as LSA. */
-export function defaultFitRange(histogram: PublishedMinvHistogram): [number, number] {
-  return [histogram.xmin, histogram.xmax];
+  return residual;
 }

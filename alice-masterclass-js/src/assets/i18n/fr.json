@@ -495,13 +495,16 @@
       },
       "SUBTRACT": "Soustraire le bruit de fond",
       "SUBTRACT_HELP": "Les paires de même charge ne peuvent pas venir d'une désintégration de J/psi, elles te montrent donc les combinaisons aléatoires. Soustrais-les des paires de charges opposées pour révéler le signal.",
-      "AFTER_SUBTRACT": "Ce qui reste est le signal. Le pic près de 3,1 GeV/c² vient des désintégrations de J/psi.",
+      "AFTER_SUBTRACT": "Ce qui reste est le résidu : un pic de J/psi sur un fond qui n'est pas parfaitement plat. Ajuste-y une droite en dehors du pic, puis compte l'excès à l'intérieur de la fenêtre.",
       "SHOW_COMPONENTS": "Afficher les composantes",
+      "BACKGROUND_RANGE": "Plage d'ajustement du fond",
       "WINDOW": "Fenêtre de masse du signal",
+      "FIT": "Ajuster",
+      "FIT_HINT": "Appuie sur Ajuster pour ajuster le fond et compter le signal dans la fenêtre.",
       "ACCEPT": "Valider le résultat",
       "NEGATIVE_BINS_NOTE": "Les fluctuations aléatoires peuvent faire passer une case légèrement sous zéro. Ces cases sont affichées à zéro.",
       "TOO_WIDE": "Ta sélection contient trop de traces. Resserre d'abord la bande des électrons.",
-      "NO_SIGNAL_HINT": "Pas encore de signal. Analyse plus d'événements ou resserre la bande des électrons."
+      "NO_SIGNAL_HINT": "Pas de signal dans cette fenêtre. Élargis-la ou déplace-la sur le pic, puis ajuste à nouveau."
     },
     "METRICS": {
       "SIGNAL": "Signal J/psi",
@@ -511,23 +514,9 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Masse invariante",
         "UNLIKE": "Paires de signes opposés",
         "LIKE": "Paires de même signe (bruit de fond)",
-        "SUBTRACT": "Soustraire le bruit de fond",
-        "AFTER_SUBTRACT": "Voir le panneau d'ajustement à droite.",
         "EMPTY": "Impossible de charger cet histogramme."
-      },
-      "FIT": {
-        "TITLE": "Ajustement du signal",
-        "EMPTY_HINT": "Cliquez sur « Soustraire le bruit de fond » à gauche pour révéler le signal.",
-        "TOTAL": "Total",
-        "SIGNAL": "Signal J/psi",
-        "BACKGROUND": "Bruit de fond",
-        "SHOW_UL": "Afficher signes opposés/mêmes signes",
-        "NO_SIGNAL_HINT": "Pas encore d'ajustement. Cliquez sur Ajuster après avoir choisi les plages de signal et de fond.",
-        "RESET_ZOOM": "Réinitialiser le zoom",
-        "RESET_RANGE": "Réinitialiser la plage"
       },
       "RESULTS": {
         "TITLE": "Rendement J/psi en Pb-Pb",
@@ -596,7 +585,7 @@
       "STEP_SUBTRACT_TITLE": "Soustraire le bruit de fond",
       "STEP_SUBTRACT_BODY": "Les paires de même charge mesurent les combinaisons aléatoires directement dans les données. Soustrais-les case par case des paires de charges opposées et le pic du J/psi apparaît.",
       "STEP_WINDOW_TITLE": "Compter le signal",
-      "STEP_WINDOW_BODY": "Fais glisser la fenêtre sur le pic. Tout ce qui est à l'intérieur est compté. Remarque comment une fenêtre trop large ajoute du bruit de fond et dégrade le rapport signal sur bruit.",
+      "STEP_WINDOW_BODY": "Fais glisser la plage d'ajustement du bruit de fond sur les parties plates en dehors du pic et clique sur <strong>Ajuster</strong> pour tracer une droite à travers elles. Fais glisser la fenêtre de signal sur le pic lui-même : tout ce qui est au-dessus de la droite à l'intérieur est ton signal. Remarque comment une fenêtre trop large ajoute du bruit de fond et dégrade le rapport signal sur bruit.",
       "STEP_ACCEPT_TITLE": "Enregistrer ton résultat",
       "STEP_ACCEPT_BODY": "<strong>Valider le résultat</strong> enregistre cette mesure dans ton tableau. Tu peux toujours changer la fenêtre et valider de nouveau.",
       "STEP_DATASET_TITLE": "Le deuxième système de collision",

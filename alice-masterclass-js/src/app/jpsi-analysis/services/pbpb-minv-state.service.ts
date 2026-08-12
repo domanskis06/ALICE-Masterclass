@@ -1,19 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
-import { FitService } from '../../shared/services/fit.service';
 import {
   createPbPbCentralityState,
-  defaultFitRange,
   emptyFitSnapshot,
-  FitSnapshot,
   PbPbCentralityId,
   PbPbCentralityState,
+  PbPbFitSnapshot,
   PBPB_CENTRALITY_IDS,
   PbPbYieldRow,
-  residualToLsaData,
+  rawResidual,
 } from '../models/pbpb-minv.models';
 import { JpsiMinvDataService } from './jpsi-minv-data.service';
+import { JpsiResidualFitService } from './jpsi-residual-fit.service';
 
 /**
  * Owns the analysis state of all eight published Pb-Pb centralities.
@@ -26,8 +25,9 @@ import { JpsiMinvDataService } from './jpsi-minv-data.service';
  * — and the exact fit state behind it — is frozen and survives every future switch, because
  * accepted results are the baseline the student needs later for R_AA.
  *
- * `FitService` itself is a single shared instance, so whatever a centrality "remembers" lives
- * in its own `fitSnapshot`, restored into `FitService` whenever that centrality becomes active.
+ * The Pol1 fit is a stateless, closed-form call (`JpsiResidualFitService.fitPol1`), so unlike
+ * the old FitService-backed version, there is nothing shared to snapshot/restore beyond the
+ * two range sliders and the last fit result — both already live directly on `PbPbCentralityState`.
  */
 @Injectable()
 export class PbPbMinvStateService {
@@ -42,7 +42,7 @@ export class PbPbMinvStateService {
 
   constructor(
     private readonly data: JpsiMinvDataService,
-    private readonly fitService: FitService
+    private readonly residualFit: JpsiResidualFitService
   ) {
     // Both files are tiny (a few KB) — load both up front so the dropdown never blocks.
     this.preload();
@@ -80,7 +80,6 @@ export class PbPbMinvStateService {
     this.leaveCurrentCentrality();
     this._activeCentrality = id;
     this.ensureHistogramLoaded(id);
-    this.restoreFitService(id);
     this.emit();
   }
 
@@ -93,23 +92,21 @@ export class PbPbMinvStateService {
    */
   leavePublishedView(): void {
     this.leaveCurrentCentrality();
-    this.restoreFitService(this._activeCentrality);
     this.emit();
   }
 
   /**
    * Every dataset change resets the departing centrality back to a blank 'explore' view —
-   * unless it already has an accepted result, in which case its live fit state is snapshotted
-   * first so any edits made after accepting are not lost, and the centrality is left exactly
-   * as the student saw it.
+   * unless it already has an accepted result, in which case its fit state is left untouched so
+   * any edits made after accepting are not lost, and the centrality is left exactly as the
+   * student saw it.
    */
   private leaveCurrentCentrality(): void {
-    const id = this._activeCentrality;
-    const state = this.states[id];
-    if (state.tableRow !== null) {
-      this.snapshotFitService(id);
-    } else {
+    const state = this.states[this._activeCentrality];
+    if (state.tableRow === null) {
       state.panelMode = 'explore';
+      // Ranges are meaningless in explore mode; subtractBackground() reseeds them with the
+      // histogram's full axis the next time this centrality is subtracted.
       state.fitSnapshot = emptyFitSnapshot();
     }
   }
@@ -133,29 +130,8 @@ export class PbPbMinvStateService {
     });
   }
 
-  private snapshotFitService(id: PbPbCentralityId): void {
-    this.states[id].fitSnapshot = {
-      data: this.fitService.data,
-      signalFitRange: this.fitService.signalFitRange,
-      backgroundFitRange: this.fitService.backgroundFitRange,
-      aGaussHint: this.fitService.aGaussHint,
-      aPolyHint: this.fitService.aPolyHint,
-      result: this.fitService.result,
-      signalFunction: this.fitService.signalFunction,
-      backgroundFunction: this.fitService.backgroundFunction,
-    };
-  }
-
-  private restoreFitService(id: PbPbCentralityId): void {
-    const snapshot: FitSnapshot = this.states[id].fitSnapshot;
-    this.fitService.data = snapshot.data;
-    this.fitService.signalFitRange = snapshot.signalFitRange;
-    this.fitService.backgroundFitRange = snapshot.backgroundFitRange;
-    this.fitService.aGaussHint = snapshot.aGaussHint;
-    this.fitService.aPolyHint = snapshot.aPolyHint;
-    this.fitService.result = snapshot.result;
-    this.fitService.signalFunction = snapshot.signalFunction;
-    this.fitService.backgroundFunction = snapshot.backgroundFunction;
+  private get snapshot(): PbPbFitSnapshot {
+    return this.state.fitSnapshot;
   }
 
   get canSubtract(): boolean {
@@ -164,17 +140,9 @@ export class PbPbMinvStateService {
   }
 
   /**
-   * Builds the pseudo-unbinned residual and hands it to `FitService`. The signal/background
-   * *range sliders* are never pre-set from `fitHint` by design — the student starts from the
-   * full range, exactly like in LSA.
-   *
-   * `aGaussHint`, however, is not a slider default: it is the Nelder-Mead starting point for
-   * the Gaussian fit, the same role LSA fills with a hardcoded per-particle guess (e.g.
-   * `[10.730, 0.498, 0.004]` for kaons — see `StrangenessLargeScaleAnalysisComponent`). Left at
-   * `[0, 0, 0]`, mu=0 sits far outside any realistic J/psi mass window, so the optimiser's chi²
-   * penalty for "mu outside range" is the same constant everywhere near the start and it can
-   * never climb out towards the real peak — the Gaussian stays at zero and the signal curve
-   * never appears. `histogram.fitHint.aGaussHint` gives it a physically sensible seed instead.
+   * Student starts from the full axis on both sliders — same starting point as LSA — so a
+   * centrality whose histogram has empty bins at the edges (several do, see the plan doc)
+   * forces the student to notice and narrow the background fit range themselves.
    */
   subtractBackground(): void {
     if (!this.canSubtract) {
@@ -186,15 +154,9 @@ export class PbPbMinvStateService {
       return;
     }
 
-    this.fitService.data = residualToLsaData(histogram);
-    const range = defaultFitRange(histogram);
-    this.fitService.signalFitRange = range;
-    this.fitService.backgroundFitRange = range;
-    this.fitService.aGaussHint = [...histogram.fitHint.aGaussHint];
-    this.fitService.aPolyHint = [0, 0, 0];
-
+    const fullRange: [number, number] = [histogram.xmin, histogram.xmax];
+    state.fitSnapshot = emptyFitSnapshot(fullRange);
     state.panelMode = 'subtracted';
-    this.snapshotFitService(this._activeCentrality);
     this.emit();
   }
 
@@ -204,8 +166,38 @@ export class PbPbMinvStateService {
     this.emit();
   }
 
+  setMassWindow(window: [number, number]): void {
+    this.snapshot.massWindow = window;
+    this.snapshot.fitResult = null;
+    this.emit();
+  }
+
+  setBackgroundFitRange(range: [number, number]): void {
+    this.snapshot.backgroundFitRange = range;
+    this.snapshot.fitResult = null;
+    this.emit();
+  }
+
+  runFit(): void {
+    const state = this.state;
+    const histogram = state.histogram;
+    if (state.panelMode !== 'subtracted' || histogram === null) {
+      return;
+    }
+    state.fitSnapshot.fitResult = this.residualFit.fitPol1(
+      rawResidual(histogram),
+      histogram.xmin,
+      histogram.xmax,
+      histogram.bins,
+      state.fitSnapshot.backgroundFitRange,
+      state.fitSnapshot.massWindow
+    );
+    this.emit();
+  }
+
   get canAccept(): boolean {
-    return this.state.panelMode === 'subtracted' && this.fitService.result !== null;
+    const state = this.state;
+    return state.panelMode === 'subtracted' && (state.fitSnapshot.fitResult?.signal ?? 0) > 0;
   }
 
   acceptResult(): void {
@@ -214,7 +206,7 @@ export class PbPbMinvStateService {
     }
     const state = this.state;
     const histogram = state.histogram;
-    const result = this.fitService.result;
+    const result = state.fitSnapshot.fitResult;
     if (histogram === null || result === null) {
       return;
     }

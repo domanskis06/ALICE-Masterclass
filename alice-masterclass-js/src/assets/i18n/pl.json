@@ -495,13 +495,16 @@
       },
       "SUBTRACT": "Odejmij tło",
       "SUBTRACT_HELP": "Pary tego samego znaku nie mogą pochodzić z rozpadu J/psi, więc pokazują przypadkowe kombinacje. Odejmij je od par przeciwnego znaku, żeby odsłonić sygnał.",
-      "AFTER_SUBTRACT": "Zostaje sygnał. Pik w okolicy 3,1 GeV/c² pochodzi z rozpadów J/psi.",
+      "AFTER_SUBTRACT": "Zostaje rezydualny sygnał: pik J/psi na tle, które nie jest idealnie płaskie. Dopasuj do niego prostą poza pikiem, a następnie zlicz nadwyżkę wewnątrz okna.",
       "SHOW_COMPONENTS": "Pokaż składowe",
+      "BACKGROUND_RANGE": "Zakres dopasowania tła",
       "WINDOW": "Okno masy sygnału",
+      "FIT": "Dopasuj",
+      "FIT_HINT": "Naciśnij Dopasuj, aby dopasować tło i zliczyć sygnał w oknie.",
       "ACCEPT": "Zaakceptuj wynik",
       "NEGATIVE_BINS_NOTE": "Losowe fluktuacje mogą zepchnąć bin lekko poniżej zera. Takie biny pokazujemy jako zero.",
       "TOO_WIDE": "Twoje zaznaczenie zawiera za dużo torów. Najpierw zawęż pas elektronów.",
-      "NO_SIGNAL_HINT": "Nie ma jeszcze sygnału. Przeanalizuj więcej zdarzeń albo zawęż pas elektronów."
+      "NO_SIGNAL_HINT": "Brak sygnału w tym oknie. Poszerz je albo przesuń na pik i dopasuj ponownie."
     },
     "METRICS": {
       "SIGNAL": "Sygnał J/psi",
@@ -511,23 +514,9 @@
     },
     "PBPB": {
       "MINV": {
-        "TITLE": "Masa niezmiennicza",
         "UNLIKE": "Pary o różnych znakach",
         "LIKE": "Pary o tych samych znakach (tło)",
-        "SUBTRACT": "Odejmij tło",
-        "AFTER_SUBTRACT": "Zobacz panel dopasowania po prawej.",
         "EMPTY": "Nie udało się wczytać tego histogramu."
-      },
-      "FIT": {
-        "TITLE": "Dopasowanie sygnału",
-        "EMPTY_HINT": "Kliknij „Odejmij tło” po lewej, aby odkryć sygnał.",
-        "TOTAL": "Suma",
-        "SIGNAL": "Sygnał J/psi",
-        "BACKGROUND": "Tło",
-        "SHOW_UL": "Pokaż pary różne/tego samego znaku",
-        "NO_SIGNAL_HINT": "Brak dopasowania. Kliknij Dopasuj po wybraniu zakresów sygnału i tła.",
-        "RESET_ZOOM": "Resetuj powiększenie",
-        "RESET_RANGE": "Resetuj zakres"
       },
       "RESULTS": {
         "TITLE": "Yield J/psi w Pb-Pb",
@@ -596,7 +585,7 @@
       "STEP_SUBTRACT_TITLE": "Odejmij tło",
       "STEP_SUBTRACT_BODY": "Pary tego samego znaku mierzą przypadkowe kombinacje wprost z danych. Odejmij je bin po binie od par przeciwnego znaku, a pokaże się pik J/psi.",
       "STEP_WINDOW_TITLE": "Policz sygnał",
-      "STEP_WINDOW_BODY": "Przesuń okno na pik. Liczy się wszystko, co jest w środku. Zwróć uwagę, jak zbyt szerokie okno dokłada tło i psuje stosunek sygnału do tła.",
+      "STEP_WINDOW_BODY": "Przesuń zakres dopasowania tła na płaskie fragmenty poza pikiem i naciśnij <strong>Dopasuj</strong>, aby poprowadzić przez nie prostą. Przesuń okno sygnału na sam pik: liczy się wszystko powyżej prostej, co jest w środku. Zwróć uwagę, jak zbyt szerokie okno dokłada tło i psuje stosunek sygnału do tła.",
       "STEP_ACCEPT_TITLE": "Zapisz wynik",
       "STEP_ACCEPT_BODY": "<strong>Zaakceptuj wynik</strong> zapisuje ten pomiar w twojej tabeli. Zawsze możesz zmienić okno i zaakceptować ponownie.",
       "STEP_DATASET_TITLE": "Drugi układ zderzenia",

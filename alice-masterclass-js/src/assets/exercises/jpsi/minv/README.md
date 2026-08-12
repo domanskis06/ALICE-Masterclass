@@ -12,7 +12,11 @@ two ALICE analysis-note figures, covering **8 centrality classes** spanning
 > <https://alice-notes.web.cern.ch/system/files/notes/analysis/953/2024-01-28-Inclusive_Jpsi_analysis_notes__from_2018_PbPb.pdf>
 
 These assets power the MasterClass J/ψ exercise workflow:
-**show unlike + like → subtract background → fit residual (LSA-style)**.
+**show unlike + like → subtract background → fit the residual background with a straight
+line (Pol1) → count the excess inside a chosen mass window**. This is the same workflow used
+by the pp and p–Pb track-level datasets — one shared, dedicated `JpsiResidualFitService`
+(closed-form Pol1, no Gauss/MC template) drives all collision systems; see
+`alice-masterclass-js/src/app/jpsi-analysis/services/jpsi-residual-fit.service.ts`.
 
 ---
 
@@ -166,7 +170,9 @@ verified by direct zoomed inspection of the 300 DPI render for every panel.
     "significanceNote": "..."
   },
 
-  // Hints for the LSA-style Gauss+poly fit
+  // Legacy hints from an earlier Gauss+poly fit design; unused by the app today
+  // (the Pol1 residual fit needs no seed — see "Intended exercise workflow"),
+  // kept only so the schema still matches every already-generated JSON file
   "fitHint": {
     "signalWindow": [2.9, 3.2],
     "peakMean": 3.1,
@@ -184,7 +190,7 @@ verified by direct zoomed inspection of the 300 DPI render for every panel.
 | Residual not stored | Computed at runtime as `unlike[i] - like[i]`; avoids redundancy |
 | Didactic `like ≤ unlike` clamp | Avoids digitization flips that made blue bars taller than red in the UI; see issue #3 |
 | `published` block | Allows validation: student's fit yield can be compared to ALICE result |
-| `fitHint` | Seeds the Gauss+poly fitter with reasonable starting parameters |
+| `fitHint` | Legacy (unused): seeded an earlier Gauss+poly fitter, superseded by the closed-form Pol1 residual fit |
 | Separate files per centrality | Smaller payloads; manifest enables lazy loading |
 | Poisson errors stored | Enables error bars on histograms and χ² in fit |
 
@@ -195,8 +201,13 @@ verified by direct zoomed inspection of the 300 DPI render for every panel.
 1. Student selects a centrality class (0–5% … 70–90%)
 2. Application displays unlike-sign and like-sign histograms overlaid
 3. Student clicks **"Subtract background"** → residual \(R_i = U_i - L_i\) is shown
-4. Student selects signal and background fit ranges (sliders, LSA-style)
-5. Student clicks **"Fit"** → Gauss + polynomial is fitted to the residual
+4. Student drags two independent range sliders: **Background fit range** (the
+   sidebands the line is fitted to — some centralities have empty bins at the
+   edges, so the student may need to narrow this) and **Signal mass window**
+   (what gets counted as signal)
+5. Student clicks **"Fit"** → a first-degree polynomial (Pol1) is fitted to the
+   residual outside the signal window (no Gauss, no MC template); the signal is
+   then simply the sum of bins above that line inside the window
 6. Result: extracted J/ψ yield compared to the published value; S/B visibly
    grows from central (0–5%, S/B≈0.01) to peripheral (70–90%, S/B≈0.65)
    collisions, illustrating how combinatorial background scales with
@@ -296,5 +307,8 @@ Each JSON records the clamp in `source.calibration`.
 
 - Track-level Pb–Pb conversion attempt: branch `j/psi-exercise-pb-pb-dataset`
   (converter `data/jpsi/inspect_ao2d.C`, physics check `data/jpsi/jpsi_physics_check.py`)
-- Large Scale Analysis strangeness exercise: uses `FitService` with unbinned `LSAData`
+- Large Scale Analysis strangeness exercise: uses the shared `FitService`
+  (Gauss + Pol2 on unbinned `LSAData`) — kept exclusively for LSA; J/ψ has its
+  own dedicated `JpsiResidualFitService` (closed-form Pol1 on binned data), see
+  `jpsi-residual-fit.service.ts`
 - pp / p–Pb track-level datasets: `src/assets/exercises/jpsi/manifest.json`

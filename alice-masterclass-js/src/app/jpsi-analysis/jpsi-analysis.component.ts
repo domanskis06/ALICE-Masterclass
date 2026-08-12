@@ -13,7 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 
 import { InstructionsProvider } from '../shared/interfaces';
-import { FitService } from '../shared/services/fit.service';
+import { SeriesEntry, SERIES_COLOURS } from './components/mass-panel/mass-panel.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import {
   DatasetDescriptor,
@@ -21,9 +21,11 @@ import {
   DEFAULT_PID_CUT,
   MASS_BINS,
   PidCut,
+  SeriesVisibility,
   SummaryRow,
 } from './models/jpsi.models';
 import {
+  clampedResidual,
   CollisionSystemId,
   isPbPbCentralityId,
   PbPbCentralityDescriptor,
@@ -50,10 +52,7 @@ const SNACKBAR_DURATION_MS = 3000;
   templateUrl: './jpsi-analysis.component.html',
   styleUrls: ['./jpsi-analysis.component.scss'],
   standalone: false,
-  // Own FitService instance: both StrangenessLargeScaleAnalysisModule and JpsiAnalysisModule
-  // are eagerly loaded into AppModule, so a module-level FitService provider would collapse
-  // into one app-wide singleton shared with LSA. Component-level providers avoid that.
-  providers: [FitService, PbPbMinvStateService],
+  providers: [PbPbMinvStateService],
 })
 export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsProvider {
   instructionsComponent: Type<unknown> = InstructionsComponent;
@@ -73,6 +72,9 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   activeCollisionSystem: CollisionSystemId = 'pp';
 
   readonly pbPbCentralityDescriptors: readonly PbPbCentralityDescriptor[] = PBPB_CENTRALITY_DESCRIPTORS;
+
+  /** Purely local display preference for the Pb-Pb panel; never persisted per centrality. */
+  pbPbVisibility: SeriesVisibility = { unlike: true, like: true };
 
   private readonly destroyRef = inject(DestroyRef);
 
@@ -160,6 +162,78 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     return this.pbPbState.rows;
   }
 
+  // --- Mass panel series (shared by the pp/p-Pb and Pb-Pb templates) --------
+
+  get trackPrimarySeries(): SeriesEntry {
+    return {
+      key: 'unlike',
+      colour: SERIES_COLOURS.unlike,
+      values: this.state.state.mass.unlike,
+      labelKey: 'JPSI.MASS.SERIES.UNLIKE',
+    };
+  }
+
+  get trackSecondarySeries(): SeriesEntry[] {
+    return [
+      {
+        key: 'posPos',
+        colour: SERIES_COLOURS.posPos,
+        values: this.state.state.mass.posPos,
+        labelKey: 'JPSI.MASS.SERIES.POSPOS',
+      },
+      {
+        key: 'negNeg',
+        colour: SERIES_COLOURS.negNeg,
+        values: this.state.state.mass.negNeg,
+        labelKey: 'JPSI.MASS.SERIES.NEGNEG',
+      },
+    ];
+  }
+
+  get trackMergedSeries(): SeriesEntry {
+    return {
+      key: 'background',
+      colour: SERIES_COLOURS.background,
+      values: this.background,
+      labelKey: 'JPSI.MASS.SERIES.BACKGROUND',
+    };
+  }
+
+  get pbPbPrimarySeries(): SeriesEntry | null {
+    const histogram = this.pbPbState.state.histogram;
+    return histogram === null
+      ? null
+      : {
+          key: 'unlike',
+          colour: SERIES_COLOURS.unlike,
+          values: histogram.unlike,
+          labelKey: 'JPSI.PBPB.MINV.UNLIKE',
+        };
+  }
+
+  get pbPbSecondarySeries(): SeriesEntry[] {
+    const histogram = this.pbPbState.state.histogram;
+    return histogram === null
+      ? []
+      : [
+          {
+            key: 'like',
+            colour: SERIES_COLOURS.posPos,
+            values: histogram.like,
+            labelKey: 'JPSI.PBPB.MINV.LIKE',
+          },
+        ];
+  }
+
+  get pbPbResidual(): Float64Array {
+    const histogram = this.pbPbState.state.histogram;
+    return histogram === null ? new Float64Array(0) : clampedResidual(histogram);
+  }
+
+  onTogglePbPbSeries(key: string): void {
+    this.pbPbVisibility = { ...this.pbPbVisibility, [key]: !this.pbPbVisibility[key] };
+  }
+
   // --- Toolbar --------------------------------------------------------------
 
   onDatasetChange(id: CollisionSystemId): void {
@@ -211,7 +285,7 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   // --- Mass panel -----------------------------------------------------------
 
-  onToggleSeries(series: 'unlike' | 'posPos' | 'negNeg'): void {
+  onToggleSeries(series: string): void {
     this.state.toggleSeries(series);
   }
 
@@ -232,6 +306,14 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     this.state.setMassWindow(window);
   }
 
+  onBackgroundRangeChange(range: [number, number]): void {
+    this.state.setBackgroundFitRange(range);
+  }
+
+  onFit(): void {
+    this.state.runFit();
+  }
+
   onAcceptResult(): void {
     this.state.acceptResult();
     this.tutorial.notifyAccepted();
@@ -245,6 +327,18 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   onShowComponentsPbPb(): void {
     this.pbPbState.showComponents();
+  }
+
+  onPbPbMassWindowChange(window: [number, number]): void {
+    this.pbPbState.setMassWindow(window);
+  }
+
+  onPbPbBackgroundRangeChange(range: [number, number]): void {
+    this.pbPbState.setBackgroundFitRange(range);
+  }
+
+  onPbPbFit(): void {
+    this.pbPbState.runFit();
   }
 
   onAcceptPbPbResult(): void {

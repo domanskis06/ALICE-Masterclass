@@ -8,8 +8,6 @@ import { SharedModule } from '../shared/shared.module';
 import { ComparePanelComponent } from './components/compare-panel/compare-panel.component';
 import { DatasetToolbarComponent } from './components/dataset-toolbar/dataset-toolbar.component';
 import { MassPanelComponent } from './components/mass-panel/mass-panel.component';
-import { PbPbFitPanelComponent } from './components/pbpb-fit-panel/pbpb-fit-panel.component';
-import { PbPbMinvPanelComponent } from './components/pbpb-minv-panel/pbpb-minv-panel.component';
 import { PbPbResultsComponent } from './components/pbpb-results/pbpb-results.component';
 import { PidCutControlsComponent } from './components/pid-cut-controls/pid-cut-controls.component';
 import { PidHeatmapComponent } from './components/pid-heatmap/pid-heatmap.component';
@@ -22,6 +20,7 @@ import { JpsiDataService } from './services/jpsi-data.service';
 import { JpsiMinvDataService } from './services/jpsi-minv-data.service';
 import { JpsiPairingService } from './services/jpsi-pairing.service';
 import { JpsiQuickAnalysisService } from './services/jpsi-quick-analysis.service';
+import { JpsiResidualFitService } from './services/jpsi-residual-fit.service';
 import { JpsiSignalService } from './services/jpsi-signal.service';
 import { JpsiTutorialService } from './services/jpsi-tutorial.service';
 import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.component';
@@ -36,8 +35,6 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     MassPanelComponent,
     ResultsTableComponent,
     ComparePanelComponent,
-    PbPbMinvPanelComponent,
-    PbPbFitPanelComponent,
     PbPbResultsComponent,
   ],
   imports: [
@@ -53,12 +50,13 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     JpsiDataService,
     JpsiPairingService,
     JpsiSignalService,
+    JpsiResidualFitService,
     JpsiAnalysisStateService,
     JpsiQuickAnalysisService,
     JpsiTutorialService,
-    // FitService and PbPbMinvStateService are deliberately NOT here — see
-    // JpsiAnalysisComponent's own `providers` for why they must be component-scoped.
     JpsiMinvDataService,
+    // PbPbMinvStateService is deliberately NOT here — see JpsiAnalysisComponent's own
+    // `providers` for why it must stay component-scoped.
   ],
 })
 export class JpsiAnalysisModule {}
