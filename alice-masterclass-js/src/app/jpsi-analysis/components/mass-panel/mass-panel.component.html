@@ -161,9 +161,7 @@
               </g>
             }
 
-            <!-- Position/opacity are driven entirely by d3 transitions in the component (see
-                 updatePol1Line), the same "grow out of a flat baseline" effect LSA's fit curves
-                 use, so this line must never be conditionally created/destroyed by @if. -->
+            <!-- Always in the DOM; visibility/geometry come from updatePol1Line (instant). -->
             <line class="mass-panel__pol1-line" #pol1LineEl data-testid="jpsi-pol1-line"></line>
           </g>
 

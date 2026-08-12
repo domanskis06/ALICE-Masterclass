@@ -30,8 +30,6 @@ import { SERIES_COLOURS } from '../../models/series-colours';
 const MARGIN = { top: 10, right: 14, bottom: 40, left: 56 };
 /** Headroom above the tallest bar so it never touches the plot's top edge. */
 const Y_AXIS_HEADROOM = 1.2;
-/** How long the Pol1 line takes to glide into (or out of) place — same feel as LSA's curves. */
-const POL1_ANIMATION_MS = 400;
 
 let nextClipId = 0;
 
@@ -181,8 +179,7 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.resizeObserver = new ResizeObserver(() => this.measureAndRender());
     this.resizeObserver.observe(this.hostRef.nativeElement);
     window.addEventListener('resize', this.onWindowResize);
-    // Start invisible: the very first render must not flash a stray line at (0,0).
-    d3.select(this.pol1LineRef.nativeElement).attr('opacity', 0);
+    this.updatePol1Line();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -533,36 +530,35 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   /**
-   * Glides the Pol1 line into (or out of) place via a d3 attribute transition — the same
-   * technique LSA's `FitHistogramComponent` uses for its curves — instead of an Angular
-   * binding that would snap it into view instantly. When there is no fit yet (or it was just
-   * cleared), the line collapses to a flat, invisible baseline spanning the current background
-   * slider, so the next fit always animates *from* that baseline rather than from nothing.
+   * Snap the Pol1 line to its fitted endpoints (or hide it). LSA morphs a multi-point
+   * path `d` over 200 ms; for a straight residual line that grow-from-baseline effect
+   * just felt slow, so we set geometry immediately instead.
    */
   private updatePol1Line(): void {
     if (!this.pol1LineRef) {
       return;
     }
     const line = this.pol1Line;
-    const target =
-      line !== null
-        ? { ...line, opacity: 1 }
-        : {
-            x1: MARGIN.left + this.xScale(this.backgroundStart),
-            x2: MARGIN.left + this.xScale(this.backgroundEnd),
-            y1: MARGIN.top + this.yScale(0),
-            y2: MARGIN.top + this.yScale(0),
-            opacity: 0,
-          };
+    const el = d3.select(this.pol1LineRef.nativeElement);
+    // Cancel any in-flight transition left over from an older build.
+    el.interrupt();
 
-    d3.select(this.pol1LineRef.nativeElement)
-      .transition()
-      .duration(POL1_ANIMATION_MS)
-      .attr('x1', target.x1)
-      .attr('y1', target.y1)
-      .attr('x2', target.x2)
-      .attr('y2', target.y2)
-      .attr('opacity', target.opacity);
+    if (line === null) {
+      el
+        .attr('x1', MARGIN.left + this.xScale(this.backgroundStart))
+        .attr('x2', MARGIN.left + this.xScale(this.backgroundEnd))
+        .attr('y1', MARGIN.top + this.yScale(0))
+        .attr('y2', MARGIN.top + this.yScale(0))
+        .attr('opacity', 0);
+      return;
+    }
+
+    el
+      .attr('x1', line.x1)
+      .attr('y1', line.y1)
+      .attr('x2', line.x2)
+      .attr('y2', line.y2)
+      .attr('opacity', 1);
   }
 
   onWindowChange(): void {

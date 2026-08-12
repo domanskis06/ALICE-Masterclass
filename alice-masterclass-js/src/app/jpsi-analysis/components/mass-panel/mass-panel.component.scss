@@ -154,7 +154,6 @@ $background-accent: #3f51b5;
   stroke: $background-accent;
   stroke-width: 2;
   fill: none;
-  // Position + opacity are transitioned from the component (d3), not CSS — see updatePol1Line.
 }
 
 // d3-brush default look (grey selection rect, crosshair cursor); this only sets what d3 does
