@@ -11,6 +11,11 @@ at 300 DPI:
 Both source figures share the same ROOT canvas template (same legend
 layout, same tick style, same top/bottom sub-pad split), which is why a
 single set of pixel heuristics below works for every panel in both figures.
+
+After window-sum normalisation to published N_total / N_bkg, applies a
+didactic clamp like[i] = min(like[i], unlike[i]) so digitization noise
+cannot leave background bars taller than unlike-sign in the MasterClass UI
+(see assets/.../minv/README.md, Known digitization issue #3).
 """
 from __future__ import annotations
 
@@ -358,6 +363,16 @@ def digitize_panel(px, fig_cfg, panel_cfg):
     nTotal, nBkg = panel_cfg["nTotal"], panel_cfg["nBkg"]
     u = [round(v * (nTotal / su), 3) for v in u]
     l = [round(v * (nBkg / sl), 3) for v in l]
+
+    # Didactic clamp: on the published figures, like-sign markers sit at or
+    # slightly below unlike-sign everywhere (S/B ~ 1% in central Pb-Pb).
+    # Marker digitization noise can flip that ordering; clamp so students
+    # never see blue bars taller than red after subtract-ready display.
+    n_clamped = sum(1 for uu, ll in zip(u, l) if ll > uu)
+    if n_clamped:
+        print(f"  {tag}: didactic clamp like<=unlike in {n_clamped}/{len(u)} bins")
+    l = [min(ll, uu) for uu, ll in zip(u, l)]
+
     uerr = [round(math.sqrt(max(v, 0)), 3) for v in u]
     lerr = [round(math.sqrt(max(v, 0)), 3) for v in l]
 
@@ -377,7 +392,9 @@ def digitize_panel(px, fig_cfg, panel_cfg):
             "nEvents": panel_cfg["nEvents"],
             "calibration": (
                 "Shape from top-panel markers; absolute scale set so sums in "
-                "[2.9,3.2) match published N_total / N_bkg"
+                "[2.9,3.2) match published N_total / N_bkg; then didactic "
+                "clamp like[i] = min(like[i], unlike[i]) to remove "
+                "digitization flips (MasterClass: never show like > unlike)"
             ),
         },
         "xmin": 2.0,

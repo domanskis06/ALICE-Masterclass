@@ -12,7 +12,7 @@
     "renderDpi": 300,
     "binWidthGeV": 0.04,
     "nEvents": 36480000,
-    "calibration": "Shape from top-panel markers; absolute scale set so sums in [2.9,3.2) match published N_total / N_bkg"
+    "calibration": "Shape from top-panel markers; absolute scale set so sums in [2.9,3.2) match published N_total / N_bkg; then didactic clamp like[i] = min(like[i], unlike[i]) to remove digitization flips (MasterClass: never show like > unlike)"
   },
   "xmin": 2.0,
   "xmax": 3.72,
@@ -148,7 +148,7 @@
     639.257,
     580.61,
     568.88,
-    527.827,
+    519.749,
     0.0,
     0.0
   ],
@@ -238,7 +238,7 @@
     25.284,
     24.096,
     23.851,
-    22.974,
+    22.798,
     0.0,
     0.0
   ],

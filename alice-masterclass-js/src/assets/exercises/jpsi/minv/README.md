@@ -100,7 +100,10 @@ ALICE results, across the full centrality range.
    - This ensures the residual \(U - L\) in the signal window equals
      \(N_\text{total} - N_\text{bkg}\), consistent with published \(N_{J/\psi}\)
 
-4. **Output** → JSON + manifest in `src/assets/exercises/jpsi/minv/`
+4. **Didactic clamp** `like[i] = min(like[i], unlike[i])`
+   — see **Known digitization issue #3** below.
+
+5. **Output** → JSON + manifest in `src/assets/exercises/jpsi/minv/`
 
 ### Reproduction
 
@@ -179,6 +182,7 @@ verified by direct zoomed inspection of the 300 DPI render for every panel.
 | --- | --- |
 | Binned counts (`unlike`/`like`) instead of unbinned `data` array | Faithful representation of the published histogram; no information loss vs. figure |
 | Residual not stored | Computed at runtime as `unlike[i] - like[i]`; avoids redundancy |
+| Didactic `like ≤ unlike` clamp | Avoids digitization flips that made blue bars taller than red in the UI; see issue #3 |
 | `published` block | Allows validation: student's fit yield can be compared to ALICE result |
 | `fitHint` | Seeds the Gauss+poly fitter with reasonable starting parameters |
 | Separate files per centrality | Smaller payloads; manifest enables lazy loading |
@@ -253,6 +257,38 @@ they're distinguishable by pixel length) and calibrating from that true
 0.2 GeV tick spacing anchored at `x_left`, instead of the frame border. A
 sanity check raises an error if the tick-based and frame-based scales
 disagree by more than 15%, to catch future axis-detection failures outright.
+
+## Known digitization issue #3 (fixed): like-sign taller than unlike-sign
+
+After window normalisation, several centralities (especially **0–5%** and
+**10–20%**) had `like[i] > unlike[i]` in most bins. In the app that looked
+wrong: blue background bars sat **above** the red unlike-sign bars across
+large sideband ranges, while on the published figures the two series nearly
+overlap with like-sign typically at or slightly below unlike-sign
+(S/B ≈ 1% in the most central class).
+
+**Cause.** Unlike and like markers are digitized independently (filled red
+vs open blue). At S/B ≈ 1% the vertical separation is only ~1–2 pixels, so
+noise easily flips which series is higher. Independent absolute scaling to
+published \(N_\text{total}\) / \(N_\text{bkg}\) in `[2.9, 3.2)` then locks
+that bad relative shape into the sidebands.
+
+**Fix.** After normalisation, apply a didactic clamp in `digitize_minv.py`:
+
+```text
+like[i] = min(like[i], unlike[i])
+```
+
+**Pedagogy vs paper.** Real histograms can show a few bins with like slightly
+above unlike from Poisson fluctuations; the clamp removes those too. For the
+MasterClass that is intentional: students should see a clean
+“unlike ≈ like + small excess” picture before subtract/fit, not systematic
+negative sideband residuals from digitization. Trade-off: window sum of like
+can drop a little below the printed \(N_\text{bkg}\) (residual in the window
+then slightly above \(N_\text{total} - N_\text{bkg}\)). The `published`
+block still stores the original paper numbers for comparison.
+
+Each JSON records the clamp in `source.calibration`.
 
 ---
 
