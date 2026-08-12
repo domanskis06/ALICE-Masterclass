@@ -62,6 +62,8 @@ function fitResult(overrides: Partial<ResidualFitResult> = {}): ResidualFitResul
     signalWindow: [1, 3],
     pol1: [1, 0.5],
     total: 10,
+    residualBackground: 6,
+    combinatorialBackground: 0,
     background: 6,
     signal: 4,
     signalError: 3,
@@ -166,6 +168,18 @@ describe('MassPanelComponent', () => {
     expect(panel).toBeTruthy();
   });
 
+  it('derives the slider step from this histogram\'s own bin width, e.g. a Pb-Pb centrality digitized in 40 MeV bins', () => {
+    // A Pb-Pb centrality's real digitized binning: 2.0-3.72 GeV in 43 bins (40 MeV/bin).
+    host.xmin = 2.0;
+    host.xmax = 3.72;
+    host.bins = 43;
+    init();
+
+    const expectedStep = (3.72 - 2.0) / 43;
+    expect(panel.sliderOptions.step).toBeCloseTo(expectedStep, 10);
+    expect(panel.backgroundSliderOptions.step).toBeCloseTo(expectedStep, 10);
+  });
+
   describe('generic rawSeries rendering', () => {
     it('draws all three track series (unlike/posPos/negNeg) when every toggle is on', () => {
       const { primary, secondary } = trackSeries();
@@ -230,15 +244,35 @@ describe('MassPanelComponent', () => {
       expect(panel.pol1Line).toBeNull();
     });
 
-    it('draws the Pol1 line across the full visible axis once a fit result is set', () => {
+    it('draws the Pol1 line across the full visible axis when it was fitted on the full axis', () => {
       host.mode = 'subtracted';
       host.residual = Float64Array.from([1, 2, 3, 4]);
-      host.fitResult = fitResult({ pol1: [1, 0.5] });
+      host.fitResult = fitResult({ pol1: [1, 0.5], backgroundFitRange: [0, 4] });
       init();
       layout();
 
       expect(panel.pol1Line).not.toBeNull();
       expect(panel.pol1Line!.x1).toBeLessThan(panel.pol1Line!.x2);
+    });
+
+    it('clips the Pol1 line to fitResult.backgroundFitRange, not the live slider or full axis', () => {
+      host.mode = 'subtracted';
+      host.residual = Float64Array.from([1, 2, 3, 4]);
+      // Fitted on a narrower sideband than the full [0, 4] axis.
+      host.fitResult = fitResult({ pol1: [1, 0.5], backgroundFitRange: [1, 3] });
+      init();
+      layout();
+
+      const line = panel.pol1Line!;
+      const fullAxisLine = { x1: 0 /* xScale(0) */ };
+      expect(line).not.toBeNull();
+      // The line's left edge must sit at xScale(1), strictly right of xScale(0) (the full axis start).
+      expect(line.x1).toBeGreaterThan(fullAxisLine.x1);
+
+      // Dragging the background slider afterwards (without a fresh Fit) must not move the curve.
+      panel.backgroundStart = 0;
+      panel.onBackgroundRangeChange();
+      expect(panel.pol1Line).toEqual(line);
     });
   });
 

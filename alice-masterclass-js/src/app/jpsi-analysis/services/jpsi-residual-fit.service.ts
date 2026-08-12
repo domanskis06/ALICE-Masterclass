@@ -13,9 +13,21 @@ export interface ResidualFitResult {
   pol1: [number, number];
   /** Sum of the (unclamped) residual bins inside the signal window. */
   total: number;
-  /** Sum of floor(f(bin center)) inside the signal window. */
+  /** Sum of floor(f(bin center)) inside the signal window — the residual sideband alone. */
+  residualBackground: number;
+  /**
+   * Sum of the combinatorial (like-sign) series inside the signal window — the background
+   * already removed by the like-sign subtraction, before this Pol1 fit ever ran.
+   */
+  combinatorialBackground: number;
+  /**
+   * round(residualBackground + combinatorialBackground): the *total* background under the
+   * unlike-sign peak. This — not `residualBackground` alone — is what S/B and significance are
+   * computed against, otherwise both look artificially good: the like-sign subtraction already
+   * removed most of the background before the student ever sees the residual.
+   */
   background: number;
-  /** total - background. */
+  /** round(total - residualBackground). */
   signal: number;
   /** round(sqrt(max(0, total))) — Poisson error on the observed count in the window. */
   signalError: number;
@@ -43,7 +55,13 @@ export class JpsiResidualFitService {
     xmax: number,
     bins: number,
     backgroundFitRange: [number, number],
-    signalWindow: [number, number]
+    signalWindow: [number, number],
+    /**
+     * Combinatorial (like-sign) background already subtracted out of `values` before this fit
+     * — e.g. posPos+negNeg for pp/p-Pb, or the like-sign histogram for Pb-Pb. Defaults to all
+     * zero so callers that only care about the residual step (e.g. most unit tests) keep working.
+     */
+    combinatorial: Float64Array | number[] = []
   ): ResidualFitResult {
     const binWidth = (xmax - xmin) / bins;
     const binCenter = (i: number): number => xmin + (i + 0.5) * binWidth;
@@ -96,17 +114,22 @@ export class JpsiResidualFitService {
     }
 
     let total = 0;
-    let background = 0;
+    let residualBackground = 0;
+    let combinatorialBackground = 0;
     // A tiny epsilon guards against floating-point noise (e.g. an exact-integer background
     // landing on 9.999999999999998 from the closed-form sums above) flooring one whole unit
     // too low; real histogram counts are never close enough to an integer boundary for this
     // to matter, so it never changes a genuine floor.
     for (let i = sigLo; i < sigHi; i++) {
       total += values[i];
-      background += Math.floor(a + b * binCenter(i) + 1e-9);
+      residualBackground += Math.floor(a + b * binCenter(i) + 1e-9);
+      combinatorialBackground += combinatorial[i] ?? 0;
     }
 
-    const signal = total - background;
+    // Both counts are rounded to whole events — see `signal`/`background` doc comments — so S/B
+    // and significance are computed from the same integers the student sees on screen.
+    const signal = Math.round(total - residualBackground);
+    const background = Math.round(residualBackground + combinatorialBackground);
     const signalError = Math.round(Math.sqrt(Math.max(0, total)));
     const signalToBackground = background > 0 ? signal / background : null;
     const significanceDenominator = signal + background;
@@ -116,6 +139,8 @@ export class JpsiResidualFitService {
       signalWindow,
       pol1: [a, b],
       total,
+      residualBackground,
+      combinatorialBackground,
       background,
       signal,
       signalError,

@@ -52,7 +52,6 @@ const SNACKBAR_DURATION_MS = 3000;
   templateUrl: './jpsi-analysis.component.html',
   styleUrls: ['./jpsi-analysis.component.scss'],
   standalone: false,
-  providers: [PbPbMinvStateService],
 })
 export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsProvider {
   instructionsComponent: Type<unknown> = InstructionsComponent;
@@ -92,6 +91,8 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   ) {}
 
   ngOnInit(): void {
+    this.tutorial.registerViewSwitcher(() => this.onDatasetChange('pp'));
+
     this.state.changes$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.onStateChanged());
@@ -117,6 +118,13 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   ngOnDestroy(): void {
     this.quickAnalysis.cancel();
     this.tutorial.destroyDriver(true);
+
+    // Both state services live at module scope and therefore survive navigating away from this
+    // route — reset their in-progress work now (accepted rows excepted) so returning to the
+    // exercise starts from a clean, consistent slate instead of stale ranges/fit lines from
+    // last time (see resetForNewSession() docs).
+    this.state.resetForNewSession();
+    this.pbPbState.resetForNewSession();
   }
 
   // --- Derived view state ---------------------------------------------------
@@ -135,14 +143,6 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   get rows(): SummaryRow[] {
     return this.state.rows;
-  }
-
-  get ppRow(): SummaryRow | null {
-    return this.state.stateOf('pp').tableRow;
-  }
-
-  get pPbRow(): SummaryRow | null {
-    return this.state.stateOf('pPb').tableRow;
   }
 
   get hasData(): boolean {
@@ -217,8 +217,10 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
       ? []
       : [
           {
+            // Same "combinatorial background" yellow used in pp/p-Pb for the merged same-charge
+            // series — like-sign pairs are the background here too.
             key: 'like',
-            colour: SERIES_COLOURS.posPos,
+            colour: SERIES_COLOURS.background,
             values: histogram.like,
             labelKey: 'JPSI.PBPB.MINV.LIKE',
           },
@@ -241,6 +243,7 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
       return;
     }
     this.activeCollisionSystem = id;
+    this.tutorial.setActiveCollisionSystem(id);
     if (isPbPbCentralityId(id)) {
       this.pbPbState.selectCentrality(id);
     } else {
@@ -319,6 +322,14 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     this.tutorial.notifyAccepted();
   }
 
+  onClearFit(): void {
+    this.state.clearFit();
+  }
+
+  onRemoveResult(datasetId: DatasetId): void {
+    this.state.removeResult(datasetId);
+  }
+
   // --- Pb-Pb Minv panel -------------------------------------------------------
 
   onSubtractPbPb(): void {
@@ -347,6 +358,10 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   onRemovePbPbResult(id: PbPbCentralityId): void {
     this.pbPbState.removeResult(id);
+  }
+
+  onClearFitPbPb(): void {
+    this.pbPbState.clearFit();
   }
 
   // --- Upload ---------------------------------------------------------------

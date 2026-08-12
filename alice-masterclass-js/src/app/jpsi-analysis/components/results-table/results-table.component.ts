@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { ApiService } from '../../../shared/services/api.service';
-import { SummaryRow } from '../../models/jpsi.models';
+import { DatasetId, SummaryRow } from '../../models/jpsi.models';
 
 @Component({
   selector: 'app-jpsi-results-table',
@@ -13,6 +13,7 @@ export class ResultsTableComponent {
   @Input() rows: SummaryRow[] = [];
 
   @Output() uploadResults = new EventEmitter<void>();
+  @Output() removeResult = new EventEmitter<DatasetId>();
 
   readonly displayedColumns = [
     'dataset',
@@ -22,6 +23,7 @@ export class ResultsTableComponent {
     'signalToBackground',
     'significance',
     'window',
+    'actions',
   ];
 
   constructor(public readonly apiService: ApiService) {}
@@ -32,5 +34,9 @@ export class ResultsTableComponent {
 
   formatRatio(value: number | null): string {
     return value === null ? '—' : value.toFixed(2);
+  }
+
+  onRemoveClick(row: SummaryRow): void {
+    this.removeResult.emit(row.datasetId);
   }
 }

@@ -102,6 +102,17 @@ describe('JpsiAnalysisStateService', () => {
     expect(service.state.tableRow?.nEvents).toBe(acceptedEvents);
   });
 
+  it('also resets the PID cut selection back to its default range', () => {
+    service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
+    expect(service.state.cut.dedxMin).toBe(70);
+
+    service.resetHistograms();
+
+    expect(service.state.cut).toEqual(DEFAULT_PID_CUT);
+    expect(service.state.appliedCut).toBeNull();
+  });
+
   it('only allows accepting a subtracted result with a non-zero signal', () => {
     expect(service.canAccept).toBeFalse();
 
@@ -166,6 +177,34 @@ describe('JpsiAnalysisStateService', () => {
 
     expect(service.state.tooWideSelection).toBeTrue();
     expect(service.canSubtract).toBeFalse();
+  });
+
+  it('resetForNewSession wipes both datasets back to a blank slate but keeps accepted rows', () => {
+    service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange({ ...DEFAULT_PID_CUT, dedxMin: 70, dedxMax: 90 });
+    service.subtractBackground();
+    service.setMassWindow([2.9, 3.1]);
+    service.runFit();
+    service.acceptResult();
+    const acceptedRow = service.state.tableRow;
+
+    service.selectDataset('pPb');
+    service.appendEvents([makePairEvent()]);
+    service.acceptSelectedRange(DEFAULT_PID_CUT);
+    // pPb is left in-progress, never accepted.
+
+    service.resetForNewSession();
+
+    expect(service.activeDataset).toBe('pp');
+    expect(service.state.tableRow).toEqual(acceptedRow);
+    expect(service.state.processedCount).toBe(0);
+    expect(service.state.appliedCut).toBeNull();
+    expect(service.state.cut).toEqual(DEFAULT_PID_CUT);
+    expect(service.state.panelMode).toBe('explore');
+
+    expect(service.stateOf('pPb').tableRow).toBeNull();
+    expect(service.stateOf('pPb').processedCount).toBe(0);
+    expect(service.stateOf('pPb').appliedCut).toBeNull();
   });
 
   it('rebuilds mass when Accept selected range is pressed again', () => {

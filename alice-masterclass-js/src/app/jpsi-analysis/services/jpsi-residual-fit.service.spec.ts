@@ -112,4 +112,49 @@ describe('JpsiResidualFitService', () => {
     expect(Number.isFinite(result.pol1[0])).toBeTrue();
     expect(Number.isFinite(result.pol1[1])).toBeTrue();
   });
+
+  describe('total background (residual Pol1 + combinatorial like-sign)', () => {
+    it('defaults the combinatorial background to zero when omitted, unlike-sign-only fits unaffected', () => {
+      const values = new Float64Array(20).fill(10);
+      for (let i = 4; i < 9; i++) {
+        values[i] = 30;
+      }
+
+      const result = service.fitPol1(values, 0, 20, 20, [0, 20], [4, 9]);
+
+      expect(result.combinatorialBackground).toBe(0);
+      expect(result.background).toBe(result.residualBackground);
+    });
+
+    it('adds the combinatorial series inside the signal window to the residual background', () => {
+      // Same rectangular-excess residual as above: flat sidebands at 10, +20 excess in [4, 9).
+      const values = new Float64Array(20).fill(10);
+      for (let i = 4; i < 9; i++) {
+        values[i] = 30;
+      }
+      // Like-sign combinatorial background the residual already had subtracted out: 40/window bin.
+      const combinatorial = new Float64Array(20).fill(40);
+
+      const result = service.fitPol1(values, 0, 20, 20, [0, 20], [4, 9], combinatorial);
+
+      expect(result.residualBackground).toBe(50); // 5 * 10, same Pol1 fit as before
+      expect(result.combinatorialBackground).toBe(200); // 5 * 40
+      expect(result.background).toBe(250); // 50 + 200 — the *total* background under the peak
+      expect(result.signal).toBe(100); // unaffected: still total - residualBackground
+      // S/B and significance must drop once the full background is counted, not just the residual.
+      expect(result.signalToBackground).toBeCloseTo(100 / 250, 6);
+      expect(result.significance).toBeCloseTo(100 / Math.sqrt(350), 6);
+    });
+
+    it('rounds signal and background to whole counts even with fractional (digitized) inputs', () => {
+      const values = new Float64Array(10).fill(10.4);
+      values[5] = 30.6;
+      const combinatorial = new Float64Array(10).fill(5.5);
+
+      const result = service.fitPol1(values, 0, 10, 10, [0, 10], [5, 6], combinatorial);
+
+      expect(Number.isInteger(result.signal)).toBeTrue();
+      expect(Number.isInteger(result.background)).toBeTrue();
+    });
+  });
 });

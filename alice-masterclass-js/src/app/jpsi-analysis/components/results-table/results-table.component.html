@@ -64,6 +64,23 @@
         </td>
       </ng-container>
 
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <button
+            type="button"
+            mat-icon-button
+            color="warn"
+            class="results-table__remove-button"
+            [attr.aria-label]="'JPSI.RESULTS.DELETE' | translate"
+            [matTooltip]="'JPSI.RESULTS.DELETE' | translate"
+            (click)="onRemoveClick(row)"
+          >
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>

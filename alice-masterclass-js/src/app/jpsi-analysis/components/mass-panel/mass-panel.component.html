@@ -1,6 +1,28 @@
 <mat-card appearance="outlined" class="mass-panel" id="jpsi-tour-mass-panel">
   <mat-card-title class="mass-panel__title">
-    {{ 'JPSI.MASS.TITLE' | translate }}
+    <span class="mass-panel__title-text">{{ 'JPSI.MASS.TITLE' | translate }}</span>
+    <div class="mass-panel__title-actions" id="jpsi-tour-mass-actions">
+      <button
+        type="button"
+        mat-stroked-button
+        class="mass-panel__action-button"
+        data-testid="jpsi-reset-range"
+        [disabled]="mode !== 'subtracted' || !hasData"
+        (click)="resetRange()"
+      >
+        {{ 'JPSI.MASS.RESET_RANGE' | translate }}
+      </button>
+      <button
+        type="button"
+        mat-stroked-button
+        class="mass-panel__action-button"
+        data-testid="jpsi-reset-zoom"
+        [disabled]="!isZoomed"
+        (click)="resetZoom()"
+      >
+        {{ 'JPSI.MASS.RESET_ZOOM' | translate }}
+      </button>
+    </div>
   </mat-card-title>
 
   <mat-card-content>
@@ -50,10 +72,6 @@
           </mat-slide-toggle>
         }
       </div>
-    } @else {
-      <p class="mass-panel__after-subtract" data-testid="jpsi-after-subtract">
-        {{ 'JPSI.MASS.AFTER_SUBTRACT' | translate }}
-      </p>
     }
 
     <div id="jpsi-tour-mass-signal">
@@ -65,60 +83,97 @@
         }
 
         <svg #svg [attr.width]="width" [attr.height]="height">
-          @if (windowRect; as rect) {
-            <rect
-              class="mass-panel__window"
-              [attr.x]="rect.x"
-              [attr.y]="margin.top"
-              [attr.width]="rect.width"
-              [attr.height]="plotHeight"
-            ></rect>
-          }
+          <defs>
+            <clipPath [attr.id]="clipId">
+              <rect
+                [attr.x]="margin.left"
+                [attr.y]="margin.top"
+                [attr.width]="plotWidth"
+                [attr.height]="plotHeight"
+              ></rect>
+            </clipPath>
+          </defs>
 
-          @for (entry of series; track entry.key) {
-            <g class="mass-panel__series" [attr.data-series]="entry.key">
-              @for (bar of entry.bars; track $index) {
+          <g [attr.clip-path]="'url(#' + clipId + ')'">
+            @for (entry of series; track entry.key) {
+              <g class="mass-panel__series" [attr.data-series]="entry.key">
+                @for (bar of entry.bars; track $index) {
+                  <rect
+                    [attr.x]="bar.x"
+                    [attr.y]="bar.y"
+                    [attr.width]="bar.width"
+                    [attr.height]="bar.height"
+                    [attr.fill]="entry.colour"
+                  ></rect>
+                }
+              </g>
+            }
+
+            @if (backgroundBand; as band) {
+              <g class="mass-panel__band mass-panel__band--background">
                 <rect
-                  [attr.x]="bar.x"
-                  [attr.y]="bar.y"
-                  [attr.width]="bar.width"
-                  [attr.height]="bar.height"
-                  [attr.fill]="entry.colour"
+                  class="mass-panel__band-fill"
+                  [attr.x]="band.x"
+                  [attr.y]="margin.top"
+                  [attr.width]="band.width"
+                  [attr.height]="plotHeight"
                 ></rect>
-              }
-            </g>
-          }
+                <line
+                  class="mass-panel__band-line"
+                  [attr.x1]="band.lineX0"
+                  [attr.x2]="band.lineX0"
+                  [attr.y1]="margin.top"
+                  [attr.y2]="margin.top + plotHeight"
+                ></line>
+                <line
+                  class="mass-panel__band-line"
+                  [attr.x1]="band.lineX1"
+                  [attr.x2]="band.lineX1"
+                  [attr.y1]="margin.top"
+                  [attr.y2]="margin.top + plotHeight"
+                ></line>
+              </g>
+            }
 
-          @if (backgroundRangeGuides; as guides) {
-            <line
-              class="mass-panel__fit-range-guide"
-              [attr.x1]="guides[0]"
-              [attr.x2]="guides[0]"
-              [attr.y1]="margin.top"
-              [attr.y2]="margin.top + plotHeight"
-            ></line>
-            <line
-              class="mass-panel__fit-range-guide"
-              [attr.x1]="guides[1]"
-              [attr.x2]="guides[1]"
-              [attr.y1]="margin.top"
-              [attr.y2]="margin.top + plotHeight"
-            ></line>
-          }
+            @if (windowBand; as band) {
+              <g class="mass-panel__band mass-panel__band--signal">
+                <rect
+                  class="mass-panel__band-fill"
+                  [attr.x]="band.x"
+                  [attr.y]="margin.top"
+                  [attr.width]="band.width"
+                  [attr.height]="plotHeight"
+                ></rect>
+                <line
+                  class="mass-panel__band-line"
+                  [attr.x1]="band.lineX0"
+                  [attr.x2]="band.lineX0"
+                  [attr.y1]="margin.top"
+                  [attr.y2]="margin.top + plotHeight"
+                ></line>
+                <line
+                  class="mass-panel__band-line"
+                  [attr.x1]="band.lineX1"
+                  [attr.x2]="band.lineX1"
+                  [attr.y1]="margin.top"
+                  [attr.y2]="margin.top + plotHeight"
+                ></line>
+              </g>
+            }
 
-          @if (pol1Line; as line) {
-            <line
-              class="mass-panel__pol1-line"
-              [attr.x1]="line.x1"
-              [attr.y1]="line.y1"
-              [attr.x2]="line.x2"
-              [attr.y2]="line.y2"
-              data-testid="jpsi-pol1-line"
-            ></line>
-          }
+            <!-- Position/opacity are driven entirely by d3 transitions in the component (see
+                 updatePol1Line), the same "grow out of a flat baseline" effect LSA's fit curves
+                 use, so this line must never be conditionally created/destroyed by @if. -->
+            <line class="mass-panel__pol1-line" #pol1LineEl data-testid="jpsi-pol1-line"></line>
+          </g>
 
           <g class="x-axis"></g>
           <g class="y-axis"></g>
+          <g
+            class="mass-panel__brush"
+            #brushGroup
+            [attr.transform]="'translate(' + margin.left + ',' + margin.top + ')'"
+          ></g>
 
           <text
             class="mass-panel__axis-label"
@@ -147,18 +202,10 @@
       </div>
 
       @if (mode === 'subtracted') {
-        <div class="mass-panel__window-controls" id="jpsi-tour-background-range">
-          <span class="mass-panel__window-label">{{ 'JPSI.MASS.BACKGROUND_RANGE' | translate }}</span>
-          <ngx-slider
-            [(value)]="backgroundStart"
-            [(highValue)]="backgroundEnd"
-            [options]="backgroundSliderOptions"
-            (userChange)="onBackgroundRangeChange()"
-            (userChangeEnd)="onBackgroundRangeChangeEnd()"
-          ></ngx-slider>
-        </div>
-
-        <div class="mass-panel__window-controls" id="jpsi-tour-mass-window">
+        <div
+          class="mass-panel__window-controls mass-panel__window-controls--signal"
+          id="jpsi-tour-mass-window"
+        >
           <span class="mass-panel__window-label">{{ 'JPSI.MASS.WINDOW' | translate }}</span>
           <ngx-slider
             [(value)]="windowStart"
@@ -166,6 +213,20 @@
             [options]="sliderOptions"
             (userChange)="onWindowChange()"
             (userChangeEnd)="onWindowChangeEnd()"
+          ></ngx-slider>
+        </div>
+
+        <div
+          class="mass-panel__window-controls mass-panel__window-controls--background"
+          id="jpsi-tour-background-range"
+        >
+          <span class="mass-panel__window-label">{{ 'JPSI.MASS.BACKGROUND_RANGE' | translate }}</span>
+          <ngx-slider
+            [(value)]="backgroundStart"
+            [(highValue)]="backgroundEnd"
+            [options]="backgroundSliderOptions"
+            (userChange)="onBackgroundRangeChange()"
+            (userChangeEnd)="onBackgroundRangeChangeEnd()"
           ></ngx-slider>
         </div>
       }
@@ -194,8 +255,6 @@
           </div>
         </div>
       }
-
-      <p class="mass-panel__hint">{{ 'JPSI.MASS.NEGATIVE_BINS_NOTE' | translate }}</p>
     }
   </mat-card-content>
 
@@ -235,6 +294,15 @@
       </button>
       <button mat-stroked-button data-testid="jpsi-show-components" (click)="showComponents.emit()">
         {{ 'JPSI.MASS.SHOW_COMPONENTS' | translate }}
+      </button>
+      <button
+        mat-stroked-button
+        id="jpsi-tour-clear-fit-button"
+        data-testid="jpsi-clear-fit"
+        [disabled]="fitResult === null"
+        (click)="clearFit.emit()"
+      >
+        {{ 'JPSI.MASS.CLEAR_FIT' | translate }}
       </button>
       @if (fitResult === null) {
         <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.FIT_HINT' | translate }}</span>

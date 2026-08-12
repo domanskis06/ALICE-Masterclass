@@ -111,6 +111,21 @@ export class PbPbMinvStateService {
     }
   }
 
+  /**
+   * Called when the student leaves the exercise entirely (a different route). Like
+   * `JpsiAnalysisStateService.resetForNewSession`, this drops every in-progress panel/fit
+   * state back to a blank 'explore' view while keeping already-fetched histograms (no need to
+   * refetch) and any accepted row (a frozen measurement worth keeping in view).
+   */
+  resetForNewSession(): void {
+    for (const id of PBPB_CENTRALITY_IDS) {
+      const state = this.states[id];
+      state.panelMode = 'explore';
+      state.fitSnapshot = emptyFitSnapshot();
+    }
+    this._activeCentrality = PBPB_CENTRALITY_IDS[0];
+  }
+
   private ensureHistogramLoaded(id: PbPbCentralityId): void {
     const state = this.states[id];
     if (state.histogram !== null || state.loading) {
@@ -190,7 +205,8 @@ export class PbPbMinvStateService {
       histogram.xmax,
       histogram.bins,
       state.fitSnapshot.backgroundFitRange,
-      state.fitSnapshot.massWindow
+      state.fitSnapshot.massWindow,
+      histogram.like
     );
     this.emit();
   }
@@ -223,6 +239,12 @@ export class PbPbMinvStateService {
 
   removeResult(id: PbPbCentralityId): void {
     this.states[id].tableRow = null;
+    this.emit();
+  }
+
+  /** Drops the current fit curve/result without touching the histogram or accepted rows. */
+  clearFit(): void {
+    this.state.fitSnapshot.fitResult = null;
     this.emit();
   }
 

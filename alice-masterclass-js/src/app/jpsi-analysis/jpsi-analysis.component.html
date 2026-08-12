@@ -15,36 +15,41 @@
     ></app-jpsi-dataset-toolbar>
 
     @if (isPublished(activeCollisionSystem)) {
-      <app-jpsi-mass-panel
-        [primarySeries]="pbPbPrimarySeries"
-        [secondarySeries]="pbPbSecondarySeries"
-        [residual]="pbPbResidual"
-        [mode]="pbPbState.state.panelMode"
-        [xmin]="pbPbState.state.histogram?.xmin ?? 0"
-        [xmax]="pbPbState.state.histogram?.xmax ?? 1"
-        [bins]="pbPbState.state.histogram?.bins ?? 1"
-        [visibility]="pbPbVisibility"
-        [massWindow]="pbPbState.state.fitSnapshot.massWindow"
-        [backgroundFitRange]="pbPbState.state.fitSnapshot.backgroundFitRange"
-        [fitResult]="pbPbState.state.fitSnapshot.fitResult"
-        [canSubtract]="pbPbState.canSubtract"
-        [canAccept]="pbPbState.canAccept"
-        [hasData]="pbPbState.state.histogram !== null"
-        [loading]="pbPbState.state.loading"
-        emptyHintKey="JPSI.PBPB.MINV.EMPTY"
-        (toggleSeries)="onTogglePbPbSeries($event)"
-        (subtract)="onSubtractPbPb()"
-        (showComponents)="onShowComponentsPbPb()"
-        (massWindowChange)="onPbPbMassWindowChange($event)"
-        (backgroundFitRangeChange)="onPbPbBackgroundRangeChange($event)"
-        (fit)="onPbPbFit()"
-        (acceptResult)="onAcceptPbPbResult()"
-      ></app-jpsi-mass-panel>
+      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
+        <app-jpsi-mass-panel
+          fxFlex="65"
+          [primarySeries]="pbPbPrimarySeries"
+          [secondarySeries]="pbPbSecondarySeries"
+          [residual]="pbPbResidual"
+          [mode]="pbPbState.state.panelMode"
+          [xmin]="pbPbState.state.histogram?.xmin ?? 0"
+          [xmax]="pbPbState.state.histogram?.xmax ?? 1"
+          [bins]="pbPbState.state.histogram?.bins ?? 1"
+          [visibility]="pbPbVisibility"
+          [massWindow]="pbPbState.state.fitSnapshot.massWindow"
+          [backgroundFitRange]="pbPbState.state.fitSnapshot.backgroundFitRange"
+          [fitResult]="pbPbState.state.fitSnapshot.fitResult"
+          [canSubtract]="pbPbState.canSubtract"
+          [canAccept]="pbPbState.canAccept"
+          [hasData]="pbPbState.state.histogram !== null"
+          [loading]="pbPbState.state.loading"
+          emptyHintKey="JPSI.PBPB.MINV.EMPTY"
+          (toggleSeries)="onTogglePbPbSeries($event)"
+          (subtract)="onSubtractPbPb()"
+          (showComponents)="onShowComponentsPbPb()"
+          (massWindowChange)="onPbPbMassWindowChange($event)"
+          (backgroundFitRangeChange)="onPbPbBackgroundRangeChange($event)"
+          (fit)="onPbPbFit()"
+          (acceptResult)="onAcceptPbPbResult()"
+          (clearFit)="onClearFitPbPb()"
+        ></app-jpsi-mass-panel>
 
-      <app-jpsi-pbpb-results
-        [rows]="pbPbRows"
-        (removeResult)="onRemovePbPbResult($event)"
-      ></app-jpsi-pbpb-results>
+        <app-jpsi-pbpb-results
+          fxFlex="35"
+          [rows]="pbPbRows"
+          (removeResult)="onRemovePbPbResult($event)"
+        ></app-jpsi-pbpb-results>
+      </div>
     } @else {
       <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
         <mat-card appearance="outlined" fxFlex="50" id="jpsi-tour-heatmap">
@@ -94,15 +99,15 @@
           (backgroundFitRangeChange)="onBackgroundRangeChange($event)"
           (fit)="onFit()"
           (acceptResult)="onAcceptResult()"
+          (clearFit)="onClearFit()"
         ></app-jpsi-mass-panel>
       </div>
 
       <app-jpsi-results-table
         [rows]="rows"
         (uploadResults)="onUploadResults()"
+        (removeResult)="onRemoveResult($event)"
       ></app-jpsi-results-table>
-
-      <app-jpsi-compare-panel [ppRow]="ppRow" [pPbRow]="pPbRow"></app-jpsi-compare-panel>
     }
   </div>
 </div>

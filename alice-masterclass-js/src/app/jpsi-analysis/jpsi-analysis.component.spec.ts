@@ -43,6 +43,8 @@ describe('JpsiAnalysisComponent', () => {
       'notifyCutsChanged',
       'notifySubtracted',
       'notifyAccepted',
+      'setActiveCollisionSystem',
+      'registerViewSwitcher',
     ]);
 
     // The welcome dialog is opened once per tab; specs must not depend on that order.
@@ -130,5 +132,32 @@ describe('JpsiAnalysisComponent', () => {
 
     expect(component.activeDataset).toBe('pp');
     expect(tutorial.notifyDatasetSwitched).not.toHaveBeenCalled();
+  });
+
+  it('resets in-progress work but keeps accepted rows when the route is left', () => {
+    state.appendEvents([
+      {
+        px: Float32Array.from([1.5, -1.5]),
+        py: Float32Array.from([0, 0]),
+        pz: Float32Array.from([0, 0]),
+        p: Float32Array.from([1.5, 1.5]),
+        dedx: Float32Array.from([80, 80]),
+        sign: Int8Array.from([1, -1]),
+      },
+    ]);
+    state.acceptSelectedRange({ pMin: 0.1, pMax: 10, dedxMin: 70, dedxMax: 90 });
+    state.subtractBackground();
+    state.setMassWindow([2.9, 3.1]);
+    state.runFit();
+    state.acceptResult();
+    expect(state.state.tableRow).not.toBeNull();
+
+    fixture.destroy();
+
+    expect(state.state.tableRow).not.toBeNull();
+    expect(state.state.processedCount).toBe(0);
+    expect(state.state.appliedCut).toBeNull();
+    expect(state.state.cut.dedxMin).toBe(20);
+    expect(state.state.panelMode).toBe('explore');
   });
 });

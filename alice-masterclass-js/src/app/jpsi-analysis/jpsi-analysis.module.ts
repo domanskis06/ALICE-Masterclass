@@ -5,7 +5,6 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
-import { ComparePanelComponent } from './components/compare-panel/compare-panel.component';
 import { DatasetToolbarComponent } from './components/dataset-toolbar/dataset-toolbar.component';
 import { MassPanelComponent } from './components/mass-panel/mass-panel.component';
 import { PbPbResultsComponent } from './components/pbpb-results/pbpb-results.component';
@@ -23,6 +22,7 @@ import { JpsiQuickAnalysisService } from './services/jpsi-quick-analysis.service
 import { JpsiResidualFitService } from './services/jpsi-residual-fit.service';
 import { JpsiSignalService } from './services/jpsi-signal.service';
 import { JpsiTutorialService } from './services/jpsi-tutorial.service';
+import { PbPbMinvStateService } from './services/pbpb-minv-state.service';
 import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.component';
 
 @NgModule({
@@ -34,7 +34,6 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     PidCutControlsComponent,
     MassPanelComponent,
     ResultsTableComponent,
-    ComparePanelComponent,
     PbPbResultsComponent,
   ],
   imports: [
@@ -55,8 +54,10 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     JpsiQuickAnalysisService,
     JpsiTutorialService,
     JpsiMinvDataService,
-    // PbPbMinvStateService is deliberately NOT here — see JpsiAnalysisComponent's own
-    // `providers` for why it must stay component-scoped.
+    // Module-scoped (not component-scoped) so accepted Pb-Pb rows — and the preloaded
+    // histograms — survive navigating away from /jpsi-analysis and back; only in-progress,
+    // unaccepted fit state is cleared on the way out (see resetForNewSession()).
+    PbPbMinvStateService,
   ],
 })
 export class JpsiAnalysisModule {}

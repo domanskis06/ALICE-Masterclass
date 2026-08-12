@@ -285,4 +285,33 @@ describe('PbPbMinvStateService', () => {
       expect(service.stateOf('pbPb_0_5').fitSnapshot.fitResult).toEqual(acceptedResult);
     });
   });
+
+  describe('resetForNewSession', () => {
+    it('resets every centrality — even an accepted one — to explore/blank, keeping only the accepted row itself', () => {
+      service.subtractBackground();
+      service.setMassWindow([2, 3]);
+      service.runFit();
+      service.acceptResult();
+      const acceptedRow = service.state.tableRow;
+
+      service.selectCentrality('pbPb_5_10');
+      service.subtractBackground();
+      service.setMassWindow([2, 3]);
+      service.runFit();
+      // pbPb_5_10 is left in-progress, never accepted.
+
+      service.resetForNewSession();
+
+      expect(service.activeCentrality).toBe('pbPb_0_5');
+      // The chart/sliders reset to a blank view even for the accepted centrality...
+      expect(service.stateOf('pbPb_0_5').panelMode).toBe('explore');
+      expect(service.stateOf('pbPb_0_5').fitSnapshot.fitResult).toBeNull();
+      // ...but the frozen row itself, already in the results table, survives untouched.
+      expect(service.stateOf('pbPb_0_5').tableRow).toEqual(acceptedRow);
+      expect(service.stateOf('pbPb_5_10').panelMode).toBe('explore');
+      expect(service.stateOf('pbPb_5_10').fitSnapshot.fitResult).toBeNull();
+      expect(service.stateOf('pbPb_5_10').tableRow).toBeNull();
+      expect(service.stateOf('pbPb_5_10').histogram).not.toBeNull();
+    });
+  });
 });

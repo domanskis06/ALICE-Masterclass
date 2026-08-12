@@ -84,6 +84,23 @@ export class JpsiAnalysisStateService {
     this.emit();
   }
 
+  /**
+   * Called when the student leaves the exercise entirely (a different route). This service is
+   * provided at module scope, so — unlike the component — it survives that navigation and would
+   * otherwise still hold stale processed events, cuts and fit ranges the moment the student
+   * comes back, well after any component-local field has already re-initialized to its default.
+   * That mismatch is exactly what made the PID sliders and the Pol1 line look "stuck" on return
+   * (see the plan doc). Accepted rows are the one thing worth keeping — they are frozen
+   * measurements the student may still want in view — so only those survive.
+   */
+  resetForNewSession(): void {
+    for (const datasetId of ['pp', 'pPb'] as DatasetId[]) {
+      const tableRow = this.states[datasetId].tableRow;
+      this.states[datasetId] = { ...createDatasetState(datasetId), tableRow };
+    }
+    this._activeDataset = 'pp';
+  }
+
   // --- Quick Analysis -------------------------------------------------------
 
   /**
@@ -124,6 +141,9 @@ export class JpsiAnalysisStateService {
     state.nextEventIndex = 0;
     state.pidBins = new Uint32Array(PID_P_BINS * PID_DEDX_BINS);
     state.pidMax = 0;
+    // The PID range selection is meaningless once its histogram is gone — reset it too, so the
+    // heatmap sliders don't keep showing a range that no longer corresponds to anything on screen.
+    state.cut = { ...DEFAULT_PID_CUT };
     state.appliedCut = null;
     state.mass = createMassHistograms();
     state.tooWideSelection = false;
@@ -251,7 +271,8 @@ export class JpsiAnalysisStateService {
       MASS_XMAX,
       MASS_BINS,
       state.backgroundFitRange,
-      state.massWindow
+      state.massWindow,
+      this.signal.backgroundSeries(state.mass)
     );
     this.emit();
   }
@@ -271,6 +292,17 @@ export class JpsiAnalysisStateService {
       datasetId: state.datasetId,
       nEvents: state.processedCount,
     };
+    this.emit();
+  }
+
+  /** Drops the current fit curve/result without touching the histogram or accepted rows. */
+  clearFit(): void {
+    this.state.fitResult = null;
+    this.emit();
+  }
+
+  removeResult(datasetId: DatasetId): void {
+    this.states[datasetId].tableRow = null;
     this.emit();
   }
 

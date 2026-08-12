@@ -230,11 +230,17 @@ above — no per-panel axis-value transcription needed.)
    (what gets counted as signal)
 5. Student clicks **"Fit"** → a first-degree polynomial (Pol1) is fitted to the
    residual outside the signal window (no Gauss, no MC template); the signal is
-   then simply the sum of bins above that line inside the window
-6. Result: extracted J/ψ yield compared to the published value; S/B visibly
-   grows from central (0–5%, S/B≈0.01) to peripheral (70–90%, S/B≈0.65)
-   collisions, illustrating how combinatorial background scales with
-   multiplicity
+   then simply the sum of bins above that line inside the window, rounded to a
+   whole count
+6. Result: extracted J/ψ yield compared to the published value. **S/B and
+   significance are computed against the *total* background** — the
+   combinatorial (like-sign) background already removed by the subtraction in
+   step 3, plus the residual Pol1 background from step 5 — not the residual
+   alone; the residual by itself is a small fraction of what was really under
+   the unlike-sign peak, so using only it would make S/B and significance look
+   far better than they really are. S/B visibly grows from central (0–5%,
+   S/B≈0.01) to peripheral (70–90%, S/B≈0.65) collisions, illustrating how
+   combinatorial background scales with multiplicity
 
 ---
 
