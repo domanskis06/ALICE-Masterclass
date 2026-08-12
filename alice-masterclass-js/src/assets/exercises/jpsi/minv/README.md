@@ -62,14 +62,17 @@ ALICE results, across the full centrality range.
 - `data/jpsi/minv_digitize/pb-pb-jpsi.pdf` — Figure 15 (50–70%, 70–90%)
 - `data/jpsi/minv_digitize/pb-pb-jpsi2.pdf` — Figure 14 (0–5% … 40–50%, a 3×2
   grid of 6 centrality panels on one page)
-- Both figures use the **same ROOT canvas template**: each panel has a top
-  sub-pad (unlike-sign / like-sign histograms — the only one we digitize) and
-  a bottom sub-pad (raw signal + MC fit, not used here), the same 6-entry
-  legend, and the same tick style. This is why one script/heuristic set
-  handles all 8 panels.
-- Only the **top sub-panel** of each is digitized (unlike-sign and like-sign
-  \(m_{ee}\) spectra); the bottom fit panel is not used — we redo the fit
-  ourselves in the app (LSA-style) from the digitized top panel.
+- Both figures use the **same ROOT canvas template**: each panel is a
+  **two-pad stack** — a top sub-pad (unlike-sign / like-sign histograms) and,
+  directly below it, sharing the same x-axis, a bottom sub-pad ("Raw J/ψ
+  signal" residual + MC/Pol1 fit curves) — plus the same 6-entry legend and
+  the same tick style. This is why one script/heuristic set handles all 8
+  panels.
+- **Both sub-pads are digitized** (v2, see below): the top pad for
+  unlike-sign, the bottom pad for the residual, which is used to *derive*
+  like-sign. The published fit curves themselves (MC, MC+Pol1, Pol1
+  Residual) are not used — we redo the fit ourselves in the app (LSA-style)
+  from the digitized data.
 
 ### Steps
 
@@ -81,33 +84,51 @@ ALICE results, across the full centrality range.
    ```
 
 2. **Digitize with Python** (`digitize_minv.py`)
-   - For each of the 8 panels, locates its frame (top/bottom/left/right) via
-     pixel-darkness axis detection, within a rough per-panel search box
-     (`x_search`/`y_search` in the `FIGURES` config)
+   - For each of the 8 panels, locates the top pad's frame (top/bottom/left/right)
+     via pixel-darkness axis detection, within a rough per-panel search box
+     (`x_search`/`y_search` in the `FIGURES` config), then locates the bottom
+     pad's frame directly below it (its top border *is* the top pad's x-axis;
+     its bottom border is found the same way, further down; it shares
+     `x_left`/`x_right` with the top pad)
    - Calibrates the mass ↔ pixel scale from the **major tick spacing**
      (0.2 GeV apart), not from the outer frame border — see "Known issue #2" below
-   - For each 0.04 GeV bin, scans a vertical strip to find the marker centroid
-     (unlike-sign = filled red circles, like-sign = open blue circles)
-   - Excludes the in-plot legend's pixel rectangle from the scan (a fixed
-     offset relative to each panel's own frame, verified safe for all 8
-     panels — see "Known issue #1" below), and prefers the y-cluster closest
-     to the previous bin's value when several candidate clusters exist
+   - For each 0.04 GeV bin:
+     - scans a vertical strip of the **top pad** to find the unlike-sign
+       marker centroid (filled red circles)
+     - scans the same mass column in the **bottom pad** to find the residual
+       marker centroid (strict near-black circles + error bars, distinguished
+       from the overlapping red/green/blue fit curves by a tighter colour
+       test), converting its pixel row to a signed value via the bottom
+       pad's y=0 reference row (see "Zero-row calibration" below)
+   - Excludes fixed pixel rectangles from each scan: the top pad's in-plot
+     legend (see "Known issue #1" below) and the bottom pad's two in-plot
+     text blocks (`N_J/ψ`/`S/B`/`S/√(S+2B)` on the left, `χ²/ndf`/`Fit
+     all`/`Fit bkg`/... on the right) — and prefers the y-cluster closest to
+     the previous bin's value when several candidate clusters exist
    - Converts pixel y-coordinate → an arbitrary-but-consistent entry count
      (the absolute scale cancels out in the normalisation step below, so we
      don't need to read each panel's, sometimes ×10³-scaled, y-axis)
 
+   **Zero-row calibration.** The bottom pad's y=0 tick is rendered
+   noticeably bolder/longer (~39 px) than its other major ticks (~22–24 px)
+   — confirmed on every one of the 8 panels by direct pixel measurement, and
+   cross-checked by eye against each panel's printed "0" label. Detecting
+   this one outlier tick gives a fully automatic, per-panel zero calibration
+   with no manual number transcription; as a sanity net, the detected
+   zero-row's position is also required to fall within the narrow band
+   (70–86% down the pad) seen consistently on every panel, or the script
+   refuses to digitize that panel.
+
 3. **Absolute normalisation**
-   - Each series is rescaled so that the **sum in the signal window [2.9, 3.2) GeV**
-     matches the published values printed on the figure:
-     - Unlike-sign sum → \(N_\text{total}\)
-     - Like-sign sum → \(N_\text{bkg}\)
-   - This ensures the residual \(U - L\) in the signal window equals
-     \(N_\text{total} - N_\text{bkg}\), consistent with published \(N_{J/\psi}\)
+   - Unlike-sign is rescaled so its **sum in the signal window [2.9, 3.2) GeV**
+     matches the published \(N_\text{total}\)
+   - Residual is rescaled so its sum in the same window matches published
+     \(N_\text{total} - N_\text{bkg}\)
+   - Like-sign is then *derived*: `like[i] = max(0, unlike[i] - residual[i])`
+     — see "Digitization methodology v2" below for why this replaced
+     independently digitizing the top pad's blue markers
 
-4. **Didactic clamp** `like[i] = min(like[i], unlike[i])`
-   — see **Known digitization issue #3** below.
-
-5. **Output** → JSON + manifest in `src/assets/exercises/jpsi/minv/`
+4. **Output** → JSON + manifest in `src/assets/exercises/jpsi/minv/`
 
 ### Reproduction
 
@@ -122,6 +143,8 @@ Published numbers (`nTotal`, `nBkg`, `nJpsi`, `sOverB`, `significance`,
 `nEvents`) for each panel are hand-transcribed from the on-plot text
 annotations into the `FIGURES` config at the top of `digitize_minv.py` —
 verified by direct zoomed inspection of the 300 DPI render for every panel.
+(Zero-row calibration for the bottom pad, by contrast, is automatic — see
+above — no per-panel axis-value transcription needed.)
 
 ---
 
@@ -139,7 +162,7 @@ verified by direct zoomed inspection of the 300 DPI render for every panel.
     "figure": 15,                  // 14 or 15
     "localPdf": "data/jpsi/minv_digitize/pb-pb-jpsi.pdf",
     "url": "https://...",          // null for Figure 14 (no public note URL on hand)
-    "digitizedWith": "Python/Pillow (per-bin strip scan)",
+    "digitizedWith": "Python/Pillow (per-bin strip scan, v2: residual read from bottom pad)",
     "renderDpi": 300,
     "binWidthGeV": 0.04,
     "nEvents": 36480000            // total events in centrality class
@@ -187,8 +210,8 @@ verified by direct zoomed inspection of the 300 DPI render for every panel.
 | Decision | Why |
 | --- | --- |
 | Binned counts (`unlike`/`like`) instead of unbinned `data` array | Faithful representation of the published histogram; no information loss vs. figure |
-| Residual not stored | Computed at runtime as `unlike[i] - like[i]`; avoids redundancy |
-| Didactic `like ≤ unlike` clamp | Avoids digitization flips that made blue bars taller than red in the UI; see issue #3 |
+| Residual not stored | Recomputed at runtime as `unlike[i] - like[i]` (equals the digitized bottom-pad residual by construction, up to rounding); avoids redundancy |
+| `like` derived as `unlike - residual`, floored at 0 | v2 methodology: reading the small U−L difference directly off the bottom pad avoids the catastrophic-cancellation noise of subtracting two independently-digitized ~10⁵–10⁶-count curves; see "Digitization methodology v2" and issue #3 |
 | `published` block | Allows validation: student's fit yield can be compared to ALICE result |
 | `fitHint` | Legacy (unused): seeded an earlier Gauss+poly fitter, superseded by the closed-form Pol1 residual fit |
 | Separate files per centrality | Smaller payloads; manifest enables lazy loading |
@@ -269,7 +292,7 @@ they're distinguishable by pixel length) and calibrating from that true
 sanity check raises an error if the tick-based and frame-based scales
 disagree by more than 15%, to catch future axis-detection failures outright.
 
-## Known digitization issue #3 (fixed): like-sign taller than unlike-sign
+## Known digitization issue #3 (superseded by v2): like-sign taller than unlike-sign
 
 After window normalisation, several centralities (especially **0–5%** and
 **10–20%**) had `like[i] > unlike[i]` in most bins. In the app that looked
@@ -278,28 +301,74 @@ large sideband ranges, while on the published figures the two series nearly
 overlap with like-sign typically at or slightly below unlike-sign
 (S/B ≈ 1% in the most central class).
 
-**Cause.** Unlike and like markers are digitized independently (filled red
-vs open blue). At S/B ≈ 1% the vertical separation is only ~1–2 pixels, so
-noise easily flips which series is higher. Independent absolute scaling to
-published \(N_\text{total}\) / \(N_\text{bkg}\) in `[2.9, 3.2)` then locks
-that bad relative shape into the sidebands.
+**Cause.** Unlike and like markers were digitized independently (filled red
+vs open blue, both from the top pad). At S/B ≈ 1% the vertical separation is
+only ~1–2 pixels, so noise easily flips which series is higher. Independent
+absolute scaling to published \(N_\text{total}\) / \(N_\text{bkg}\) in
+`[2.9, 3.2)` then locked that bad relative shape into the sidebands.
 
-**Fix.** After normalisation, apply a didactic clamp in `digitize_minv.py`:
+**v1 fix (superseded).** After normalisation, a didactic clamp
+`like[i] = min(like[i], unlike[i])` forced the ordering everywhere. This
+worked but was purely cosmetic — it papered over the underlying noisy
+subtraction rather than fixing it, and it clamped away *every* bin where
+`like` was even fractionally above `unlike`, including some that were
+genuine (if small) published fluctuations, not digitization noise.
 
-```text
-like[i] = min(like[i], unlike[i])
-```
+**v2 fix (current).** Root cause addressed directly — see "Digitization
+methodology v2" below. `like` is no longer digitized independently; it's
+*derived* as `unlike - residual`, where `residual` is read straight off the
+bottom pad. This structurally guarantees `unlike - like ≡ residual`, so
+`like` only exceeds `unlike` from genuine residual-read noise, not from
+subtracting two large nearly-equal numbers — in practice this dropped
+`like[i] > unlike[i]` bin counts from 30/43 and 28/43 (0–5%, 10–20%, v1) to
+single digits per panel, all isolated, sub-1%-of-`unlike` sideband bins.
+`like` is now only floored at 0 (`max(0, unlike[i] - residual[i])`), not
+clamped against `unlike` — see the design rationale table above.
 
-**Pedagogy vs paper.** Real histograms can show a few bins with like slightly
-above unlike from Poisson fluctuations; the clamp removes those too. For the
-MasterClass that is intentional: students should see a clean
-“unlike ≈ like + small excess” picture before subtract/fit, not systematic
-negative sideband residuals from digitization. Trade-off: window sum of like
-can drop a little below the printed \(N_\text{bkg}\) (residual in the window
-then slightly above \(N_\text{total} - N_\text{bkg}\)). The `published`
-block still stores the original paper numbers for comparison.
+---
 
-Each JSON records the clamp in `source.calibration`.
+## Digitization methodology v2: residual read from the bottom pad
+
+Rather than reading like-sign independently and subtracting, read the top
+pad's unlike-sign as before, but derive like-sign as `unlike - residual`,
+where `residual` is read directly from each panel's **bottom sub-pad** ("Raw
+J/ψ signal" black points) — a panel ROOT already renders on a scale sized
+for the small U−L difference, so it carries far better relative precision
+than subtracting two independently-digitized ~10⁵–10⁶-count curves.
+
+Implementation, entirely in `digitize_minv.py`:
+
+1. **Bottom-pad frame** — top border is the top pad's own x-axis (shared
+   row); bottom border is a second horizontal-axis search further down;
+   `x_left`/`x_right` are reused from the top pad (confirmed identical
+   across a Figure 14 and a Figure 15 panel).
+2. **Zero-row calibration** — see the automatic bold-tick detection
+   described above; sanity-checked against a fixed expected fractional
+   position (`ZERO_ROW_FRACTION_BAND`).
+3. **Black-marker detection** — a strict `is_black` colour test (tighter
+   than the generic `is_dark` used for frame/axis structure) isolates
+   marker pixels even where they visually overlap the red "MC+Pol1 Fit"
+   curve at the peak.
+4. **In-plot text exclusion** — the bottom pad's `N_J/ψ`/`S/B`/`S/√(S+2B)`
+   (left) and `χ²/ndf`/`Fit all`/`Fit bkg`/... (right) annotations sit in
+   the pad's upper region and must not contaminate the marker scan. Unlike
+   the top-pad legend (issue #1), the right-hand text block occupies nearly
+   the same *mass range* as real high-mass sideband data — so exclusion is
+   a rectangle bounded in **both** x and y (`RIGHT_TEXT_REL_X_MIN`,
+   `RIGHT_TEXT_REL_Y`), not a full-width column: real sideband markers stay
+   near the zero-row (low in the pad) while the text sits high in the pad,
+   so a y-bounded rectangle removes the text without touching sideband data.
+   The exclusion's x-start was measured on the panel with the longest
+   printed numbers (0–5%, Figure 14) so it's conservative for every panel
+   (a TPaveText's left edge is fixed by its on-pad position; only the
+   printed values' length varies, extending the text further right, never
+   left).
+5. **Signed value & normalisation** — `residual_raw[i] = zero_row - y`
+   (positive above zero, negative below), window-sum normalised to
+   published \(N_\text{total} - N_\text{bkg}\), then
+   `like[i] = max(0, unlike[i] - residual[i])`. Unlike the old clamp,
+   isolated negative-residual sideband bins (real fluctuations already
+   present in the published bottom panel) are preserved rather than erased.
 
 ---
 

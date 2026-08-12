@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Digitize published Pb-Pb J/psi Minv top panels (unlike + like) into
+"""Digitize published Pb-Pb J/psi Minv panels into
 assets/exercises/jpsi/minv/*.json, across two source figures / 8 centrality
 classes.
 
@@ -12,10 +12,17 @@ Both source figures share the same ROOT canvas template (same legend
 layout, same tick style, same top/bottom sub-pad split), which is why a
 single set of pixel heuristics below works for every panel in both figures.
 
-After window-sum normalisation to published N_total / N_bkg, applies a
-didactic clamp like[i] = min(like[i], unlike[i]) so digitization noise
-cannot leave background bars taller than unlike-sign in the MasterClass UI
-(see assets/.../minv/README.md, Known digitization issue #3).
+Digitization strategy (v2): `unlike` is read from the top sub-pad's red
+markers (unchanged from v1). `like` is *derived* as `unlike - residual`,
+where `residual` is read directly from the bottom sub-pad's black "Raw
+J/psi signal" markers, instead of independently digitizing the top pad's
+overlapping blue markers. The top pad shows unlike/like at ~10^5-10^6
+counts with only a ~1-2 px visual separation (S/B ~ 1-3% in central
+classes), so subtracting two independent reads of those curves amplifies
+pixel noise into a large relative error in the difference. The bottom pad
+already shows that small difference on its own, appropriately-scaled axis,
+so reading it directly avoids this catastrophic-cancellation problem (see
+assets/.../minv/README.md, "Known digitization issue #3").
 """
 from __future__ import annotations
 
@@ -47,21 +54,61 @@ WIN = (2.9, 3.2)
 # absolute position on the page or its y-axis scale. A real data point is
 # never found above y_top+158 anywhere near that column (checked with >15px
 # margin for every panel), so excluding this rectangle from the per-column
-# pixel scan removes the legend without ever discarding real data.
+# pixel scan removes the legend without ever discarding real data. (Only
+# relevant to the top pad's red/unlike scan now -- see is_black comment
+# above for why v2 no longer digitizes the top pad's blue/like markers.)
 LEGEND_REL_X = (420, 520)
 LEGEND_Y_OFFSET = 158
+
+# The bottom pad's in-plot text annotations ("N_J/psi:.. S/B:.. S/sqrt(S+2B).."
+# on the left, "chi2/ndf.. Fit all:.. Fit bkg:.. Fit all-Fit bkg.. Fit J/psi.."
+# on the right) must be excluded from the black-marker scan. Their extent was
+# measured directly on the Figure 14, 0-5% panel (the one with the longest
+# printed numbers, so the widest text): real data -- including the tallest
+# J/psi-peak marker and its error bar -- never crosses x_left+505 while
+# inside the text's y-band, and the text's *left* edge is fixed by the ROOT
+# TPaveText's on-pad position (identical for every panel of a figure; only
+# the printed numbers' length varies with the value, which only extends the
+# text further right, never left). RIGHT_TEXT_REL_X has no upper bound
+# because everything right of the threshold, in that y-band, is text.
+LEFT_TEXT_REL_X = (0, 300)
+LEFT_TEXT_REL_Y = (0, 165)
+RIGHT_TEXT_REL_X_MIN = 505
+RIGHT_TEXT_REL_Y = (0, 220)
+
+# Search window (px, below the top pad's x-axis) for the bottom pad's own
+# bottom frame border.
+BOTTOM_PAD_SEARCH = (300, 500)
+
+# Fraction of the bottom pad's height at which the y=0 reference row sits.
+# ROOT renders this tick noticeably bolder/longer than the other major
+# ticks (confirmed on every one of the 8 panels: ~39px vs ~22-24px for
+# regular majors), which is a far more robust signal than trying to read
+# the axis' printed numbers -- but as a sanity net (this is calibration,
+# not measurement, so a silent mis-detection would corrupt every bin's
+# sign), the detected zero-row's fractional position is also required to
+# fall in this empirically-observed band (0.78 on every panel checked).
+ZERO_ROW_FRACTION_BAND = (0.70, 0.86)
 
 
 def is_red(r, g, b):
     return r > 150 and g < 120 and b < 130 and r >= g + 35 and r >= b + 35
 
 
-def is_blue(r, g, b):
-    return b > 125 and r < 135 and g < 175 and b > r + 25
-
-
 def is_dark(r, g, b):
     return r + g + b < 200
+
+
+def is_black(r, g, b):
+    """Strict near-black test for the bottom pad's "Raw J/psi signal"
+    markers and their error bars -- deliberately tighter than is_dark
+    (used for frame/axis structural elements) so it doesn't pick up
+    anti-aliased edge pixels of the green/red/blue fit curves that
+    visually overlap the black markers near the J/psi peak (confirmed by
+    direct pixel classification: at the peak column, red "MC+Pol1 Fit"
+    pixels and black marker pixels coexist in the same rows, but only the
+    marker pixels satisfy this stricter test)."""
+    return max(r, g, b) < 95 and (max(r, g, b) - min(r, g, b)) < 30
 
 
 # Each figure shares one rendered page; panels are (x_search, y_search)
@@ -144,7 +191,12 @@ def sum_win(arr, lo=WIN[0], hi=WIN[1]):
     return sum(arr[i] for i, c in enumerate(CENTERS) if lo <= c < hi)
 
 
-def fill_gaps(arr):
+def fill_gaps(arr, clamp_nonneg=True):
+    """Linearly interpolate short (<=2 bin) gaps of undetected markers;
+    longer gaps fall back to 0. `clamp_nonneg=False` is used for the
+    residual, which legitimately dips slightly negative in sideband bins
+    (a real background fluctuation already present in the published
+    figure) -- clamping it to 0 would erase that real signal."""
     a = list(arr)
     i = 0
     while i < len(a):
@@ -165,7 +217,9 @@ def fill_gaps(arr):
             for k in range(i, j):
                 a[k] = 0.0
         i = j
-    return [max(0.0, float(v)) for v in a]
+    if clamp_nonneg:
+        return [max(0.0, float(v)) for v in a]
+    return [float(v) for v in a]
 
 
 def digitize_panel(px, fig_cfg, panel_cfg):
@@ -268,6 +322,89 @@ def digitize_panel(px, fig_cfg, panel_cfg):
     legend_x0, legend_x1 = x_left + LEGEND_REL_X[0], x_left + LEGEND_REL_X[1]
     legend_y_max = y_top + LEGEND_Y_OFFSET
 
+    # --- Bottom pad (residual "Raw J/psi signal") geometry -----------------
+    # Its top border *is* the top pad's x-axis (shared row, y_bot); its own
+    # bottom border is a second near-full-width dark row further down; it
+    # shares x_left/x_right with the top pad (all confirmed identical across
+    # a Figure 14 and a Figure 15 panel -- no new per-panel search box
+    # needed).
+    y_top2 = y_bot
+    y_bot2 = find_horizontal_axis(
+        x_lo + 40, x_hi - 40, y_top2 + BOTTOM_PAD_SEARCH[0], y_top2 + BOTTOM_PAD_SEARCH[1]
+    )
+    if y_bot2 is None:
+        raise RuntimeError(f"{tag}: could not detect bottom pad's frame border")
+
+    def find_major_ticks_vertical(x_axis, y0, y1, min_len=8):
+        """Like find_major_tick_spacing, but rotated 90 degrees: scans tick
+        length to the *right* of the y-axis for each row instead of tick
+        length *below* the x-axis for each column. A min_len floor on the
+        raw per-row length is required here (unlike the x-axis version)
+        because on some panels x_axis+1 is itself part of the axis line's
+        anti-aliasing, which would otherwise register a spurious length>=1
+        on every row and merge every real tick into one giant run."""
+        lengths = {}
+        for y in range(y0, y1):
+            length = 0
+            for dx in range(1, 40):
+                if is_dark(*px[x_axis + dx, y]):
+                    length = dx
+                else:
+                    break
+            if length >= min_len:
+                lengths[y] = length
+        runs, cur, prev = [], [], None
+        for y in sorted(lengths):
+            if prev is not None and y - prev > 2:
+                runs.append(cur)
+                cur = []
+            cur.append(y)
+            prev = y
+        if cur:
+            runs.append(cur)
+        return [(sum(r) / len(r), max(lengths[y] for y in r)) for r in runs]
+
+    def find_zero_row():
+        """Locate the bottom pad's y=0 reference row. ROOT renders this
+        particular tick noticeably bolder/longer than the other major
+        ticks -- confirmed on every one of the 8 panels (~39px vs ~22-24px
+        for regular majors) by direct pixel measurement, and cross-checked
+        by eye against each panel's rendered "0" label during development.
+        This is far more robust than trying to read the axis' printed
+        numbers, and needs no per-panel hand-transcription."""
+        ticks = find_major_ticks_vertical(x_left, y_top2 + 2, y_bot2 - 2)
+        majors = [(row, length) for row, length in ticks if length >= 15]
+        if len(majors) < 3:
+            raise RuntimeError(
+                f"{tag}: too few y-axis major ticks found ({len(majors)}) "
+                f"on the bottom pad to calibrate zero-row"
+            )
+        normal_len = sorted(length for _, length in majors)[len(majors) // 2]
+        bold = [(row, length) for row, length in majors if length > 1.4 * normal_len]
+        if len(bold) != 1:
+            raise RuntimeError(
+                f"{tag}: expected exactly one bold zero-tick among bottom "
+                f"pad y-axis majors, found {len(bold)} "
+                f"(lengths={[l for _, l in majors]}) -- refusing to guess "
+                f"zero-row calibration"
+            )
+        zero_row = bold[0][0]
+        frac = (zero_row - y_top2) / (y_bot2 - y_top2)
+        if not (ZERO_ROW_FRACTION_BAND[0] <= frac <= ZERO_ROW_FRACTION_BAND[1]):
+            raise RuntimeError(
+                f"{tag}: zero-row at {frac:.2f} of bottom-pad height is "
+                f"outside the expected {ZERO_ROW_FRACTION_BAND} band seen "
+                f"on every other panel -- likely a mis-detection, refusing "
+                f"to calibrate"
+            )
+        return zero_row
+
+    zero_row = find_zero_row()
+    left_text_x0, left_text_x1 = x_left + LEFT_TEXT_REL_X[0], x_left + LEFT_TEXT_REL_X[1]
+    left_text_y0, left_text_y1 = y_top2 + LEFT_TEXT_REL_Y[0], y_top2 + LEFT_TEXT_REL_Y[1]
+    right_text_x0 = x_left + RIGHT_TEXT_REL_X_MIN
+    right_text_y0, right_text_y1 = y_top2 + RIGHT_TEXT_REL_Y[0], y_top2 + RIGHT_TEXT_REL_Y[1]
+
     def peak_y_candidates(ys, bin_px=3, top_n=4):
         """Return up to top_n candidate y-clusters, largest first, as
         (median_y, pixel_count) tuples. Returning several candidates
@@ -301,37 +438,51 @@ def digitize_panel(px, fig_cfg, panel_cfg):
         return candidates[0][0]
 
     max_jump_px = 0.35 * (y_bot - y_top)
+    max_jump_px2 = 0.35 * (y_bot2 - y_top2)
 
-    unlike, like = [], []
-    last_ry, last_by = None, None
+    unlike, residual_raw = [], []
+    last_ry, last_ky = None, None
     for c in CENTERS:
         if c < X_MASS_MIN - 1e-9 or c > X_MASS_MAX + 0.02:
             unlike.append(None)
-            like.append(None)
+            residual_raw.append(None)
             continue
         xc = mass_to_x(c)
         x0, x1 = int(xc - half), int(xc + half)
-        red_ys, blue_ys = [], []
+
+        red_ys = []
         for x in range(max(x_left + 2, x0), min(x_right - 2, x1) + 1):
             in_legend_x = legend_x0 <= x <= legend_x1
             y_scan_min = legend_y_max if in_legend_x else (y_top + 3)
             for y in range(y_scan_min, y_bot - 3):
-                r, g, b = px[x, y]
-                if is_red(r, g, b):
+                if is_red(*px[x, y]):
                     red_ys.append(y)
-                elif is_blue(r, g, b):
-                    blue_ys.append(y)
+
+        black_ys = []
+        for x in range(max(x_left + 2, x0), min(x_right - 2, x1) + 1):
+            in_left_text = left_text_x0 <= x <= left_text_x1
+            in_right_text = x >= right_text_x0
+            for y in range(y_top2 + 3, y_bot2 - 3):
+                if in_left_text and left_text_y0 <= y <= left_text_y1:
+                    continue
+                if in_right_text and right_text_y0 <= y <= right_text_y1:
+                    continue
+                if is_black(*px[x, y]):
+                    black_ys.append(y)
 
         ry = pick_continuous(peak_y_candidates(red_ys), last_ry, max_jump_px)
-        by = pick_continuous(peak_y_candidates(blue_ys), last_by, max_jump_px)
+        ky = pick_continuous(peak_y_candidates(black_ys), last_ky, max_jump_px2)
         if ry is not None:
             last_ry = ry
-        if by is not None:
-            last_by = by
+        if ky is not None:
+            last_ky = ky
         unlike.append(y_to_entries(ry) if ry is not None else None)
-        like.append(y_to_entries(by) if by is not None else None)
+        # Positive above the zero row, negative below -- residual can be
+        # legitimately negative in sideband bins (see fill_gaps docstring).
+        residual_raw.append(float(zero_row - ky) if ky is not None else None)
 
-    u, l = fill_gaps(unlike), fill_gaps(like)
+    u = fill_gaps(unlike)
+    residual = fill_gaps(residual_raw, clamp_nonneg=False)
 
     def warn_anomalies(arr, label):
         """Flag bins that look like a residual digitization artifact: a
@@ -357,21 +508,27 @@ def digitize_panel(px, fig_cfg, panel_cfg):
                       f"check for a remaining artifact")
 
     warn_anomalies(u, "unlike")
-    warn_anomalies(l, "like")
+    warn_anomalies(residual, "residual")
 
-    su, sl = sum_win(u), sum_win(l)
+    su, sr = sum_win(u), sum_win(residual)
     nTotal, nBkg = panel_cfg["nTotal"], panel_cfg["nBkg"]
-    u = [round(v * (nTotal / su), 3) for v in u]
-    l = [round(v * (nBkg / sl), 3) for v in l]
+    if abs(sr) < 1e-9:
+        raise RuntimeError(f"{tag}: residual window-sum is ~0, cannot normalise")
+    u = [v * (nTotal / su) for v in u]
+    residual = [v * ((nTotal - nBkg) / sr) for v in residual]
 
-    # Didactic clamp: on the published figures, like-sign markers sit at or
-    # slightly below unlike-sign everywhere (S/B ~ 1% in central Pb-Pb).
-    # Marker digitization noise can flip that ordering; clamp so students
-    # never see blue bars taller than red after subtract-ready display.
-    n_clamped = sum(1 for uu, ll in zip(u, l) if ll > uu)
-    if n_clamped:
-        print(f"  {tag}: didactic clamp like<=unlike in {n_clamped}/{len(u)} bins")
-    l = [min(ll, uu) for uu, ll in zip(u, l)]
+    # like is *derived*, not independently digitized: unlike - like == residual
+    # by construction, so (unlike - residual) can only fall below 0 from
+    # genuine digitization noise in the residual read, not from the old
+    # systematic "two independent near-overlapping curves" bias -- this is
+    # therefore a plain physical floor, not the old didactic min(like,unlike)
+    # clamp. See "Known digitization issue #3" in the README.
+    like_raw = [uu - rr for uu, rr in zip(u, residual)]
+    n_negative = sum(1 for v in like_raw if v < 0)
+    if n_negative:
+        print(f"  {tag}: floored like to 0 in {n_negative}/{len(u)} bins (residual > unlike)")
+    u = [round(v, 3) for v in u]
+    l = [round(max(0.0, v), 3) for v in like_raw]
 
     uerr = [round(math.sqrt(max(v, 0)), 3) for v in u]
     lerr = [round(math.sqrt(max(v, 0)), 3) for v in l]
@@ -386,15 +543,17 @@ def digitize_panel(px, fig_cfg, panel_cfg):
             "figure": fig_cfg["figure"],
             "localPdf": fig_cfg["localPdf"],
             "url": fig_cfg["url"],
-            "digitizedWith": "Python per-bin strip digitization + window-scale calibration",
+            "digitizedWith": "Python per-bin strip digitization (v2: residual read from bottom pad)",
             "renderDpi": 300,
             "binWidthGeV": BIN_WIDTH,
             "nEvents": panel_cfg["nEvents"],
             "calibration": (
-                "Shape from top-panel markers; absolute scale set so sums in "
-                "[2.9,3.2) match published N_total / N_bkg; then didactic "
-                "clamp like[i] = min(like[i], unlike[i]) to remove "
-                "digitization flips (MasterClass: never show like > unlike)"
+                "unlike: shape from top-pad red markers, scaled so its "
+                "[2.9,3.2) window sum matches published N_total. residual: "
+                "shape from bottom-pad black 'Raw J/psi signal' markers "
+                "(read directly, not as unlike-minus-independently-digitized-like), "
+                "scaled so its window sum matches N_total-N_bkg; "
+                "like = max(0, unlike - residual)"
             ),
         },
         "xmin": 2.0,
@@ -430,9 +589,9 @@ def digitize_panel(px, fig_cfg, panel_cfg):
 
     with open(IMG_DIR / f"{tag}_unlike_like.csv", "w", newline="") as f:
         wri = csv.writer(f)
-        wri.writerow(["binCenter", "unlike", "like"])
-        for c, uu, ll in zip(CENTERS, u, l):
-            wri.writerow([f"{c:.4f}", f"{uu:.3f}", f"{ll:.3f}"])
+        wri.writerow(["binCenter", "unlike", "like", "residual"])
+        for c, uu, ll, rr in zip(CENTERS, u, l, residual):
+            wri.writerow([f"{c:.4f}", f"{uu:.3f}", f"{ll:.3f}", f"{rr:.3f}"])
 
     return {"id": f"pbPb_{tag}", "file": f"pbPb_{tag}.json", "centrality": tag}
 
