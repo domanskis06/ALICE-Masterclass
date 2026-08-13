@@ -21,8 +21,8 @@
     "STRANGENESS": "Seltsamkeit",
     "VISUAL_ANALYSIS": "Visuelle Analyse",
     "LARGE_SCALE_ANALYSIS": "Großskalige Analyse",
-    "JPSI": "J/psi",
-    "JPSI_ANALYSIS": "R_AA-Analyse"
+    "JPSI": "J/ψ-Produktion",
+    "JPSI_ANALYSIS": "J/ψ-Analyse"
   },
   "SESSION": {
     "TITLE": "Ereignisse",

@@ -21,8 +21,8 @@
     "STRANGENESS": "Strangeness",
     "VISUAL_ANALYSIS": "Visual Analysis",
     "LARGE_SCALE_ANALYSIS": "Large Scale Analysis",
-    "JPSI": "J/psi",
-    "JPSI_ANALYSIS": "R_AA Analysis"
+    "JPSI": "J/ψ production",
+    "JPSI_ANALYSIS": "J/ψ analysis"
   },
   "SESSION": {
     "TITLE": "Events",

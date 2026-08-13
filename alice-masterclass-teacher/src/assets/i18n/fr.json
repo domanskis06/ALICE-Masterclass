@@ -21,8 +21,8 @@
     "STRANGENESS": "Étrangeté",
     "VISUAL_ANALYSIS": "Analyse visuelle",
     "LARGE_SCALE_ANALYSIS": "Analyse à grande échelle",
-    "JPSI": "J/psi",
-    "JPSI_ANALYSIS": "Analyse R_AA"
+    "JPSI": "Production de J/ψ",
+    "JPSI_ANALYSIS": "Analyse J/ψ"
   },
   "SESSION": {
     "TITLE": "Événements",

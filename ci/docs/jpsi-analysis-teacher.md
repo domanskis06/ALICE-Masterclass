@@ -9,7 +9,7 @@ student's own pp/p-Pb measurement (see "Why a fixed pp reference?" below).
 | --- | --- |
 | **Module** | `alice-masterclass-teacher/src/app/jpsi-analysis/` |
 | **Route** | `/jpsi-analysis` |
-| **Nav** | `NAV.JPSI` / `NAV.JPSI_ANALYSIS` — "R_AA Analysis" |
+| **Nav** | `NAV.JPSI` / `NAV.JPSI_ANALYSIS` — "J/ψ production" / "J/ψ analysis" |
 | **Status** | **Layout only.** Results are hard-coded sample data; there is no
 `jpsi_analysis`/`jpsi_analysis_results` endpoint in the Django API yet, and no student→teacher
 data flow. See "Why layout only" below. |
