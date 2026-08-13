@@ -35,8 +35,8 @@
 
         <ng-container matColumnDef="efficiency">
           <th mat-header-cell *matHeaderCellDef>{{ 'JPSI_ANALYSIS.EFFICIENCY' | translate }}</th>
-          <td mat-cell *matCellDef="let element;" [title]="('JPSI_ANALYSIS.EFFICIENCY_TOOLTIP' | translate) + ' ' + (element.efficiency | number:'1.3-3') + ' × ' + (element.windowFactor | number:'1.2-2')">
-            {{ (element.efficiency * element.windowFactor) | number:'1.2-2' }}
+          <td mat-cell *matCellDef="let element;" [title]="('JPSI_ANALYSIS.EFFICIENCY_TOOLTIP' | translate) + ' ' + (element.efficiency | number:'1.3-3')">
+            {{ element.efficiency | number:'1.2-2' }}
           </td>
         </ng-container>
 

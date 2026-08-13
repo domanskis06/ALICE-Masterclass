@@ -1,10 +1,12 @@
 import {
   clampedResidual,
   createPbPbCentralityState,
+  defaultPbPbSignalWindow,
   emptyFitSnapshot,
   isPbPbCentralityId,
   PBPB_CENTRALITY_DESCRIPTORS,
   PBPB_CENTRALITY_IDS,
+  PBPB_SIGNAL_WINDOW_WIDTH,
   PublishedMinvHistogram,
   rawResidual,
 } from './pbpb-minv.models';
@@ -142,5 +144,11 @@ describe('emptyFitSnapshot / createPbPbCentralityState', () => {
     const snapshot = emptyFitSnapshot([2.0, 3.72]);
     expect(snapshot.massWindow).toEqual([2.0, 3.72]);
     expect(snapshot.backgroundFitRange).toEqual([2.0, 3.72]);
+  });
+});
+
+describe('defaultPbPbSignalWindow', () => {
+  it('parks the fixed-width window at the left of the given axis', () => {
+    expect(defaultPbPbSignalWindow(2.0)).toEqual([2.0, 2.0 + PBPB_SIGNAL_WINDOW_WIDTH]);
   });
 });

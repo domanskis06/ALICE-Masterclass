@@ -22,7 +22,6 @@ export class ResultsTableComponent {
     'background',
     'signalToBackground',
     'significance',
-    'window',
     'actions',
   ];
 

@@ -502,10 +502,9 @@
       "FIT_HINT": "Appuie sur Ajuster pour ajuster le fond et compter le signal dans la fenêtre.",
       "ACCEPT": "Valider le résultat",
       "RESET_RANGE": "Réinitialiser la plage",
-      "RESET_ZOOM": "Réinitialiser le zoom",
       "CLEAR_FIT": "Effacer l'ajustement",
       "TOO_WIDE": "Ta sélection contient trop de traces. Resserre d'abord la bande des électrons.",
-      "NO_SIGNAL_HINT": "Pas de signal dans cette fenêtre. Élargis-la ou déplace-la sur le pic, puis ajuste à nouveau."
+      "NO_SIGNAL_HINT": "Pas de signal dans cette fenêtre. Déplace-la sur le pic, puis ajuste à nouveau."
     },
     "METRICS": {
       "SIGNAL": "Signal J/psi",
@@ -526,7 +525,6 @@
         "BACKGROUND": "Bruit de fond",
         "SB": "S/B",
         "SIGNIFICANCE": "Significativité",
-        "WINDOW": "Fenêtre de masse",
         "DELETE": "Supprimer ce résultat",
         "EMPTY": "Acceptez un ajustement pour l'ajouter ici."
       }
@@ -539,7 +537,6 @@
       "BACKGROUND": "Bruit de fond",
       "SB": "S/B",
       "SIGNIFICANCE": "Significativité",
-      "WINDOW": "Fenêtre de masse",
       "DELETE": "Supprimer ce résultat",
       "EMPTY": "Valide un résultat pour l'ajouter ici.",
       "UPLOAD_SOON": "L'envoi des résultats à ton enseignant sera bientôt disponible."
@@ -580,7 +577,7 @@
       "STEP_SUBTRACT_TITLE": "Soustraire le bruit de fond",
       "STEP_SUBTRACT_BODY": "Les paires de même charge mesurent les combinaisons aléatoires directement dans les données. Soustrais-les case par case des paires de charges opposées et ce qui reste est le résidu : un pic de J/psi sur un fond qui n'est pas parfaitement plat. Les fluctuations aléatoires peuvent aussi faire passer une case légèrement sous zéro — ces cases sont affichées à zéro.",
       "STEP_WINDOW_TITLE": "Compter le signal",
-      "STEP_WINDOW_BODY": "Fais glisser la plage d'ajustement du bruit de fond sur les parties plates en dehors du pic et clique sur <strong>Ajuster</strong> pour tracer une droite à travers elles. Fais glisser la fenêtre de signal sur le pic lui-même : tout ce qui est au-dessus de la droite à l'intérieur est ton signal. Remarque comment une fenêtre trop large ajoute du bruit de fond et dégrade le rapport signal sur bruit.",
+      "STEP_WINDOW_BODY": "Fais glisser la plage d'ajustement du bruit de fond sur les parties plates en dehors du pic et clique sur <strong>Ajuster</strong> pour tracer une droite à travers elles. La fenêtre de signal a une largeur fixe — tu peux seulement la déplacer (pas la redimensionner) jusqu'à ce qu'elle soit sur le pic : tout ce qui est au-dessus de la droite à l'intérieur est ton signal.",
       "STEP_ACCEPT_TITLE": "Enregistrer ton résultat",
       "STEP_ACCEPT_BODY": "<strong>Valider le résultat</strong> enregistre cette mesure dans ton tableau. Tu peux toujours changer la fenêtre et valider de nouveau.",
       "STEP_RESULTS_TITLE": "Tes résultats",

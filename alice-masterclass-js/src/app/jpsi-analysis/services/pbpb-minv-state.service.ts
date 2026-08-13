@@ -3,6 +3,7 @@ import { Observable, Subject } from 'rxjs';
 
 import {
   createPbPbCentralityState,
+  defaultPbPbSignalWindow,
   emptyFitSnapshot,
   PbPbCentralityId,
   PbPbCentralityState,
@@ -155,9 +156,12 @@ export class PbPbMinvStateService {
   }
 
   /**
-   * Student starts from the full axis on both sliders — same starting point as LSA — so a
-   * centrality whose histogram has empty bins at the edges (several do, see the plan doc)
-   * forces the student to notice and narrow the background fit range themselves.
+   * The background sideband slider still starts on the full axis — same starting point as
+   * LSA — so a centrality whose histogram has empty bins at the edges (several do, see the
+   * plan doc) forces the student to notice and narrow it themselves. The signal window, on the
+   * other hand, has a fixed width the student can only slide (see `PBPB_SIGNAL_WINDOW_WIDTH`),
+   * so it starts at the left of the axis (`defaultPbPbSignalWindow`) instead of on the peak —
+   * the student has to slide it onto the J/psi themselves.
    */
   subtractBackground(): void {
     if (!this.canSubtract) {
@@ -170,7 +174,7 @@ export class PbPbMinvStateService {
     }
 
     const fullRange: [number, number] = [histogram.xmin, histogram.xmax];
-    state.fitSnapshot = emptyFitSnapshot(fullRange);
+    state.fitSnapshot = emptyFitSnapshot(fullRange, defaultPbPbSignalWindow(histogram.xmin));
     state.panelMode = 'subtracted';
     this.emit();
   }

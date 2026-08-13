@@ -37,6 +37,27 @@ export const PBPB_CENTRALITY_DESCRIPTORS: readonly PbPbCentralityDescriptor[] = 
 /** Everything selectable in the toolbar dropdown: track-based datasets plus published Pb-Pb centralities. */
 export type CollisionSystemId = DatasetId | PbPbCentralityId;
 
+/**
+ * Fixed width of the student's signal-counting window (GeV/c^2) for every Pb-Pb centrality —
+ * 6 bins at these histograms' 40 MeV binning. The student can only slide the window, not
+ * resize it. Identical to the teacher module's `JPSI_REFERENCE_MASS_WINDOW` width
+ * (`alice-masterclass-teacher/src/app/jpsi-analysis/jpsi-raa.constants.ts`) — Acc×epsilon there
+ * is calibrated to exactly this width, so fixing it here removes the need for any mass-window
+ * "safety net" correction on the teacher side (a mismatch can no longer occur). Mirrors
+ * `SIGNAL_WINDOW_WIDTH` in `jpsi.models.ts` (pp/p-Pb).
+ */
+export const PBPB_SIGNAL_WINDOW_WIDTH = 0.24;
+
+/**
+ * Default signal-window position for a Pb-Pb histogram: parked at the left of that histogram's
+ * own axis, not on the peak. Starting on the J/psi would give the yield away — the student has
+ * to slide the block onto the peak. Each centrality's xmin differs, so this is computed from
+ * the loaded histogram rather than a shared constant.
+ */
+export function defaultPbPbSignalWindow(xmin: number): [number, number] {
+  return [xmin, xmin + PBPB_SIGNAL_WINDOW_WIDTH];
+}
+
 const PBPB_CENTRALITY_ID_SET: ReadonlySet<string> = new Set(PBPB_CENTRALITY_IDS);
 
 export function isPbPbCentralityId(id: CollisionSystemId): id is PbPbCentralityId {
@@ -127,10 +148,13 @@ export interface PbPbFitSnapshot {
   fitResult: ResidualFitResult | null;
 }
 
-export function emptyFitSnapshot(range: [number, number] = [0, 1]): PbPbFitSnapshot {
+export function emptyFitSnapshot(
+  backgroundFitRange: [number, number] = [0, 1],
+  massWindow: [number, number] = backgroundFitRange
+): PbPbFitSnapshot {
   return {
-    massWindow: [...range],
-    backgroundFitRange: [...range],
+    massWindow: [...massWindow],
+    backgroundFitRange: [...backgroundFitRange],
     fitResult: null,
   };
 }

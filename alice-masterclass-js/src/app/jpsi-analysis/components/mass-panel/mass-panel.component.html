@@ -12,16 +12,6 @@
       >
         {{ 'JPSI.MASS.RESET_RANGE' | translate }}
       </button>
-      <button
-        type="button"
-        mat-stroked-button
-        class="mass-panel__action-button"
-        data-testid="jpsi-reset-zoom"
-        [disabled]="!isZoomed"
-        (click)="resetZoom()"
-      >
-        {{ 'JPSI.MASS.RESET_ZOOM' | translate }}
-      </button>
     </div>
   </mat-card-title>
 
@@ -167,11 +157,6 @@
 
           <g class="x-axis"></g>
           <g class="y-axis"></g>
-          <g
-            class="mass-panel__brush"
-            #brushGroup
-            [attr.transform]="'translate(' + margin.left + ',' + margin.top + ')'"
-          ></g>
 
           <text
             class="mass-panel__axis-label"

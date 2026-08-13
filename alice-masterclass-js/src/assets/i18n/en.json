@@ -500,10 +500,9 @@
       "FIT_HINT": "Press Fit to fit the background and count the signal in the window.",
       "ACCEPT": "Accept result",
       "RESET_RANGE": "Reset range",
-      "RESET_ZOOM": "Reset zoom",
       "CLEAR_FIT": "Clear fit",
       "TOO_WIDE": "Your selection contains too many tracks. Narrow the electron band first.",
-      "NO_SIGNAL_HINT": "No signal in this window. Widen it or move it over the peak, then fit again."
+      "NO_SIGNAL_HINT": "No signal in this window. Move it over the peak, then fit again."
     },
     "METRICS": {
       "SIGNAL": "J/psi signal",
@@ -524,7 +523,6 @@
         "BACKGROUND": "Background",
         "SB": "S/B",
         "SIGNIFICANCE": "Significance",
-        "WINDOW": "Mass window",
         "DELETE": "Remove this result",
         "EMPTY": "Accept a fit to add it here."
       }
@@ -537,7 +535,6 @@
       "BACKGROUND": "Background",
       "SB": "S/B",
       "SIGNIFICANCE": "Significance",
-      "WINDOW": "Mass window",
       "DELETE": "Remove this result",
       "EMPTY": "Accept a result to add it here.",
       "UPLOAD_SOON": "Sending results to your teacher will be available soon."
@@ -578,7 +575,7 @@
       "STEP_SUBTRACT_TITLE": "Subtract the background",
       "STEP_SUBTRACT_BODY": "Same-charge pairs measure the random combinations directly from the data. Subtract them bin by bin from the opposite-charge pairs and what remains is the residual: a J/psi peak sitting on top of a background that is not perfectly flat. Random fluctuations can also push a bin slightly below zero — we show those bins as zero.",
       "STEP_WINDOW_TITLE": "Count the signal",
-      "STEP_WINDOW_BODY": "Drag the background fit range over the flat parts outside the peak and press <strong>Fit</strong> to draw a straight line through them. Drag the signal window over the peak itself: everything above the line inside it is your signal. Notice how a window that is too wide adds background and makes the signal to background ratio worse.",
+      "STEP_WINDOW_BODY": "Drag the background fit range over the flat parts outside the peak and press <strong>Fit</strong> to draw a straight line through them. The signal window has a fixed width — slide it (you cannot resize it) until it sits over the peak: everything above the line inside it is your signal.",
       "STEP_ACCEPT_TITLE": "Save your result",
       "STEP_ACCEPT_BODY": "<strong>Accept result</strong> stores this measurement in your table. You can always change the window and accept again.",
       "STEP_RESULTS_TITLE": "Your results",

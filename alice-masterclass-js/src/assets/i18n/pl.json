@@ -502,10 +502,9 @@
       "FIT_HINT": "Naciśnij Dopasuj, aby dopasować tło i zliczyć sygnał w oknie.",
       "ACCEPT": "Zaakceptuj wynik",
       "RESET_RANGE": "Resetuj zakres",
-      "RESET_ZOOM": "Resetuj powiększenie",
       "CLEAR_FIT": "Wyczyść dopasowanie",
       "TOO_WIDE": "Twoje zaznaczenie zawiera za dużo torów. Najpierw zawęż pas elektronów.",
-      "NO_SIGNAL_HINT": "Brak sygnału w tym oknie. Poszerz je albo przesuń na pik i dopasuj ponownie."
+      "NO_SIGNAL_HINT": "Brak sygnału w tym oknie. Przesuń je na pik i dopasuj ponownie."
     },
     "METRICS": {
       "SIGNAL": "Sygnał J/psi",
@@ -526,7 +525,6 @@
         "BACKGROUND": "Tło",
         "SB": "S/B",
         "SIGNIFICANCE": "Istotność",
-        "WINDOW": "Okno masy",
         "DELETE": "Usuń ten wynik",
         "EMPTY": "Zaakceptuj dopasowanie, aby dodać je tutaj."
       }
@@ -539,7 +537,6 @@
       "BACKGROUND": "Tło",
       "SB": "S/B",
       "SIGNIFICANCE": "Istotność",
-      "WINDOW": "Okno masy",
       "DELETE": "Usuń ten wynik",
       "EMPTY": "Zaakceptuj wynik, żeby dodać go tutaj.",
       "UPLOAD_SOON": "Wysyłanie wyników do nauczyciela będzie dostępne wkrótce."
@@ -580,7 +577,7 @@
       "STEP_SUBTRACT_TITLE": "Odejmij tło",
       "STEP_SUBTRACT_BODY": "Pary tego samego znaku mierzą przypadkowe kombinacje wprost z danych. Odejmij je bin po binie od par przeciwnego znaku, a zostanie rezydualny sygnał: pik J/psi na tle, które nie jest idealnie płaskie. Losowe fluktuacje mogą też zepchnąć bin lekko poniżej zera — takie biny pokazujemy jako zero.",
       "STEP_WINDOW_TITLE": "Policz sygnał",
-      "STEP_WINDOW_BODY": "Przesuń zakres dopasowania tła na płaskie fragmenty poza pikiem i naciśnij <strong>Dopasuj</strong>, aby poprowadzić przez nie prostą. Przesuń okno sygnału na sam pik: liczy się wszystko powyżej prostej, co jest w środku. Zwróć uwagę, jak zbyt szerokie okno dokłada tło i psuje stosunek sygnału do tła.",
+      "STEP_WINDOW_BODY": "Przesuń zakres dopasowania tła na płaskie fragmenty poza pikiem i naciśnij <strong>Dopasuj</strong>, aby poprowadzić przez nie prostą. Okno sygnału ma stałą szerokość — możesz je tylko przesuwać (nie rozciągniesz go), aż znajdzie się nad pikiem: liczy się wszystko powyżej prostej, co jest w jego środku.",
       "STEP_ACCEPT_TITLE": "Zapisz wynik",
       "STEP_ACCEPT_BODY": "<strong>Zaakceptuj wynik</strong> zapisuje ten pomiar w twojej tabeli. Zawsze możesz zmienić okno i zaakceptować ponownie.",
       "STEP_RESULTS_TITLE": "Twoje wyniki",

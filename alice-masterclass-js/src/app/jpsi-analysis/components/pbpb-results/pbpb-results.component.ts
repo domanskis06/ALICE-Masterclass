@@ -26,7 +26,6 @@ export class PbPbResultsComponent {
     'background',
     'signalToBackground',
     'significance',
-    'window',
     'actions',
   ];
 

@@ -500,10 +500,9 @@
       "FIT_HINT": "Drücke Fit, um den Untergrund zu fitten und das Signal im Fenster zu zählen.",
       "ACCEPT": "Ergebnis übernehmen",
       "RESET_RANGE": "Bereich zurücksetzen",
-      "RESET_ZOOM": "Zoom zurücksetzen",
       "CLEAR_FIT": "Fit löschen",
       "TOO_WIDE": "Deine Auswahl enthält zu viele Spuren. Grenze zuerst das Elektronenband ein.",
-      "NO_SIGNAL_HINT": "Kein Signal in diesem Fenster. Erweitere es oder verschiebe es über den Peak und fitte erneut."
+      "NO_SIGNAL_HINT": "Kein Signal in diesem Fenster. Verschiebe es über den Peak und fitte erneut."
     },
     "METRICS": {
       "SIGNAL": "J/psi-Signal",
@@ -524,7 +523,6 @@
         "BACKGROUND": "Untergrund",
         "SB": "S/U",
         "SIGNIFICANCE": "Signifikanz",
-        "WINDOW": "Massenfenster",
         "DELETE": "Dieses Ergebnis entfernen",
         "EMPTY": "Akzeptiere einen Fit, um ihn hier hinzuzufügen."
       }
@@ -537,7 +535,6 @@
       "BACKGROUND": "Untergrund",
       "SB": "S/U",
       "SIGNIFICANCE": "Signifikanz",
-      "WINDOW": "Massenfenster",
       "DELETE": "Dieses Ergebnis entfernen",
       "EMPTY": "Übernimm ein Ergebnis, um es hier einzutragen.",
       "UPLOAD_SOON": "Das Senden der Ergebnisse an die Lehrkraft wird bald verfügbar sein."
@@ -578,7 +575,7 @@
       "STEP_SUBTRACT_TITLE": "Untergrund abziehen",
       "STEP_SUBTRACT_BODY": "Paare gleicher Ladung messen die zufälligen Kombinationen direkt aus den Daten. Ziehe sie Bin für Bin von den Paaren mit entgegengesetzter Ladung ab, und übrig bleibt das Residuum: ein J/psi-Peak auf einem Untergrund, der nicht perfekt flach ist. Zufällige Schwankungen können außerdem einen Bin leicht unter null drücken — solche Bins zeigen wir als null.",
       "STEP_WINDOW_TITLE": "Signal zählen",
-      "STEP_WINDOW_BODY": "Ziehe den Untergrund-Anpassungsbereich über die flachen Stellen außerhalb des Peaks und klicke auf <strong>Anpassen</strong>, um eine Gerade hindurchzulegen. Ziehe das Signalfenster über den Peak selbst: Alles darüber innerhalb des Fensters ist dein Signal. Achte darauf, wie ein zu breites Fenster Untergrund hinzufügt und das Verhältnis von Signal zu Untergrund verschlechtert.",
+      "STEP_WINDOW_BODY": "Ziehe den Untergrund-Anpassungsbereich über die flachen Stellen außerhalb des Peaks und klicke auf <strong>Anpassen</strong>, um eine Gerade hindurchzulegen. Das Signalfenster hat eine feste Breite — du kannst es nur verschieben (nicht vergrößern), bis es über dem Peak liegt: Alles darüber innerhalb des Fensters ist dein Signal.",
       "STEP_ACCEPT_TITLE": "Ergebnis speichern",
       "STEP_ACCEPT_BODY": "<strong>Ergebnis übernehmen</strong> speichert diese Messung in deiner Tabelle. Du kannst das Fenster jederzeit ändern und erneut übernehmen.",
       "STEP_RESULTS_TITLE": "Deine Ergebnisse",

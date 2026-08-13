@@ -3,7 +3,6 @@ import { Component, OnInit, Type } from '@angular/core';
 import { ApiService, EventAPI } from '../shared/services/api.service';
 import { InstructionsProvider } from '../shared/interfaces';
 import { InstructionsComponent } from './instructions/instructions.component';
-import { JPSI_REFERENCE_MASS_WINDOW } from './jpsi-raa.constants';
 import { JpsiRaaService } from './jpsi-raa.service';
 import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow, isPbPbCentrality } from './jpsi-raa.models';
 
@@ -13,9 +12,9 @@ import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow, isPbPbCentrality } from
  * `ci/docs/jpsi-analysis-teacher.md`). Pb-Pb numbers reuse the published yields/event counts
  * already bundled with the student exercise (`assets/exercises/jpsi/minv/pbPb_*.json`); pp/p-Pb
  * reuse the cross-checked example from the student module's README ("pp, 1000 events... N=59").
- * Every row uses `JPSI_REFERENCE_MASS_WINDOW` - they are digitized/published numbers already
- * calibrated to that window, so the mass-window safety net (`windowEfficiencyFactor`) is inert
- * for this sample data and only activates once real, variable-window student submissions exist.
+ * No mass window is carried here anymore - the student app locks the signal window to a fixed
+ * width matching `JPSI_REFERENCE_MASS_WINDOW` exactly (see "Mass-window safety net" in
+ * `ci/docs/jpsi-analysis-teacher.md`), so there is nothing left to vary per submission.
  *
  * pp and p-Pb signals are kept here because students do analyse and submit both systems as part
  * of the exercise - but per the physics supervisors' confirmed decision, only the eight Pb-Pb
@@ -23,16 +22,16 @@ import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow, isPbPbCentrality } from
  * reference?" in `ci/docs/jpsi-analysis-teacher.md`).
  */
 const SAMPLE_SIGNALS: readonly JpsiRawSignal[] = [
-  { system: 'pp', signal: 59, signalError: 8, nEvents: 1000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pPb', signal: 34, signalError: 6, nEvents: 800, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_0_5', signal: 34662, signalError: 186, nEvents: 40090000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_5_10', signal: 33443, signalError: 183, nEvents: 40070000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_10_20', signal: 7858, signalError: 89, nEvents: 18140000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_20_30', signal: 5961, signalError: 77, nEvents: 18180000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_30_40', signal: 7181, signalError: 85, nEvents: 39760000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_40_50', signal: 3425, signalError: 59, nEvents: 39830000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_50_70', signal: 1478, signalError: 38, nEvents: 36480000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
-  { system: 'pbPb_70_90', signal: 310, signalError: 18, nEvents: 36380000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
+  { system: 'pp', signal: 59, signalError: 8, nEvents: 1000 },
+  { system: 'pPb', signal: 34, signalError: 6, nEvents: 800 },
+  { system: 'pbPb_0_5', signal: 34662, signalError: 186, nEvents: 40090000 },
+  { system: 'pbPb_5_10', signal: 33443, signalError: 183, nEvents: 40070000 },
+  { system: 'pbPb_10_20', signal: 7858, signalError: 89, nEvents: 18140000 },
+  { system: 'pbPb_20_30', signal: 5961, signalError: 77, nEvents: 18180000 },
+  { system: 'pbPb_30_40', signal: 7181, signalError: 85, nEvents: 39760000 },
+  { system: 'pbPb_40_50', signal: 3425, signalError: 59, nEvents: 39830000 },
+  { system: 'pbPb_50_70', signal: 1478, signalError: 38, nEvents: 36480000 },
+  { system: 'pbPb_70_90', signal: 310, signalError: 18, nEvents: 36380000 },
 ];
 
 /** Deterministic pseudo-random number in [0, 1) - mulberry32, seeded per event/row. */

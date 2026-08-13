@@ -56,17 +56,20 @@ export function collisionSystemLabel(system: CollisionSystemId): string {
 
 /**
  * What a student ultimately submits per collision system: the fitted J/psi signal (and its
- * Poisson error) from the residual-fit yield extraction, the mass window used to extract it,
- * and the number of analysed events. This mirrors `SummaryRow`/`PbPbYieldRow` from the student
- * app, reduced to the few numbers the teacher-side R_AA calculation actually needs.
+ * Poisson error) from the residual-fit yield extraction, and the number of analysed events.
+ * This mirrors `SummaryRow`/`PbPbYieldRow` from the student app, reduced to the few numbers the
+ * teacher-side R_AA calculation actually needs. The mass window the signal was extracted from
+ * is deliberately *not* part of this payload: the student app locks that window to a fixed
+ * width per system (`SIGNAL_WINDOW_WIDTH`/`PBPB_SIGNAL_WINDOW_WIDTH` in the student app's
+ * `jpsi.models.ts`/`pbpb-minv.models.ts`) that matches Acc×epsilon's calibration window
+ * exactly, so there is nothing left for the teacher side to correct for (see "Mass-window
+ * safety net" in `ci/docs/jpsi-analysis-teacher.md`).
  */
 export interface JpsiRawSignal {
   system: CollisionSystemId;
   signal: number;
   signalError: number;
   nEvents: number;
-  /** [low, high] mass window (GeV/c^2) the signal was extracted from - see `windowEfficiencyFactor`. */
-  massWindow: [number, number];
 }
 
 /**
@@ -83,10 +86,8 @@ export interface JpsiResultRow {
   nEvents: number;
   signal: number;
   signalError: number;
-  /** Base Acc x epsilon for this system/centrality, BEFORE the mass-window correction. */
+  /** Acc x epsilon for this system/centrality. */
   efficiency: number;
-  /** Mass-window efficiency factor actually applied on top of `efficiency` (1 = reference window). */
-  windowFactor: number;
   correctedYield: number;
   raa: number | null;
   raaError: number | null;

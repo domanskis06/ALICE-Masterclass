@@ -146,7 +146,12 @@ whole plot. Any change to `PID_DEDX_MIN`, `PID_DEDX_MAX` or `PID_DEDX_BINS` has 
 bin width at a whole number.
 
 The mass panel draws bars rather than smooth densities: the whole lesson is that these are
-counts being subtracted from each other.
+counts being subtracted from each other. After subtraction the student fits a first-degree
+polynomial to the residual background *outside* the peak, then counts the excess inside a
+**fixed-width** signal window (0.25 GeV/c² for pp/p-Pb, 0.24 GeV/c² for Pb-Pb — matching the
+window Acc×ε is calibrated to on the teacher side). The window can only be slid, not resized,
+and starts parked at the **left** of the axis so it does not already cover the peak. There is
+no brush-zoom on this chart.
 
 ---
 

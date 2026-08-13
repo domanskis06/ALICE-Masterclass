@@ -9,8 +9,7 @@ import { PbPbCentralityId } from './jpsi-raa.models';
  *    exactly; 50-70% and 70-90% are plain averages of the four underlying 5%-wide bins.
  *
  *  - Acc x epsilon (full acceptance x efficiency, PID included, BEFORE the branching-ratio
- *    and mass-window corrections applied separately below), used in
- *    Yield = signal / ((A x epsilon) * epsilon_window * BR_ee * nEvents):
+ *    correction applied separately below), used in Yield = signal / ((A x epsilon) * BR_ee * nEvents):
  *      * Pb-Pb: Fig. 25 (A x epsilon w/o PID, ~0.126, flat vs centrality) times Fig. 31
  *        (PID efficiency) from ALICE-ANA-2020-xxx (`pid-efficiency.pdf`); cross-checked
  *        against ~6.5% in 0-10% from arXiv:2303.13361.
@@ -38,15 +37,14 @@ import { PbPbCentralityId } from './jpsi-raa.models';
  *    (`LsaEnhancementService`). The student's pp/p-Pb submission is still accepted by this
  *    exercise, but is not shown in the teacher Results table and never feeds R_AA.
  *
- *  - epsilon_window (JPSI_MASS_MEAN_GEV / JPSI_MASS_SIGMA_GEV / JPSI_REFERENCE_MASS_WINDOW /
- *    the window-efficiency clamp bounds): a mass-window safety net. The Acc x epsilon
- *    constants above are implicitly calibrated to a specific analysis mass window
- *    (JPSI_REFERENCE_MASS_WINDOW). If a student picks a narrower or wider window, the
- *    fraction of the true J/psi peak they capture changes, and Acc x epsilon should change
- *    with it - otherwise a narrow window silently underestimates the yield (and R_AA) and
- *    a wide one overestimates it. `JpsiRaaService.windowEfficiencyFactor` models this with a
- *    single representative Gaussian peak shape; see "Mass-window safety net" in
- *    `ci/docs/jpsi-analysis-teacher.md`.
+ *  - There used to be a mass-window "safety net" here (epsilon_window / JPSI_MASS_MEAN_GEV /
+ *    JPSI_MASS_SIGMA_GEV / JPSI_REFERENCE_MASS_WINDOW / clamp bounds), correcting Acc x epsilon
+ *    for how much of the J/psi peak a student's chosen mass window actually captured. It has
+ *    been removed: the student app now locks the signal window to a fixed width per system
+ *    (`SIGNAL_WINDOW_WIDTH` = 0.25 GeV/c^2 for pp/p-Pb, `PBPB_SIGNAL_WINDOW_WIDTH` = 0.24 GeV/c^2
+ *    for Pb-Pb - see the student app's `jpsi.models.ts`/`pbpb-minv.models.ts`) that matches
+ *    exactly the window these Acc x epsilon constants are calibrated against, so a mismatch can
+ *    no longer occur. See "Mass-window safety net" in `ci/docs/jpsi-analysis-teacher.md`.
  *
  * A per-J/psi pT is not available in the student app (`JpsiPairingService` stores only the
  * invariant-mass bin), so every Acc x epsilon constant is a single pT-integrated number.
@@ -121,31 +119,13 @@ export const PP_SIGMA_INEL_5_02_TEV_MB = 69;
 export const PP_YIELD_5_02_TEV_REF =
   (PP_DSIGDY_5_02_TEV_UB * PP_MIDRAP_DY * 1e-6) / (PP_SIGMA_INEL_5_02_TEV_MB * 1e-3);
 
-/** PDG J/psi mass, GeV/c^2. */
-export const JPSI_MASS_MEAN_GEV = 3.0969;
-
-/**
- * Representative Gaussian width (GeV/c^2) of the reconstructed dielectron J/psi mass peak.
- * A single pT- and system-independent approximation, NOT a fitted per-system detector
- * resolution - see "Mass-window safety net" in `ci/docs/jpsi-analysis-teacher.md`.
- */
-export const JPSI_MASS_SIGMA_GEV = 0.075;
-
 /**
  * The invariant-mass window ALICE's own dielectron J/psi analyses use to extract the signal
  * (cross-checked against EPJ Web Conf. 171, 18018 (2018): "the signal is extracted in the
  * invariant mass window 2.92 < m_ee < 3.16 GeV/c^2"). The Acc x epsilon constants above are
- * implicitly calibrated against this window, so it is also the reference window for
- * `JpsiRaaService.windowEfficiencyFactor`.
+ * implicitly calibrated against this window. The student app's Pb-Pb signal window is locked
+ * to this exact width (`PBPB_SIGNAL_WINDOW_WIDTH` = 0.24 GeV/c^2, see the student app's
+ * `pbpb-minv.models.ts`), so no runtime correction is needed here anymore - kept only for
+ * documentation/cross-checking.
  */
 export const JPSI_REFERENCE_MASS_WINDOW: readonly [number, number] = [2.92, 3.16];
-
-/**
- * Clamp bounds for the mass-window efficiency factor, so a pathologically narrow or wide
- * student window cannot blow up or zero out the corrected yield. With the Gaussian model
- * above, the largest possible ratio (a window wide enough to capture the whole peak, divided
- * by the reference window's own fraction) is ~1.26, so MAX_WINDOW_EFFICIENCY is set below
- * that natural ceiling to guarantee the clamp is actually reachable.
- */
-export const MIN_WINDOW_EFFICIENCY = 0.2;
-export const MAX_WINDOW_EFFICIENCY = 1.2;

@@ -10,12 +10,27 @@ export const MASS_XMAX = 5;
 export const MASS_BINS = 80;
 export const MASS_BIN_WIDTH = (MASS_XMAX - MASS_XMIN) / MASS_BINS;
 
-/** Signal-window drag limits; match the histogram axis and start at both ends. */
-export const MASS_WINDOW_LIMITS: [number, number] = [MASS_XMIN, MASS_XMAX];
-export const DEFAULT_MASS_WINDOW: [number, number] = [
-  MASS_WINDOW_LIMITS[0],
-  MASS_WINDOW_LIMITS[1],
+/**
+ * Fixed width of the student's signal-counting window (GeV/c^2) — 5 bins at this histogram's
+ * 50 MeV binning. The student can only slide the window, not resize it, matching the ~0.25
+ * GeV/c^2 window the reference paper integrates over. Mirrors `PBPB_SIGNAL_WINDOW_WIDTH` in
+ * `pbpb-minv.models.ts` and the teacher module's `JPSI_REFERENCE_MASS_WINDOW`
+ * (`alice-masterclass-teacher/src/app/jpsi-analysis/jpsi-raa.constants.ts`) — Acc×epsilon there
+ * is calibrated to exactly this width, so fixing it here removes the need for any mass-window
+ * "safety net" correction on the teacher side (a mismatch can no longer occur).
+ */
+export const SIGNAL_WINDOW_WIDTH = 0.25;
+/**
+ * Default signal-window position: parked at the left of the axis, not on the peak. Starting
+ * on the J/psi would give the yield away — the student has to slide the block onto the peak.
+ */
+export const DEFAULT_SIGNAL_WINDOW: [number, number] = [
+  MASS_XMIN,
+  MASS_XMIN + SIGNAL_WINDOW_WIDTH,
 ];
+
+/** Background sideband range still starts on the full axis — the student narrows it themselves. */
+export const DEFAULT_BACKGROUND_FIT_RANGE: [number, number] = [MASS_XMIN, MASS_XMAX];
 
 /** Axis ranges of the dE/dx vs p heatmap. The p axis is logarithmic. */
 export const PID_P_MIN = 0.1;
@@ -201,8 +216,8 @@ export function createDatasetState(datasetId: DatasetId): DatasetAnalysisState {
     panelMode: 'explore',
     visibility: { unlike: true, posPos: true, negNeg: true },
     showBackgroundSum: false,
-    massWindow: [...DEFAULT_MASS_WINDOW] as [number, number],
-    backgroundFitRange: [...DEFAULT_MASS_WINDOW] as [number, number],
+    massWindow: [...DEFAULT_SIGNAL_WINDOW] as [number, number],
+    backgroundFitRange: [...DEFAULT_BACKGROUND_FIT_RANGE] as [number, number],
     fitResult: null,
     tableRow: null,
     tooWideSelection: false,

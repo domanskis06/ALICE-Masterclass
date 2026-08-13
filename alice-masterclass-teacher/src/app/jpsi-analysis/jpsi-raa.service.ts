@@ -2,11 +2,6 @@ import { Injectable } from '@angular/core';
 
 import {
   BR_JPSI_EE,
-  JPSI_MASS_MEAN_GEV,
-  JPSI_MASS_SIGMA_GEV,
-  JPSI_REFERENCE_MASS_WINDOW,
-  MAX_WINDOW_EFFICIENCY,
-  MIN_WINDOW_EFFICIENCY,
   PBPB_ACC_EFF,
   PBPB_NCOLL,
   PBPB_NPART,
@@ -30,11 +25,11 @@ import {
  *
  * R_AA(centrality) = Yield_PbPb(centrality) / (Ncoll(centrality) x PP_YIELD_5_02_TEV_REF)
  *
- * where Yield = signal / ((A x epsilon) x epsilon_window x BR_ee x nEvents):
- *  - (A x epsilon) is the base, centrality-dependent detector Acc x efficiency;
- *  - epsilon_window is a mass-window safety-net factor (see `windowEfficiencyFactor`) that
- *    rescales (A x epsilon) for how much of the J/psi peak the student's own mass window
- *    captures, relative to the window the (A x epsilon) constants were calibrated against;
+ * where Yield = signal / ((A x epsilon) x BR_ee x nEvents):
+ *  - (A x epsilon) is the base, centrality-dependent detector Acc x efficiency, calibrated
+ *    against the fixed-width mass window the student app locks the signal window to
+ *    (`SIGNAL_WINDOW_WIDTH`/`PBPB_SIGNAL_WINDOW_WIDTH`), so no runtime mass-window correction
+ *    is needed - see "Mass-window safety net" in `ci/docs/jpsi-analysis-teacher.md`;
  *  - BR_ee converts the measured dielectron count into an inclusive J/psi yield.
  *
  * PP_YIELD_5_02_TEV_REF is a FIXED, physically-sourced pp reference yield (not derived from
@@ -54,40 +49,12 @@ export class JpsiRaaService {
     return system === 'pp' ? PP_ACC_EFF : PPB_ACC_EFF;
   }
 
-  /**
-   * Fraction of the J/psi peak (modelled as a single representative Gaussian, see
-   * `jpsi-raa.constants.ts`) captured by `window`, relative to the fraction captured by
-   * `JPSI_REFERENCE_MASS_WINDOW` (the window the Acc x epsilon constants are calibrated
-   * against). Equal to 1 when `window` is the reference window; clamped so a pathologically
-   * narrow or wide student window cannot blow up or zero out the corrected yield.
-   */
-  windowEfficiencyFactor(window: readonly [number, number]): number {
-    const peakFraction = (range: readonly [number, number]): number => {
-      const cdf = (mass: number): number =>
-        standardNormalCdf((mass - JPSI_MASS_MEAN_GEV) / JPSI_MASS_SIGMA_GEV);
-      return cdf(range[1]) - cdf(range[0]);
-    };
-
-    const referenceFraction = peakFraction(JPSI_REFERENCE_MASS_WINDOW);
-    if (referenceFraction <= 0) {
-      return 1;
-    }
-
-    const factor = peakFraction(window) / referenceFraction;
-    return Math.min(MAX_WINDOW_EFFICIENCY, Math.max(MIN_WINDOW_EFFICIENCY, factor));
-  }
-
   correctedYield(signal: JpsiRawSignal): number {
-    const efficiency = this.effectiveEfficiency(signal);
+    const efficiency = this.efficiencyFor(signal.system);
     if (signal.nEvents <= 0 || efficiency <= 0) {
       return 0;
     }
     return signal.signal / (efficiency * BR_JPSI_EE * signal.nEvents);
-  }
-
-  /** Base Acc x epsilon times the mass-window correction - what `correctedYield` actually divides by. */
-  private effectiveEfficiency(signal: JpsiRawSignal): number {
-    return this.efficiencyFor(signal.system) * this.windowEfficiencyFactor(signal.massWindow);
   }
 
   /** Builds one Results-table row per submitted signal, computing R_AA for Pb-Pb rows only. */
@@ -119,7 +86,6 @@ export class JpsiRaaService {
         signal: signal.signal,
         signalError: signal.signalError,
         efficiency: this.efficiencyFor(signal.system),
-        windowFactor: this.windowEfficiencyFactor(signal.massWindow),
         correctedYield,
         raa,
         raaError,
@@ -151,26 +117,4 @@ export class JpsiRaaService {
   private relativeStatError(pbPb: JpsiRawSignal): number {
     return pbPb.signal > 0 ? pbPb.signalError / pbPb.signal : 0;
   }
-}
-
-/**
- * Standard normal CDF via the Abramowitz-Stegun 7.1.26 approximation (max error ~1.5e-7).
- * No existing dependency in this app provides erf/normal CDF, and the mass-window safety net
- * only needs a peak-shape *ratio*, so this level of precision is more than sufficient.
- */
-function standardNormalCdf(z: number): number {
-  const sign = z < 0 ? -1 : 1;
-  const x = Math.abs(z) / Math.SQRT2;
-
-  const a1 = 0.254829592;
-  const a2 = -0.284496736;
-  const a3 = 1.421413741;
-  const a4 = -1.453152027;
-  const a5 = 1.061405429;
-  const p = 0.3275911;
-
-  const t = 1 / (1 + p * x);
-  const y = 1 - ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-
-  return 0.5 * (1 + sign * y);
 }

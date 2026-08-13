@@ -15,11 +15,13 @@ import { Options } from '@angular-slider/ngx-slider';
 import * as d3 from 'd3';
 
 import {
+  DEFAULT_SIGNAL_WINDOW,
   MASS_BINS,
   MASS_CHART_ASPECT,
   MASS_XMAX,
   MASS_XMIN,
   MassPanelMode,
+  SIGNAL_WINDOW_WIDTH,
   SeriesVisibility,
   jpsiResponsiveChartHeight,
 } from '../../models/jpsi.models';
@@ -62,9 +64,10 @@ export interface SeriesEntry {
  *
  * In explore mode the student compares opposite-charge pairs against same-charge pairs; after
  * subtraction only the residual is drawn, together with a Pol1 line fitted to the sidebands
- * and two independent sliders: `backgroundFitRange` (what the line is fitted to) and
- * `massWindow` (what gets counted as signal). Bars are used rather than smooth densities
- * because the whole lesson is that these are counts that get subtracted from each other.
+ * and two sliders: `backgroundFitRange` (what the line is fitted to — a free two-handle range)
+ * and `massWindow` (what gets counted as signal — a fixed-width block the student can only
+ * slide, see `signalWindowWidth`). Bars are used rather than smooth densities because the whole
+ * lesson is that these are counts that get subtracted from each other.
  *
  * All maths (the Pol1 fit itself, the yield) happens in `JpsiResidualFitService`, called by the
  * host's state service — this component only draws whatever `fitResult` it is given.
@@ -93,6 +96,15 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() showBackgroundSum = false;
   @Input() massWindow: [number, number] = [MASS_XMIN, MASS_XMAX];
   @Input() backgroundFitRange: [number, number] = [MASS_XMIN, MASS_XMAX];
+  /**
+   * Fixed width (GeV/c^2) the signal-window slider is locked to — the student can slide the
+   * window but never resize it (see `SIGNAL_WINDOW_WIDTH`/`PBPB_SIGNAL_WINDOW_WIDTH`). Passed
+   * in per dataset shape since pp/p-Pb and Pb-Pb use different binning and therefore different
+   * fixed widths.
+   */
+  @Input() signalWindowWidth = SIGNAL_WINDOW_WIDTH;
+  /** Position the "Reset range" button restores the signal window to. */
+  @Input() defaultSignalWindow: [number, number] = DEFAULT_SIGNAL_WINDOW;
   @Input() fitResult: ResidualFitResult | null = null;
   @Input() canSubtract = false;
   @Input() canAccept = false;
@@ -114,7 +126,6 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   @ViewChild('host') private hostRef!: ElementRef<HTMLDivElement>;
   @ViewChild('svg') private svgRef!: ElementRef<SVGSVGElement>;
-  @ViewChild('brushGroup') private brushGroupRef!: ElementRef<SVGGElement>;
   @ViewChild('pol1LineEl') private pol1LineRef!: ElementRef<SVGLineElement>;
 
   width = 0;
@@ -124,21 +135,19 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   /** Unique per instance so several mass panels can exist in the DOM without clip-id clashes. */
   readonly clipId = `jpsi-mass-panel-clip-${nextClipId++}`;
 
-  /**
-   * Visible x-domain: equals [xmin, xmax] until the student brush-zooms the chart, exactly
-   * like LSA's `HistogramComponent.xDomainZoom`. Both sliders' floor/ceil follow this, not the
-   * full dataset span, so a zoomed-in view can only select ranges inside what is on screen.
-   */
-  private zoomDomain: [number, number] = [this.xmin, this.xmax];
-  private readonly brushX: d3.BrushBehavior<unknown> = d3.brushX();
-
   windowStart = this.massWindow[0];
   windowEnd = this.massWindow[1];
   backgroundStart = this.backgroundFitRange[0];
   backgroundEnd = this.backgroundFitRange[1];
 
-  sliderOptions: Options = this.buildSliderOptions(this.zoomDomain);
-  backgroundSliderOptions: Options = this.buildSliderOptions(this.zoomDomain);
+  /**
+   * The signal window is a fixed-width block the student can only slide, never resize —
+   * `minRange`/`maxRange` pinned to `signalWindowWidth` plus `draggableRangeOnly` turn
+   * `ngx-slider`'s usual two independent thumbs into a single draggable block. The background
+   * sideband slider stays a normal, freely resizable two-handle range.
+   */
+  sliderOptions: Options = this.buildSignalSliderOptions();
+  backgroundSliderOptions: Options = this.buildBackgroundSliderOptions();
 
   private resizeObserver: ResizeObserver | null = null;
   private viewReady = false;
@@ -175,7 +184,6 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
    */
   ngAfterViewInit(): void {
     this.viewReady = true;
-    this.brushX.on('end', (event) => this.onBrushEnd(event));
     this.resizeObserver = new ResizeObserver(() => this.measureAndRender());
     this.resizeObserver.observe(this.hostRef.nativeElement);
     window.addEventListener('resize', this.onWindowResize);
@@ -183,14 +191,10 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['xmin'] || changes['xmax']) {
-      // A new dataset/centrality — the old zoom no longer means anything.
-      this.zoomDomain = [this.xmin, this.xmax];
-    }
-    if (changes['xmin'] || changes['xmax'] || changes['bins']) {
-      this.sliderOptions = this.buildSliderOptions(this.zoomDomain);
-      this.backgroundSliderOptions = this.buildSliderOptions(this.zoomDomain);
-      this.xScale.domain(this.zoomDomain);
+    if (changes['xmin'] || changes['xmax'] || changes['bins'] || changes['signalWindowWidth']) {
+      this.sliderOptions = this.buildSignalSliderOptions();
+      this.backgroundSliderOptions = this.buildBackgroundSliderOptions();
+      this.xScale.domain([this.xmin, this.xmax]);
     }
     if (changes['massWindow'] && !this.windowDragging) {
       this.windowStart = this.massWindow[0];
@@ -212,11 +216,29 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   /** Step follows this histogram's own bin width, so a drag always lands on a real bin edge. */
-  private buildSliderOptions(domain: [number, number]): Options {
+  private buildBackgroundSliderOptions(): Options {
     return {
-      floor: domain[0],
-      ceil: domain[1],
+      floor: this.xmin,
+      ceil: this.xmax,
       step: (this.xmax - this.xmin) / this.bins,
+      translate: (value: number) => value.toFixed(2),
+    };
+  }
+
+  /**
+   * Same floor/ceil/step as the background slider, but `minRange`/`maxRange` pinned to the
+   * same value plus `draggableRangeOnly` lock the two thumbs together into a single block of
+   * exactly `signalWindowWidth` wide — dragging anywhere on the bar slides the whole window,
+   * neither edge can move independently.
+   */
+  private buildSignalSliderOptions(): Options {
+    return {
+      floor: this.xmin,
+      ceil: this.xmax,
+      step: (this.xmax - this.xmin) / this.bins,
+      minRange: this.signalWindowWidth,
+      maxRange: this.signalWindowWidth,
+      draggableRangeOnly: true,
       translate: (value: number) => value.toFixed(2),
     };
   }
@@ -230,11 +252,10 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.width = rect.width;
     this.height = jpsiResponsiveChartHeight(rect.width, MASS_CHART_ASPECT, 280);
 
-    this.xScale.domain(this.zoomDomain).range([0, this.plotWidth]);
+    this.xScale.domain([this.xmin, this.xmax]).range([0, this.plotWidth]);
     this.yScale.range([this.plotHeight, 0]);
 
     this.render();
-    this.updateBrush();
     this.changeDetector.markForCheck();
   }
 
@@ -258,132 +279,23 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.updatePol1Line();
   }
 
-  // --- Zoom (brush-drag on the chart), mirroring LSA's HistogramComponent ------------------
-
-  /** True once the student has brush-zoomed away from the full [xmin, xmax] span. */
-  get isZoomed(): boolean {
-    return this.zoomDomain[0] !== this.xmin || this.zoomDomain[1] !== this.xmax;
-  }
-
-  /** Keeps the brush's hit area in sync with the plot's current pixel size. */
-  private updateBrush(): void {
-    if (!this.brushGroupRef) {
-      return;
-    }
-    const selection = d3.select(this.brushGroupRef.nativeElement);
-    this.brushX.extent([
-      [0, 0],
-      [Math.max(0, this.plotWidth), Math.max(0, this.plotHeight)],
-    ]);
-    selection.call(this.brushX as never);
-    selection.on('dblclick', () => this.resetZoom());
-  }
-
-  private onBrushEnd(event: d3.D3BrushEvent<unknown>): void {
-    // Ignore the programmatic `.move(null)` call below, which would otherwise re-enter here.
-    if (!event.sourceEvent) {
-      return;
-    }
-    const selection = event.selection as [number, number] | null;
-    if (selection === null) {
-      return;
-    }
-
-    const [screenX0, screenX1] = selection;
-    const domain: [number, number] = [this.xScale.invert(screenX0), this.xScale.invert(screenX1)];
-
-    if (this.brushGroupRef) {
-      d3.select(this.brushGroupRef.nativeElement).call(this.brushX.move as never, null);
-    }
-
-    this.applyZoomDomain(domain);
-  }
-
-  private applyZoomDomain(domain: [number, number]): void {
-    const lo = Math.max(this.xmin, Math.min(domain[0], domain[1]));
-    const hi = Math.min(this.xmax, Math.max(domain[0], domain[1]));
-    if (!(hi > lo)) {
-      return;
-    }
-    this.zoomDomain = [lo, hi];
-    this.refreshRangesForZoom();
-    this.render();
-  }
-
-  /** Public unzoom — restores the full axis view, used by the "Reset zoom" button. */
-  resetZoom(): void {
-    this.zoomDomain = [this.xmin, this.xmax];
-    this.refreshRangesForZoom();
-    this.render();
-  }
-
   /**
-   * Both sliders' floor/ceil follow the current zoom, same as LSA's fit-selector `axisRange`:
-   * narrowing the zoom clamps any selection that falls outside it (shifting it into view,
-   * preserving its width when possible); widening it back out never moves an already-valid
-   * selection.
+   * Resets the background sideband slider to the full axis, and the signal window back to its
+   * fixed-width default position (`defaultSignalWindow`) — the two ranges reset independently
+   * since only the background range is a free two-handle selection.
    */
-  private refreshRangesForZoom(): void {
-    this.sliderOptions = this.buildSliderOptions(this.zoomDomain);
-    this.backgroundSliderOptions = this.buildSliderOptions(this.zoomDomain);
-
-    const clampedWindow = MassPanelComponent.clampRangeToView(
-      [this.windowStart, this.windowEnd],
-      this.zoomDomain
-    );
-    if (clampedWindow[0] !== this.windowStart || clampedWindow[1] !== this.windowEnd) {
-      this.windowStart = clampedWindow[0];
-      this.windowEnd = clampedWindow[1];
-      this.massWindowChange.emit(clampedWindow);
-    }
-
-    const clampedBackground = MassPanelComponent.clampRangeToView(
-      [this.backgroundStart, this.backgroundEnd],
-      this.zoomDomain
-    );
-    if (clampedBackground[0] !== this.backgroundStart || clampedBackground[1] !== this.backgroundEnd) {
-      this.backgroundStart = clampedBackground[0];
-      this.backgroundEnd = clampedBackground[1];
-      this.backgroundFitRangeChange.emit(clampedBackground);
-    }
-  }
-
-  /**
-   * Keep a range inside a (possibly narrower) view: clip it, or shift it into view — preserving
-   * width when possible — if it now lies entirely outside. Same rule LSA's `FitService` applies
-   * on zoom.
-   */
-  private static clampRangeToView(range: [number, number], view: [number, number]): [number, number] {
-    const [v0, v1] = view;
-    if (!(v1 > v0)) {
-      return range;
-    }
-    const [a, b] = range;
-    if (!(b > a)) {
-      return [v0, v1];
-    }
-    const width = b - a;
-    if (b < v0) {
-      return [v0, Math.min(v1, v0 + width)];
-    }
-    if (a > v1) {
-      return [Math.max(v0, v1 - width), v1];
-    }
-    return [Math.max(a, v0), Math.min(b, v1)];
-  }
-
-  /** Resets both range sliders to the extremes of the current (possibly zoomed) view. */
   resetRange(): void {
-    const [floor, ceil] = this.zoomDomain;
-    if (!(ceil > floor)) {
+    if (!(this.xmax > this.xmin)) {
       return;
     }
-    this.windowStart = floor;
-    this.windowEnd = ceil;
-    this.backgroundStart = floor;
-    this.backgroundEnd = ceil;
-    this.massWindowChange.emit([floor, ceil]);
-    this.backgroundFitRangeChange.emit([floor, ceil]);
+    this.backgroundStart = this.xmin;
+    this.backgroundEnd = this.xmax;
+    this.backgroundFitRangeChange.emit([this.xmin, this.xmax]);
+
+    const [defaultStart, defaultEnd] = this.defaultSignalWindow;
+    this.windowStart = defaultStart;
+    this.windowEnd = defaultEnd;
+    this.massWindowChange.emit([defaultStart, defaultEnd]);
   }
 
   /** Which series are drawn, given the mode and the student's toggles. */
@@ -436,8 +348,9 @@ export class MassPanelComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   /**
-   * Bar edges go through `xScale` (not fixed index math) so a brush-zoom actually rescales and
-   * shifts them; the clip-path in the template hides whatever falls outside the zoomed view.
+   * Bar edges go through `xScale` rather than fixed index math so the clip-path in the
+   * template can safely hide anything that ever falls outside the plotting area (e.g. during a
+   * resize), even though the axis itself no longer zooms.
    */
   private toBars(values: Float64Array | number[]): Bar[] {
     const bars: Bar[] = [];

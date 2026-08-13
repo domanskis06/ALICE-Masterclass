@@ -33,7 +33,7 @@ export class InstructionsComponent implements AfterViewInit, OnDestroy {
   private renderFormulas(): void {
     if (this.yieldFormula) {
       katex.render(
-        String.raw`Y = \dfrac{N_{\mathrm{J/\psi}}}{(A\times\varepsilon)\cdot \varepsilon_{\mathrm{window}}\cdot BR_{ee}\, N_{\mathrm{ev}}}`,
+        String.raw`Y = \dfrac{N_{\mathrm{J/\psi}}}{(A\times\varepsilon)\cdot BR_{ee}\, N_{\mathrm{ev}}}`,
         this.yieldFormula.nativeElement,
         { displayMode: true, throwOnError: false, output: 'html' }
       );

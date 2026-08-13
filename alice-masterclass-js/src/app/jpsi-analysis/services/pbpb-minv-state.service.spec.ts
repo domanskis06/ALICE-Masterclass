@@ -100,11 +100,11 @@ describe('PbPbMinvStateService', () => {
   });
 
   describe('subtractBackground', () => {
-    it('starts both sliders on the full histogram axis (student starts from full range)', () => {
+    it('starts the background range on the full histogram axis, and the signal window at the left of the axis', () => {
       service.subtractBackground();
 
       expect(service.state.panelMode).toBe('subtracted');
-      expect(service.state.fitSnapshot.massWindow).toEqual([0, 5]);
+      expect(service.state.fitSnapshot.massWindow).toEqual([0, 0.24]);
       expect(service.state.fitSnapshot.backgroundFitRange).toEqual([0, 5]);
       expect(service.state.fitSnapshot.fitResult).toBeNull();
     });

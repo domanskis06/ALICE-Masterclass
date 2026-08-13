@@ -19,19 +19,23 @@ import {
   DatasetDescriptor,
   DatasetId,
   DEFAULT_PID_CUT,
+  DEFAULT_SIGNAL_WINDOW,
   MASS_BINS,
   PidCut,
   SeriesVisibility,
+  SIGNAL_WINDOW_WIDTH,
   SummaryRow,
 } from './models/jpsi.models';
 import {
   clampedResidual,
   CollisionSystemId,
+  defaultPbPbSignalWindow,
   isPbPbCentralityId,
   PbPbCentralityDescriptor,
   PbPbCentralityId,
   PbPbYieldRow,
   PBPB_CENTRALITY_DESCRIPTORS,
+  PBPB_SIGNAL_WINDOW_WIDTH,
 } from './models/pbpb-minv.models';
 import { JpsiAnalysisStateService } from './services/jpsi-analysis-state.service';
 import { JpsiDataService } from './services/jpsi-data.service';
@@ -74,6 +78,18 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   /** Purely local display preference for the Pb-Pb panel; never persisted per centrality. */
   pbPbVisibility: SeriesVisibility = { unlike: true, like: true };
+
+  /**
+   * Fixed signal-window widths/default positions the mass panel locks its slider to — see
+   * `SIGNAL_WINDOW_WIDTH`/`PBPB_SIGNAL_WINDOW_WIDTH` for why the width is fixed at all.
+   */
+  readonly signalWindowWidth = SIGNAL_WINDOW_WIDTH;
+  readonly defaultSignalWindow = DEFAULT_SIGNAL_WINDOW;
+  readonly pbPbSignalWindowWidth = PBPB_SIGNAL_WINDOW_WIDTH;
+
+  get pbPbDefaultSignalWindow(): [number, number] {
+    return defaultPbPbSignalWindow(this.pbPbState.state.histogram?.xmin ?? 0);
+  }
 
   private readonly destroyRef = inject(DestroyRef);
 

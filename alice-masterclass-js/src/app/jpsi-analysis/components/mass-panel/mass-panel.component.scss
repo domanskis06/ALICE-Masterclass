@@ -156,14 +156,6 @@ $background-accent: #3f51b5;
   fill: none;
 }
 
-// d3-brush default look (grey selection rect, crosshair cursor); this only sets what d3 does
-// not already inline, matching LSA's un-styled `app-histogram` brush.
-.mass-panel__brush {
-  .overlay {
-    cursor: crosshair;
-  }
-}
-
 .mass-panel__spinner {
   position: absolute;
   inset: 0;

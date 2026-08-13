@@ -27,9 +27,9 @@ Material results table underneath.
 
 ```
 jpsi-analysis/
-  jpsi-raa.models.ts       collision-system ids, raw signal input (incl. mass window), result row, plot entry
-  jpsi-raa.constants.ts    Ncoll / Npart / Acc×ε / BR / fixed pp reference / mass-window model
-  jpsi-raa.service.ts      JpsiRaaService — corrected yield, mass-window safety net, R_AA
+  jpsi-raa.models.ts       collision-system ids, raw signal input, result row, plot entry
+  jpsi-raa.constants.ts    Ncoll / Npart / Acc×ε / BR / fixed pp reference
+  jpsi-raa.service.ts      JpsiRaaService — corrected yield, R_AA
   jpsi-analysis.component.{ts,html,scss}   shell: Event dropdown, sample data, wiring
   raa-plot/                R_AA vs. <Npart> scatter (D3-on-SVG, modelled on the LSA enhancement plot)
   results/                 Results table (Collision system, Npart, N events, signal, A×ε,
@@ -40,17 +40,18 @@ jpsi-analysis/
 ## The calculation
 
 ```
-epsilon_window(system)  = windowEfficiencyFactor(massWindow) - see "Mass-window safety net" below
-Yield(system)            = signal / ((A × ε)(system) × epsilon_window(system) × BR_ee × nEvents)
+Yield(system)            = signal / ((A × ε)(system) × BR_ee × nEvents)
 R_AA(centrality)         = Yield(Pb-Pb, centrality) / (Ncoll(centrality) × PP_YIELD_5_02_TEV_REF)
 ```
 
 `signal` and its Poisson error are exactly `SummaryRow.signal`/`signalError` (pp, p-Pb) or
 `PbPbYieldRow.fit.signal`/`signalError` (Pb-Pb) from the student app's residual-fit yield
-extraction — see [`jpsi-analysis.md`](jpsi-analysis.md). `massWindow` is the mass window that
-signal was extracted from. R_AA's statistical error is just the Pb-Pb signal's relative
-Poisson error — see "Why a fixed pp reference?" below for why the pp side never contributes a
-statistical term.
+extraction — see [`jpsi-analysis.md`](jpsi-analysis.md). No mass window is submitted alongside
+`signal` any more: the student app locks the signal-counting window to a fixed width per system
+(`SIGNAL_WINDOW_WIDTH`/`PBPB_SIGNAL_WINDOW_WIDTH`, see "Mass-window safety net" below) that
+matches `(A × ε)`'s calibration window exactly, so there is nothing left to vary or correct for.
+R_AA's statistical error is just the Pb-Pb signal's relative Poisson error — see "Why a fixed pp
+reference?" below for why the pp side never contributes a statistical term.
 
 **Only the eight Pb-Pb centrality rows are shown in the teacher Results table.** Students still
 analyse and submit pp and p-Pb signals as part of the exercise (`JpsiRaaService.computeResults`
@@ -126,28 +127,27 @@ corrected yield to the same inclusive basis before it is used anywhere, includin
 was a missing factor in the original implementation, caught during the same sanity check that
 motivated the fixed pp reference above.
 
-### Mass-window safety net
+### Mass-window safety net (removed)
 
 `(A × ε)` is implicitly calibrated to a specific analysis mass window
-(`JPSI_REFERENCE_MASS_WINDOW`, see below). If a student's chosen mass window is narrower or
-wider than that, the fraction of the true J/psi peak they actually capture changes — a
-narrower window silently loses signal (and Acc×ε doesn't know to compensate), a wider one
-picks up more of the peak (plus more background) than Acc×ε assumes.
+(`JPSI_REFERENCE_MASS_WINDOW`, 2.92–3.16 GeV/c², see below). Earlier, students could freely
+resize the signal-counting window in the student app, so the fraction of the true J/psi peak
+they actually captured could vary — a narrower window silently lost signal (and Acc×ε had no
+way to compensate), a wider one picked up more of the peak (plus more background) than Acc×ε
+assumed. A `JpsiRaaService.windowEfficiencyFactor` safety net used to correct for this by
+modelling the J/psi peak as a single Gaussian and rescaling `(A × ε)` by the ratio of the peak
+fraction inside the student's window to the peak fraction inside `JPSI_REFERENCE_MASS_WINDOW`.
 
-`JpsiRaaService.windowEfficiencyFactor` guards against this by modelling the J/psi peak as a
-single Gaussian (`JPSI_MASS_MEAN_GEV` = 3.0969 GeV/c², the PDG mass; `JPSI_MASS_SIGMA_GEV` =
-75 MeV/c², a representative width — **not** a per-system fitted detector resolution) and
-computing the ratio of the peak fraction inside the student's window to the peak fraction
-inside `JPSI_REFERENCE_MASS_WINDOW`. A student who uses the reference window gets a factor of
-exactly 1 (no change from before this feature existed); the factor is clamped to
-`[MIN_WINDOW_EFFICIENCY, MAX_WINDOW_EFFICIENCY]` = `[0.2, 1.2]` so a pathologically narrow or
-wide window cannot blow up or zero out the corrected yield. This is a safety net, not a
-precise detector-resolution correction — it exists to stop window choice from silently biasing
-R_AA, not to model the real per-centrality mass resolution.
-
-All current `SAMPLE_SIGNALS` use `JPSI_REFERENCE_MASS_WINDOW` (they are digitized/published
-numbers already calibrated to it), so this factor is inert — exactly 1 — until real,
-variable-window student submissions exist.
+Per the physics supervisors' decision, the student app now locks the signal-counting window to
+a **fixed width** the student can only slide, never resize:
+`SIGNAL_WINDOW_WIDTH` = 0.25 GeV/c² for pp/p-Pb, `PBPB_SIGNAL_WINDOW_WIDTH` = 0.24 GeV/c² for
+Pb-Pb (both student-app `jpsi.models.ts`/`pbpb-minv.models.ts`) — matching
+`JPSI_REFERENCE_MASS_WINDOW`'s width exactly. The window starts parked at the **left** of the
+histogram axis, not on the peak, so the student still has to slide it onto the J/psi. A
+mismatch between the student's window and the window `(A × ε)` is calibrated against can
+therefore no longer occur, so the safety net (and the mass window itself) was removed from
+`JpsiRawSignal`/`JpsiResultRow` and the R_AA calculation entirely — there is nothing left to
+correct for.
 
 ---
 
@@ -176,11 +176,11 @@ variable-window student submissions exist.
     [arXiv:1208.4968](https://link.springer.com/article/10.1140/epjc/s10052-013-2456-0)
     (Eur. Phys. J. C 73 (2013) 2456): 62.8 mb at 2.76 TeV and 73.2 mb at 7 TeV. Flagged in code
     as an approximation, not a direct measurement.
-- **JPSI_MASS_MEAN_GEV / JPSI_MASS_SIGMA_GEV / JPSI_REFERENCE_MASS_WINDOW** — PDG J/psi mass
-  (3.0969 GeV/c²); a single representative Gaussian width (75 MeV/c², an approximation, see
-  above); reference window 2.92–3.16 GeV/c², matching the window ALICE's own dielectron J/psi
-  analyses use ("the signal is extracted in the invariant mass window 2.92 < m_ee <
-  3.16 GeV/c²" — EPJ Web Conf. 171, 18018 (2018)).
+- **JPSI_REFERENCE_MASS_WINDOW** — 2.92–3.16 GeV/c², matching the window ALICE's own
+  dielectron J/psi analyses use ("the signal is extracted in the invariant mass window
+  2.92 < m_ee < 3.16 GeV/c²" — EPJ Web Conf. 171, 18018 (2018)) and the window `(A × ε)` above
+  is calibrated against. Kept only for documentation/cross-checking — see "Mass-window safety
+  net (removed)" above for why nothing reads it at runtime any more.
 - Neither system can use a pT-binned correction: `JpsiPairingService` never stores pair pT.
 
 ---
@@ -191,9 +191,6 @@ variable-window student submissions exist.
   table.** This is by design, confirmed with the physics supervisors — see "Why a fixed pp
   reference?" above — not a stopgap awaiting a better pp sample. Students still analyse and
   submit pp/p-Pb signals; the exercise just does not otherwise use that submission here.
-- **The mass-window safety net is a single generic Gaussian**, not a per-system/per-centrality
-  fitted resolution. It is good enough to stop window choice from silently biasing the yield,
-  not to model the real detector response.
 - **σ_INEL(pp, 5.02 TeV) is interpolated**, not directly measured by ALICE. If a better sourced
   value becomes available, `PP_SIGMA_INEL_5_02_TEV_MB` should be updated.
 - **R_AA's statistical error only propagates the Pb-Pb signal's Poisson error.** The fixed pp
