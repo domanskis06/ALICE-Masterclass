@@ -5,11 +5,22 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { shareReplay } from 'rxjs/operators';
 
+/**
+ * Which of the three independent sub-masterclasses a session belongs to. Mirrors
+ * `ExerciseKind` in `alice-masterclass-django/masterclass/models.py` - keep these in sync.
+ */
+export enum ExerciseKind {
+  STRANGENESS = 'strangeness',
+  JPSI = 'jpsi',
+  RAA = 'raa',
+}
+
 export interface Session {
   error: boolean
   name: string
   reason?: 'password' | 'student_taken' | 'student_invalid' | ''
   maxStudents?: number
+  kind?: ExerciseKind
 }
 
 export interface AuthStatus {
@@ -58,6 +69,21 @@ export interface LargeScaleAnalysisResultsEntry {
   signal: number
 }
 
+/**
+ * What the J/psi exercise submits per collision system. No `massWindow` here on purpose - the
+ * student app locks the signal-counting window to a fixed width per system
+ * (`SIGNAL_WINDOW_WIDTH`/`PBPB_SIGNAL_WINDOW_WIDTH` in the jpsi-analysis models), matching
+ * exactly the window the teacher's Acc x epsilon constants are calibrated against. `nEvents` is
+ * only present for pp/p-Pb - Pb-Pb event counts are a fixed, published constant kept on the
+ * teacher side (`PBPB_NEVENTS`), never submitted by the student.
+ */
+export interface JpsiSignalEntry {
+  system: string;
+  signal: number;
+  signalError: number;
+  nEvents?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -76,6 +102,14 @@ export class ApiService {
   studentID: number = null;
 
   sessionName: string = null;
+
+  /**
+   * Which sub-masterclass the current session's event belongs to. `null` until the server has
+   * told us (e.g. old cached login, or `MockApiService`'s demo mode) - in that case
+   * `matchesSessionKind` fails open, since the backend still enforces the real guard at
+   * submission time regardless of what the UI shows.
+   */
+  sessionKind: ExerciseKind | null = null;
 
   private readonly authStatusSubject = new BehaviorSubject<AuthStatus>({
     authenticated: false,
@@ -115,7 +149,7 @@ export class ApiService {
         sessionStorage.setItem(this.passwordKey, password);
         sessionStorage.setItem(this.studentIDKey, studentID.toString());
 
-        this.applyAuthenticatedSession(password, studentID, data.name);
+        this.applyAuthenticatedSession(password, studentID, data.name, data.kind);
       }
     },);
 
@@ -128,12 +162,23 @@ export class ApiService {
   }
 
   /** Shared success path for real and mock auth so UI can react without refresh. */
-  protected applyAuthenticatedSession(password: string, studentID: number, sessionName: string): void {
+  protected applyAuthenticatedSession(password: string, studentID: number, sessionName: string, kind?: ExerciseKind): void {
     this.password = password;
     this.studentID = studentID;
     this.sessionName = sessionName;
+    this.sessionKind = kind ?? null;
     this.emitAuthStatus();
     this.updateTitle();
+  }
+
+  /**
+   * Whether the current session's exercise kind allows submitting to `expected`'s module.
+   * Fails open (`true`) when the kind is unknown - the real guard is enforced server-side
+   * (`Event.kind` in the Django `jpsi`/`strangeness` submit views), this only lets the UI warn
+   * the student *before* they waste time on the wrong exercise.
+   */
+  matchesSessionKind(expected: ExerciseKind): boolean {
+    return this.sessionKind === null || this.sessionKind === expected;
   }
 
   private emitAuthStatus(): void {
@@ -194,5 +239,14 @@ export class ApiService {
     }
 
     return this.put(`strangeness_large_scale_analysis/${this.studentID}`, body);
+  }
+
+  submitJpsiAnalysisResults(entries: JpsiSignalEntry[]): Observable<any> {
+    const body = {
+      password: this.password,
+      results: entries,
+    };
+
+    return this.put(`jpsi_analysis/${this.studentID}`, body);
   }
 }

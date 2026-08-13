@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 
+import { ApiService, JpsiSignalEntry } from '../shared/services/api.service';
 import { InstructionsProvider } from '../shared/interfaces';
 import { SeriesEntry, SERIES_COLOURS } from './components/mass-panel/mass-panel.component';
 import { InstructionsComponent } from './instructions/instructions.component';
@@ -103,7 +104,8 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
     private readonly translate: TranslateService,
     private readonly snackBar: MatSnackBar,
     private readonly dialog: MatDialog,
-    private readonly changeDetector: ChangeDetectorRef
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly apiService: ApiService
   ) {}
 
   ngOnInit(): void {
@@ -382,12 +384,39 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   // --- Upload ---------------------------------------------------------------
 
+  get hasPbPbResults(): boolean {
+    return this.pbPbRows.length > 0;
+  }
+
   /**
-   * The J/psi backend does not exist yet, so this deliberately performs no request. The
-   * button still follows the workshop pattern and stays disabled without a session.
+   * Uploads every accepted row - pp/p-Pb and Pb-Pb alike - as one submission. `nEvents` is only
+   * attached for pp/p-Pb (`JpsiSignalEntry` doc comment): Pb-Pb event counts are a fixed,
+   * published constant the teacher app already has (`PBPB_NEVENTS`), so nothing is lost by
+   * omitting it here.
    */
   onUploadResults(): void {
-    this.notify('JPSI.RESULTS.UPLOAD_SOON');
+    const entries: JpsiSignalEntry[] = [
+      ...this.rows.map((row) => ({
+        system: row.datasetId,
+        signal: row.signal,
+        signalError: row.signalError,
+        nEvents: row.nEvents,
+      })),
+      ...this.pbPbRows.map((row) => ({
+        system: row.centralityId,
+        signal: row.fit.signal,
+        signalError: row.fit.signalError,
+      })),
+    ];
+
+    if (entries.length === 0) {
+      return;
+    }
+
+    this.apiService.submitJpsiAnalysisResults(entries).subscribe({
+      next: () => this.notify('JPSI.RESULTS.UPLOAD_SUCCESS'),
+      error: () => this.notify('JPSI.RESULTS.UPLOAD_ERROR'),
+    });
   }
 
   // --- Internals ------------------------------------------------------------

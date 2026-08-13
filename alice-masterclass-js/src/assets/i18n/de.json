@@ -119,9 +119,11 @@
     "BUTTON_PROCEED": "Vorgehen",
     "BUTTON_CANCEL": "Abbrechen",
     "NO_TOKEN_TOOLTIP": "Geben Sie zum Aktivieren des Daten-Uploads das Kennwort mit der Option Kennwort im Menü ein.",
+    "WRONG_EXERCISE_TOOLTIP": "Diese Sitzung ist nicht für diese Übung eingerichtet.",
     "ERROR": "Das eingegebene Kennwort ist falsch.",
     "UPLOADING": "Daten werden hochgeladen...",
     "COMPLETED": "Upload abgeschlossen!",
+    "UPLOAD_ERROR": "Ergebnisse konnten nicht hochgeladen werden. Bitte versuchen Sie es erneut.",
     "UPLOAD_DATA": "Daten hochladen",
     "STUDENT_TAKEN": "Diese Schülernummer ist in dieser Sitzung bereits vergeben.",
     "STUDENT_INVALID": "Schülernummer ist für diese Sitzung ungültig.",
@@ -442,8 +444,8 @@
     }
   },
   "JPSI": {
-    "TITLE": "J/psi-Produktion",
-    "MENU": "J/psi-Analyse",
+    "TITLE": "J/ψ-Produktion",
+    "MENU": "J/ψ-Analyse",
     "DATASET": {
       "PP": "Proton-Proton",
       "PPB": "Proton-Blei",
@@ -497,7 +499,6 @@
       "BACKGROUND_RANGE": "Untergrund",
       "WINDOW": "Signal",
       "FIT": "Fit",
-      "FIT_HINT": "Drücke Fit, um den Untergrund zu fitten und das Signal im Fenster zu zählen.",
       "ACCEPT": "Ergebnis übernehmen",
       "RESET_RANGE": "Bereich zurücksetzen",
       "CLEAR_FIT": "Fit löschen",
@@ -537,7 +538,8 @@
       "SIGNIFICANCE": "Signifikanz",
       "DELETE": "Dieses Ergebnis entfernen",
       "EMPTY": "Übernimm ein Ergebnis, um es hier einzutragen.",
-      "UPLOAD_SOON": "Das Senden der Ergebnisse an die Lehrkraft wird bald verfügbar sein."
+      "UPLOAD_SUCCESS": "Ergebnisse wurden an die Lehrkraft gesendet.",
+      "UPLOAD_ERROR": "Ergebnisse konnten nicht gesendet werden. Bitte versuche es erneut."
     },
     "WELCOME": {
       "TITLE": "Auf der Suche nach dem J/psi",

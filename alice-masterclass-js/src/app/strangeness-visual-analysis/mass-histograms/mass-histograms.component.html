@@ -37,12 +37,12 @@
       </div>
       @if (!demo) {
         <span
-          [matTooltipDisabled]="apiService.isAuthenticated"
-          [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate" matTooltipPosition="before"
+          [matTooltipDisabled]="apiService.isAuthenticated && !wrongExerciseKind"
+          [matTooltip]="(apiService.isAuthenticated ? 'PASSWORD.WRONG_EXERCISE_TOOLTIP' : 'PASSWORD.NO_TOKEN_TOOLTIP') | translate" matTooltipPosition="before"
         >
           <button
             id="va-tour-upload"
-            [disabled]="!apiService.isAuthenticated || uploadDisabled"
+            [disabled]="uploadButtonDisabled"
             mat-raised-button
             color="warn"
             class="upload-data-button"

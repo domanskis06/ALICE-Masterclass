@@ -1,6 +1,26 @@
 <mat-card appearance="outlined" id="jpsi-tour-pbpb-results">
-  <mat-card-title class="pbpb-results__title">
-    {{ 'JPSI.PBPB.RESULTS.TITLE' | translate }}
+  <mat-card-title class="pbpb-results__header">
+    <span class="pbpb-results__title">{{ 'JPSI.PBPB.RESULTS.TITLE' | translate }}</span>
+    <span
+      [matTooltipDisabled]="apiService.isAuthenticated && !wrongExerciseKind"
+      [matTooltip]="(apiService.isAuthenticated ? 'PASSWORD.WRONG_EXERCISE_TOOLTIP' : 'PASSWORD.NO_TOKEN_TOOLTIP') | translate"
+      matTooltipPosition="before"
+    >
+      <button
+        id="jpsi-tour-pbpb-upload-button"
+        mat-raised-button
+        color="warn"
+        aria-label="Upload data"
+        data-testid="jpsi-pbpb-upload"
+        [disabled]="uploadDisabled"
+        (click)="uploadResults.emit()"
+      >
+        <mat-icon class="material-icons-outlined">
+          {{ apiService.isAuthenticated ? 'cloud_upload' : 'cloud_off' }}
+        </mat-icon>
+        <span>{{ 'PASSWORD.UPLOAD_DATA' | translate }}</span>
+      </button>
+    </span>
   </mat-card-title>
 
   <mat-card-content>

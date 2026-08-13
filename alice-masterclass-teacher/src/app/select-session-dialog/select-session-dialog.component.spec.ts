@@ -6,7 +6,7 @@ import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
 import { SelectSessionDialogComponent } from './select-session-dialog.component';
-import { ApiService, SessionAPI } from '../shared/services/api.service';
+import { ApiService, ExerciseKind, SessionAPI } from '../shared/services/api.service';
 import { of } from 'rxjs';
 
 
@@ -53,8 +53,8 @@ describe('SelectSessionDialogComponent', () => {
 
   describe('with sample set', () => {
     const SESSIONS: SessionAPI[] = [
-      {id: 1, event: 'TEST', name: 'TestName', password: 'testpassword', maxStudents: 15, created: new Date(Date.now())},
-      {id: 2, event: 'TEST2', name: 'TestName2', password: 'testpassword2', maxStudents: 30, created: new Date(Date.now())}
+      {id: 1, event: 'TEST', kind: ExerciseKind.STRANGENESS, name: 'TestName', password: 'testpassword', maxStudents: 15, created: new Date(Date.now())},
+      {id: 2, event: 'TEST2', kind: ExerciseKind.STRANGENESS, name: 'TestName2', password: 'testpassword2', maxStudents: 30, created: new Date(Date.now())}
     ];
 
     beforeEach(() => {

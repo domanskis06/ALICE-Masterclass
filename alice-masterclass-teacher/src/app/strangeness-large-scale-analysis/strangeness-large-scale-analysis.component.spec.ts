@@ -7,7 +7,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
-import { ApiService, CentralityType, CollisionType, EventAPI, ParticleType, StrangenesLargeScaleAnalysisResultAPI } from '../shared/services/api.service';
+import { ApiService, CentralityType, CollisionType, EventAPI, ExerciseKind, ParticleType, StrangenesLargeScaleAnalysisResultAPI } from '../shared/services/api.service';
 
 import { CentralityNamePipe, StrangenessLargeScaleAnalysisComponent } from './strangeness-large-scale-analysis.component';
 import { StrangenessEnhancementPlotComponent } from './strangeness-enhancement-plot/strangeness-enhancement-plot.component';
@@ -23,8 +23,8 @@ describe('StrangenessLargeScaleAnalysisComponent', () => {
   let spyResults: jasmine.Spy;
 
   const EVENTS: EventAPI[] = [
-    { id: 1, name: 'Event A', created: new Date() },
-    { id: 2, name: 'Event B', created: new Date() },
+    { id: 1, name: 'Event A', kind: ExerciseKind.STRANGENESS, created: new Date() },
+    { id: 2, name: 'Event B', kind: ExerciseKind.STRANGENESS, created: new Date() },
   ];
 
   beforeEach(async () => {

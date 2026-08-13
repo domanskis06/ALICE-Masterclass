@@ -1,45 +1,26 @@
-import { Component, OnInit, Type } from '@angular/core';
+import { Component, OnDestroy, OnInit, Type } from '@angular/core';
 
-import { ApiService, EventAPI } from '../shared/services/api.service';
+import { ApiService, EventAPI, ExerciseKind, JpsiAnalysisResultAPI } from '../shared/services/api.service';
 import { InstructionsProvider } from '../shared/interfaces';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { JpsiRaaService } from './jpsi-raa.service';
-import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow, isPbPbCentrality } from './jpsi-raa.models';
+import { PBPB_NEVENTS } from './jpsi-raa.constants';
+import {
+  CollisionSystemId,
+  JpsiRawSignal,
+  JpsiRaaPlotEntry,
+  JpsiResultRow,
+  PBPB_CENTRALITY_IDS,
+  isPbPbCentrality,
+} from './jpsi-raa.models';
 
-/**
- * Sample J/psi signals standing in for the student submissions this page will eventually load
- * from `GET /api/v1/jpsi_analysis_results/{eventID}/` (endpoint not implemented yet - see
- * `ci/docs/jpsi-analysis-teacher.md`). Pb-Pb numbers reuse the published yields/event counts
- * already bundled with the student exercise (`assets/exercises/jpsi/minv/pbPb_*.json`); pp/p-Pb
- * reuse the cross-checked example from the student module's README ("pp, 1000 events... N=59").
- * No mass window is carried here anymore - the student app locks the signal window to a fixed
- * width matching `JPSI_REFERENCE_MASS_WINDOW` exactly (see "Mass-window safety net" in
- * `ci/docs/jpsi-analysis-teacher.md`), so there is nothing left to vary per submission.
- *
- * pp and p-Pb signals are kept here because students do analyse and submit both systems as part
- * of the exercise - but per the physics supervisors' confirmed decision, only the eight Pb-Pb
- * centrality rows are ever shown to the teacher (see `recalculate()` below and "Why a fixed pp
- * reference?" in `ci/docs/jpsi-analysis-teacher.md`).
- */
-const SAMPLE_SIGNALS: readonly JpsiRawSignal[] = [
-  { system: 'pp', signal: 59, signalError: 8, nEvents: 1000 },
-  { system: 'pPb', signal: 34, signalError: 6, nEvents: 800 },
-  { system: 'pbPb_0_5', signal: 34662, signalError: 186, nEvents: 40090000 },
-  { system: 'pbPb_5_10', signal: 33443, signalError: 183, nEvents: 40070000 },
-  { system: 'pbPb_10_20', signal: 7858, signalError: 89, nEvents: 18140000 },
-  { system: 'pbPb_20_30', signal: 5961, signalError: 77, nEvents: 18180000 },
-  { system: 'pbPb_30_40', signal: 7181, signalError: 85, nEvents: 39760000 },
-  { system: 'pbPb_40_50', signal: 3425, signalError: 59, nEvents: 39830000 },
-  { system: 'pbPb_50_70', signal: 1478, signalError: 38, nEvents: 36480000 },
-  { system: 'pbPb_70_90', signal: 310, signalError: 18, nEvents: 36380000 },
-];
+/** Every collision system shown in the table/plot, in display order - fixed regardless of
+ * which systems have submissions yet, so the layout does not jump around as students submit. */
+const ALL_SYSTEMS: readonly CollisionSystemId[] = ['pp', 'pPb', ...PBPB_CENTRALITY_IDS];
 
-/** Deterministic pseudo-random number in [0, 1) - mulberry32, seeded per event/row. */
-function seededRandom(seed: number): number {
-  let t = seed + 0x6d2b79f5;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+/** Average of a list of student-submitted numbers, 0 when nobody has submitted yet. */
+function average(values: readonly number[]): number {
+  return values.length === 0 ? 0 : values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
 @Component({
@@ -48,7 +29,7 @@ function seededRandom(seed: number): number {
     styleUrls: ['./jpsi-analysis.component.scss'],
     standalone: false
 })
-export class JpsiAnalysisComponent implements OnInit, InstructionsProvider {
+export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsProvider {
 
   instructionsComponent: Type<any> = InstructionsComponent;
 
@@ -58,55 +39,82 @@ export class JpsiAnalysisComponent implements OnInit, InstructionsProvider {
   public rows: JpsiResultRow[] = [];
   public plotData: JpsiRaaPlotEntry[] = [];
 
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor(
     private readonly apiService: ApiService,
     private readonly raaService: JpsiRaaService
   ) { }
 
   ngOnInit(): void {
-    this.apiService.getEvents().subscribe((events: EventAPI[]) => {
+    // Only J/psi events are relevant here - the three sub-masterclasses are independent
+    // (Event.kind), so a strangeness/R_AA event would never have jpsi_analysis_results anyway.
+    this.apiService.getEvents(ExerciseKind.JPSI).subscribe((events: EventAPI[]) => {
       this.events = events;
     });
 
-    this.recalculate();
+    if (this.apiService.autoRefresh()) {
+      this.refreshTimer = setInterval(() => {
+        if (this.eventID !== null) {
+          this.reload();
+        }
+      }, this.apiService.REFRESH_INTERVAL);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer !== null) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 
   onEventChange(): void {
-    // No jpsi results endpoint exists yet (see class doc comment): switching events only
-    // reshuffles the sample data, within a small, seeded margin, so the page visibly reacts
-    // the way it will once real per-event submissions are wired in.
-    this.recalculate();
+    this.reload();
   }
 
   onReload(): void {
-    this.recalculate();
+    this.reload();
   }
 
-  private recalculate(): void {
-    const signals = this.jitteredSignals();
-    const allRows = this.raaService.computeResults(signals);
-    // Only the Pb-Pb centrality classes are shown to the teacher - pp/p-Pb signals are still
-    // accepted and computed above (so nothing breaks once real submissions include them), but
-    // R_AA always compares against the fixed reference yield, never a student's own pp/p-Pb row,
-    // so displaying that row here would be misleading. See "Why a fixed pp reference?" in
-    // `ci/docs/jpsi-analysis-teacher.md`.
-    this.rows = allRows.filter((row) => isPbPbCentrality(row.system));
-    this.plotData = this.raaService.toPlotEntries(this.rows);
-  }
-
-  private jitteredSignals(): JpsiRawSignal[] {
+  private reload(): void {
     if (this.eventID === null) {
-      return SAMPLE_SIGNALS.slice();
+      return;
     }
 
-    return SAMPLE_SIGNALS.map((base, index) => {
-      const jitter = 0.85 + 0.3 * seededRandom(this.eventID! * 1000 + index);
-      const signal = Math.max(0, Math.round(base.signal * jitter));
-      return {
-        ...base,
-        signal,
-        signalError: Math.round(Math.sqrt(signal)),
-      };
+    this.apiService.getJpsiAnalysisResults(this.eventID).subscribe((results: JpsiAnalysisResultAPI[]) => {
+      const signals = this.toRawSignals(results);
+      const allRows = this.raaService.computeResults(signals);
+      // Only the Pb-Pb centrality classes are shown to the teacher - pp/p-Pb signals are still
+      // accepted and computed above, but R_AA always compares against the fixed reference
+      // yield, never a student's own pp/p-Pb row - see "Why a fixed pp reference?" in
+      // `ci/docs/jpsi-analysis-teacher.md`.
+      this.rows = allRows.filter((row) => isPbPbCentrality(row.system));
+      this.plotData = this.raaService.toPlotEntries(this.rows);
+    });
+  }
+
+  /**
+   * Turns the raw per-student arrays the API returns into one averaged signal per system,
+   * filling in every system that has no submissions yet with a zero row (rather than omitting
+   * it) so the table/plot layout stays stable as students submit over the course of a session.
+   * Pb-Pb `nEvents` always comes from the fixed `PBPB_NEVENTS` constant, never from the
+   * response - see the `JpsiAnalysisResultAPI` doc comment.
+   */
+  private toRawSignals(results: readonly JpsiAnalysisResultAPI[]): JpsiRawSignal[] {
+    const bySystem = new Map(results.map((entry) => [entry.system, entry]));
+
+    return ALL_SYSTEMS.map((system) => {
+      const entry = bySystem.get(system);
+      const signal = entry ? average(entry.signal) : 0;
+      const signalError = entry ? average(entry.signalError) : 0;
+      const nEvents = isPbPbCentrality(system)
+        ? PBPB_NEVENTS[system]
+        : entry
+          ? average(entry.nEvents)
+          : 0;
+
+      return { system, signal, signalError, nEvents };
     });
   }
 }

@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from alice_masterclass_django.token import TemporaryTokenAuthentication
 from masterclass.serializers import EventSerializer, SessionSerializer
-from masterclass.models import Event, sessionByPassword, Session
+from masterclass.models import Event, sessionByPassword, Session, ExerciseKind
 
 error_logger = logging.getLogger('masterclass_error')
 
@@ -27,6 +27,28 @@ def _has_unique_error(serializer):
         return getattr(errors, 'code', None) == 'unique'
 
     return _walk(serializer.errors)
+
+def _student_taken(session, student_idx):
+    """
+    Whether `student_idx` has already submitted results in `session`. Dispatches on
+    `session.event.kind` so a student id is only "taken" within its own sub-masterclass -
+    the same id can independently take the strangeness, J/psi and R_AA masterclasses.
+    """
+    kind = session.event.kind
+
+    if kind == ExerciseKind.STRANGENESS:
+        from strangeness.models import VisualAnalysisResult, LargeScaleAnalysisResult
+        return (
+            VisualAnalysisResult.objects.filter(session=session, student=student_idx).exists()
+            or LargeScaleAnalysisResult.objects.filter(session=session, student=student_idx).exists()
+        )
+
+    if kind == ExerciseKind.JPSI:
+        from jpsi.models import JpsiAnalysisResult
+        return JpsiAnalysisResult.objects.filter(session=session, student=student_idx).exists()
+
+    # RAA sub-masterclass is not implemented yet - nothing can be "taken" there.
+    return False
 
 class OAuthAPI(APIView):
     def get(self, request):
@@ -68,7 +90,15 @@ class EventCreateListAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = EventSerializer(Event.objects.all(), many=True)
+        events = Event.objects.all()
+
+        kind = request.query_params.get('kind')
+        if kind is not None:
+            if kind not in ExerciseKind.values:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            events = events.filter(kind=kind)
+
+        serializer = EventSerializer(events, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -107,10 +137,11 @@ class SessionCreateListAPI(APIView):
     def get(self, request):
         serializer = SessionSerializer(Session.objects.all(), many=True)
 
-        # add event name
+        # add event name and kind (derived from the event - Session itself has no kind field)
         for entry in serializer.data:
             session = Session.objects.filter(name=entry['name']).first()
             entry['event'] = session.event.name
+            entry['kind'] = session.event.kind
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -184,17 +215,13 @@ class CheckSessionAPI(APIView):
                         'reason': 'student_invalid',
                         'name': session.name,
                         'maxStudents': session.maxStudents,
+                        'kind': session.event.kind,
                     },
                     status=status.HTTP_200_OK,
                 )
 
             if not allow_existing:
-                from strangeness.models import VisualAnalysisResult, LargeScaleAnalysisResult
-
-                taken = (
-                    VisualAnalysisResult.objects.filter(session=session, student=student_idx).exists()
-                    or LargeScaleAnalysisResult.objects.filter(session=session, student=student_idx).exists()
-                )
+                taken = _student_taken(session, student_idx)
                 if taken:
                     return Response(
                         {
@@ -202,6 +229,7 @@ class CheckSessionAPI(APIView):
                             'reason': 'student_taken',
                             'name': session.name,
                             'maxStudents': session.maxStudents,
+                            'kind': session.event.kind,
                         },
                         status=status.HTTP_200_OK,
                     )
@@ -212,6 +240,7 @@ class CheckSessionAPI(APIView):
                 'reason': '',
                 'name': session.name,
                 'maxStudents': session.maxStudents,
+                'kind': session.event.kind,
             },
             status=status.HTTP_200_OK,
         )

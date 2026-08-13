@@ -129,8 +129,10 @@
     "BUTTON_PROCEED": "Continuer",
     "BUTTON_CANCEL": "Annuler",
     "NO_TOKEN_TOOLTIP": "Pour activer l’envoi des données, fournissez le mot de passe via l’option Mot de passe du Menu.",
+    "WRONG_EXERCISE_TOOLTIP": "Cette session n’est pas configurée pour cet exercice.",
     "UPLOADING": "Envoi des données…",
     "COMPLETED": "Envoi terminé !",
+    "UPLOAD_ERROR": "Impossible d’envoyer les résultats. Veuillez réessayer.",
     "UPLOAD_DATA": "Envoyer les données",
     "STUDENT_TAKEN": "Ce numéro d’élève est déjà utilisé dans cette session.",
     "STUDENT_INVALID": "Numéro d’élève invalide pour cette session.",
@@ -444,8 +446,8 @@
     }
   },
   "JPSI": {
-    "TITLE": "Production de J/psi",
-    "MENU": "Analyse J/psi",
+    "TITLE": "Production de J/ψ",
+    "MENU": "Analyse J/ψ",
     "DATASET": {
       "PP": "proton-proton",
       "PPB": "proton-plomb",
@@ -499,7 +501,6 @@
       "BACKGROUND_RANGE": "Fond",
       "WINDOW": "Signal",
       "FIT": "Ajuster",
-      "FIT_HINT": "Appuie sur Ajuster pour ajuster le fond et compter le signal dans la fenêtre.",
       "ACCEPT": "Valider le résultat",
       "RESET_RANGE": "Réinitialiser la plage",
       "CLEAR_FIT": "Effacer l'ajustement",
@@ -539,7 +540,8 @@
       "SIGNIFICANCE": "Significativité",
       "DELETE": "Supprimer ce résultat",
       "EMPTY": "Valide un résultat pour l'ajouter ici.",
-      "UPLOAD_SOON": "L'envoi des résultats à ton enseignant sera bientôt disponible."
+      "UPLOAD_SUCCESS": "Les résultats ont été envoyés à ton enseignant.",
+      "UPLOAD_ERROR": "Impossible d'envoyer les résultats. Réessaie."
     },
     "WELCOME": {
       "TITLE": "À la recherche de la particule J/psi",

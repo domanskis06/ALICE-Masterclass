@@ -2,8 +2,8 @@
   <mat-card-title class="results-table__header">
     <span class="results-table__title">{{ 'JPSI.RESULTS.TITLE' | translate }}</span>
     <span
-      [matTooltipDisabled]="apiService.isAuthenticated"
-      [matTooltip]="'PASSWORD.NO_TOKEN_TOOLTIP' | translate"
+      [matTooltipDisabled]="apiService.isAuthenticated && !wrongExerciseKind"
+      [matTooltip]="(apiService.isAuthenticated ? 'PASSWORD.WRONG_EXERCISE_TOOLTIP' : 'PASSWORD.NO_TOKEN_TOOLTIP') | translate"
       matTooltipPosition="before"
     >
       <button
@@ -12,7 +12,7 @@
         color="warn"
         aria-label="Upload data"
         data-testid="jpsi-upload"
-        [disabled]="!apiService.isAuthenticated || rows.length === 0"
+        [disabled]="uploadDisabled"
         (click)="uploadResults.emit()"
       >
         <mat-icon class="material-icons-outlined">

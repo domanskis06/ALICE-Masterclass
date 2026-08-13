@@ -50,6 +50,23 @@ import { PbPbCentralityId } from './jpsi-raa.models';
  * invariant-mass bin), so every Acc x epsilon constant is a single pT-integrated number.
  */
 
+/**
+ * Fixed, published Pb-Pb event counts per centrality class - metadata about the exercise
+ * sample, not something the student measures. Kept here (rather than submitted by the
+ * student) so `JpsiRawSignal.nEvents` for Pb-Pb never needs to travel over the API - see the
+ * `JpsiRawSignal` doc comment in `jpsi-raa.models.ts`.
+ */
+export const PBPB_NEVENTS: Readonly<Record<PbPbCentralityId, number>> = {
+  pbPb_0_5: 40090000,
+  pbPb_5_10: 40070000,
+  pbPb_10_20: 18140000,
+  pbPb_20_30: 18180000,
+  pbPb_30_40: 39760000,
+  pbPb_40_50: 39830000,
+  pbPb_50_70: 36480000,
+  pbPb_70_90: 36380000,
+};
+
 export const PBPB_NPART: Readonly<Record<PbPbCentralityId, number>> = {
   pbPb_0_5: 383.4,
   pbPb_5_10: 331.2,

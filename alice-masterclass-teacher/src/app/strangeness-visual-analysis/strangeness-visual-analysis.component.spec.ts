@@ -7,7 +7,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
-import { ApiService, SessionAPI, VisualAnalysisResultAPI } from '../shared/services/api.service';
+import { ApiService, ExerciseKind, SessionAPI, VisualAnalysisResultAPI } from '../shared/services/api.service';
 
 import { StrangenessVisualAnalysisComponent } from './strangeness-visual-analysis.component';
 import { MassHistogramsComponent } from './mass-histograms/mass-histograms.component';
@@ -23,8 +23,8 @@ describe('StrangenessVisualAnalysisComponent', () => {
   let spyResults: jasmine.Spy;
 
   const SESSIONS: SessionAPI[] = [
-    { id: 1, event: 'Event A', name: 'Session A', password: 'aaa', maxStudents: 10, created: new Date() },
-    { id: 2, event: 'Event A', name: 'Session B', password: 'bbb', maxStudents: 10, created: new Date() },
+    { id: 1, event: 'Event A', kind: ExerciseKind.STRANGENESS, name: 'Session A', password: 'aaa', maxStudents: 10, created: new Date() },
+    { id: 2, event: 'Event A', kind: ExerciseKind.STRANGENESS, name: 'Session B', password: 'bbb', maxStudents: 10, created: new Date() },
   ];
 
   beforeEach(async () => {

@@ -68,7 +68,12 @@ export class SessionComponent implements AfterViewInit {
       sessions: this.apiService.getSessions()
     }).subscribe(
       ({ events, sessions }) => {
-        this.eventsWithSessions = events.map(event => ({
+        // Newest events on top, so the ones teachers are actively running/setting up don't get
+        // buried under years of past masterclasses.
+        const sortedEvents = [...events].sort(
+          (a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()
+        );
+        this.eventsWithSessions = sortedEvents.map(event => ({
           event,
           sessions: sessions.filter(s => s.event === event.name)
         }));

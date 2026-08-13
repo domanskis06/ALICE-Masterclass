@@ -3,7 +3,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ParticleType, CollisionType, CentralityType, LargeScaleAnalysisResultsEntry } from '../../shared/services/api.service';
 
-import { ApiService } from '../../shared/services/api.service';
+import { ApiService, ExerciseKind } from '../../shared/services/api.service';
 
 export interface FitResult {
   particle: ParticleType,
@@ -54,6 +54,16 @@ export class ResultsComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.tableRows.paginator = this.paginator;
+  }
+
+  /** True once the student is logged into a session whose event is not `strangeness` - LSA
+   * submissions to it would be rejected server-side anyway (`Event.kind` guard). */
+  get wrongExerciseKind(): boolean {
+    return !this.apiService.matchesSessionKind(ExerciseKind.STRANGENESS);
+  }
+
+  get uploadButtonDisabled(): boolean {
+    return !this.apiService.isAuthenticated || this.wrongExerciseKind;
   }
 
   onUploadButtonClicked(): void {

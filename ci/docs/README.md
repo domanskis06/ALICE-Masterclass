@@ -18,6 +18,7 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 | [`event-display.md`](event-display.md) | Three.js EventDisplay (god component): side views (Rφ/ρz masks + zoom sync), VA detector load optimisation (merge / prune) |
 | [`particle-propagation.md`](particle-propagation.md) | Particle Propagation — RK4 / field, Pb–Pb intro, L3 magnet stand-in, architecture |
 | [`jpsi-analysis.md`](jpsi-analysis.md) | J/psi analysis — like-sign background subtraction, PID cut, appendable Quick Analysis, pp vs p-Pb |
+| [`jpsi-analysis-teacher.md`](jpsi-analysis-teacher.md) | J/psi analysis (teacher, R_AA) — fixed pp reference, `Event.kind` sub-masterclass split, `jpsi_analysis`/`jpsi_analysis_results` API |
 | [`demo-app.md`](demo-app.md) | Public offline demo SPA — purpose, `demoMode`, OKD, `v*-demo` redeploy, opening the Route |
 | [`tutorials.md`](tutorials.md) | VA / LSA driver.js tours — demo auto-welcome vs workshop Help |
 | [`../../alice-masterclass-js/data/strangeness/part1_Xi/README.md`](../../alice-masterclass-js/data/strangeness/part1_Xi/README.md) | Ξ / Ξ̅ cascade VA data — FemtoUniverse dump, helix converter, merge into host events, regenerate |

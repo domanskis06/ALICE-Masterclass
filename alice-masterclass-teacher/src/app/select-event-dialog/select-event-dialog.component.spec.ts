@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { AngularModule } from '../shared/angular.module';
-import { ApiService, EventAPI } from '../shared/services/api.service';
+import { ApiService, EventAPI, ExerciseKind } from '../shared/services/api.service';
 import { SharedModule } from '../shared/shared.module';
 
 import { SelectEventDialogComponent } from './select-event-dialog.component';
@@ -54,8 +54,8 @@ describe('SelectEventDialogComponent', () => {
 
   describe('with sample set', () => {
     const EVENTS: EventAPI[] = [
-      {id: 1, name: 'TEST', created: new Date(Date.now())},
-      {id: 2, name: 'TEST2', created: new Date(Date.now())}
+      {id: 1, name: 'TEST', kind: ExerciseKind.STRANGENESS, created: new Date(Date.now())},
+      {id: 2, name: 'TEST2', kind: ExerciseKind.STRANGENESS, created: new Date(Date.now())}
     ];
 
     beforeEach(() => {

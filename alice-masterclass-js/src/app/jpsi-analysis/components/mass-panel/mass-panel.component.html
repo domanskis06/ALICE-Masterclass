@@ -161,14 +161,14 @@
           <text
             class="mass-panel__axis-label"
             [attr.x]="margin.left + plotWidth / 2"
-            [attr.y]="height - 6"
+            [attr.y]="height - 8"
             text-anchor="middle"
           >
             {{ 'JPSI.MASS.X_AXIS' | translate }}
           </text>
           <text
             class="mass-panel__axis-label"
-            [attr.transform]="'rotate(-90) translate(' + -(margin.top + plotHeight / 2) + ', 14)'"
+            [attr.transform]="'rotate(-90) translate(' + -(margin.top + plotHeight / 2) + ', 18)'"
             text-anchor="middle"
           >
             {{ 'JPSI.MASS.Y_AXIS' | translate }}
@@ -214,6 +214,60 @@
         </div>
       }
     </div>
+  </mat-card-content>
+
+  <mat-card-actions class="mass-panel__actions">
+    <div class="mass-panel__action-row">
+      @if (mode === 'explore') {
+        <button
+          mat-raised-button
+          color="primary"
+          id="jpsi-tour-subtract-button"
+          data-testid="jpsi-subtract"
+          [disabled]="!canSubtract"
+          [matTooltip]="'JPSI.MASS.SUBTRACT_HELP' | translate"
+          (click)="subtract.emit()"
+        >
+          {{ 'JPSI.MASS.SUBTRACT' | translate }}
+        </button>
+      } @else {
+        <button
+          mat-raised-button
+          color="primary"
+          id="jpsi-tour-fit-button"
+          data-testid="jpsi-fit"
+          [disabled]="!hasData"
+          (click)="fit.emit()"
+        >
+          {{ 'JPSI.MASS.FIT' | translate }}
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          id="jpsi-tour-accept-button"
+          data-testid="jpsi-accept"
+          [disabled]="!canAccept"
+          (click)="acceptResult.emit()"
+        >
+          {{ 'JPSI.MASS.ACCEPT' | translate }}
+        </button>
+        <button mat-stroked-button data-testid="jpsi-show-components" (click)="showComponents.emit()">
+          {{ 'JPSI.MASS.SHOW_COMPONENTS' | translate }}
+        </button>
+        <button
+          mat-stroked-button
+          id="jpsi-tour-clear-fit-button"
+          data-testid="jpsi-clear-fit"
+          [disabled]="fitResult === null"
+          (click)="clearFit.emit()"
+        >
+          {{ 'JPSI.MASS.CLEAR_FIT' | translate }}
+        </button>
+        @if (fitResult !== null && !canAccept) {
+          <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.NO_SIGNAL_HINT' | translate }}</span>
+        }
+      }
+    </div>
 
     @if (mode === 'subtracted') {
       @if (fitResult; as result) {
@@ -237,60 +291,6 @@
             <span class="mass-panel__metric-value">{{ result.significance | number: '1.1-1' }}</span>
           </div>
         </div>
-      }
-    }
-  </mat-card-content>
-
-  <mat-card-actions class="mass-panel__actions">
-    @if (mode === 'explore') {
-      <button
-        mat-raised-button
-        color="primary"
-        id="jpsi-tour-subtract-button"
-        data-testid="jpsi-subtract"
-        [disabled]="!canSubtract"
-        [matTooltip]="'JPSI.MASS.SUBTRACT_HELP' | translate"
-        (click)="subtract.emit()"
-      >
-        {{ 'JPSI.MASS.SUBTRACT' | translate }}
-      </button>
-    } @else {
-      <button
-        mat-raised-button
-        color="primary"
-        id="jpsi-tour-fit-button"
-        data-testid="jpsi-fit"
-        [disabled]="!hasData"
-        (click)="fit.emit()"
-      >
-        {{ 'JPSI.MASS.FIT' | translate }}
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        id="jpsi-tour-accept-button"
-        data-testid="jpsi-accept"
-        [disabled]="!canAccept"
-        (click)="acceptResult.emit()"
-      >
-        {{ 'JPSI.MASS.ACCEPT' | translate }}
-      </button>
-      <button mat-stroked-button data-testid="jpsi-show-components" (click)="showComponents.emit()">
-        {{ 'JPSI.MASS.SHOW_COMPONENTS' | translate }}
-      </button>
-      <button
-        mat-stroked-button
-        id="jpsi-tour-clear-fit-button"
-        data-testid="jpsi-clear-fit"
-        [disabled]="fitResult === null"
-        (click)="clearFit.emit()"
-      >
-        {{ 'JPSI.MASS.CLEAR_FIT' | translate }}
-      </button>
-      @if (fitResult === null) {
-        <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.FIT_HINT' | translate }}</span>
-      } @else if (!canAccept) {
-        <span class="mass-panel__accept-hint">{{ 'JPSI.MASS.NO_SIGNAL_HINT' | translate }}</span>
       }
     }
   </mat-card-actions>

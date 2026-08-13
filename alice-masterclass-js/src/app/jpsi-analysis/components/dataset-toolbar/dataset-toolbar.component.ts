@@ -28,10 +28,6 @@ export class DatasetToolbarComponent {
   readonly presets = QUICK_ANALYSIS_PRESETS;
   selectedPreset: QuickAnalysisPreset = 100;
 
-  presetLabel(preset: QuickAnalysisPreset): string {
-    return preset === 'all' ? 'JPSI.TOOLBAR.PRESET_ALL' : String(preset);
-  }
-
   /** Compact collision-system labels for the dropdown (pp, p-Pb, …). */
   shortLabelKey(datasetId: DatasetId): string {
     return datasetId === 'pp' ? 'JPSI.DATASET.PP_SHORT' : 'JPSI.DATASET.PPB_SHORT';

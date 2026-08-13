@@ -19,6 +19,7 @@ from django.urls import path
 from masterclass.views import OAuthAPI, TokenAPI, EventCreateListAPI, EventDeleteAPI, SessionCreateListAPI, SessionDeleteAPI, CheckSessionAPI
 from strangeness.views import SubmitVisualAnalysisResultsAPI, GetVisualAnalysisResultsAPI
 from strangeness.views import SubmitLargeScaleAnalysisResultsAPI, GetLargeScaleAnalysisResultsAPI
+from jpsi.views import SubmitJpsiAnalysisResultsAPI, GetJpsiAnalysisResultsAPI
 
 urlpatterns = [
     path('oauth/', OAuthAPI.as_view()),
@@ -32,4 +33,6 @@ urlpatterns = [
     path('api/v1/strangeness_visual_analysis_results/<int:id>/', GetVisualAnalysisResultsAPI.as_view()),
     path('api/v1/strangeness_large_scale_analysis/<int:student>/', SubmitLargeScaleAnalysisResultsAPI.as_view()),
     path('api/v1/strangeness_large_scale_analysis_results/<int:id>/', GetLargeScaleAnalysisResultsAPI.as_view()),
+    path('api/v1/jpsi_analysis/<int:student>/', SubmitJpsiAnalysisResultsAPI.as_view()),
+    path('api/v1/jpsi_analysis_results/<int:id>/', GetJpsiAnalysisResultsAPI.as_view()),
 ]

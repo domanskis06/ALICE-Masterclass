@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from alice_masterclass_django.token import TemporaryTokenAuthentication
 from .models import VisualAnalysisResult, VisualAnalysisResultsEntry, LargeScaleAnalysisResult, LargeScaleAnalysisResultsEntry
-from masterclass.models import sessionByPassword, Session, Event
+from masterclass.models import sessionByPassword, Session, Event, ExerciseKind
 
 error_logger = logging.getLogger('masterclass_error')
 
@@ -19,6 +19,9 @@ class SubmitVisualAnalysisResultsAPI(APIView):
     def put(self, request, student, dataset):
         try:
             session = sessionByPassword(request)
+
+            if session.event.kind != ExerciseKind.STRANGENESS:
+                return Response(status=status.HTTP_403_FORBIDDEN)
 
             if 'results' not in request.data:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -74,6 +77,10 @@ class GetVisualAnalysisResultsAPI(APIView):
 
         if sessionQuery:
             session = sessionQuery.first()
+
+            if session.event.kind != ExerciseKind.STRANGENESS:
+                return Response(status=status.HTTP_403_FORBIDDEN)
+
             results = VisualAnalysisResult.objects.filter(session=session)
 
             studentList = []
@@ -102,6 +109,9 @@ class SubmitLargeScaleAnalysisResultsAPI(APIView):
     def put(self, request, student):
         try:
             session = sessionByPassword(request)
+
+            if session.event.kind != ExerciseKind.STRANGENESS:
+                return Response(status=status.HTTP_403_FORBIDDEN)
 
             if 'results' not in request.data:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -150,6 +160,9 @@ class GetLargeScaleAnalysisResultsAPI(APIView):
 
         if eventQuery:
             event = eventQuery.first()
+
+            if event.kind != ExerciseKind.STRANGENESS:
+                return Response(status=status.HTTP_403_FORBIDDEN)
 
             resultsQuery = LargeScaleAnalysisResultsEntry.objects.filter(result__session__event=event)
 

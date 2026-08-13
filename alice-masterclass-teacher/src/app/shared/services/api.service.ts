@@ -1,21 +1,47 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+
+/**
+ * Which of the three independent sub-masterclasses an Event/Session belongs to. Mirrors
+ * `ExerciseKind` in `alice-masterclass-django/masterclass/models.py` - keep these in sync.
+ */
+export enum ExerciseKind {
+  STRANGENESS = 'strangeness',
+  JPSI = 'jpsi',
+  RAA = 'raa',
+}
 
 export interface EventAPI {
   id: number;
   name: string;
+  kind: ExerciseKind;
   created: Date;
 }
 
 export interface SessionAPI {
   id: number;
   event: string;
+  kind: ExerciseKind;
   name: string;
   password: string;
   maxStudents: number;
   created: Date;
+}
+
+/**
+ * Raw per-system J/psi signals as returned by `GET /api/v1/jpsi_analysis_results/{eventID}/` -
+ * one entry per collision system, with one array element per student who submitted it (same
+ * "leave the averaging to the client" convention as `StrangenesLargeScaleAnalysisResultAPI`).
+ * `nEvents` is only populated for pp/p-Pb; Pb-Pb event counts are a fixed, published constant
+ * kept in the teacher app itself (`PBPB_NEVENTS`).
+ */
+export interface JpsiAnalysisResultAPI {
+  system: string;
+  signal: number[];
+  signalError: number[];
+  nEvents: number[];
 }
 
 export interface VisualAnalysisResultAPI {
@@ -96,8 +122,18 @@ export class ApiService {
     this.httpOptions.headers = this.httpOptions.headers.set('Authorization', `Token ${token}`);
   }
 
-  private get<T>(endpoint: string) {
-    return this.http.get<T>(`${this.API_URL}${endpoint}/`, this.httpOptions);
+  private get<T>(endpoint: string, params?: Record<string, string>) {
+    // Built via HttpParams (rather than string-concatenating a query string onto endpoint)
+    // because endpoint always gets a trailing slash appended below - "events?kind=jpsi" would
+    // otherwise become the invalid "events?kind=jpsi/".
+    let httpParams = new HttpParams();
+    if (params) {
+      for (const [key, value] of Object.entries(params)) {
+        httpParams = httpParams.set(key, value);
+      }
+    }
+
+    return this.http.get<T>(`${this.API_URL}${endpoint}/`, { ...this.httpOptions, params: httpParams });
   }
 
   private delete<T>(endpoint: string) {
@@ -116,8 +152,10 @@ export class ApiService {
     return true;
   }
 
-  getEvents(): Observable<EventAPI[]> {
-    return this.get<EventAPI[]>('events');
+  /** Pass `kind` to restrict the dropdown to one sub-masterclass (LSA/VA/JPSI analysis pages);
+   * omit it for the session-management pages, which need every event regardless of kind. */
+  getEvents(kind?: ExerciseKind): Observable<EventAPI[]> {
+    return this.get<EventAPI[]>('events', kind ? { kind } : undefined);
   }
 
   createEvent(body: any): Observable<any> {
@@ -146,5 +184,9 @@ export class ApiService {
 
   getStrangenessLargeScaleAnalysisResults(eventID: number): Observable<StrangenesLargeScaleAnalysisResultAPI[]> {
     return this.get<StrangenesLargeScaleAnalysisResultAPI[]>(`strangeness_large_scale_analysis_results/${eventID}`);
+  }
+
+  getJpsiAnalysisResults(eventID: number): Observable<JpsiAnalysisResultAPI[]> {
+    return this.get<JpsiAnalysisResultAPI[]>(`jpsi_analysis_results/${eventID}`);
   }
 }

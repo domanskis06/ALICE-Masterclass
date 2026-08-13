@@ -4,7 +4,7 @@ from masterclass.models import Event, Session
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['id', 'name', 'created']
+        fields = ['id', 'name', 'kind', 'created']
 
 class SessionSerializer(serializers.ModelSerializer):
     class Meta:

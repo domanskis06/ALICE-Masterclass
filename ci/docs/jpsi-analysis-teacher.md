@@ -10,9 +10,9 @@ student's own pp/p-Pb measurement (see "Why a fixed pp reference?" below).
 | **Module** | `alice-masterclass-teacher/src/app/jpsi-analysis/` |
 | **Route** | `/jpsi-analysis` |
 | **Nav** | `NAV.JPSI` / `NAV.JPSI_ANALYSIS` — "J/ψ production" / "J/ψ analysis" |
-| **Status** | **Layout only.** Results are hard-coded sample data; there is no
-`jpsi_analysis`/`jpsi_analysis_results` endpoint in the Django API yet, and no student→teacher
-data flow. See "Why layout only" below. |
+| **Status** | **Wired to real submissions.** `PUT /api/v1/jpsi_analysis/{student}/` (student app) and
+`GET /api/v1/jpsi_analysis_results/{eventID}/` (here) exist in the `jpsi` Django app. See "Wiring
+to real submissions" below. |
 
 Architecture reminder (`.cursor/rules/architecture.mdc`): the R_AA/yield math lives in
 `JpsiRaaService`, not in the component.
@@ -199,21 +199,37 @@ correct for.
 
 ---
 
-## Why layout only
+## Wiring to real submissions
 
-Wiring this up to real student submissions needs a `jpsi_analysis`/`jpsi_analysis_results`
-Django endpoint pair (PUT from the student app, GET-by-event from here), which does not exist.
-Adding it now would also mean deciding how sessions/events are split across the three planned
-sub-masterclasses (strangeness, R_AA/LSA, J/psi) — out of scope for this round, so this module
-ships as layout with sample data:
+The J/psi, strangeness and (future) R_AA exercises are three **independent sub-masterclasses**:
+each has its own events/sessions, and a submission for one kind can never be read as, or
+confused with, a submission for another. This is enforced by a single `Event.kind` field
+(`ExerciseKind`: `strangeness` | `jpsi` | `raa`, `alice-masterclass-django/masterclass/models.py`)
+rather than duplicating Event/Session per sub-masterclass — every event still lives in one
+`events` table, `kind` just says which analysis owns it.
 
-- `JpsiAnalysisComponent` keeps a hard-coded `SAMPLE_SIGNALS` array (Pb-Pb numbers reuse the
-  published yields/event counts already bundled with the student exercise's JSON assets; pp/p-Pb
-  reuse the cross-checked example from the student module's README).
-- The `Event` dropdown **is** wired to the real, generic `ApiService.getEvents()` (same call
-  LSA/VSA use), so the UI looks and behaves like the rest of the teacher app. Selecting an
-  event does not fetch per-event results (there is nothing to fetch yet) — it reshuffles the
-  sample numbers within a small, deterministically-seeded margin, so the page visibly reacts
-  the way it will once real per-event submissions exist.
-- The Results table's subtitle (`JPSI_ANALYSIS.SAMPLE_DATA_NOTE`) makes the sample-data status
-  explicit in the UI, mirroring the student app's `JPSI.RESULTS.UPLOAD_SOON`.
+- **Django app**: `alice-masterclass-django/jpsi/` (`models.py`, `serializers.py`, `views.py`).
+  `JpsiAnalysisResult` (one per session+student, like `strangeness.LargeScaleAnalysisResult`) has
+  many `JpsiAnalysisResultEntry` rows (one per collision system: `system`, `signal`,
+  `signalError`, `nEvents`).
+  - `SubmitJpsiAnalysisResultsAPI.put` (`/api/v1/jpsi_analysis/{student}/`) rejects (403) any
+    session whose `event.kind != jpsi` — a strangeness/R_AA session password can never be used
+    to submit J/psi data, and `CheckSessionAPI`'s `student_taken` check is likewise scoped to
+    `event.kind`, so the same student id is independently available in each sub-masterclass.
+  - `GetJpsiAnalysisResultsAPI.get` (`/api/v1/jpsi_analysis_results/{eventID}/`) returns one
+    entry per collision system with **raw per-student arrays** (`signal: number[]`, etc.) — the
+    same "leave the averaging to the client" convention `GetLargeScaleAnalysisResultsAPI`
+    already uses, so `JpsiAnalysisComponent.reload()` averages them the same way LSA does.
+- **No `massWindow` in the payload.** `JpsiAnalysisResultEntry` has no such field — see
+  "Mass-window safety net (removed)" above.
+- **`nEvents` is only present for pp/p-Pb.** Pb-Pb event counts are a fixed, published constant
+  (`PBPB_NEVENTS`, `jpsi-raa.constants.ts`) that the student has no influence over, so they are
+  never submitted; `JpsiAnalysisResultEntry.nEvents` is enforced (both client- and
+  server-side) to be present for pp/p-Pb and absent for every Pb-Pb centrality.
+- **Every Pb-Pb centrality is always shown**, even with zero submissions yet:
+  `JpsiAnalysisComponent.toRawSignals()` fills in a zero row for any system with no entries, so
+  the table/plot layout does not jump around as students submit over the course of a session.
+- The `Event` dropdown calls `ApiService.getEvents(ExerciseKind.JPSI)`, so only J/psi events ever
+  appear here (mirrors the strangeness LSA/VSA pages filtering by `ExerciseKind.STRANGENESS`).
+- Auto-refresh (`ApiService.autoRefresh()`/`REFRESH_INTERVAL`) polls
+  `getJpsiAnalysisResults(eventID)` the same way the LSA page polls its own results endpoint.

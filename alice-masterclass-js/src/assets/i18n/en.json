@@ -127,8 +127,10 @@
     "BUTTON_PROCEED": "Proceed",
     "BUTTON_CANCEL": "Cancel",
     "NO_TOKEN_TOOLTIP": "To enable data upload, provide the password using Password option from the Menu.",
+    "WRONG_EXERCISE_TOOLTIP": "This session is not set up for this exercise.",
     "UPLOADING": "Uploading data...",
     "COMPLETED": "Upload completed!",
+    "UPLOAD_ERROR": "Could not upload results. Please try again.",
     "UPLOAD_DATA": "Upload data",
     "STUDENT_TAKEN": "This student number is already used in this session.",
     "STUDENT_INVALID": "Student number is not valid for this session.",
@@ -442,8 +444,8 @@
     }
   },
   "JPSI": {
-    "TITLE": "J/psi production",
-    "MENU": "J/psi analysis",
+    "TITLE": "J/ψ production",
+    "MENU": "J/ψ analysis",
     "DATASET": {
       "PP": "proton-proton",
       "PPB": "proton-lead",
@@ -497,7 +499,6 @@
       "BACKGROUND_RANGE": "Background",
       "WINDOW": "Signal",
       "FIT": "Fit",
-      "FIT_HINT": "Press Fit to fit the background and count the signal in the window.",
       "ACCEPT": "Accept result",
       "RESET_RANGE": "Reset range",
       "CLEAR_FIT": "Clear fit",
@@ -537,7 +538,8 @@
       "SIGNIFICANCE": "Significance",
       "DELETE": "Remove this result",
       "EMPTY": "Accept a result to add it here.",
-      "UPLOAD_SOON": "Sending results to your teacher will be available soon."
+      "UPLOAD_SUCCESS": "Results uploaded to your teacher.",
+      "UPLOAD_ERROR": "Could not upload results. Please try again."
     },
     "WELCOME": {
       "TITLE": "Looking for the J/psi particle",

@@ -12,8 +12,8 @@ I18N_DIR = pathlib.Path(__file__).resolve().parents[2] / "src" / "assets" / "i18
 
 BLOCKS = {
     "en": {
-        "TITLE": "J/psi production",
-        "MENU": "J/psi analysis",
+        "TITLE": "J/ψ production",
+        "MENU": "J/ψ analysis",
         "DATASET": {"PP": "proton-proton", "PPB": "proton-lead"},
         "TOOLBAR": {
             "DATASET": "Collision system",
@@ -128,8 +128,8 @@ BLOCKS = {
         },
     },
     "pl": {
-        "TITLE": "Produkcja J/psi",
-        "MENU": "Analiza J/psi",
+        "TITLE": "Produkcja J/ψ",
+        "MENU": "Analiza J/ψ",
         "DATASET": {"PP": "proton-proton", "PPB": "proton-o\u0142\u00f3w"},
         "TOOLBAR": {
             "DATASET": "Uk\u0142ad zderzenia",
@@ -244,8 +244,8 @@ BLOCKS = {
         },
     },
     "de": {
-        "TITLE": "J/psi-Produktion",
-        "MENU": "J/psi-Analyse",
+        "TITLE": "J/ψ-Produktion",
+        "MENU": "J/ψ-Analyse",
         "DATASET": {"PP": "Proton-Proton", "PPB": "Proton-Blei"},
         "TOOLBAR": {
             "DATASET": "Kollisionssystem",
@@ -360,8 +360,8 @@ BLOCKS = {
         },
     },
     "fr": {
-        "TITLE": "Production de J/psi",
-        "MENU": "Analyse J/psi",
+        "TITLE": "Production de J/ψ",
+        "MENU": "Analyse J/ψ",
         "DATASET": {"PP": "proton-proton", "PPB": "proton-plomb"},
         "TOOLBAR": {
             "DATASET": "Syst\u00e8me de collision",

@@ -41,6 +41,10 @@
     "ADD_EVENT_DIALOG": {
       "EVENT_NAME": "Nom de l’événement",
       "NAME_EXISTS": "Un événement portant ce nom existe déjà.",
+      "KIND": "Sous-masterclass",
+      "KIND_STRANGENESS": "Strangeness",
+      "KIND_JPSI": "J/psi",
+      "KIND_RAA": "R_AA",
       "CREATE": "Créer l’événement",
       "CANCEL": "Annuler"
     },
@@ -126,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Événement",
     "RESULTS": "Résultats",
-    "SAMPLE_DATA_NOTE": "Données d’exemple - l’API de soumission des élèves n’est pas encore connectée",
     "PP_REFERENCE_NOTE": "Seules les lignes Pb-Pb sont affichées ici ; R_AA utilise une référence pp fixe à 5.02 TeV, et non une mesure de l’élève (voir Instructions)",
     "EFFICIENCY_TOOLTIP": "Acc × ε :",
     "COLLISION_SYSTEM": "Système de collision",

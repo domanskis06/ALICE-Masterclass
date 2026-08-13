@@ -29,7 +29,13 @@
           <mat-label>{{ 'JPSI.TOOLBAR.EVENTS' | translate }}</mat-label>
           <mat-select [(value)]="selectedPreset" [disabled]="isRunning" data-testid="jpsi-preset">
             @for (preset of presets; track preset) {
-              <mat-option [value]="preset">{{ presetLabel(preset) | translate }}</mat-option>
+              <mat-option [value]="preset">
+                @if (preset === 'all') {
+                  {{ 'JPSI.TOOLBAR.PRESET_ALL' | translate }}
+                } @else {
+                  {{ preset }}
+                }
+              </mat-option>
             }
           </mat-select>
         </mat-form-field>

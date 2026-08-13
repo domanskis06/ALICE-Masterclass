@@ -1109,17 +1109,25 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
   }
 
   onUploadResults() {
-    let uploadingTranslation = '', completedTranslation = '';
+    let uploadingTranslation = '', completedTranslation = '', errorTranslation = '';
 
-    forkJoin([ this.translateService.get('PASSWORD.UPLOADING'), this.translateService.get('PASSWORD.COMPLETED') ])
+    forkJoin([
+      this.translateService.get('PASSWORD.UPLOADING'),
+      this.translateService.get('PASSWORD.COMPLETED'),
+      this.translateService.get('PASSWORD.UPLOAD_ERROR'),
+    ])
       .subscribe((res) => {
         uploadingTranslation = res[0];
         completedTranslation = res[1];
+        errorTranslation = res[2];
 
         this.snackBar.open(uploadingTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION});
 
-        this.dataService.submitVisualAnalysisResults(this.datasetID).subscribe(() => {
-          this.snackBar.open(completedTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION});
+        this.dataService.submitVisualAnalysisResults(this.datasetID).subscribe({
+          next: () => this.snackBar.open(completedTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION}),
+          // A 403 here means the session's event kind isn't `strangeness` (see uploadButtonDisabled
+          // in MassHistogramsComponent) - surface it instead of failing silently.
+          error: () => this.snackBar.open(errorTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION}),
         });
     });
   }

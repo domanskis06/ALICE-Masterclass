@@ -41,6 +41,10 @@
     "ADD_EVENT_DIALOG": {
       "EVENT_NAME": "Event name",
       "NAME_EXISTS": "Event with this name already exists.",
+      "KIND": "Sub-masterclass",
+      "KIND_STRANGENESS": "Strangeness",
+      "KIND_JPSI": "J/psi",
+      "KIND_RAA": "R_AA",
       "CREATE": "Create Event",
       "CANCEL": "Cancel"
     },
@@ -126,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Event",
     "RESULTS": "Results",
-    "SAMPLE_DATA_NOTE": "Sample data - student submission API not connected yet",
     "PP_REFERENCE_NOTE": "Only Pb-Pb rows are shown here; R_AA uses a fixed pp reference yield at 5.02 TeV, not a student measurement (see Instructions)",
     "EFFICIENCY_TOOLTIP": "Acc × ε:",
     "COLLISION_SYSTEM": "Collision system",

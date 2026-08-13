@@ -1,7 +1,7 @@
 import { Component, OnInit, Inject } from '@angular/core';
 import { MatDialogRef, MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import { ApiService } from 'src/app/shared/services/api.service';
+import { ApiService, ExerciseKind } from 'src/app/shared/services/api.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -17,6 +17,12 @@ export class AddEventDialogComponent implements OnInit {
 
   public form!: UntypedFormGroup;
 
+  readonly kinds = [
+    { value: ExerciseKind.STRANGENESS, labelKey: 'SESSION.ADD_EVENT_DIALOG.KIND_STRANGENESS' },
+    { value: ExerciseKind.JPSI, labelKey: 'SESSION.ADD_EVENT_DIALOG.KIND_JPSI' },
+    { value: ExerciseKind.RAA, labelKey: 'SESSION.ADD_EVENT_DIALOG.KIND_RAA' },
+  ];
+
   constructor(
     @Inject(MAT_DIALOG_DATA) private data: any,
     private dialogRef: MatDialogRef<AddEventDialogComponent>,
@@ -27,6 +33,7 @@ export class AddEventDialogComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.formBuilder.group({
       name: ['', Validators.required],
+      kind: [ExerciseKind.STRANGENESS, Validators.required],
     });
   }
 
@@ -34,7 +41,8 @@ export class AddEventDialogComponent implements OnInit {
     this.loading = true;
 
     const body = {
-      name: this.form.controls.name.value
+      name: this.form.controls.name.value,
+      kind: this.form.controls.kind.value,
     }
 
     this.apiService.createEvent(body).subscribe(() => {

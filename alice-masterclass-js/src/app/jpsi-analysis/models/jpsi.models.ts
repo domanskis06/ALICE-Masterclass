@@ -47,8 +47,8 @@ export const PID_HEATMAP_MARGIN = {
   top: 8,
   /** Colour-bar gap + bar + count-axis. */
   right: 12 + 14 + 34,
-  bottom: 42,
-  left: 52,
+  bottom: 54,
+  left: 60,
 } as const;
 
 /** Height / width targets used while the panel is still under the viewport cap. */

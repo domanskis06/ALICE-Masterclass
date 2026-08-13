@@ -29,7 +29,7 @@ import { ResidualFitResult } from '../../services/jpsi-residual-fit.service';
 
 import { SERIES_COLOURS } from '../../models/series-colours';
 
-const MARGIN = { top: 10, right: 14, bottom: 40, left: 56 };
+const MARGIN = { top: 10, right: 14, bottom: 52, left: 64 };
 /** Headroom above the tallest bar so it never touches the plot's top edge. */
 const Y_AXIS_HEADROOM = 1.2;
 

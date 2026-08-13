@@ -41,6 +41,10 @@
     "ADD_EVENT_DIALOG": {
       "EVENT_NAME": "Ereignisname",
       "NAME_EXISTS": "Ein Ereignis mit diesem Namen existiert bereits.",
+      "KIND": "Untermasterclass",
+      "KIND_STRANGENESS": "Strangeness",
+      "KIND_JPSI": "J/psi",
+      "KIND_RAA": "R_AA",
       "CREATE": "Ereignis erstellen",
       "CANCEL": "Abbrechen"
     },
@@ -126,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Ereignis",
     "RESULTS": "Ergebnisse",
-    "SAMPLE_DATA_NOTE": "Beispieldaten - Schüler-API noch nicht verbunden",
     "PP_REFERENCE_NOTE": "Nur Pb-Pb-Zeilen werden angezeigt; R_AA verwendet eine feste pp-Referenz bei 5.02 TeV statt einer Schülermessung (siehe Anleitung)",
     "EFFICIENCY_TOOLTIP": "Acc × ε:",
     "COLLISION_SYSTEM": "Kollisionssystem",

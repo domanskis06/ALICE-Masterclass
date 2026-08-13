@@ -7,7 +7,7 @@ electron candidates and removing the combinatorial background with the like-sign
 | --- | --- |
 | **Module** | `alice-masterclass-js/src/app/jpsi-analysis/` |
 | **Route** | `/jpsi-analysis` |
-| **Menu** | `JPSI.MENU` — "J/psi analysis" |
+| **Menu** | `JPSI.MENU` — "J/ψ analysis" |
 | **Assets** | `assets/exercises/jpsi/manifest.json`, `assets/exercises/jpsi/{pp,pPb}/batch_NNN.json` (~6.7 MB total) |
 | **Converter** | `alice-masterclass-js/data/jpsi/` — see its [`README.md`](../../alice-masterclass-js/data/jpsi/README.md) |
 | **Event display** | Not used. This exercise has no 3D scene. |
@@ -157,14 +157,43 @@ no brush-zoom on this chart.
 
 ## Workshop integration
 
-The results table follows the usual workshop pattern, but **Upload data currently performs no
-request** — there is no J/psi endpoint in the Django API yet. The button stays disabled
-without a session and otherwise shows `JPSI.RESULTS.UPLOAD_SOON`. The API is deliberately out
-of scope for this iteration.
+The results table follows the usual workshop pattern. **Upload data** (`onUploadResults` in
+`jpsi-analysis.component.ts`) packages every accepted row — pp/p-Pb rows (`system`, `signal`,
+`signalError`, `nEvents`) plus Pb-Pb rows (`system`, `signal`, `signalError`, no `nEvents`, see
+below) — and submits them in one `PUT` via `ApiService.submitJpsiAnalysisResults`. Both result
+panels have their own **Upload data** button wired to the same `onUploadResults()` — the pp/p-Pb
+`ResultsTableComponent` (shown for the pp/p-Pb branch) and the `PbPbResultsComponent` (shown for
+the published Pb-Pb branch) — so a student can upload from whichever panel is on screen. Each
+button is disabled without a session, or while there is nothing accepted yet on **either**
+dataset (`uploadDisabled`, driven by each component's own `hasOtherResults` input pointing at the
+*other* panel's rows); a successful or failed submission shows
+`JPSI.RESULTS.UPLOAD_SUCCESS`/`UPLOAD_ERROR`.
 
-A teacher-side module now exists as **layout only**, combining sample pp/p-Pb/Pb-Pb yields into
-R_AA vs. Pb-Pb centrality — see [`jpsi-analysis-teacher.md`](jpsi-analysis-teacher.md) for the
-calculation, the constants and why it still runs on sample data rather than real submissions.
+No mass window is sent: the signal-counting window is a fixed width the student can only slide
+(see "The mass panel" above), so there is nothing left to vary or correct for on the teacher
+side. `nEvents` is only included for pp/p-Pb — Pb-Pb event counts are a fixed constant the
+student has no influence over, so the API rejects `nEvents` on any Pb-Pb entry (and requires it
+on pp/p-Pb).
+
+`Event.kind` (`masterclass.models.ExerciseKind`, Django) keeps this exercise's events/sessions
+independent from the strangeness and (future) R_AA sub-masterclasses: a J/psi submission can
+only target a `kind=jpsi` session (`SubmitJpsiAnalysisResultsAPI` returns 403 otherwise), and a
+student id used here does not block that same id in the other sub-masterclasses.
+
+**Client-side kind gating.** `check_session` now also returns the session's `kind`, which
+`ApiService` stores as `sessionKind` on successful login. Each exercise's upload button
+additionally disables itself when `sessionKind` doesn't match its own kind
+(`ApiService.matchesSessionKind` — VA/LSA require `strangeness`, this page requires `jpsi`; see
+`wrongExerciseKind` in `ResultsTableComponent`, `PbPbResultsComponent`, `MassHistogramsComponent`
+and the strangeness `ResultsComponent`). This is a UX nicety on top of the real, server-side
+`Event.kind` guard: it
+fails *open* (`sessionKind === null` matches everything) for old cached logins or
+`MockApiService`'s demo mode, so it never blocks a legitimate submission the backend would
+otherwise accept — it only stops a student from wasting time filling in the wrong exercise for
+their session, and shows `PASSWORD.WRONG_EXERCISE_TOOLTIP` explaining why.
+
+The teacher-side module — `jpsi_analysis`/`jpsi_analysis_results` endpoints, R_AA calculation and
+display — is documented in [`jpsi-analysis-teacher.md`](jpsi-analysis-teacher.md).
 
 ---
 

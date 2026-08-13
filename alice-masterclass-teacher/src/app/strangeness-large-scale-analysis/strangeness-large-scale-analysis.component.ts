@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, Type } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ParticleType, CentralityType, CollisionType, EventAPI, StrangenesLargeScaleAnalysisResultAPI, ApiService } from '../shared/services/api.service';
+import { ParticleType, CentralityType, CollisionType, EventAPI, ExerciseKind, StrangenesLargeScaleAnalysisResultAPI, ApiService } from '../shared/services/api.service';
 import { InstructionsProvider } from '../shared/interfaces';
 import { InstructionsComponent } from './instructions/instructions.component';
 
@@ -105,7 +105,9 @@ export class StrangenessLargeScaleAnalysisComponent implements OnInit, OnDestroy
   constructor(private apiService: ApiService) { }
 
   ngOnInit(): void {
-    this.apiService.getEvents().subscribe((events: EventAPI[]) => {
+    // Only strangeness events are relevant here - the three sub-masterclasses are independent
+    // (Event.kind).
+    this.apiService.getEvents(ExerciseKind.STRANGENESS).subscribe((events: EventAPI[]) => {
       this.events = events;
     });
 

@@ -49,6 +49,8 @@
         <app-jpsi-pbpb-results
           fxFlex="35"
           [rows]="pbPbRows"
+          [hasOtherResults]="rows.length > 0"
+          (uploadResults)="onUploadResults()"
           (removeResult)="onRemovePbPbResult($event)"
         ></app-jpsi-pbpb-results>
       </div>
@@ -109,6 +111,7 @@
 
       <app-jpsi-results-table
         [rows]="rows"
+        [hasOtherResults]="hasPbPbResults"
         (uploadResults)="onUploadResults()"
         (removeResult)="onRemoveResult($event)"
       ></app-jpsi-results-table>

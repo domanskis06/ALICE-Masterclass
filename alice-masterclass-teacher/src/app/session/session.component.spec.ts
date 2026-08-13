@@ -5,7 +5,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 
-import { ApiService } from '../shared/services/api.service';
+import { ApiService, EventAPI, ExerciseKind } from '../shared/services/api.service';
 
 import { SessionComponent, SessionUrlPipe } from './session.component';
 import { of } from 'rxjs';
@@ -43,5 +43,22 @@ describe('SessionComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('lists events newest-created first', () => {
+    const events: EventAPI[] = [
+      { id: 1, name: 'OLDEST', kind: ExerciseKind.STRANGENESS, created: new Date('2026-01-01T00:00:00Z') },
+      { id: 2, name: 'NEWEST', kind: ExerciseKind.STRANGENESS, created: new Date('2026-03-01T00:00:00Z') },
+      { id: 3, name: 'MIDDLE', kind: ExerciseKind.STRANGENESS, created: new Date('2026-02-01T00:00:00Z') },
+    ];
+    spy2.and.returnValue(of(events));
+
+    component.reload();
+
+    expect(component.eventsWithSessions.map((item) => item.event.name)).toEqual([
+      'NEWEST',
+      'MIDDLE',
+      'OLDEST',
+    ]);
   });
 });

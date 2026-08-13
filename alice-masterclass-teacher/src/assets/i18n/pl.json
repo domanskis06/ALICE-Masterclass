@@ -41,6 +41,10 @@
     "ADD_EVENT_DIALOG": {
       "EVENT_NAME": "Nazwa wydarzenia",
       "NAME_EXISTS": "Wydarzenie o tej nazwie już istnieje.",
+      "KIND": "Podklasa mistrzowska",
+      "KIND_STRANGENESS": "Strangeness",
+      "KIND_JPSI": "J/psi",
+      "KIND_RAA": "R_AA",
       "CREATE": "Utwórz wydarzenie",
       "CANCEL": "Anuluj"
     },
@@ -126,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Wydarzenie",
     "RESULTS": "Wyniki",
-    "SAMPLE_DATA_NOTE": "Dane przykładowe - API zgłoszeń uczniów nie jest jeszcze podłączone",
     "PP_REFERENCE_NOTE": "Widoczne są tylko wiersze Pb-Pb; R_AA używa stałej referencji pp przy 5.02 TeV, a nie pomiaru ucznia (patrz Instrukcje)",
     "EFFICIENCY_TOOLTIP": "Acc × ε:",
     "COLLISION_SYSTEM": "Układ zderzenia",

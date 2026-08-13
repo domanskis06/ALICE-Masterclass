@@ -129,8 +129,10 @@
     "BUTTON_PROCEED": "Kontynuuj",
     "BUTTON_CANCEL": "Anuluj",
     "NO_TOKEN_TOOLTIP": "Aby włączyć przesyłanie danych, podaj hasło w opcji Hasło w menu.",
+    "WRONG_EXERCISE_TOOLTIP": "Ta sesja nie jest przeznaczona dla tego ćwiczenia.",
     "UPLOADING": "Przesyłanie danych...",
     "COMPLETED": "Przesyłanie zakończone!",
+    "UPLOAD_ERROR": "Nie udało się przesłać wyników. Spróbuj ponownie.",
     "UPLOAD_DATA": "Prześlij dane",
     "STUDENT_TAKEN": "Ten numer ucznia jest już zajęty w tej sesji.",
     "STUDENT_INVALID": "Numer ucznia jest nieprawidłowy dla tej sesji.",
@@ -444,8 +446,8 @@
     }
   },
   "JPSI": {
-    "TITLE": "Produkcja J/psi",
-    "MENU": "Analiza J/psi",
+    "TITLE": "Produkcja J/ψ",
+    "MENU": "Analiza J/ψ",
     "DATASET": {
       "PP": "proton-proton",
       "PPB": "proton-ołów",
@@ -499,7 +501,6 @@
       "BACKGROUND_RANGE": "Tło",
       "WINDOW": "Sygnał",
       "FIT": "Dopasuj",
-      "FIT_HINT": "Naciśnij Dopasuj, aby dopasować tło i zliczyć sygnał w oknie.",
       "ACCEPT": "Zaakceptuj wynik",
       "RESET_RANGE": "Resetuj zakres",
       "CLEAR_FIT": "Wyczyść dopasowanie",
@@ -539,7 +540,8 @@
       "SIGNIFICANCE": "Istotność",
       "DELETE": "Usuń ten wynik",
       "EMPTY": "Zaakceptuj wynik, żeby dodać go tutaj.",
-      "UPLOAD_SOON": "Wysyłanie wyników do nauczyciela będzie dostępne wkrótce."
+      "UPLOAD_SUCCESS": "Wyniki zostały przesłane do nauczyciela.",
+      "UPLOAD_ERROR": "Nie udało się przesłać wyników. Spróbuj ponownie."
     },
     "WELCOME": {
       "TITLE": "Szukamy cząstki J/psi",

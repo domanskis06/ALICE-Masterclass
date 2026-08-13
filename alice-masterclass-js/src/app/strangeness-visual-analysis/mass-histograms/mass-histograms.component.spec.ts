@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AngularModule } from '../../shared/angular.module';
 import { SharedModule } from '../../shared/shared.module';
 
-import { ApiService } from '../../shared/services/api.service';
+import { ApiService, ExerciseKind } from '../../shared/services/api.service';
 
 import {
   KAON_MASS_GEV,
@@ -86,5 +86,33 @@ describe('MassHistogramsComponent', () => {
     expect(mid(component.kaonXDomain)).toBeCloseTo(KAON_MASS_GEV, 10);
     expect(mid(component.lambdaXDomain)).toBeCloseTo(LAMBDA_MASS_GEV, 10);
     expect(mid(component.antiLambdaXDomain)).toBeCloseTo(LAMBDA_MASS_GEV, 10);
+  });
+
+  describe('upload gating by session kind', () => {
+    let apiService: ApiService;
+
+    beforeEach(() => {
+      apiService = TestBed.inject(ApiService);
+      apiService.password = 'pw';
+      apiService.studentID = 0;
+      apiService.sessionName = 'SESSION';
+      component.uploadDisabled = false;
+    });
+
+    it('stays enabled while the session kind is unknown (fail open)', () => {
+      apiService.sessionKind = null;
+      expect(component.uploadButtonDisabled).toBeFalse();
+    });
+
+    it('disables upload when logged into a non-strangeness (e.g. jpsi) session', () => {
+      apiService.sessionKind = ExerciseKind.JPSI;
+      expect(component.wrongExerciseKind).toBeTrue();
+      expect(component.uploadButtonDisabled).toBeTrue();
+    });
+
+    it('stays enabled when logged into a strangeness session', () => {
+      apiService.sessionKind = ExerciseKind.STRANGENESS;
+      expect(component.uploadButtonDisabled).toBeFalse();
+    });
   });
 });

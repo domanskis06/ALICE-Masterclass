@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild, inject } from '@angular/core';
-import { ApiService } from '../../shared/services/api.service';
+import { ApiService, ExerciseKind } from '../../shared/services/api.service';
 import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { ParticleType, VisualAnalysisResultsEntry } from '../../shared/services/api.service';
 import { HistogramBinTarget, HistogramComponent } from '../../shared/components/histogram/histogram.component';
@@ -83,6 +83,16 @@ export class MassHistogramsComponent implements OnInit {
 
   @Input()
   uploadDisabled: boolean = false;
+
+  /** True once the student is logged into a session whose event is not `strangeness` - VA
+   * submissions to it would be rejected server-side anyway (`Event.kind` guard). */
+  get wrongExerciseKind(): boolean {
+    return !this.apiService.matchesSessionKind(ExerciseKind.STRANGENESS);
+  }
+
+  get uploadButtonDisabled(): boolean {
+    return !this.apiService.isAuthenticated || this.uploadDisabled || this.wrongExerciseKind;
+  }
 
   @Input()
   get results(): Map<string, VisualAnalysisResultsEntry[]> { return this._results; }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ApiService, EventAPI, SessionAPI, VisualAnalysisResultAPI, StrangenesLargeScaleAnalysisResultAPI, ParticleType, CollisionType, CentralityType } from './api.service';
+import { ApiService, EventAPI, SessionAPI, VisualAnalysisResultAPI, StrangenesLargeScaleAnalysisResultAPI, JpsiAnalysisResultAPI, ExerciseKind, ParticleType, CollisionType, CentralityType } from './api.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 describe('ApiService', () => {
@@ -28,13 +28,31 @@ describe('ApiService', () => {
 
   it('should fetch events', () => {
     const EVENTS: EventAPI[] = [
-      {id: 0, name: 'TEST', created: new Date(Date.now())},
-      {id: 1, name: 'TEST2', created: new Date(Date.now())},
+      {id: 0, name: 'TEST', kind: ExerciseKind.STRANGENESS, created: new Date(Date.now())},
+      {id: 1, name: 'TEST2', kind: ExerciseKind.STRANGENESS, created: new Date(Date.now())},
     ];
     
     service.getEvents().subscribe(data => expect(data).toEqual(EVENTS));
 
     const req = httpTestingController.expectOne(`${URL}events/`);
+    expect(req.request.method).toEqual('GET');
+    expect(req.request.params.keys().length).toEqual(0);
+
+    req.flush(EVENTS);
+
+    httpTestingController.verify();
+  });
+
+  it('should fetch events filtered by kind', () => {
+    const EVENTS: EventAPI[] = [
+      {id: 1, name: 'JPSI_EVENT', kind: ExerciseKind.JPSI, created: new Date(Date.now())},
+    ];
+
+    service.getEvents(ExerciseKind.JPSI).subscribe(data => expect(data).toEqual(EVENTS));
+
+    const req = httpTestingController.expectOne(
+      (r) => r.url === `${URL}events/` && r.params.get('kind') === ExerciseKind.JPSI
+    );
     expect(req.request.method).toEqual('GET');
 
     req.flush(EVENTS);
@@ -72,8 +90,8 @@ describe('ApiService', () => {
 
   it('should fetch sessions', () => {
     const SESSIONS: SessionAPI[] = [
-      {id: 1, event: 'TEST', name: 'TestName', password: 'testpassword', maxStudents: 15, created: new Date(Date.now())},
-      {id: 2, event: 'TEST2', name: 'TestName2', password: 'testpassword2', maxStudents: 30, created: new Date(Date.now())}
+      {id: 1, event: 'TEST', kind: ExerciseKind.STRANGENESS, name: 'TestName', password: 'testpassword', maxStudents: 15, created: new Date(Date.now())},
+      {id: 2, event: 'TEST2', kind: ExerciseKind.STRANGENESS, name: 'TestName2', password: 'testpassword2', maxStudents: 30, created: new Date(Date.now())}
     ];
     
     service.getSessions().subscribe(data => expect(data).toEqual(SESSIONS));
@@ -151,6 +169,24 @@ describe('ApiService', () => {
     expect(req.request.method).toEqual('GET');
 
     req.flush(LSA_RESULTS);
+
+    httpTestingController.verify();
+  });
+
+  it('should fetch jpsi results', () => {
+    const JPSI_RESULTS: JpsiAnalysisResultAPI[] = [
+      {system: 'pp', signal: [59, 65], signalError: [8, 9], nEvents: [1000, 1000]},
+      {system: 'pbPb_0_5', signal: [34662], signalError: [186], nEvents: []},
+    ];
+
+    const eventID: number = 0;
+
+    service.getJpsiAnalysisResults(eventID).subscribe(data => expect(data).toEqual(JPSI_RESULTS));
+
+    const req = httpTestingController.expectOne(`${URL}jpsi_analysis_results/${eventID}/`);
+    expect(req.request.method).toEqual('GET');
+
+    req.flush(JPSI_RESULTS);
 
     httpTestingController.verify();
   });
