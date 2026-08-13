@@ -5,7 +5,7 @@ import { InstructionsProvider } from '../shared/interfaces';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { JPSI_REFERENCE_MASS_WINDOW } from './jpsi-raa.constants';
 import { JpsiRaaService } from './jpsi-raa.service';
-import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow } from './jpsi-raa.models';
+import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow, isPbPbCentrality } from './jpsi-raa.models';
 
 /**
  * Sample J/psi signals standing in for the student submissions this page will eventually load
@@ -16,6 +16,11 @@ import { JpsiRawSignal, JpsiRaaPlotEntry, JpsiResultRow } from './jpsi-raa.model
  * Every row uses `JPSI_REFERENCE_MASS_WINDOW` - they are digitized/published numbers already
  * calibrated to that window, so the mass-window safety net (`windowEfficiencyFactor`) is inert
  * for this sample data and only activates once real, variable-window student submissions exist.
+ *
+ * pp and p-Pb signals are kept here because students do analyse and submit both systems as part
+ * of the exercise - but per the physics supervisors' confirmed decision, only the eight Pb-Pb
+ * centrality rows are ever shown to the teacher (see `recalculate()` below and "Why a fixed pp
+ * reference?" in `ci/docs/jpsi-analysis-teacher.md`).
  */
 const SAMPLE_SIGNALS: readonly JpsiRawSignal[] = [
   { system: 'pp', signal: 59, signalError: 8, nEvents: 1000, massWindow: [...JPSI_REFERENCE_MASS_WINDOW] },
@@ -80,7 +85,13 @@ export class JpsiAnalysisComponent implements OnInit, InstructionsProvider {
 
   private recalculate(): void {
     const signals = this.jitteredSignals();
-    this.rows = this.raaService.computeResults(signals);
+    const allRows = this.raaService.computeResults(signals);
+    // Only the Pb-Pb centrality classes are shown to the teacher - pp/p-Pb signals are still
+    // accepted and computed above (so nothing breaks once real submissions include them), but
+    // R_AA always compares against the fixed reference yield, never a student's own pp/p-Pb row,
+    // so displaying that row here would be misleading. See "Why a fixed pp reference?" in
+    // `ci/docs/jpsi-analysis-teacher.md`.
+    this.rows = allRows.filter((row) => isPbPbCentrality(row.system));
     this.plotData = this.raaService.toPlotEntries(this.rows);
   }
 

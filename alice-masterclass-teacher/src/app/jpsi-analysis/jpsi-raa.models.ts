@@ -69,7 +69,12 @@ export interface JpsiRawSignal {
   massWindow: [number, number];
 }
 
-/** One row of the teacher Results table: a raw signal enriched with everything derived from it. */
+/**
+ * A raw signal enriched with everything derived from it. `JpsiRaaService.computeResults`
+ * produces one of these per submitted signal, including pp/p-Pb - but `JpsiAnalysisComponent`
+ * only ever passes the Pb-Pb rows on to the teacher Results table (see "Why a fixed pp
+ * reference?" in `ci/docs/jpsi-analysis-teacher.md`).
+ */
 export interface JpsiResultRow {
   system: CollisionSystemId;
   systemLabel: string;

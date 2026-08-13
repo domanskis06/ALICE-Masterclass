@@ -24,14 +24,19 @@ import { PbPbCentralityId } from './jpsi-raa.models';
  *    them into inclusive (all-channel) J/psi yields, comparable to PP_YIELD_5_02_TEV_REF below.
  *
  *  - PP_YIELD_5_02_TEV_REF: a FIXED, physically-sourced pp reference yield used as the R_AA
- *    denominator, replacing the previous approach of rescaling the student's own (7 TeV,
- *    artificially J/psi-enriched) pp sample. See "Why a fixed physical pp reference
- *    (temporary)?" in `ci/docs/jpsi-analysis-teacher.md` for the full reasoning: the
- *    student pp exercise sample has an unphysically high J/psi rate (it exists to make
- *    fitting practical, not to reproduce minimum-bias pp), so it cannot itself be used as
- *    an absolute R_AA reference. This is a temporary stand-in - the student's pp
- *    measurement no longer influences R_AA at all, which is itself an open problem noted
- *    in the docs.
+ *    denominator - confirmed with the physics supervisors as the intended design for this
+ *    exercise, not a stopgap. See "Why a fixed pp reference?" in
+ *    `ci/docs/jpsi-analysis-teacher.md` for the full reasoning. In short: R_AA compares two
+ *    different collision systems and does not require them to be measured at the same
+ *    collision energy (the earlier assumption that a 7-to-5.02 TeV energy mismatch was the
+ *    core problem was wrong - the supervisors confirmed R_AA does not scale with energy that
+ *    way, and even theoretical R_AA predictions mix Pb-Pb at 5.02 TeV with pp at other
+ *    energies). The actual reason the student's own pp/p-Pb measurement cannot be the R_AA
+ *    denominator is that the exercise sample is deliberately enriched in J/psi so fitting a
+ *    visible peak is possible in the time available - the same simplification the Strangeness
+ *    Large Scale Analysis module already uses for its own fixed pp reference yields
+ *    (`LsaEnhancementService`). The student's pp/p-Pb submission is still accepted by this
+ *    exercise, but is not shown in the teacher Results table and never feeds R_AA.
  *
  *  - epsilon_window (JPSI_MASS_MEAN_GEV / JPSI_MASS_SIGMA_GEV / JPSI_REFERENCE_MASS_WINDOW /
  *    the window-efficiency clamp bounds): a mass-window safety net. The Acc x epsilon

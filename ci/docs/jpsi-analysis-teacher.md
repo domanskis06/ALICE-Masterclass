@@ -1,8 +1,9 @@
 # J/psi analysis — teacher module (R_AA)
 
-Teacher-side counterpart to the student [J/psi analysis](jpsi-analysis.md) exercise: combines
-the J/psi yields students measure in pp, p-Pb and Pb-Pb collisions into the nuclear
-modification factor R_AA as a function of Pb-Pb centrality.
+Teacher-side counterpart to the student [J/psi analysis](jpsi-analysis.md) exercise: turns the
+J/psi yield students measure in Pb-Pb collisions into the nuclear modification factor R_AA as a
+function of Pb-Pb centrality, using a **fixed, published pp reference yield** rather than the
+student's own pp/p-Pb measurement (see "Why a fixed pp reference?" below).
 
 | | |
 | --- | --- |
@@ -32,7 +33,7 @@ jpsi-analysis/
   jpsi-analysis.component.{ts,html,scss}   shell: Event dropdown, sample data, wiring
   raa-plot/                R_AA vs. <Npart> scatter (D3-on-SVG, modelled on the LSA enhancement plot)
   results/                 Results table (Collision system, Npart, N events, signal, A×ε,
-                            yield, Ncoll, R_AA)
+                            yield, Ncoll, R_AA) - Pb-Pb rows only, see "The calculation" below
   instructions/            Help panel (yield/R_AA formulas rendered with KaTeX)
 ```
 
@@ -48,33 +49,54 @@ R_AA(centrality)         = Yield(Pb-Pb, centrality) / (Ncoll(centrality) × PP_Y
 `PbPbYieldRow.fit.signal`/`signalError` (Pb-Pb) from the student app's residual-fit yield
 extraction — see [`jpsi-analysis.md`](jpsi-analysis.md). `massWindow` is the mass window that
 signal was extracted from. R_AA's statistical error is just the Pb-Pb signal's relative
-Poisson error — see "Why a fixed physical pp reference (temporary)?" below for why the pp
-side no longer contributes a statistical term.
+Poisson error — see "Why a fixed pp reference?" below for why the pp side never contributes a
+statistical term.
 
-The Results table **Yield** column shows every row's own Acc×ε-, mass-window- and
-branching-ratio-corrected yield (pp and p-Pb included).
+**Only the eight Pb-Pb centrality rows are shown in the teacher Results table.** Students still
+analyse and submit pp and p-Pb signals as part of the exercise (`JpsiRaaService.computeResults`
+happily computes a row for them, same as for Pb-Pb), but `JpsiAnalysisComponent` filters those
+rows out before they reach `ResultsComponent` — see "Why a fixed pp reference?" below for why
+showing them next to a fixed-reference R_AA would be misleading. This was a deliberate decision
+by the physics supervisors, not an oversight.
 
-**p-Pb is not part of the R_AA formula.** It is shown in the Results table purely as a
-reference row (its own corrected yield, no R_AA/Ncoll).
+### Why a fixed pp reference?
 
-### Why a fixed physical pp reference (temporary)?
+**This is the confirmed, intended design for this exercise** (per direct guidance from the
+physics supervisors), not a temporary stopgap pending better data.
 
-R_AA needs a pp reference yield at the same energy as Pb-Pb (5.02 TeV). The student pp
-exercise sample, however, is not a minimum-bias sample: it is deliberately enriched in J/psi
-so that fitting a visible peak is possible in the time available for the exercise. Its
-per-event J/psi rate is many orders of magnitude higher than a real pp collision's.
+An earlier version of this reasoning assumed the core problem was an *energy* mismatch — the
+student pp exercise runs at a different beam energy than the Pb-Pb sample, so a 7→5.02 TeV
+rescaling factor was applied to the student's own pp yield before using it as the R_AA
+denominator. **This was wrong, and has been removed.** R_AA compares two fundamentally
+different collision systems (pp vs. Pb-Pb); it does not need them measured at the same
+collision energy to be physically meaningful, and even theoretical R_AA predictions routinely
+compare Pb-Pb at 5.02 TeV against pp at other energies. The supervisors were explicit that
+R_AA does not "scale" with energy the way that earlier reasoning assumed, and that any such
+mismatch is a minor effect, not the dominant one.
 
-Using that enriched sample's own corrected yield as the R_AA denominator was tried and
+The actual, dominant problem is that the student pp/p-Pb exercise sample is not a minimum-bias
+sample: it is deliberately enriched in J/psi so that fitting a visible peak is possible in the
+time available for the exercise. Its per-event J/psi rate is many orders of magnitude higher
+than a real pp collision's — regardless of what energy it was measured at. This is exactly the
+same simplification the **Strangeness Large Scale Analysis** module already makes: its teacher
+and student-side enhancement calculations (`LsaEnhancementService`) compare the (artificially
+amplified) student Pb-Pb sample against **fixed, published pp yield constants**
+(`PP_YIELD_KAON`, `PP_YIELD_LAMBDA`), never against a student pp measurement, for exactly this
+reason. This module now follows the same established pattern.
+
+Using the enriched student sample's own corrected yield as the R_AA denominator was tried and
 sanity-checked against the screenshotted student signals: it produces R_AA ≈ 1e-5 across
 every centrality class — unphysical (published ALICE mid-rapidity inclusive J/psi R_AA at
 5.02 TeV is of order 0.6–0.9). The problem is not the Pb-Pb side, the mass window, or Ncoll —
 it is that the pp denominator is inflated by roughly the same enrichment factor that makes
-the exercise fittable, so it cannot double as an absolute-scale reference.
+the exercise fittable, so it cannot double as an absolute-scale reference, no matter what
+energy it is nominally measured at.
 
-Until a realistic pp @ 5.02 TeV sample is available for the exercise (or some other weighting
-scheme is worked out), R_AA instead divides by a **fixed** reference yield,
-`PP_YIELD_5_02_TEV_REF`, computed from a published pp cross section rather than from any
-per-session student measurement:
+R_AA therefore divides by a **fixed** reference yield, `PP_YIELD_5_02_TEV_REF`, computed from a
+published pp cross section rather than from any per-session student measurement. 5.02 TeV is
+used simply because it is the Pb-Pb sample's own collision energy and the most directly
+comparable published pp cross section — not because matching energies is a hard physical
+requirement:
 
 \[
 Y_{\mathrm{pp}}^{\mathrm{ref}}
@@ -89,11 +111,10 @@ fixed reference (and the branching-ratio fix below) gives R_AA in the **0.3–0.
 centrality classes for the screenshotted student signals — the right order of magnitude and,
 critically, no longer collapsing to zero.
 
-**This is a known, explicit limitation**: the student's own pp/p-Pb submission is still shown
-in the Results table with its own corrected yield, but it no longer influences R_AA at all.
-Restoring some real influence from the student's pp measurement (without reintroducing the
-unphysical absolute-scale bias) is an open problem for a future round — see "Known
-limitations / next steps" below.
+Students can still analyse and submit their own pp/p-Pb signal as part of the exercise (that
+part of the lesson — extracting a signal from a busier, harder pp/p-Pb sample — is unaffected),
+but per the supervisors' decision that submission is **not shown in the teacher Results table**
+and **never enters R_AA**, now or in a future round with a real per-session data flow.
 
 ### Branching ratio
 
@@ -166,10 +187,10 @@ variable-window student submissions exist.
 
 ## Known limitations / next steps
 
-- **The student's pp measurement does not affect R_AA.** It is shown in the Results table
-  purely for reference. Restoring genuine per-session influence (without reproducing the
-  ~1e-5 R_AA bug from using the enriched sample directly) needs either a realistic pp @
-  5.02 TeV exercise sample, or a deliberate re-weighting scheme — not yet designed.
+- **The student's pp/p-Pb measurement does not affect R_AA and is not shown in the Results
+  table.** This is by design, confirmed with the physics supervisors — see "Why a fixed pp
+  reference?" above — not a stopgap awaiting a better pp sample. Students still analyse and
+  submit pp/p-Pb signals; the exercise just does not otherwise use that submission here.
 - **The mass-window safety net is a single generic Gaussian**, not a per-system/per-centrality
   fitted resolution. It is good enough to stop window choice from silently biasing the yield,
   not to model the real detector response.

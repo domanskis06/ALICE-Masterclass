@@ -39,9 +39,11 @@ import {
  *
  * PP_YIELD_5_02_TEV_REF is a FIXED, physically-sourced pp reference yield (not derived from
  * the student's own pp measurement - see `jpsi-raa.constants.ts` and
- * `ci/docs/jpsi-analysis-teacher.md`, "Why a fixed physical pp reference (temporary)?"). The
- * student's pp/p-Pb rows are still shown in the Results table with their own corrected yield,
- * but only as a reference - they do not enter the R_AA formula.
+ * `ci/docs/jpsi-analysis-teacher.md`, "Why a fixed pp reference?"). `computeResults` still
+ * computes a row for every submitted signal, including pp/p-Pb (so nothing breaks once real
+ * per-session pp/p-Pb submissions exist) - but `JpsiAnalysisComponent` only ever passes the
+ * Pb-Pb rows on to the teacher Results table, since pp/p-Pb never feed R_AA and showing them
+ * next to a fixed-reference R_AA would be misleading.
  */
 @Injectable()
 export class JpsiRaaService {
