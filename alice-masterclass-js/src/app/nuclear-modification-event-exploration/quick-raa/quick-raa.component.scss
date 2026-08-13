@@ -1,0 +1,36 @@
+:host {
+  display: block;
+}
+
+.nmf-panel {
+  background: var(--va-bg-panel-solid, #0a1832);
+  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
+  color: var(--va-text, #e5edf7);
+}
+
+.muted {
+  color: var(--va-muted, rgba(226, 232, 240, 0.7));
+}
+
+.raa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.raa-table th,
+.raa-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
+}
+
+.raa-table th {
+  color: var(--va-muted, rgba(226, 232, 240, 0.7));
+  font-weight: 500;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+}

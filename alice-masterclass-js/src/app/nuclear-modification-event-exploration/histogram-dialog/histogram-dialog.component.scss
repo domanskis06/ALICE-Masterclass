@@ -1,0 +1,237 @@
+.nmf-hist-dialog {
+  position: relative;
+  background: var(--va-bg-panel-solid, #0a1832);
+  color: var(--va-text, #ffffff);
+  min-width: min(80vw, 720px);
+}
+
+.nmf-hist-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 8px 0 16px;
+}
+
+.nmf-hist-dialog-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--va-text, #ffffff);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+:host ::ng-deep .nmf-hist-dialog-title sub {
+  font-size: 0.72em;
+}
+
+.nmf-hist-dialog-close {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  color: var(--va-text, #ffffff);
+}
+
+/* Same control chrome as Visual Analysis mass-histograms bin picker. */
+.bin-control {
+  --bin-track-active: #b71c1c;
+  --bin-track-inactive: #ef9a9a;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1a1a1a;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  flex: 0 0 auto;
+}
+
+.bin-control__caption {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #334155;
+}
+
+.bin-control__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 72px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 72px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+
+  &::-webkit-slider-runnable-track {
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      var(--bin-track-active) 0%,
+      var(--bin-track-active) var(--bin-fill, 0%),
+      var(--bin-track-inactive) var(--bin-fill, 0%),
+      var(--bin-track-inactive) 100%
+    );
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4.5px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bin-track-active);
+    box-shadow: none;
+  }
+
+  &::-moz-range-track {
+    height: 3px;
+    border: none;
+    border-radius: 999px;
+    background: var(--bin-track-inactive);
+  }
+
+  &::-moz-range-progress {
+    height: 3px;
+    border: none;
+    border-radius: 999px;
+    background: var(--bin-track-active);
+  }
+
+  &::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bin-track-active);
+    box-shadow: none;
+  }
+
+  &:focus,
+  &:active,
+  &:focus-visible {
+    outline: none;
+  }
+}
+
+.bin-control__input {
+  width: 2.6em;
+  height: 22px;
+  margin: 0;
+  padding: 0 2px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 22px;
+  text-align: center;
+  outline: none;
+  -moz-appearance: textfield;
+
+  &:focus {
+    border-color: var(--bin-track-active);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--bin-track-active) 25%, transparent);
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.nmf-hist-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px 0;
+}
+
+.nmf-hist-dialog-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nmf-hist-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #b71c1c;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.nmf-hist-dialog-plot {
+  width: min(70vw, 640px);
+  height: min(60vh, 420px);
+}
+
+.nmf-hist-dialog-plot app-histogram {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+:host ::ng-deep .nmf-hist-dialog-plot app-histogram {
+  width: 100%;
+  height: 100%;
+
+  > div,
+  figure {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    overflow: visible;
+  }
+
+  text {
+    fill: var(--va-text, #ffffff);
+  }
+
+  #title,
+  #xAxisLabel,
+  #yAxisLabel,
+  #xAxisLabel text,
+  #yAxisLabel text,
+  #xAxis .tick text,
+  #yAxis .tick text {
+    font-weight: 700;
+  }
+
+  path,
+  line {
+    stroke: rgba(226, 232, 240, 0.55);
+  }
+}

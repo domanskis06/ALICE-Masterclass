@@ -1,0 +1,333 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.nmf-analysis-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  padding: 8px 10px 12px;
+  box-sizing: border-box;
+  color: var(--va-text, #ffffff);
+  overflow: auto;
+}
+
+/* —— R_AA summary cards —— */
+.nmf-analysis-results {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+
+.nmf-raa-group {
+  --nmf-raa-accent: #38bdf8;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-left: 3px solid var(--nmf-raa-accent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+}
+
+.nmf-raa-group[data-class='pbPbPeripheral'] {
+  --nmf-raa-accent: #38bdf8;
+}
+
+.nmf-raa-group[data-class='pbPbSemiCentral'] {
+  --nmf-raa-accent: #fbbf24;
+}
+
+.nmf-raa-group[data-class='pbPbCentral'] {
+  --nmf-raa-accent: #f472b6;
+}
+
+.nmf-raa-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nmf-collision-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 30px;
+  overflow: visible;
+  color: var(--nmf-raa-accent, #38bdf8);
+
+  line {
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+  }
+
+  polyline {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.nmf-collision-icon--sm {
+  width: 36px;
+  height: 22px;
+
+  line,
+  polyline {
+    stroke-width: 2.5;
+  }
+}
+
+.nmf-raa-class {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nmf-raa-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nmf-raa-symbol {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(226, 232, 240, 0.72);
+  line-height: 1.2;
+
+  sub {
+    font-size: 0.72em;
+  }
+}
+
+.nmf-raa-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--va-text, #ffffff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nmf-raa-value--empty {
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.35);
+}
+
+/* —— p_T spectra —— */
+.nmf-analysis-plots {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.nmf-analysis-panel--fullscreen .nmf-analysis-plots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+
+.nmf-analysis-plot {
+  --nmf-plot-accent: #38bdf8;
+  --nmf-plot-meta-h: 40px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+  overflow: visible;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nmf-analysis-plot[data-class='pbPbPeripheral'] {
+  --nmf-plot-accent: #38bdf8;
+}
+
+.nmf-analysis-plot[data-class='pbPbSemiCentral'] {
+  --nmf-plot-accent: #fbbf24;
+}
+
+.nmf-analysis-plot[data-class='pbPbCentral'] {
+  --nmf-plot-accent: #f472b6;
+}
+
+.nmf-analysis-plot:hover,
+.nmf-analysis-plot:focus-visible {
+  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 72%, #1e3a5f);
+  border-color: color-mix(in srgb, var(--nmf-plot-accent) 45%, rgba(148, 163, 184, 0.35));
+  outline: none;
+}
+
+.nmf-analysis-plot-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  min-width: 0;
+  min-height: var(--nmf-plot-meta-h);
+  box-sizing: border-box;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.nmf-analysis-plot-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nmf-analysis-plot .nmf-collision-icon {
+  color: var(--nmf-plot-accent);
+}
+
+.nmf-analysis-plot-class {
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nmf-plot-accent);
+}
+
+.nmf-analysis-plot-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--va-text, #ffffff);
+  line-height: 1.25;
+}
+
+:host ::ng-deep .nmf-analysis-plot-title sub {
+  font-size: 0.72em;
+}
+
+.nmf-analysis-plot-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: rgba(226, 232, 240, 0.55);
+  white-space: nowrap;
+}
+
+.nmf-analysis-plot-meta-sep {
+  opacity: 0.5;
+}
+
+/* One meta-bar of space under the title row; SVG top margin keeps "1.0" inside the viewBox. */
+.nmf-analysis-plot-body {
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  height: 280px;
+  margin-top: 8px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.nmf-analysis-panel--fullscreen .nmf-analysis-plot-body {
+  height: 360px;
+}
+
+.nmf-analysis-plot-body app-histogram {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+:host ::ng-deep .nmf-analysis-plot-body app-histogram {
+  position: relative;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
+
+  > div,
+  figure {
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible;
+  }
+
+  svg {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible;
+    background: transparent;
+  }
+
+  text {
+    fill: var(--va-text, #ffffff);
+  }
+
+  #title,
+  #xAxisLabel,
+  #yAxisLabel,
+  #xAxisLabel text,
+  #yAxisLabel text,
+  #xAxis .tick text,
+  #yAxis .tick text {
+    font-weight: 700;
+  }
+
+  path,
+  line {
+    stroke: rgba(226, 232, 240, 0.55);
+  }
+}
+
+.nmf-analysis-panel-actions {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+@media (max-width: 420px) {
+  .nmf-analysis-results {
+    flex-direction: column;
+  }
+
+  .nmf-raa-value {
+    font-size: 1.35rem;
+  }
+}

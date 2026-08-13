@@ -1,0 +1,248 @@
+<div
+  class="container nmf-dark-mode"
+  fxFlex="grow"
+  data-testid="nmf-event-exploration-page"
+>
+  <div class="nmf-main-row">
+  <div class="nmf-event-display-wrap">
+    <app-event-display
+      [decaysShown]="decaysShown"
+      [backgroundColor]="darkBackgroundColor"
+      [hasClusters]="hasClusters"
+      [landscape]="(isLandscape$ | async)"
+      [detectorModel]="ALICE_DETECTOR_MODEL"
+      [showThemeToggle]="false"
+      [darkMode]="true"
+      [event]="displayEvent"
+      [sideViewsShown]="sideViewsShown"
+      [detectorShown]="detectorShown"
+      [clustersShown]="clustersShown"
+      [axesShown]="axesShown"
+      [tracksShown]="tracksShown"
+      [clusterSize]="clusterSize"
+      [trackWidth]="trackWidth"
+      [cameraMode]="cameraMode"
+      [eventTracksClickable]="true"
+      [previousEventButtonDisabled]="!hasDatasetSelected || eventIndex <= 0 || primaryPickChallengeActive"
+      (previousEvent)="onPreviousEvent()"
+      [nextEventButtonDisabled]="nextEventDisabled"
+      (nextEvent)="onNextEvent()"
+      (trackClickedEvent)="onTrackClicked($event)"
+    >
+      <div edSidebarMetaLeft class="event-meta-panel">
+        <!-- Same control as Visual Analysis, for a consistent look. -->
+        <div id="nmf-tour-dataset" class="dataset-controls">
+          <mat-form-field appearance="outline" class="dataset-select">
+            <mat-label>{{ 'SELECT_DATASET_DIALOG.DATASET' | translate }}</mat-label>
+            <mat-select
+              data-testid="nmf-dataset-select"
+              [(ngModel)]="datasetID"
+              (selectionChange)="onDatasetChange($event.value)"
+            >
+              <mat-select-trigger>
+                @if (datasetID != null) {
+                  <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{ dataset: datasetID }"></span>
+                }
+              </mat-select-trigger>
+              @for (ds of datasetOptions; track ds) {
+                <mat-option [value]="ds">
+                  <span [translate]="'SELECT_DATASET_DIALOG.DATASET_VAL'" [translateParams]="{ dataset: ds }"></span>
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div id="nmf-tour-event-nav" class="event-label-row">
+          <!-- Desktop Event Navigation: "1 / 34" + collision type -->
+          @if (hasDatasetSelected) {
+            <span class="event-label" data-testid="nmf-event-number">
+              <span
+                [translate]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.EVENT_OF'"
+                [translateParams]="{ current: eventIndex + 1, total: maxEvents }"
+              ></span>
+            </span>
+            @if (isCurrentEventDone) {
+              <mat-icon id="done" aria-hidden="true">done</mat-icon>
+            }
+            <span class="event-type-label" data-testid="nmf-event-type">{{ eventTypeLabelKey | translate }}</span>
+          }
+        </div>
+
+        <div class="nmf-options-panel">
+          <div id="nmf-tour-visibility" class="nmf-tour-visibility-block">
+            <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
+            <div fxLayout="column" fxLayoutGap="8px">
+              <mat-slide-toggle [(ngModel)]="sideViewsShown">{{ 'EVENT_DISPLAY.SIDE_VIEWS' | translate }}</mat-slide-toggle>
+              <mat-slide-toggle [(ngModel)]="detectorShown">{{ 'EVENT_DISPLAY.DETECTOR' | translate }}</mat-slide-toggle>
+              @if (hasClusters) {
+                <mat-slide-toggle [(ngModel)]="clustersShown">{{ 'EVENT_DISPLAY.CLUSTERS' | translate }}</mat-slide-toggle>
+              }
+              <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
+              <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
+              @if (hasSecondaryTracks && isCurrentEventDone) {
+                <mat-slide-toggle
+                  [(ngModel)]="secondaryTracksShown"
+                  (ngModelChange)="onSecondaryTracksShownChange()"
+                  data-testid="nmf-secondary-tracks-toggle"
+                >{{ 'EVENT_DISPLAY.SECONDARY_TRACKS' | translate }}</mat-slide-toggle>
+              }
+            </div>
+          </div>
+
+          @if (hasClusters) {
+            <h4>{{ 'EVENT_DISPLAY.CLUSTER_SIZE' | translate }}</h4>
+            <mat-radio-group [(ngModel)]="clusterSize" fxLayout="row" fxLayoutAlign="space-around start">
+              <mat-radio-button [value]="0.1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
+              <mat-radio-button [value]="0.25">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
+              <mat-radio-button [value]="0.5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
+            </mat-radio-group>
+          }
+
+          <h4>{{ 'EVENT_DISPLAY.TRACK_WIDTH' | translate }}</h4>
+          <mat-radio-group [(ngModel)]="trackWidth" fxLayout="row" fxLayoutAlign="space-around start">
+            <mat-radio-button [value]="1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
+            <mat-radio-button [value]="2">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
+            <mat-radio-button [value]="5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
+          </mat-radio-group>
+
+          <h4>Camera</h4>
+          <mat-radio-group [(ngModel)]="cameraMode" (change)="onCameraModeChange()" fxLayout="column" fxLayoutGap="4px">
+            <mat-radio-button value="centered">Centered</mat-radio-button>
+            <mat-radio-button value="free">Free</mat-radio-button>
+          </mat-radio-group>
+
+          <h4>Track</h4>
+          <div class="nmf-track-counter" data-testid="nmf-track-counter">
+            <table class="nmf-track-table">
+              <tbody>
+                <tr>
+                  <th scope="row">p<sub>x</sub></th>
+                  <td>{{ selectedTrack ? (selectedTrack.px | number: '1.3-3') : '' }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">p<sub>y</sub></th>
+                  <td>{{ selectedTrack ? (selectedTrack.py | number: '1.3-3') : '' }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">p<sub>z</sub></th>
+                  <td>{{ selectedTrack ? (selectedTrack.pz | number: '1.3-3') : '' }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">charge</th>
+                  <td>{{ selectedTrack ? selectedTrackCharge : '' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </app-event-display>
+
+    @if (filterReady) {
+      <div
+        class="nmf-marquee-layer"
+        [class.nmf-marquee-layer--armed]="shiftHeld || marqueeActive"
+        data-testid="nmf-marquee-layer"
+        (pointerdown)="onMarqueePointerDown($event)"
+        (pointermove)="onMarqueePointerMove($event)"
+        (pointerup)="onMarqueePointerUp($event)"
+        (pointercancel)="onMarqueePointerUp($event)"
+      ></div>
+    }
+    @if (marqueeActive) {
+      <div class="nmf-marquee-box" [ngStyle]="marqueeBoxStyle"></div>
+    }
+  </div>
+
+  <button
+    mat-icon-button
+    type="button"
+    class="nmf-char-toggle"
+    [class.nmf-char-toggle--open]="charPanelOpen"
+    [class.nmf-char-toggle--hidden]="charPanelFullscreen"
+    data-testid="nmf-characteristics-toggle"
+    [attr.aria-label]="(charPanelOpen ? 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_HIDE' : 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_SHOW') | translate"
+    (click)="onToggleCharPanel()"
+  >
+    <mat-icon>{{ charPanelOpen ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+  </button>
+
+  <aside
+    id="nmf-tour-characteristics"
+    class="nmf-characteristics-col"
+    [class.nmf-characteristics-col--open]="charPanelOpen"
+    [class.nmf-characteristics-col--fullscreen]="charPanelFullscreen"
+    data-testid="nmf-characteristics-panel"
+  >
+    <div class="nmf-results-toolbar">
+      <mat-tab-group
+        class="nmf-results-tabs"
+        animationDuration="0ms"
+        [(selectedIndex)]="resultsTabIndex"
+        data-testid="nmf-results-tabs"
+      >
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <span id="nmf-tour-tab-characteristics">
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.TAB_CHARACTERISTICS' | translate }}
+            </span>
+          </ng-template>
+          <app-nmf-event-characteristics
+            [event]="event"
+            [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
+            [showTitle]="false"
+          ></app-nmf-event-characteristics>
+        </mat-tab>
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <span
+              id="nmf-tour-tab-raa"
+              [innerHTML]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.TAB_RAA_ANALYSIS' | translate"
+            ></span>
+          </ng-template>
+          <app-nmf-analysis-panel
+            [records]="analysisRecordsList"
+            [nCollPart1]="nCollPart1"
+            [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
+            [showGoSpectrum]="allEventsAnalyzed"
+            (goSpectrum)="onGoSpectrum()"
+          ></app-nmf-analysis-panel>
+        </mat-tab>
+      </mat-tab-group>
+
+      <div class="nmf-results-toolbar-actions">
+        <button
+          type="button"
+          mat-icon-button
+          id="nmf-tour-hist-help"
+          class="nmf-char-help-btn"
+          data-testid="nmf-hist-help"
+          aria-label="Histogram help"
+          (click)="onHistogramHelp()"
+        >
+          <mat-icon>help_outline</mat-icon>
+        </button>
+        <button
+          type="button"
+          mat-icon-button
+          class="nmf-char-fullscreen-btn"
+          data-testid="nmf-characteristics-fullscreen-toggle"
+          [attr.aria-label]="(charPanelFullscreen ? 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_EXIT_FULLSCREEN' : 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_FULLSCREEN') | translate"
+          (click)="onToggleFullscreen()"
+        >
+          <mat-icon>{{ charPanelFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </aside>
+  </div>
+
+  @if (filterBuilderOpen) {
+    <div class="nmf-filter-overlay" data-testid="nmf-filter-overlay">
+      <app-nmf-filter-builder
+        (filterAccepted)="onFilterAccepted()"
+        (closed)="onFilterBuilderClosed()"
+      ></app-nmf-filter-builder>
+    </div>
+  }
+</div>

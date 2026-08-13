@@ -1,0 +1,120 @@
+<div
+  class="nmf-analysis-panel"
+  [class.nmf-analysis-panel--fullscreen]="layout === 'fullscreen'"
+  data-testid="nmf-analysis-panel"
+  id="nmf-tour-raa-analysis"
+>
+  <section class="nmf-analysis-results" data-testid="nmf-analysis-results">
+    @for (c of classes; track c.key) {
+      <div class="nmf-raa-group" [attr.data-class]="c.key">
+        <div class="nmf-raa-group-head">
+          <svg
+            class="nmf-collision-icon"
+            viewBox="0 0 64 44"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <!-- Left beam → -->
+              <g [attr.transform]="'translate(0 ' + (22 - impactOffset(c.key)) + ')'">
+                <line x1="4" y1="0" x2="26" y2="0" />
+                <polyline points="18,-6 28,0 18,6" />
+              </g>
+              <!-- Right beam ← -->
+              <g [attr.transform]="'translate(0 ' + (22 + impactOffset(c.key)) + ')'">
+                <line x1="60" y1="0" x2="38" y2="0" />
+                <polyline points="46,-6 36,0 46,6" />
+              </g>
+          </svg>
+          <span class="nmf-raa-class">{{ c.titleKey | translate }}</span>
+        </div>
+        <div class="nmf-raa-readout">
+          <span class="nmf-raa-symbol">R<sub>AA</sub></span>
+          @if (c.ready) {
+            <span class="nmf-raa-value">{{ c.raa | number: '1.3-3' }}</span>
+          } @else {
+            <span class="nmf-raa-value nmf-raa-value--empty">—</span>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <div class="nmf-analysis-plots" data-testid="nmf-analysis-plots">
+    @for (c of classes; track c.key) {
+      <section
+        class="nmf-analysis-plot"
+        [attr.data-class]="c.key"
+        [attr.data-testid]="'nmf-analysis-pt-' + c.key"
+        role="button"
+        tabindex="0"
+        (click)="openPlot(c, $event)"
+        (keydown.enter)="openPlot(c, $event)"
+        (keydown.space)="openPlot(c, $event); $event.preventDefault()"
+      >
+        <div class="nmf-analysis-plot-head">
+          <div class="nmf-analysis-plot-heading">
+            <svg
+              class="nmf-collision-icon nmf-collision-icon--sm"
+              viewBox="0 0 64 44"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <g [attr.transform]="'translate(0 ' + (22 - impactOffset(c.key)) + ')'">
+                <line x1="4" y1="0" x2="26" y2="0" />
+                <polyline points="18,-6 28,0 18,6" />
+              </g>
+              <g [attr.transform]="'translate(0 ' + (22 + impactOffset(c.key)) + ')'">
+                <line x1="60" y1="0" x2="38" y2="0" />
+                <polyline points="46,-6 36,0 46,6" />
+              </g>
+            </svg>
+            <span class="nmf-analysis-plot-class">{{ c.titleKey | translate }}</span>
+            <h3
+              class="nmf-analysis-plot-title"
+              [innerHTML]="c.ptSpec.titleKey | translate"
+            ></h3>
+          </div>
+          <div class="nmf-analysis-plot-meta">
+            <span>
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}
+              {{ stats(c.ptSpec.data).entries }}
+            </span>
+            <span class="nmf-analysis-plot-meta-sep" aria-hidden="true">·</span>
+            <span>
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}
+              {{ stats(c.ptSpec.data).mean | number: '1.2-2' }}
+            </span>
+          </div>
+        </div>
+        <div class="nmf-analysis-plot-body">
+          <app-histogram
+            [data]="c.ptSpec.data"
+            [xDomain]="c.ptSpec.xDomain"
+            [bins]="c.ptSpec.bins"
+            [barColor]="c.barColor"
+            [expandDomainToData]="c.ptSpec.expandDomainToData"
+            [compactChrome]="true"
+            [stretchFill]="true"
+          >
+            <svg:text xAxisLabel>{{ c.ptSpec.xAxisLabelKey | translate }}</svg:text>
+            <svg:text yAxisLabel>{{ c.ptSpec.yAxisLabelKey | translate }}</svg:text>
+          </app-histogram>
+        </div>
+      </section>
+    }
+  </div>
+
+  @if (showGoSpectrum) {
+    <div class="nmf-analysis-panel-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        data-testid="nmf-analysis-go-spectrum"
+        (click)="onGoSpectrum()"
+      >
+        {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.GO_SPECTRUM' | translate }}
+      </button>
+    </div>
+  }
+</div>

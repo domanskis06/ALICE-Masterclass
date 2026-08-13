@@ -445,6 +445,91 @@
       "STEP_UPLOAD_BODY": "Une fois connecté, <strong>Envoyer les données</strong> envoie votre tableau à la session serveur, en regroupant les résultats de la classe. Si le bouton est désactivé, connectez-vous d’abord depuis le flux principal."
     }
   },
+  "NUCLEAR_MODIFICATION": {
+    "TITLE": "Nuclear Modification Factor",
+    "EVENT_EXPLORATION_MENU": "Event Exploration",
+    "SPECTRUM_ANALYSIS_MENU": "Spectrum Analysis",
+    "COLLISION": {
+      "PP": "Proton–proton",
+      "PERIPHERAL": "Peripheral Pb–Pb",
+      "SEMI_CENTRAL": "Semi-central Pb–Pb",
+      "CENTRAL": "Central Pb–Pb"
+    },
+    "EVENT_EXPLORATION": {
+      "EVENT": "Event",
+      "EVENT_OF": "{{current}} / {{total}}",
+      "TYPE_PP_7TEV": "pp, 7 TeV, B=0 T",
+      "TYPE_PP_276TEV": "pp, 2.76 TeV, B=0.5 T",
+      "TYPE_PBPB_PERIPHERAL": "PbPb, Peripheral",
+      "TYPE_PBPB_SEMI_CENTRAL": "PbPb, Semi-central",
+      "TYPE_PBPB_CENTRAL": "PbPb, Central",
+      "SUMMARY_TITLE": "Event summary",
+      "SUMMARY_HINT": "Press Analyze this event — tracks are counted automatically (no manual clicking).",
+      "MULTIPLICITY": "Multiplicity",
+      "HIGH_PT": "Tracks with p<sub>T</sub> > 1 GeV/c",
+      "MEAN_PT": "Mean p<sub>T</sub>",
+      "QUICK_RAA_TITLE": "Quick R<sub>AA</sub>",
+      "QUICK_RAA_HINT": "Analyze the pp baseline and the three Pb–Pb showcase events to unlock integrated R<sub>AA</sub>.",
+      "CLASS": "Class",
+      "GO_SPECTRUM": "Continue to Spectrum Analysis",
+      "CHARACTERISTICS_TITLE": "Event Characteristics",
+      "HIST_MULTIPLICITY_TITLE": "Multiplicity distribution",
+      "HIST_MULTIPLICITY_MIN_PT_TITLE": "Multiplicity, p<sub>T</sub> > 1 GeV/c",
+      "HIST_SECONDARIES_TITLE": "Multiplicity of Secondaries",
+      "HIST_PT_TITLE": "p<sub>T</sub> distribution",
+      "HIST_CHARGE_TITLE": "Charge Distribution",
+      "HIST_PHI_TITLE": "Normalized φ projection",
+      "AXIS_MULTIPLICITY": "multiplicity",
+      "AXIS_PT": "pₜ (GeV/c)",
+      "AXIS_CHARGE": "Charge",
+      "AXIS_PHI": "φ",
+      "AXIS_EVENTS": "Events",
+      "STATS_ENTRIES": "Entries",
+      "STATS_MEAN": "Mean",
+      "CHARACTERISTICS_SHOW": "Show Event Characteristics",
+      "CHARACTERISTICS_HIDE": "Hide Event Characteristics",
+      "CHARACTERISTICS_FULLSCREEN": "Expand to fullscreen",
+      "CHARACTERISTICS_EXIT_FULLSCREEN": "Exit fullscreen",
+      "TAB_CHARACTERISTICS": "Event Characteristics",
+      "TAB_RAA_ANALYSIS": "R<sub>AA</sub> Analysis",
+      "ANALYSIS_TITLE": "Analysis",
+      "ANALYSIS_PERIPHERAL": "Peripheral",
+      "ANALYSIS_SEMI_CENTRAL": "Semi-central",
+      "ANALYSIS_CENTRAL": "Central",
+      "AXIS_TPC_TRACKS": "#TPC tracks"
+    },
+    "SPECTRUM_ANALYSIS": {
+      "PIPELINE_TITLE": "Analysis pipeline (blocks)",
+      "PLOTS_TITLE": "Results",
+      "RUN": "Run",
+      "CLEAR": "Clear blocks",
+      "STATUS_OK": "Pipeline looks complete",
+      "STATUS_WARN": "Pipeline incomplete — check warnings",
+      "EXTRACT_TITLE": "Extract R<sub>AA</sub> values",
+      "EXTRACT_EMPTY": "No extract values yet — run a complete pipeline first.",
+      "CENTRALITY": "Centrality",
+      "PT_BIN": "p<sub>T</sub> bin"
+    },
+    "INSTRUCTIONS_EVENT_EXPLORATION": {
+      "TITLE": "Event Exploration",
+      "P1": "Use the event display to inspect pp and Pb–Pb collisions and measure charged-particle multiplicity.",
+      "STEP1": "Browse the events in your dataset. The first event is a pp collision at 7 TeV with B = 0 T — for familiarisation only, do not count it.",
+      "STEP2": "For the following 30 pp collisions at 2.76 TeV, inspect the tracks and note the multiplicity.",
+      "STEP3": "The last three events are Pb–Pb (peripheral, semi-central, central). Use auto-counting for these high-multiplicity events.",
+      "STEP4": "Compare yields and compute the integrated nuclear modification factor R<sub>AA</sub>."
+    },
+    "INSTRUCTIONS_SPECTRUM_ANALYSIS": {
+      "TITLE": "Spectrum Analysis",
+      "P1": "Build an analysis pipeline to compute R<sub>AA</sub> as a function of transverse momentum.",
+      "STEP1": "Load Pb–Pb data and select a centrality class.",
+      "STEP2": "Build the p<sub>T</sub> spectrum and normalise by the number of events and ⟨N<sub>coll</sub>⟩.",
+      "STEP3": "Divide by the pp reference spectrum to obtain R<sub>AA</sub>.",
+      "STEP4": "Plot the result and extract values for the discussion."
+    },
+    "DESKTOP": {
+      "HINT": "Based on the ALICE MasterClass desktop exercise."
+    }
+  },
   "JPSI": {
     "TITLE": "Production de J/ψ",
     "MENU": "Analyse J/ψ",

@@ -12,6 +12,10 @@
         <h1 matSubheader>{{ 'JPSI.TITLE' | translate }}</h1>
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/jpsi-analysis" routerLinkActive #rlaJpsi="routerLinkActive" [activated]="rlaJpsi.isActive" data-testid="nav-link-jpsi-analysis">{{ 'JPSI.MENU' | translate }}</a>
+        <h1 matSubheader>{{ 'NUCLEAR_MODIFICATION.TITLE' | translate }}</h1>
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/nuclear-modification-event-exploration" routerLinkActive #rlaNmfEe="routerLinkActive" [activated]="rlaNmfEe.isActive" data-testid="nav-link-nmf-event-exploration">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION_MENU' | translate }}</a>
+        <a mat-list-item routerLink="/nuclear-modification-spectrum-analysis" routerLinkActive #rlaNmfSa="routerLinkActive" [activated]="rlaNmfSa.isActive" data-testid="nav-link-nmf-spectrum-analysis">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS_MENU' | translate }}</a>
         <div fxFlex="grow"></div>
         <a mat-list-item (click)="onPasswordButtonClicked()">
           @if (demo) {

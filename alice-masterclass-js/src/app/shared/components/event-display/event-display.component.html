@@ -141,6 +141,7 @@
           </div>
           @if (showControls) {
             <button
+              id="event-display-next-event"
               class="event-nav-btn event-nav-btn--next"
               type="button"
               [disabled]="nextEventButtonDisabled"
@@ -221,6 +222,13 @@
               </div>
             </div>
           }
+          <!-- NMF (and similar) project dataset/options here; right slot stays for VA. -->
+          <div
+            class="event-meta-slot event-meta-slot--left"
+            [hidden]="!detectorInteractiveAssemblyDone"
+            [attr.aria-hidden]="!detectorInteractiveAssemblyDone">
+            <ng-content select="[edSidebarMetaLeft]"></ng-content>
+          </div>
         </div>
       </aside>
 

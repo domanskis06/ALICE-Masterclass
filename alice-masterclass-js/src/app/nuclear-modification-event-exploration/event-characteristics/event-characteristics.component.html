@@ -1,0 +1,44 @@
+<div class="nmf-char-panel">
+  @if (showTitle) {
+    <div class="nmf-char-title-row">
+      <h3 class="nmf-char-title">{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.CHARACTERISTICS_TITLE' | translate }}</h3>
+    </div>
+  }
+
+  <div class="nmf-hist-grid" [class.nmf-hist-grid--fullscreen]="layout === 'fullscreen'">
+    @for (h of histograms; track h.key) {
+      <button
+        type="button"
+        class="nmf-hist-item"
+        [attr.data-hist-key]="h.key"
+        [attr.data-testid]="'nmf-hist-' + h.key"
+        (click)="openHistogram(h)"
+      >
+        <app-histogram
+          [data]="h.data"
+          [xDomain]="h.xDomain"
+          [bins]="h.bins"
+          [discreteValues]="h.discreteValues ?? null"
+          [barColor]="h.barColor"
+          [expandDomainToData]="h.expandDomainToData"
+          [compactChrome]="true"
+          [viewBoxHeight]="340"
+        >
+          <span title class="nmf-hist-title" [innerHTML]="h.titleKey | translate"></span>
+          <svg:text xAxisLabel>{{ h.xAxisLabelKey | translate }}</svg:text>
+          <svg:text yAxisLabel>{{ h.yAxisLabelKey | translate }}</svg:text>
+        </app-histogram>
+        <div class="nmf-hist-stats">
+          <span class="nmf-hist-stat-badge">
+            {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}:
+            {{ stats(h).entries }}
+          </span>
+          <span class="nmf-hist-stat-badge">
+            {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}:
+            {{ stats(h).mean | number: '1.2-2' }}
+          </span>
+        </div>
+      </button>
+    }
+  </div>
+</div>

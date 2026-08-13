@@ -27,6 +27,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTabsModule } from '@angular/material/tabs';
 import { NgxSliderModule } from '@angular-slider/ngx-slider'; 
 @NgModule({
   imports: [
@@ -54,6 +55,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     MatTooltipModule,
     MatTableModule,
     MatPaginatorModule,
+    MatTabsModule,
     MatSlideToggleModule,
     MatSliderModule,
     NgxSliderModule
@@ -81,6 +83,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
     MatTooltipModule,
     MatTableModule,
     MatPaginatorModule,
+    MatTabsModule,
     MatSlideToggleModule,
     MatSliderModule,
     NgxSliderModule

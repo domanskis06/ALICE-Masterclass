@@ -103,7 +103,9 @@
     "TITLE": "Welcome to the ALICE Masterclass!",
     "P1": "The ALICE Collaboration has built a dedicated detector to exploit the unique physics potential of nucleus-nucleus collisions at LHC energies. Our aim is to study the physics of strongly interacting matter at the highest energy densities reached so far in the laboratory. In such conditions, an extreme phase of matter - called the quark-gluon plasma - is formed.",
     "P2": "Our universe is thought to have been in such a primordial state for the first few millionths of a second after the Big Bang. The properties of such a phase are key issues for Quantum Chromo Dynamics, the understanding of confinement-deconfinement and chiral phase transitions.",
-    "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right."
+    "P3": "For this purpose, we are carrying out a comprehensive study of the hadrons, electrons, muons and photons produced in the collisions of heavy nuclei. ALICE is also studying proton-proton and proton-nucleus collisions both as a comparison with nucleus-nucleus collisions and in their own right.",
+    "DOWNLOAD": "If you wish, you can download and use a desktop version of the Masterclass:",
+    "COMING_SOON": "Coming soon!"
   },
   "ABOUT": {
     "ABOUT_MENU": "About ALICE"
@@ -182,7 +184,8 @@
     "TOF_READING": "TOF reading",
     "DETECTOR_CALORIMETERS": "Calorimeters",
     "PREVIOUS_EVENT": "Previous event",
-    "NEXT_EVENT": "Next event"
+    "NEXT_EVENT": "Next event",
+    "SECONDARY_TRACKS": "Secondary tracks"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Please select dataset:",
@@ -210,10 +213,10 @@
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Strange Particle Production",
       "SUBTITLE": "Exercise 1: Visual inspection",
-      "P1": "The aim of the exercise is to search for strange particles produced from collisions at LHC and recorded by the ALICE experiment. Strange particles do not live long; they decay soon after their production. However, they live long enough to travel some distance, usually a few centimeters, from the interaction point IP where they were produced at the primary vertex. Their search is thus based on the identification of their decay products, which must originate from a common secondary vertex. Neutral strange particles, such as <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> and <span class=\"particle\">Λ&#773;</span>, decay giving a characteristic decay pattern called V0. The mother particle disappears some centimeters from the interaction point and two oppositely charged particles appear in its place, which are bent in opposite directions inside the magnetic field of the ALICE solenoid. In the following figures red tracks indicate positively charged particles, green tracks indicate negatively charged particles, and blue tracks indicate the bachelor pion in cascade decays. The decays we will be looking for are:",
-      "P2": "We see that for a pion-pion final state the decay pattern is quasi-symmetric, whereas in the pion-proton final state the radius of curvature of the proton is larger than that of the pion: due to its higher mass, the proton carries most of the initial momentum.",
-      "P3": "We will also be looking for cascade decays of charged strange particles. The <span class=\"particle\">Ξ<sup>−</sup></span> decays into <span class=\"particle\">π<sup>−</sup></span> and <span class=\"particle\">Λ</span>; the <span class=\"particle\">Λ</span> then decays into a proton and <span class=\"particle\">π<sup>−</sup></span>. Its antiparticle, the <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, decays into <span class=\"particle\">π<sup>+</sup></span> and <span class=\"particle\">Λ&#773;</span>; the <span class=\"particle\">Λ&#773;</span> then decays into an antiproton and <span class=\"particle\">π<sup>+</sup></span>. In both cases the first pion is the bachelor, a single charged track, and is shown in blue. The search for V0s and cascades is based on the decay topology and the identification of the decay products; an additional confirmation of the particle identity is the calculation of its mass, based on the mass and momentum of the decay products.",
-      "P4": "In this exercise, you will determine the number of strange particles in 15 pp collisions at a collision energy of 7 TeV. Particles can be identified through the topology of their decays. When you select tracks from a V0 or Cascade, the relevant numbers, momentum components <em>px, py, pz</em> and mass, will automatically be sent to the <strong>Calculator</strong> interface, and the invariant mass for the currently selected particles is calculated. Then you choose a particle type and click <strong>Add</strong> to include its mass in the graphs below."
+      "P1": "The aim of the exercise is to search for strange particles produced from collisions at LHC and recorded by the ALICE experiment. Strange particles do not live long; they decay soon after their production. However, they live long enough to travel some distance (usually a few centimeters) from the interaction point (IP) from where they were produced (primary vertex). Their search is thus based on the identification of their decay products, which must originate from a common secondary vertex. Neutral strange particles, such as <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> and <span class=\"particle\">Λ&#773;</span>, decay giving a characteristic decay pattern, called V0. The mother particle disappears some centimeters from the interaction point and two oppositely charged particles appear in its place, which are bent in opposite directions inside the magnetic field of the ALICE solenoid. In the following figures red tracks indicate positively charged particles, green tracks indicate negatively charged particles, and blue tracks indicate the bachelor pion in cascade decays. The decays we will be looking for are:",
+      "P2": "We see that for a pion–pion final state the decay pattern is quasi-symmetric, whereas in the pion–proton final state the radius of curvature of the proton is larger than that of the pion: due to its higher mass, the proton carries most of the initial momentum.",
+      "P3": "We will also be looking for cascade decays of charged strange particles. The <span class=\"particle\">Ξ<sup>−</sup></span> decays into <span class=\"particle\">π<sup>−</sup></span> and <span class=\"particle\">Λ</span>; the <span class=\"particle\">Λ</span> then decays into a proton and <span class=\"particle\">π<sup>−</sup></span>. Its antiparticle, the <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, decays into <span class=\"particle\">π<sup>+</sup></span> and <span class=\"particle\">Λ&#773;</span>; the <span class=\"particle\">Λ&#773;</span> then decays into an antiproton and <span class=\"particle\">π<sup>+</sup></span>. In both cases the first pion is the bachelor (a single charged track) and is shown in blue. The search for V0s and cascades is based on the decay topology and the identification of the decay products; an additional confirmation of the particle identity is the calculation of its mass, based on the mass and momentum of the decay products.",
+      "P4": "In this exercise, you will determine the number of strange particles in 15 pp collisions at a collision energy of 7 TeV. Particles can be identified through the topology of their decays. When you select tracks from a V0 or Cascade, the relevant numbers (momentum in the form <em>(px,py,pz)</em> and mass) will automatically be sent to the <strong>Calculator</strong> interface, and the invariant mass for the currently selected particles is calculated. Then you choose a particle type and click <strong>Add</strong> to include its mass in the graphs below."
     },
     "TITLE": "Strangeness",
     "VISUAL_ANALYSIS_MENU": "Visual Analysis",
@@ -265,9 +268,9 @@
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
       "TITLE": "Strange Particle Production",
       "SUBTITLE": "Exercise 2: Large Scale Analysis",
-      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However, in real life data analysis is not done visually, because that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
-      "P2": "You will now analyse recordings from hundreds of events at once. You can see that the invariant mass is a continuous distribution, because the pairs of pions combined are random, not coming from a common secondary vertex and can give any value of mass. Most of them are background.",
-      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a second-degree polynomial curve to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable. If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second-degree polynomial are used. After clicking the <strong>Accept</strong> button you will get, on the histogram, the total number of counts in the peak, the number of background counts and those which are signal."
+      "P1": "The event display is a powerful tool which helps check the quality of the data and their reconstruction and gives a “feeling” of what events look like. However, in real life data analysis is not done visually — that would be far too tedious and time-consuming. To analyse the millions of events that we collect daily at the LHC we run programs, and this is what you will do here, in order to look for V0s in a bigger event sample.",
+      "P2": "You will now analyse recordings from hundreds of events at once. You can see that the invariant mass is a continuous distribution – this is because the pairs of pions combined are random, not coming from a common secondary vertex and can give any value of mass. Most of them are background.",
+      "P3": "In order to find the number of particles of a certain type, for example K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, you need to find the number of events in the peak after background subtraction. In order to fit a curve (second degree polynomial) to the background, you first choose the fit range using the slider. To fit a Gaussian distribution to the signal you also have to select the range of the peak. When you click on <strong>Fit</strong>, the fitted functions are superimposed on the histogram and you can check visually whether the fit is reasonable. If you think the fitted functions match the data well, you can push the <strong>Accept</strong> button. For the background subtraction the coefficients of the second degree polynomial are used. After clicking the <strong>Accept</strong> button you will get, on the histogram, the total number of counts in the peak, the number of background counts and those which are signal."
     },
     "HISTOGRAM_SELECTOR": {
       "TITLE": "Histogram Selector",
@@ -320,11 +323,11 @@
       "TITLE": "How tracks curve through ALICE",
       "P1": "Charged particles in ALICE travel through a strong magnetic field, and the Lorentz force pushes them sideways whenever their motion cuts across that field. Their tracks therefore curve: a stronger field or a lower momentum gives a tighter bend, while positive and negative charges curve opposite ways. Neutral particles feel no magnetic force, so they go straight. From how sharply a track bends, physicists can read the particle’s momentum.",
       "P2": "That field is shaped by a large solenoid around the barrel and a dipole near the muon detectors. Before the animation begins, the app follows every particle through this measured field and stores the paths. Once that is done, play and the time slider only reveal what was prepared, which keeps the motion smooth as you move through the event.",
-      "P3": "Along the timeline you first see the beams approaching, protons or lead nuclei in the Pb-Pb event, then the collision, and finally the particles flying outward from the centre. If you change the field strength or reverse the solenoid, the bends should change with it; press Replay afterwards so the tracks are recalculated. Fading the detector layers or showing the field lines can make the same story easier to follow in the scene."
+      "P3": "Along the timeline you first see the protons approaching, then the collision, and finally the particles flying outward from the centre. If you change the field strength or reverse the solenoid, the bends should change with it; press Replay afterwards so the tracks are recalculated. Fading the detector layers or showing the field lines can make the same story easier to follow in the scene."
     },
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Particle Propagation in the Magnetic Field",
-      "WELCOME_BODY_1": "In most events two protons collide at the centre of ALICE; in the Pb-Pb event two lead nuclei collide instead. Both are shown in the visualisation. New particles fly outward, and the detector’s magnetic field bends the paths of those that carry electric charge.",
+      "WELCOME_BODY_1": "Two protons collide at the centre of ALICE. New particles fly outward, and the detector’s magnetic field bends the paths of those that carry electric charge.",
       "WELCOME_BODY_2": "Press Start and the app prepares each trajectory through the real magnetic field of ALICE. Events with many particles may need a short moment to load.",
       "WELCOME_BODY_3": "Afterwards, use the time slider to move from the approaching protons, through the collision, to the particles leaving the centre. Explore freely: the side panels let you change the field and look through the detector layers.",
       "START_BUTTON": "Start animation",
@@ -336,7 +339,6 @@
       "RETRY": "Retry",
       "LOADING_DETECTOR": "Loading detector model…",
       "EVENT_N": "Event {{n}}",
-      "EVENT_PBPB_N": "Pb-Pb event",
       "SIDEBAR_DETECTOR_PARTS": "Detector parts",
       "SIDEBAR_EVENT": "Event",
       "SIDEBAR_PLAYBACK": "Playback",
@@ -408,7 +410,7 @@
       "STEP_FINISH_BODY": "When every decay track in this collision has been used, the particle selector is replaced by <strong>Next event</strong>. Press it to analyse the next collision and keep filling the histograms. Press Done to close the tutorial."
     },
     "LSA_TUTORIAL": {
-      "WELCOME_TITLE": "Large scale analysis - short tutorial",
+      "WELCOME_TITLE": "Large scale analysis — short tutorial",
       "WELCOME_P1": "The event display helps you build intuition about single events, but real LHC analysis uses programs over millions of events.",
       "WELCOME_P2": "Here you analyse <strong>hundreds of events at once</strong> by studying the <strong>invariant-mass</strong> distribution of V0 candidates and extracting signal yields with a fit.",
       "WELCOME_P3": "You can <strong>skip</strong> this tour anytime using the <strong>×</strong> button. To start it later, open the <strong>Help</strong> panel via the <strong>?</strong> icon in the toolbar and click <strong>Start tutorial</strong>.",
@@ -440,7 +442,92 @@
       "STEP_RESULTS_SUMMARY_TITLE": "Results table",
       "STEP_RESULTS_SUMMARY_BODY": "For each <strong>centrality</strong> class this table gathers your accepted fits: the measured particle counts, the detector <strong>efficiency</strong>, and the <strong>yield</strong> - how many strange particles are produced per collision after corrections. The key number is <strong>enhancement</strong>: the yield divided by the same yield in proton-proton collisions. A value above 1 means strange particles are created more often in heavy-ion collisions than in simple proton-proton ones - that is strangeness enhancement.",
       "STEP_UPLOAD_TITLE": "Share results with your teacher",
-      "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session, pooling class results. If the button is disabled, sign in from the main flow first."
+      "STEP_UPLOAD_BODY": "When logged in, <strong>Upload data</strong> sends your table to the server session (pooling class results). If the button is disabled, sign in from the main flow first."
+    }
+  },
+  "NUCLEAR_MODIFICATION": {
+    "TITLE": "Nuclear Modification Factor",
+    "EVENT_EXPLORATION_MENU": "Event Exploration",
+    "SPECTRUM_ANALYSIS_MENU": "Spectrum Analysis",
+    "COLLISION": {
+      "PP": "Proton–proton",
+      "PERIPHERAL": "Peripheral Pb–Pb",
+      "SEMI_CENTRAL": "Semi-central Pb–Pb",
+      "CENTRAL": "Central Pb–Pb"
+    },
+    "EVENT_EXPLORATION": {
+      "EVENT": "Event",
+      "EVENT_OF": "{{current}} / {{total}}",
+      "TYPE_PP_7TEV": "pp, 7 TeV, B=0 T",
+      "TYPE_PP_276TEV": "pp, 2.76 TeV, B=0.5 T",
+      "TYPE_PBPB_PERIPHERAL": "PbPb, Peripheral",
+      "TYPE_PBPB_SEMI_CENTRAL": "PbPb, Semi-central",
+      "TYPE_PBPB_CENTRAL": "PbPb, Central",
+      "SUMMARY_TITLE": "Event summary",
+      "SUMMARY_HINT": "Press Analyze this event — tracks are counted automatically (no manual clicking).",
+      "MULTIPLICITY": "Multiplicity",
+      "HIGH_PT": "Tracks with p<sub>T</sub> > 1 GeV/c",
+      "MEAN_PT": "Mean p<sub>T</sub>",
+      "QUICK_RAA_TITLE": "Quick R<sub>AA</sub>",
+      "QUICK_RAA_HINT": "Analyze the pp baseline and the three Pb–Pb showcase events to unlock integrated R<sub>AA</sub>.",
+      "CLASS": "Class",
+      "GO_SPECTRUM": "Continue to Spectrum Analysis",
+      "CHARACTERISTICS_TITLE": "Event Characteristics",
+      "HIST_MULTIPLICITY_TITLE": "Multiplicity distribution",
+      "HIST_MULTIPLICITY_MIN_PT_TITLE": "Multiplicity, p<sub>T</sub> > 1 GeV/c",
+      "HIST_SECONDARIES_TITLE": "Multiplicity of Secondaries",
+      "HIST_PT_TITLE": "p<sub>T</sub> distribution",
+      "HIST_CHARGE_TITLE": "Charge Distribution",
+      "HIST_PHI_TITLE": "Normalized φ projection",
+      "AXIS_MULTIPLICITY": "multiplicity",
+      "AXIS_PT": "pₜ (GeV/c)",
+      "AXIS_CHARGE": "Charge",
+      "AXIS_PHI": "φ",
+      "AXIS_EVENTS": "Events",
+      "STATS_ENTRIES": "Entries",
+      "STATS_MEAN": "Mean",
+      "CHARACTERISTICS_SHOW": "Show Event Characteristics",
+      "CHARACTERISTICS_HIDE": "Hide Event Characteristics",
+      "CHARACTERISTICS_FULLSCREEN": "Expand to fullscreen",
+      "CHARACTERISTICS_EXIT_FULLSCREEN": "Exit fullscreen",
+      "TAB_CHARACTERISTICS": "Event Characteristics",
+      "TAB_RAA_ANALYSIS": "R<sub>AA</sub> Analysis",
+      "ANALYSIS_TITLE": "Analysis",
+      "ANALYSIS_PERIPHERAL": "Peripheral",
+      "ANALYSIS_SEMI_CENTRAL": "Semi-central",
+      "ANALYSIS_CENTRAL": "Central",
+      "AXIS_TPC_TRACKS": "#TPC tracks"
+    },
+    "SPECTRUM_ANALYSIS": {
+      "PIPELINE_TITLE": "Analysis pipeline (blocks)",
+      "PLOTS_TITLE": "Results",
+      "RUN": "Run",
+      "CLEAR": "Clear blocks",
+      "STATUS_OK": "Pipeline looks complete",
+      "STATUS_WARN": "Pipeline incomplete — check warnings",
+      "EXTRACT_TITLE": "Extract R<sub>AA</sub> values",
+      "EXTRACT_EMPTY": "No extract values yet — run a complete pipeline first.",
+      "CENTRALITY": "Centrality",
+      "PT_BIN": "p<sub>T</sub> bin"
+    },
+    "INSTRUCTIONS_EVENT_EXPLORATION": {
+      "TITLE": "Event Exploration",
+      "P1": "Use the event display to inspect pp and Pb–Pb collisions and measure charged-particle multiplicity.",
+      "STEP1": "Browse the events in your dataset. The first event is a pp collision at 7 TeV with B = 0 T — for familiarisation only, do not count it.",
+      "STEP2": "For the following 30 pp collisions at 2.76 TeV, inspect the tracks and note the multiplicity.",
+      "STEP3": "The last three events are Pb–Pb (peripheral, semi-central, central). Use auto-counting for these high-multiplicity events.",
+      "STEP4": "Compare yields and compute the integrated nuclear modification factor R<sub>AA</sub>."
+    },
+    "INSTRUCTIONS_SPECTRUM_ANALYSIS": {
+      "TITLE": "Spectrum Analysis",
+      "P1": "Build an analysis pipeline to compute R<sub>AA</sub> as a function of transverse momentum.",
+      "STEP1": "Load Pb–Pb data and select a centrality class.",
+      "STEP2": "Build the p<sub>T</sub> spectrum and normalise by the number of events and ⟨N<sub>coll</sub>⟩.",
+      "STEP3": "Divide by the pp reference spectrum to obtain R<sub>AA</sub>.",
+      "STEP4": "Plot the result and extract values for the discussion."
+    },
+    "DESKTOP": {
+      "HINT": "Based on the ALICE MasterClass desktop exercise."
     }
   },
   "JPSI": {

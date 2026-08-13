@@ -1,0 +1,23 @@
+<h2 mat-dialog-title>Event Exploration short tutorial</h2>
+<mat-dialog-content class="welcome-body">
+  <p>
+    In heavy ion collisions a hot, dense medium can form. High momentum particles lose energy in that medium
+    (<strong>jet quenching</strong>). The nuclear modification factor <strong>R<sub>AA</sub></strong> compares
+    particle production in PbPb to proton proton collisions.
+  </p>
+  <p>
+    This first exercise builds <strong>intuition on single events</strong>: navigate collisions, read Event
+    Characteristics histograms, and learn to keep only <strong>charged primary tracks</strong>, the same
+    objects real ALICE analyses count for R<sub>AA</sub>.
+  </p>
+  <p>
+    You can <strong>skip</strong> this tour anytime with <strong>×</strong>. To replay it later, open the
+    event-display <strong>Instructions</strong> and click <strong>Replay tutorial</strong>. The toolbar
+    <strong>?</strong> opens a short guide for the tab you are looking at (Event Characteristics or
+    R<sub>AA</sub> Analysis).
+  </p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="skip()">Skip</button>
+  <button mat-raised-button color="primary" type="button" (click)="start()">Start tutorial</button>
+</mat-dialog-actions>

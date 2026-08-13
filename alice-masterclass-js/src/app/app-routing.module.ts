@@ -8,6 +8,8 @@ import { StrangenessVisualAnalysisRoutingModule } from './strangeness-visual-ana
 import { StrangenessLargeScaleAnalysisRoutingModule } from './strangeness-large-scale-analysis/strangeness-large-scale-analysis-routing.module';
 import { ParticlePropagationRoutingModule } from './particle-propagation/particle-propagation-routing.module';
 import { JpsiAnalysisRoutingModule } from './jpsi-analysis/jpsi-analysis-routing.module';
+import { NuclearModificationEventExplorationRoutingModule } from './nuclear-modification-event-exploration/nuclear-modification-event-exploration-routing.module';
+import { NuclearModificationSpectrumAnalysisRoutingModule } from './nuclear-modification-spectrum-analysis/nuclear-modification-spectrum-analysis-routing.module';
 
 const routes: Routes = [
   {
@@ -28,7 +30,9 @@ const routes: Routes = [
     StrangenessVisualAnalysisRoutingModule,
     StrangenessLargeScaleAnalysisRoutingModule,
     ParticlePropagationRoutingModule,
-    JpsiAnalysisRoutingModule
+    JpsiAnalysisRoutingModule,
+    NuclearModificationEventExplorationRoutingModule,
+    NuclearModificationSpectrumAnalysisRoutingModule,
   ],
   exports: [RouterModule]
 })

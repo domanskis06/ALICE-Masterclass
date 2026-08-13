@@ -17,6 +17,12 @@
   font-size: 0.75em;
 }
 
+/* Thin brand ring so the cutout edge reads as a tight frame, not a fat halo. */
+body.driver-active .driver-active-element {
+  outline: 2px solid #b71c1c;
+  outline-offset: 1px;
+}
+
 /* Next / Done — ALICE primary red, white label + arrow (demo and workshop). */
 .driver-popover.lsa-driver-popover .driver-popover-next-btn {
   background-color: #b71c1c !important;
@@ -122,6 +128,66 @@ body.va-driver-flight-hide #va-tour-expanding-stage {
   visibility: hidden !important;
   pointer-events: none !important;
   transition: none !important;
+}
+
+/*
+ * driver.js sets `.driver-active * { pointer-events: none }` and only re-enables
+ * `.driver-active-element` (and *all* its descendants). That second part breaks
+ * Blockly: `.blocklyBlockDragSurface` must stay pointer-events:none or it steals
+ * hits from the workspace/flyout. Re-enable the filter shell, then restore Blockly.
+ */
+body.driver-active .nmf-filter-overlay,
+body.driver-active .nmf-filter-overlay > *,
+body.driver-active .nmf-filter-builder {
+  pointer-events: auto !important;
+}
+
+body.driver-active .nmf-filter-overlay .blocklyBlockDragSurface,
+body.driver-active .nmf-filter-overlay .blocklyAnimationLayer,
+body.driver-active .nmf-filter-overlay .blocklyScrollbarBackground,
+body.driver-active .nmf-filter-overlay .blocklyNoPointerEvents {
+  pointer-events: none !important;
+}
+
+body.driver-active .nmf-filter-overlay .blocklyDragging {
+  pointer-events: auto !important;
+}
+
+/*
+ * Blockly field editors / dropdowns mount on document.body (outside the
+ * highlighted `.driver-active-element`). Raise them above the NMF filter
+ * overlay (z-index 1000001) and re-enable hits under driver.js.
+ *
+ * `.driver-active * { pointer-events: none }` still disables menu items inside
+ * the DropDownDiv unless descendants are re-enabled too — otherwise the
+ * compare OP dropdown (`=` / `≠`) opens but cannot be changed.
+ */
+body:has(.nmf-filter-overlay) .blocklyWidgetDiv,
+body:has(.nmf-filter-overlay) .blocklyDropDownDiv,
+body:has(.nmf-filter-overlay) .blocklyTooltipDiv,
+body.driver-active .blocklyWidgetDiv,
+body.driver-active .blocklyDropDownDiv,
+body.driver-active .blocklyTooltipDiv {
+  pointer-events: auto !important;
+  z-index: 1000002 !important;
+}
+
+body:has(.nmf-filter-overlay) .blocklyWidgetDiv *,
+body:has(.nmf-filter-overlay) .blocklyDropDownDiv *,
+body:has(.nmf-filter-overlay) .blocklyTooltipDiv *,
+body.driver-active .blocklyWidgetDiv *,
+body.driver-active .blocklyDropDownDiv *,
+body.driver-active .blocklyTooltipDiv * {
+  pointer-events: auto !important;
+}
+
+/*
+ * Mat-select panels mount on body (outside `.driver-active-element`). Re-enable
+ * hits so the NMF/VA dataset picker stays usable during the tour highlight.
+ */
+body.driver-active .cdk-overlay-container .mat-mdc-select-panel,
+body.driver-active .cdk-overlay-container .mat-mdc-select-panel * {
+  pointer-events: auto !important;
 }
 
 html, body {
@@ -239,4 +305,15 @@ div.mat-mdc-select-panel.calculator-particle-select-panel {
   .mat-mdc-option.mat-mdc-option-active {
     background: rgba(148, 163, 184, 0.12);
   }
+}
+
+/* NMF single-histogram dialog (CDK overlay — outside component host). */
+.cdk-overlay-pane.nmf-histogram-dialog-panel {
+  z-index: 1100;
+}
+
+.nmf-histogram-dialog-panel .mat-mdc-dialog-container,
+.nmf-histogram-dialog-panel .mdc-dialog__surface {
+  background: #0a1832;
+  color: #ffffff;
 }

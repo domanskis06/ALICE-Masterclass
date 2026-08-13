@@ -1,0 +1,64 @@
+:host {
+  --va-bg-panel-solid: #0a1832;
+  --va-bg: var(--va-bg-panel-solid);
+  --va-border: rgba(148, 163, 184, 0.28);
+  --va-text: #e5edf7;
+  --va-muted: rgba(226, 232, 240, 0.7);
+  --va-control-bg: rgba(15, 23, 42, 0.94);
+
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.container.nmf-dark-mode {
+  color: var(--va-text);
+  background: var(--va-bg-panel-solid);
+  min-height: calc(100vh - 104px);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.section-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.workspace-row {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.blockly-col {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plots-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.container.nmf-dark-mode ::ng-deep {
+  mat-card {
+    background: var(--va-bg-panel-solid);
+    border-color: var(--va-border);
+    color: var(--va-text);
+  }
+
+  .mat-mdc-form-field {
+    .mdc-text-field--outlined {
+      background: var(--va-control-bg);
+    }
+    .mat-mdc-form-field-label,
+    .mat-mdc-select-value,
+    input {
+      color: var(--va-text) !important;
+    }
+  }
+}

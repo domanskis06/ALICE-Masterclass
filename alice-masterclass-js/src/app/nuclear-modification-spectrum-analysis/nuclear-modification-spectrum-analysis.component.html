@@ -1,0 +1,35 @@
+<div
+  class="container nmf-dark-mode"
+  fxFlex="grow"
+  fxLayout="column"
+  data-testid="nmf-spectrum-analysis-page"
+>
+  <div class="workspace-row" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="12px">
+    <div class="blockly-col" fxFlex="1 1 55%">
+      <h2 class="section-title">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PIPELINE_TITLE' | translate }}</h2>
+      <app-nmf-blockly-workspace
+        (pipelineChange)="onPipelineChange($event)"
+      ></app-nmf-blockly-workspace>
+      <app-nmf-pipeline-run-bar
+        [running]="running"
+        [valid]="valid"
+        [warnings]="warnings"
+        (run)="onRun()"
+        (clear)="onClear()"
+      ></app-nmf-pipeline-run-bar>
+    </div>
+    <div class="plots-col" fxFlex="1 1 45%">
+      <h2 class="section-title">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_TITLE' | translate }}</h2>
+      <app-nmf-raa-plots
+        [ptSpectra]="ptSpectra"
+        [raa]="raa"
+        [rcp]="rcp"
+      ></app-nmf-raa-plots>
+      <app-nmf-extract-panel
+        [centralityBins]="centralityBins"
+        [binCount]="binCount"
+        [extract]="extract"
+      ></app-nmf-extract-panel>
+    </div>
+  </div>
+</div>

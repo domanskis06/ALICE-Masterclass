@@ -976,7 +976,17 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private deferPhysicsUntilDetectorReveal = false;
   /** Cancels an in-flight assembly zoom-out when another piece is placed. */
   private assemblyCameraZoomGeneration = 0;
+  /** Bindable so a parent (e.g. Nuclear Modification's Options panel) can drive it. */
+  @Input()
   cameraMode: 'centered' | 'free' = 'centered';
+
+  /**
+   * When true, raycasts also hit background / event tracks on `this.tracks`
+   * (RAA Counter). Default false so Visual Analysis still only picks decay legs.
+   */
+  @Input()
+  eventTracksClickable = false;
+
   /** True while fade strength > 0 or a leave fade is in progress. */
   private cascadeHoverActive: boolean = false;
   /** 0 = normal scene, 1 = full hover fade targets. */
@@ -3111,6 +3121,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       const line = this.createLine(resolved.points, this.trackMaterial, {
         geometricStraight: resolved.geometricStraight
       });
+      const worldPoints = resolved.points.map((p) => [
+        EventDisplayComponent.objectScale * p[0],
+        EventDisplayComponent.objectScale * p[1],
+        EventDisplayComponent.objectScale * p[2],
+      ]);
+      (line as any).userData = {
+        ...((line as any).userData || {}),
+        ...track,
+        trackIndex,
+        isEventTrack: true,
+        worldPoints,
+      };
       this.tracks.add(line);
     }
 
@@ -4177,6 +4199,32 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
 
   onPointerDown(event: PointerEvent) {
+    const intersects = this.findIntersect(event);
+    const obj = intersects[0]?.object as THREE.Mesh & {
+      userData?: {
+        vertexLabel?: string;
+        vertexLabelKey?: string;
+        isDecayTrack?: boolean;
+        isEventTrack?: boolean;
+      };
+    };
+    const markerLabel = this.resolveMarkerLabel(obj?.userData);
+    if (markerLabel) {
+      return;
+    }
+
+    // RAA: pick background / event tracks when the parent enables it.
+    if (
+      this.eventTracksClickable &&
+      obj &&
+      (obj as any).isLine2 &&
+      obj.userData?.isEventTrack === true
+    ) {
+      this.beginClickHighlight(obj as unknown as Line2);
+      this.trackClickedEvent.emit((obj as any).userData as Track);
+      return;
+    }
+
     if (this.cameraMode === 'free' && event.button === 0) {
       this.isMousePanning = true;
       this.lastMousePanX = event.clientX;
@@ -4184,15 +4232,7 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.requestRender();
       return;
     }
-    const intersects = this.findIntersect(event);
     if (intersects.length === 0) return;
-    const obj = intersects[0].object as THREE.Mesh & {
-      userData?: { vertexLabel?: string; vertexLabelKey?: string; isDecayTrack?: boolean };
-    };
-    const markerLabel = this.resolveMarkerLabel(obj.userData);
-    if (markerLabel) {
-      return;
-    }
     if (this.desiredDecaysShown && this.decays.visible) {
       const line = obj as unknown as Line2;
       if (
@@ -4643,6 +4683,14 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       );
       if (ndcpos.x < -1 || ndcpos.x > 1 || ndcpos.y < -1 || ndcpos.y > 1) continue;
       raycaster.setFromCamera(ndcpos, cam);
+      // Event tracks (RAA Counter) live on `tracks`; VA daughters on `decays`.
+      if (
+        this.eventTracksClickable &&
+        this.tracks.visible &&
+        this.tracks.children.length > 0
+      ) {
+        intersects.push(...raycaster.intersectObjects(this.tracks.children, false));
+      }
       if (this.desiredDecaysShown && this.decays.children.length > 0) {
         intersects.push(...raycaster.intersectObjects(this.decays.children, true));
       }
@@ -4655,6 +4703,93 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     }
     intersects.sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
     return intersects;
+  }
+
+  /**
+   * Keep listed event-track indices drawn with the highlight material (e.g. tutorial
+   * “pick all primaries”). Pass an empty set to clear. Safe no-op before tracks exist.
+   */
+  setEmphasizedTrackIndices(indices: ReadonlySet<number> | readonly number[]): void {
+    if (!this.tracks) {
+      return;
+    }
+    const set = indices instanceof Set ? indices : new Set(indices);
+    this.tracks.traverse((obj: any) => {
+      if (!obj?.userData?.isEventTrack) {
+        return;
+      }
+      const idx = obj.userData.trackIndex as number | undefined;
+      if (idx == null) {
+        return;
+      }
+      if (set.has(idx)) {
+        if (!obj.userData._preEmphasisMaterial) {
+          obj.userData._preEmphasisMaterial = Array.isArray(obj.material)
+            ? obj.material[0]
+            : obj.material;
+        }
+        obj.material = this.highlightTrackMaterial;
+      } else if (obj.userData._preEmphasisMaterial) {
+        obj.material = obj.userData._preEmphasisMaterial;
+        delete obj.userData._preEmphasisMaterial;
+      }
+    });
+    this.requestRender(true);
+  }
+
+  /**
+   * Returns event tracks whose projected trajectory intersects a client-space rect.
+   * Used for marquee (paint-style) selection from the parent analysis page.
+   */
+  collectTracksInClientRect(clientRect: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  }): Track[] {
+    if (!this.renderer?.domElement || !this.camera3D || !this.tracks) {
+      return [];
+    }
+    const canvasRect = this.renderer.domElement.getBoundingClientRect();
+    const width = Math.max(1, canvasRect.width);
+    const height = Math.max(1, canvasRect.height);
+    const selected: Track[] = [];
+    const seen = new Set<number>();
+    const world = new THREE.Vector3();
+    const ndc = new THREE.Vector3();
+
+    this.tracks.traverse((obj: any) => {
+      if (!obj?.userData?.isEventTrack) {
+        return;
+      }
+      const trackIndex = obj.userData.trackIndex as number | undefined;
+      if (trackIndex == null || seen.has(trackIndex)) {
+        return;
+      }
+      const worldPoints = obj.userData.worldPoints as number[][] | undefined;
+      if (!worldPoints?.length) {
+        return;
+      }
+      for (const p of worldPoints) {
+        world.set(p[0], p[1], p[2]);
+        ndc.copy(world).project(this.camera3D);
+        const sx = canvasRect.left + ((ndc.x + 1) * 0.5) * width;
+        const sy = canvasRect.top + ((1 - ndc.y) * 0.5) * height;
+        if (
+          sx >= clientRect.left &&
+          sx <= clientRect.right &&
+          sy >= clientRect.top &&
+          sy <= clientRect.bottom
+        ) {
+          seen.add(trackIndex);
+          const { worldPoints: _wp, isEventTrack: _iet, trackIndex: _ti, ...track } =
+            obj.userData;
+          selected.push(track as Track);
+          return;
+        }
+      }
+    });
+    return selected;
   }
 
   private createScene(): void {

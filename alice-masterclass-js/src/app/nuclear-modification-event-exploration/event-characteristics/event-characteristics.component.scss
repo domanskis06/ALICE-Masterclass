@@ -1,0 +1,209 @@
+:host {
+  display: block;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px 20px;
+}
+
+.nmf-char-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.nmf-char-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin: 0 0 12px;
+  flex: 0 0 auto;
+}
+
+.nmf-char-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--va-text, #ffffff);
+}
+
+.nmf-hist-grid {
+  flex: 1 1 auto;
+  display: grid;
+  /* Default ("sidebar"): compact 2×3 grid that fits the fixed 1/3-width drawer. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Taller tiles so stretchFill can pull the OY axis taller in pixels. */
+  grid-auto-rows: minmax(220px, 1fr);
+  gap: 10px;
+  min-height: 0;
+}
+
+/* "fullscreen": roomier 3×2 grid once the drawer is expanded to fill the screen. */
+.nmf-hist-grid--fullscreen {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(320px, 1fr);
+}
+
+.nmf-hist-item {
+  --nmf-hist-tint: 148, 163, 184;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: rgba(var(--nmf-hist-tint), 0.09);
+  border: 1px solid rgba(var(--nmf-hist-tint), 0.28);
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nmf-hist-item[data-hist-key='multiplicity'] {
+  --nmf-hist-tint: 98, 217, 255; /* #62d9ff */
+}
+
+.nmf-hist-item[data-hist-key='multiplicityMinPt'] {
+  --nmf-hist-tint: 255, 159, 67; /* #ff9f43 */
+}
+
+.nmf-hist-item[data-hist-key='secondaries'] {
+  --nmf-hist-tint: 167, 139, 250; /* #a78bfa */
+}
+
+.nmf-hist-item[data-hist-key='pt'] {
+  --nmf-hist-tint: 74, 222, 128; /* #4ade80 */
+}
+
+.nmf-hist-item[data-hist-key='charge'] {
+  --nmf-hist-tint: 244, 114, 182; /* #f472b6 */
+}
+
+.nmf-hist-item[data-hist-key='phi'] {
+  --nmf-hist-tint: 251, 191, 36; /* #fbbf24 */
+}
+
+.nmf-hist-item:hover,
+.nmf-hist-item:focus-visible {
+  background: rgba(var(--nmf-hist-tint), 0.16);
+  border-color: rgba(var(--nmf-hist-tint), 0.48);
+  outline: none;
+}
+
+.nmf-hist-item app-histogram {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--va-text, #ffffff);
+  pointer-events: none;
+}
+
+/* Fill the tile width; keep uniform SVG scaling so axis fonts stay undistorted. */
+:host ::ng-deep .nmf-hist-item app-histogram {
+  position: relative;
+  overflow: visible !important;
+
+  > div,
+  figure {
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  #title {
+    position: relative !important;
+    top: auto;
+    left: auto;
+    flex: 0 0 auto;
+    margin-bottom: 2px;
+  }
+
+  svg {
+    display: block;
+    flex: 1 1 auto;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible;
+  }
+}
+
+.nmf-hist-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--va-text, #ffffff);
+}
+
+:host ::ng-deep .nmf-hist-title sub {
+  font-size: 0.72em;
+}
+
+/** Entries / Mean under each plot — same red oval chips as R_AA Analysis badges. */
+.nmf-hist-stats {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  pointer-events: none;
+}
+
+.nmf-hist-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 3px 12px;
+  border: none;
+  border-radius: 999px;
+  background: #b71c1c;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+
+:host ::ng-deep app-histogram svg {
+  background: transparent;
+  color: var(--va-text, #ffffff);
+
+  text {
+    fill: var(--va-text, #ffffff);
+  }
+
+  #title,
+  #xAxisLabel,
+  #yAxisLabel,
+  #xAxisLabel text,
+  #yAxisLabel text,
+  #xAxis .tick text,
+  #yAxis .tick text {
+    font-weight: 700;
+  }
+
+  path,
+  line {
+    stroke: rgba(226, 232, 240, 0.55);
+  }
+}

@@ -96,7 +96,9 @@
     "TITLE": "Herzlich Willkommen in der ALICE MasterClass!",
     "P1": "Die ALICE Collaboration hat einen speziellen Detektor gebaut, um das einzigartige physikalische Potenzial von Kern-Kern-Kollisionen bei LHC-Energien auszuschöpfen. Unser Ziel ist es, die Physik stark wechselwirkender Materie bei den höchsten bisher im Labor erreichten Energiedichten zu untersuchen. In einem solchen Zustand bildet sich eine extreme Phase der Materie - das sogenannte Quark-Gluon-Plasma.",
     "P2": "Es wird angenommen, dass sich unser Universum in den ersten Millionstelsekunden nach dem Urknall in einem so ursprünglichen Zustand befunden hat. Die Eigenschaften einer solchen Phase sind Schlüsselthemen für Quantum Chromo Dynamics, das Verständnis von Confinement-Deconfinement und chiralen Phasenübergängen.",
-    "P3": "Zu diesem Zweck führen wir eine umfassende Untersuchung der Hadronen, Elektronen, Myonen und Photonen durch, die bei Kollisionen schwerer Kerne entstehen. ALICE untersucht auch Protonen-Protonen- und Protonen-Kern-Kollisionen sowohl als Vergleich mit Kern-Kern-Kollisionen als auch für sich."
+    "P3": "Zu diesem Zweck führen wir eine umfassende Untersuchung der Hadronen, Elektronen, Myonen und Photonen durch, die bei Kollisionen schwerer Kerne entstehen. ALICE untersucht auch Protonen-Protonen- und Protonen-Kern-Kollisionen sowohl als Vergleich mit Kern-Kern-Kollisionen als auch für sich.",
+    "DOWNLOAD": "Wenn Sie möchten, können Sie eine Desktop-Version der MasterClass herunterladen und verwenden:",
+    "COMING_SOON": "Demnächst!"
   },
   "ABOUT": {
     "ABOUT_MENU": "Über ALICE"
@@ -182,7 +184,8 @@
     "TOF_READING": "TOF-Auslesung",
     "DETECTOR_CALORIMETERS": "Kalorimeter",
     "PREVIOUS_EVENT": "Vorheriges",
-    "NEXT_EVENT": "Nächstes"
+    "NEXT_EVENT": "Nächstes",
+    "SECONDARY_TRACKS": "Sekundärspuren"
   },
   "SELECT_DATASET_DIALOG": {
     "TEXT": "Bitte wählen Sie den Datensatz:",
@@ -210,10 +213,10 @@
     "INSTRUCTIONS_VISUAL_ANALYSIS": {
       "TITLE": "Produktion seltsamer Teilchen",
       "SUBTITLE": "Übung 1: Visuelle Analyse",
-      "P1": "Ziel der Übung ist die Suche nach seltsamen Teilchen, die bei Kollisionen am LHC erzeugt und vom ALICE-Experiment aufgezeichnet wurden. Seltsame Teilchen leben nicht lange; sie zerfallen bald nach ihrer Erzeugung. Sie leben jedoch lange genug, um eine gewisse Strecke, üblicherweise einige Zentimeter, vom Wechselwirkungspunkt IP zurückzulegen, an dem sie am primären Vertex erzeugt wurden. Ihre Suche beruht daher auf der Identifikation ihrer Zerfallsprodukte, die von einem gemeinsamen sekundären Vertex stammen müssen. Neutrale seltsame Teilchen wie <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> und <span class=\"particle\">Λ&#773;</span> zerfallen in einem charakteristischen Zerfallsmuster, genannt V0. Das Mutterteilchen verschwindet einige Zentimeter vom Wechselwirkungspunkt und an seiner Stelle erscheinen zwei entgegengesetzt geladene Teilchen, die im Magnetfeld des ALICE-Solenoids in entgegengesetzte Richtungen gekrümmt werden. In den folgenden Abbildungen zeigen rote Spuren positiv geladene Teilchen, grüne negativ geladene Teilchen und blaue den Bachelor-Pion in Kaskadenzerfällen. Die Zerfälle, nach denen wir suchen, sind:",
-      "P2": "Man sieht, dass das Zerfallsmuster für einen Pion-Pion-Endzustand quasi-symmetrisch ist, während im Pion-Proton-Endzustand der Krümmungsradius des Protons größer ist als der des Pions: Aufgrund seiner höheren Masse trägt das Proton den Großteil des Anfangsimpulses.",
-      "P3": "Wir suchen auch nach Kaskadenzerfällen geladener seltsamer Teilchen. Das <span class=\"particle\">Ξ<sup>−</sup></span> zerfällt in <span class=\"particle\">π<sup>−</sup></span> und <span class=\"particle\">Λ</span>; das <span class=\"particle\">Λ</span> zerfällt dann in ein Proton und <span class=\"particle\">π<sup>−</sup></span>. Sein Antiteilchen, das <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, zerfällt in <span class=\"particle\">π<sup>+</sup></span> und <span class=\"particle\">Λ&#773;</span>; das <span class=\"particle\">Λ&#773;</span> zerfällt dann in ein Antiproton und <span class=\"particle\">π<sup>+</sup></span>. In beiden Fällen ist das erste Pion der Bachelor, eine einzelne geladene Spur, und wird blau dargestellt. Die Suche nach V0s und Kaskaden beruht auf der Zerfallstopologie und der Identifikation der Zerfallsprodukte; eine zusätzliche Bestätigung der Teilchenidentität ist die Berechnung seiner Masse aus Masse und Impuls der Zerfallsprodukte.",
-      "P4": "In dieser Übung bestimmen Sie die Anzahl seltsamer Teilchen in 15 pp-Kollisionen bei einer Kollisionsenergie von 7 TeV. Teilchen können über die Topologie ihrer Zerfälle identifiziert werden. Wenn Sie Spuren eines V0 oder einer Kaskade auswählen, werden die relevanten Größen, Impulskomponenten <em>px, py, pz</em> und Masse, automatisch an die <strong>Rechner</strong>-Oberfläche gesendet, und die invariante Masse der aktuell ausgewählten Teilchen wird berechnet. Anschließend wählen Sie eine Teilchenart und klicken auf <strong>Hinzufügen</strong>, um ihre Masse in die Diagramme unten aufzunehmen."
+      "P1": "Ziel der Übung ist die Suche nach seltsamen Teilchen, die bei Kollisionen am LHC erzeugt und vom ALICE-Experiment aufgezeichnet wurden. Seltsame Teilchen leben nicht lange; sie zerfallen bald nach ihrer Erzeugung. Sie leben jedoch lange genug, um eine gewisse Strecke (meist einige Zentimeter) vom Wechselwirkungspunkt (IP) zurückzulegen, an dem sie erzeugt wurden (primärer Vertex). Ihre Suche beruht daher auf der Identifikation ihrer Zerfallsprodukte, die von einem gemeinsamen sekundären Vertex stammen müssen. Neutrale seltsame Teilchen wie <span class=\"particle\">K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span></span>, <span class=\"particle\">Λ</span> und <span class=\"particle\">Λ&#773;</span> zerfallen in einem charakteristischen Zerfallsmuster, das V0 genannt wird. Das Mutterteilchen verschwindet einige Zentimeter vom Wechselwirkungspunkt, und an seiner Stelle erscheinen zwei entgegengesetzt geladene Teilchen, die im Magnetfeld des ALICE-Solenoids in entgegengesetzte Richtungen gekrümmt werden. In den folgenden Abbildungen kennzeichnen rote Spuren positiv geladene Teilchen, grüne Spuren negativ geladene Teilchen und blaue Spuren das Bachelor-Pion in Kaskadenzerfällen. Wir suchen nach folgenden Zerfällen:",
+      "P2": "Man sieht, dass das Zerfallsmuster für einen Pion–Pion-Endzustand quasi-symmetrisch ist, während im Pion–Proton-Endzustand der Krümmungsradius des Protons größer ist als der des Pions: Aufgrund seiner höheren Masse trägt das Proton den Großteil des Anfangsimpulses.",
+      "P3": "Wir suchen auch nach Kaskadenzerfällen geladener seltsamer Teilchen. Das <span class=\"particle\">Ξ<sup>−</sup></span> zerfällt in <span class=\"particle\">π<sup>−</sup></span> und <span class=\"particle\">Λ</span>; das <span class=\"particle\">Λ</span> zerfällt dann in ein Proton und <span class=\"particle\">π<sup>−</sup></span>. Sein Antiteilchen, das <span class=\"particle\">Ξ&#773;<sup>+</sup></span>, zerfällt in <span class=\"particle\">π<sup>+</sup></span> und <span class=\"particle\">Λ&#773;</span>; das <span class=\"particle\">Λ&#773;</span> zerfällt dann in ein Antiproton und <span class=\"particle\">π<sup>+</sup></span>. In beiden Fällen ist das erste Pion das Bachelor-Pion (eine einzelne geladene Spur) und wird blau dargestellt. Die Suche nach V0s und Kaskaden beruht auf der Zerfallstopologie und der Identifikation der Zerfallsprodukte; eine zusätzliche Bestätigung der Teilchenidentität ist die Berechnung seiner Masse aus Masse und Impuls der Zerfallsprodukte.",
+      "P4": "In dieser Übung bestimmen Sie die Anzahl seltsamer Teilchen in 15 pp-Kollisionen bei einer Kollisionsenergie von 7 TeV. Teilchen können über die Topologie ihrer Zerfälle identifiziert werden. Wenn Sie Spuren eines V0 oder einer Kaskade auswählen, werden die relevanten Größen (Impuls in der Form <em>(px,py,pz)</em> und Masse) automatisch an die <strong>Rechner</strong>-Oberfläche gesendet, und die invariante Masse der aktuell ausgewählten Teilchen wird berechnet. Anschließend wählen Sie einen Teilchentyp und klicken auf <strong>Hinzufügen</strong>, um seine Masse in die Diagramme unten aufzunehmen."
     },
     "TITLE": "Seltsamkeit",
     "VISUAL_ANALYSIS_MENU": "Visuelle Analyse",
@@ -221,9 +224,9 @@
     "INSTRUCTIONS_LARGE_SCALE_ANALYSIS": {
       "TITLE": "Produktion seltsamer Teilchen",
       "SUBTITLE": "Übung 2: Großskalige Analyse",
-      "P1": "Die Ereignisanzeige ist ein leistungsfähiges Werkzeug, mit dem sich die Qualität der Daten und ihrer Rekonstruktion prüfen lässt und das ein „Gefühl“ dafür vermittelt, wie Ereignisse aussehen. In der Praxis wird die Datenanalyse jedoch nicht visuell durchgeführt, weil das viel zu mühsam und zeitaufwendig wäre. Um die Millionen von Ereignissen zu analysieren, die wir täglich am LHC sammeln, führen wir Programme aus, und genau das tun Sie hier, um V0s in einer größeren Ereignisstichprobe zu suchen.",
-      "P2": "Sie analysieren nun Aufzeichnungen von Hunderten von Ereignissen auf einmal. Sie sehen, dass die invariante Masse eine kontinuierliche Verteilung bildet, weil die kombinierten Pionpaare zufällig sind, nicht von einem gemeinsamen sekundären Vertex stammen und jeden Massenwert ergeben können. Die meisten davon sind Untergrund.",
-      "P3": "Um die Anzahl der Teilchen eines bestimmten Typs zu finden, zum Beispiel K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, müssen Sie die Anzahl der Einträge im Peak nach Untergrundsubtraktion bestimmen. Um eine Polynomkurve zweiten Grades an den Untergrund anzupassen, wählen Sie zuerst mit dem Schieberegler den Fitbereich. Um eine Gauß-Verteilung an das Signal anzupassen, müssen Sie außerdem den Peakbereich wählen. Wenn Sie auf <strong>Fit</strong> klicken, werden die angepassten Funktionen über das Histogramm gelegt und Sie können visuell prüfen, ob der Fit vernünftig ist. Wenn die angepassten Funktionen gut zu den Daten passen, können Sie den Button <strong>Übernehmen</strong> drücken. Für die Untergrundsubtraktion werden die Koeffizienten des Polynoms zweiten Grades verwendet. Nach dem Klicken auf <strong>Übernehmen</strong> erhalten Sie im Histogramm die Gesamtzahl der Einträge im Peak, die Zahl der Untergrundeinträge und die des Signals."
+      "P1": "Die Ereignisanzeige ist ein leistungsfähiges Werkzeug, mit dem sich die Qualität der Daten und ihrer Rekonstruktion prüfen lässt und das ein „Gefühl“ dafür vermittelt, wie Ereignisse aussehen. In der Praxis wird die Datenanalyse jedoch nicht visuell durchgeführt — das wäre viel zu mühsam und zeitaufwendig. Um die Millionen von Ereignissen zu analysieren, die wir täglich am LHC sammeln, führen wir Programme aus — und genau das tun Sie hier, um V0s in einer größeren Ereignisstichprobe zu suchen.",
+      "P2": "Sie analysieren nun Aufzeichnungen von Hunderten von Ereignissen auf einmal. Sie sehen, dass die invariante Masse eine kontinuierliche Verteilung bildet — weil die kombinierten Pionpaare zufällig sind, nicht von einem gemeinsamen sekundären Vertex stammen und jeden Massenwert ergeben können. Die meisten davon sind Untergrund.",
+      "P3": "Um die Anzahl der Teilchen eines bestimmten Typs zu finden, zum Beispiel K<span class=\"supsub\"><sup>0</sup><sub>S</sub></span>, müssen Sie die Anzahl der Einträge im Peak nach Untergrundsubtraktion bestimmen. Um eine Kurve (Polynom zweiten Grades) an den Untergrund anzupassen, wählen Sie zuerst mit dem Schieberegler den Fitbereich. Um eine Gauß-Verteilung an das Signal anzupassen, müssen Sie außerdem den Peakbereich wählen. Wenn Sie auf <strong>Fit</strong> klicken, werden die angepassten Funktionen über das Histogramm gelegt und Sie können visuell prüfen, ob der Fit vernünftig ist. Wenn die angepassten Funktionen gut zu den Daten passen, können Sie den Button <strong>Übernehmen</strong> drücken. Für die Untergrundsubtraktion werden die Koeffizienten des Polynoms zweiten Grades verwendet. Nach dem Klicken auf <strong>Übernehmen</strong> erhalten Sie im Histogramm die Gesamtzahl der Einträge im Peak, die Zahl der Untergrundeinträge und die des Signals."
     },
     "VISUAL_ANALYSIS": {
       "EVENT_OF": "Ereignis {{current}} / {{total}}",
@@ -318,7 +321,7 @@
     "PARTICLE_PROPAGATION_MENU": "Teilchenausbreitung",
     "PARTICLE_PROPAGATION": {
       "WELCOME_TITLE": "Teilchenausbreitung im Magnetfeld",
-      "WELCOME_BODY_1": "In den meisten Ereignissen kollidieren im Zentrum von ALICE zwei Protonen; im Pb-Pb-Ereignis kollidieren stattdessen zwei Bleikerne. Beide Fälle werden in der Visualisierung gezeigt. Neue Teilchen fliegen nach außen, und das Magnetfeld des Detektors krümmt die Bahnen der elektrisch geladenen Teilchen.",
+      "WELCOME_BODY_1": "Zwei Protonen kollidieren im Zentrum von ALICE. Neue Teilchen fliegen nach außen, und das Magnetfeld des Detektors krümmt die Bahnen der elektrisch geladenen Teilchen.",
       "WELCOME_BODY_2": "Mit Start berechnet die App jede Bahn durch das echte Magnetfeld von ALICE. Ereignisse mit vielen Teilchen können einen kurzen Moment zum Laden brauchen.",
       "WELCOME_BODY_3": "Anschließend können Sie mit dem Zeitschieberegler von den sich nähernden Protonen über die Kollision bis zu den vom Zentrum wegfliegenden Teilchen navigieren. Entdecken Sie frei: In den Seitenleisten können Sie das Feld ändern und durch die Detektorschichten blicken.",
       "START_BUTTON": "Animation starten",
@@ -330,7 +333,6 @@
       "RETRY": "Erneut versuchen",
       "LOADING_DETECTOR": "Detektormodell wird geladen…",
       "EVENT_N": "Ereignis {{n}}",
-      "EVENT_PBPB_N": "Pb-Pb-Ereignis",
       "SIDEBAR_DETECTOR_PARTS": "Detektorteile",
       "SIDEBAR_EVENT": "Ereignis",
       "SIDEBAR_PLAYBACK": "Wiedergabe",
@@ -376,7 +378,7 @@
       "TITLE": "Wie Spuren durch ALICE gekrümmt werden",
       "P1": "Geladene Teilchen in ALICE bewegen sich durch ein starkes Magnetfeld, und die Lorentzkraft drückt sie seitwärts, sobald ihre Bewegung das Feld quert. Ihre Spuren krümmen sich daher: Ein stärkeres Feld oder ein kleinerer Impuls ergibt eine engere Krümmung, während positive und negative Ladungen entgegengesetzt abbiegen. Neutrale Teilchen spüren keine magnetische Kraft und fliegen geradeaus. An der Schärfe der Krümmung lässt sich der Impuls des Teilchens ablesen.",
       "P2": "Dieses Feld wird von einem großen Solenoid um das Barrel und einem Dipol nahe den Myonendetektoren geformt. Bevor die Animation startet, verfolgt die App jedes Teilchen durch dieses gemessene Feld und speichert die Bahnen. Danach zeigen Wiedergabe und Zeitschieberegler nur noch die vorbereiteten Spuren, sodass das Bewegen durch das Ereignis flüssig bleibt.",
-      "P3": "Auf der Zeitachse sehen Sie zuerst die sich nähernden Strahlen, Protonen oder Bleikerne im Pb-Pb-Ereignis, dann die Kollision und zuletzt die vom Zentrum wegfliegenden Teilchen. Wenn Sie die Feldstärke ändern oder den Solenoid umkehren, sollten sich die Krümmungen entsprechend ändern; drücken Sie danach auf Wiederholen, damit die Spuren neu berechnet werden. Das Ausblenden von Detektorschichten oder das Einblenden der Feldlinien kann dieselbe Geschichte in der Szene leichter nachvollziehbar machen."
+      "P3": "Auf der Zeitachse sehen Sie zuerst die sich nähernden Protonen, dann die Kollision und zuletzt die vom Zentrum wegfliegenden Teilchen. Wenn Sie die Feldstärke ändern oder den Solenoid umkehren, sollten sich die Krümmungen entsprechend ändern; drücken Sie danach auf Wiederholen, damit die Spuren neu berechnet werden. Das Ausblenden von Detektorschichten oder das Einblenden der Feldlinien kann dieselbe Geschichte in der Szene leichter nachvollziehbar machen."
     },
     "VA_TUTORIAL": {
       "WELCOME_TITLE": "Visuelle Analyse - kurze Anleitung",
@@ -408,7 +410,7 @@
       "STEP_FINISH_BODY": "Wenn jede Zerfallsspur in dieser Kollision verwendet wurde, ersetzt <strong>Nächstes</strong> den Teilchenwähler. Drücken Sie es, um die nächste Kollision zu analysieren und die Histogramme weiter zu füllen. Drücken Sie Fertig, um die Anleitung zu schließen."
     },
     "LSA_TUTORIAL": {
-      "WELCOME_TITLE": "Großskalige Analyse - kurze Anleitung",
+      "WELCOME_TITLE": "Großskalige Analyse — kurze Anleitung",
       "WELCOME_P1": "Die Ereignisanzeige hilft, Intuition für einzelne Ereignisse aufzubauen, aber echte LHC-Analysen nutzen Programme über Millionen von Ereignissen.",
       "WELCOME_P2": "Hier analysieren Sie <strong>hunderte Ereignisse auf einmal</strong>, indem Sie die Verteilung der <strong>invarianten Masse</strong> von V0-Kandidaten untersuchen und Signalausbeuten mit einem Fit extrahieren.",
       "WELCOME_P3": "Sie können diese Tour jederzeit mit dem <strong>×</strong>-Button <strong>überspringen</strong>. Zum späteren Start öffnen Sie das <strong>Hilfe</strong>-Panel über das <strong>?</strong>-Symbol in der Toolbar und klicken auf <strong>Anleitung starten</strong>.",
@@ -440,7 +442,92 @@
       "STEP_RESULTS_SUMMARY_TITLE": "Ergebnistabelle",
       "STEP_RESULTS_SUMMARY_BODY": "Für jede <strong>Zentralitäts</strong>klasse sammelt diese Tabelle Ihre übernommenen Fits: die gemessenen Teilchenzahlen, die Detektor-<strong>Effizienz</strong> und die <strong>Ausbeute</strong> - wie viele Strange-Teilchen nach Korrekturen pro Kollision erzeugt werden. Die Schlüsselgröße ist die <strong>Verstärkung</strong>: die Ausbeute geteilt durch dieselbe Ausbeute in Proton-Proton-Kollisionen. Ein Wert über 1 bedeutet, dass Strange-Teilchen in Schwerionenkollisionen häufiger erzeugt werden als in einfachen Proton-Proton-Kollisionen - das ist die Strangeness-Verstärkung.",
       "STEP_UPLOAD_TITLE": "Ergebnisse mit dem Lehrer teilen",
-      "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung und sammelt die Klassenergebnisse. Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
+      "STEP_UPLOAD_BODY": "Wenn Sie angemeldet sind, sendet <strong>Daten hochladen</strong> Ihre Tabelle an die Serversitzung (Sammeln der Klassenergebnisse). Wenn der Button deaktiviert ist, melden Sie sich zuerst im Hauptablauf an."
+    }
+  },
+  "NUCLEAR_MODIFICATION": {
+    "TITLE": "Nuklearer Modifikationsfaktor",
+    "EVENT_EXPLORATION_MENU": "Ereignis-Exploration",
+    "SPECTRUM_ANALYSIS_MENU": "Spektrum-Analyse",
+    "COLLISION": {
+      "PP": "Proton–Proton",
+      "PERIPHERAL": "Peripheres Pb–Pb",
+      "SEMI_CENTRAL": "Semi-zentrales Pb–Pb",
+      "CENTRAL": "Zentrales Pb–Pb"
+    },
+    "EVENT_EXPLORATION": {
+      "EVENT": "Ereignis",
+      "EVENT_OF": "{{current}} / {{total}}",
+      "TYPE_PP_7TEV": "pp, 7 TeV, B=0 T",
+      "TYPE_PP_276TEV": "pp, 2.76 TeV, B=0.5 T",
+      "TYPE_PBPB_PERIPHERAL": "PbPb, Peripheral",
+      "TYPE_PBPB_SEMI_CENTRAL": "PbPb, Semi-zentral",
+      "TYPE_PBPB_CENTRAL": "PbPb, Zentral",
+      "SUMMARY_TITLE": "Ereigniszusammenfassung",
+      "SUMMARY_HINT": "Drücke „Ereignis analysieren“ — Spuren werden automatisch gezählt.",
+      "MULTIPLICITY": "Multiplizität",
+      "HIGH_PT": "Spuren mit p<sub>T</sub> > 1 GeV/c",
+      "MEAN_PT": "Mittleres p<sub>T</sub>",
+      "QUICK_RAA_TITLE": "Schnelles R<sub>AA</sub>",
+      "QUICK_RAA_HINT": "Analysiere die pp-Baseline und die drei Pb–Pb-Ereignisse, um R<sub>AA</sub> freizuschalten.",
+      "CLASS": "Klasse",
+      "GO_SPECTRUM": "Weiter zur Spektrum-Analyse",
+      "CHARACTERISTICS_TITLE": "Ereignis-Charakteristika",
+      "HIST_MULTIPLICITY_TITLE": "Multiplizitätsverteilung",
+      "HIST_MULTIPLICITY_MIN_PT_TITLE": "Multiplizität, p<sub>T</sub> > 1 GeV/c",
+      "HIST_SECONDARIES_TITLE": "Multiplizität der Sekundären",
+      "HIST_PT_TITLE": "p<sub>T</sub>-Verteilung",
+      "HIST_CHARGE_TITLE": "Ladungsverteilung",
+      "HIST_PHI_TITLE": "Normierte φ-Projektion",
+      "AXIS_MULTIPLICITY": "Multiplizität",
+      "AXIS_PT": "pₜ (GeV/c)",
+      "AXIS_CHARGE": "Ladung",
+      "AXIS_PHI": "φ",
+      "AXIS_EVENTS": "Ereignisse",
+      "STATS_ENTRIES": "Einträge",
+      "STATS_MEAN": "Mittelwert",
+      "CHARACTERISTICS_SHOW": "Ereignis-Charakteristika zeigen",
+      "CHARACTERISTICS_HIDE": "Ereignis-Charakteristika verbergen",
+      "CHARACTERISTICS_FULLSCREEN": "Vollbild",
+      "CHARACTERISTICS_EXIT_FULLSCREEN": "Vollbild beenden",
+      "TAB_CHARACTERISTICS": "Ereignis-Charakteristika",
+      "TAB_RAA_ANALYSIS": "R<sub>AA</sub>-Analyse",
+      "ANALYSIS_TITLE": "Analyse",
+      "ANALYSIS_PERIPHERAL": "Peripheral",
+      "ANALYSIS_SEMI_CENTRAL": "Semi-central",
+      "ANALYSIS_CENTRAL": "Central",
+      "AXIS_TPC_TRACKS": "#TPC Spuren"
+    },
+    "SPECTRUM_ANALYSIS": {
+      "PIPELINE_TITLE": "Analyse-Pipeline (Blöcke)",
+      "PLOTS_TITLE": "Ergebnisse",
+      "RUN": "Start",
+      "CLEAR": "Blöcke löschen",
+      "STATUS_OK": "Pipeline sieht vollständig aus",
+      "STATUS_WARN": "Pipeline unvollständig — Warnungen prüfen",
+      "EXTRACT_TITLE": "R<sub>AA</sub>-Werte auslesen",
+      "EXTRACT_EMPTY": "Noch keine Werte — zuerst eine vollständige Pipeline ausführen.",
+      "CENTRALITY": "Zentralität",
+      "PT_BIN": "p<sub>T</sub>-Bin"
+    },
+    "INSTRUCTIONS_EVENT_EXPLORATION": {
+      "TITLE": "Ereignis-Exploration",
+      "P1": "Untersuche mit dem Event Display pp- und Pb–Pb-Kollisionen und bestimme die Multiplizität geladener Teilchen.",
+      "STEP1": "Blättere durch die Ereignisse. Das erste ist eine pp-Kollision bei 7 TeV mit B = 0 T — nur zur Orientierung, nicht zählen.",
+      "STEP2": "Für die folgenden 30 pp-Kollisionen bei 2.76 TeV die Spuren inspizieren und die Multiplizität notieren.",
+      "STEP3": "Die letzten drei Ereignisse sind Pb–Pb (peripher, semi-zentral, zentral). Hier Auto-Count verwenden.",
+      "STEP4": "Ausbeuten vergleichen und den integrierten nuklearen Modifikationsfaktor R<sub>AA</sub> berechnen."
+    },
+    "INSTRUCTIONS_SPECTRUM_ANALYSIS": {
+      "TITLE": "Spektrum-Analyse",
+      "P1": "Baue eine Analyse-Pipeline, um R<sub>AA</sub> als Funktion des Transversalimpulses zu berechnen.",
+      "STEP1": "Pb–Pb-Daten laden und eine Zentralitätsklasse wählen.",
+      "STEP2": "p<sub>T</sub>-Spektrum bilden und durch Ereigniszahl sowie ⟨N<sub>coll</sub>⟩ normalisieren.",
+      "STEP3": "Durch das pp-Referenzspektrum teilen, um R<sub>AA</sub> zu erhalten.",
+      "STEP4": "Ergebnis plotten und Werte für die Diskussion auslesen."
+    },
+    "DESKTOP": {
+      "HINT": "Basierend auf der ALICE-MasterClass-Desktopübung."
     }
   },
   "JPSI": {
