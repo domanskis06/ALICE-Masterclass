@@ -20,6 +20,10 @@ describe('ApiService', () => {
 
   afterEach(() => {
     httpTestingController.verify();
+    // authenticate() persists these on success; Karma shares one browser across specs,
+    // so leftover keys would make AppComponent.init() fire a real check_session PUT.
+    sessionStorage.removeItem('password');
+    sessionStorage.removeItem('studentID');
   });
 
   it('should be created', () => {

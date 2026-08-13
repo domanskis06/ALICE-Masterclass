@@ -19,6 +19,13 @@ describe('AppComponent', () => {
 }).compileComponents();
   }));
 
+  beforeEach(() => {
+    // Constructor calls init() which re-authenticates from sessionStorage. These tests
+    // only check that the root component mounts — they must not depend on leftover
+    // password/studentID from other specs (or fire a real check_session PUT).
+    spyOn(TestBed.inject(ApiService), 'init');
+  });
+
   it('should create the app', waitForAsync(() => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.debugElement.componentInstance;
