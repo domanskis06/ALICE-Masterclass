@@ -156,6 +156,10 @@ export class MassHistogramsComponent implements OnInit {
   @Output()
   uploadResultsEvent: EventEmitter<any> = new EventEmitter();
 
+  /** "What is a histogram?" info button next to the card title, re-opens the info dialog on demand. */
+  @Output()
+  infoButtonClicked: EventEmitter<void> = new EventEmitter();
+
   constructor(public apiService: ApiService) { }
 
   ngOnInit(): void {
@@ -163,6 +167,10 @@ export class MassHistogramsComponent implements OnInit {
 
   onUploadButtonClicked(): void {
     this.uploadResultsEvent.emit();
+  }
+
+  onInfoButtonClicked(): void {
+    this.infoButtonClicked.emit();
   }
 
   onBinsInput(value: number | string | null): void {

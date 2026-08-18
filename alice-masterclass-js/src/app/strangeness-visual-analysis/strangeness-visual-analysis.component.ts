@@ -1112,6 +1112,19 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
     }, StrangenessVisualAnalysisComponent.HISTOGRAM_INFO_DIALOG_DELAY_MS);
   }
 
+  /** "?" button next to the Histograms title - reopens the info dialog on demand. */
+  onHistogramInfoButtonClicked(): void {
+    if (this.histogramInfoDialogTimeout != null) {
+      window.clearTimeout(this.histogramInfoDialogTimeout);
+      this.histogramInfoDialogTimeout = null;
+    }
+    this.histogramInfoDialogShownThisLoad = true;
+    this.dialog.open(HistogramInfoDialogComponent, {
+      width: '520px',
+      autoFocus: true,
+    });
+  }
+
   onUploadResults() {
     let uploadingTranslation = '', completedTranslation = '', errorTranslation = '';
 

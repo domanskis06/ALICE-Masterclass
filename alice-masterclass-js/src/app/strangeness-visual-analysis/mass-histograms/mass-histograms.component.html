@@ -1,6 +1,20 @@
 <mat-card appearance="outlined" fxLayout="column" id="va-tour-histograms">
   <mat-card-title fxLayout="row" fxLayoutAlign="space-between start" class="hist-card-title">
-    <span class="title">{{ 'STRANGENESS.HISTOGRAMS.TITLE' | translate }}</span>
+    <span class="hist-card-title-group">
+      <span class="title">{{ 'STRANGENESS.HISTOGRAMS.TITLE' | translate }}</span>
+      <button
+        mat-icon-button
+        color="warn"
+        class="histogram-info-button"
+        id="va-tour-histogram-info"
+        [attr.aria-label]="'STRANGENESS.HISTOGRAMS.INFO_TITLE' | translate"
+        [matTooltip]="'STRANGENESS.HISTOGRAMS.INFO_TITLE' | translate"
+        matTooltipPosition="above"
+        (click)="onInfoButtonClicked()"
+      >
+        <mat-icon>help_outline</mat-icon>
+      </button>
+    </span>
     <div class="hist-card-actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
       <div
         class="bin-control"

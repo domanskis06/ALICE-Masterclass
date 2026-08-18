@@ -278,6 +278,7 @@
       [uploadDisabledTooltipKey]="uploadDisabledDatasetTooltips.get(datasetID)"
       [results]="dataService.visualAnalysisResults"
       (uploadResultsEvent)="onUploadResults()"
+      (infoButtonClicked)="onHistogramInfoButtonClicked()"
     ></app-mass-histograms>
 
   </div>
