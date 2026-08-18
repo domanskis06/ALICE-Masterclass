@@ -142,7 +142,8 @@
     "pl": "Polski",
     "de": "Deutsch",
     "fr": "Français",
-    "es": "Español"
+    "es": "Español",
+    "it": "Italiano"
   },
   "EVENT_DISPLAY": {
     "VIEW_3D": "3D-Ansicht",
