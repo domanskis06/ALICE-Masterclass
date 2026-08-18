@@ -544,6 +544,17 @@
       "UPLOAD_SUCCESS": "Risultati caricati per il tuo docente.",
       "UPLOAD_ERROR": "Impossibile caricare i risultati. Riprova."
     },
+    "RAA": {
+      "TITLE": "Risultati",
+      "PLOT_TITLE": "R_AA calcolato",
+      "NO_PARTICIPANTS": "Partecipanti",
+      "NO_EVENTS": "Eventi",
+      "EFFICIENCY": "Efficienza",
+      "EFFICIENCY_TOOLTIP": "Accettanza x efficienza:",
+      "YIELD": "Resa",
+      "X_AXIS": "Numero di partecipanti",
+      "Y_AXIS": "R_AA"
+    },
     "WELCOME": {
       "TITLE": "Alla ricerca della particella J/psi",
       "P1": "Il J/psi è una particella rara composta da un quark charm e dal suo antiquark. Vive per una frazione minuscola di secondo e a volte decade in un elettrone e un positrone.",
@@ -585,6 +596,8 @@
       "STEP_ACCEPT_BODY": "<strong>Accetta risultato</strong> salva questa misura nella tua tabella. Puoi sempre cambiare la finestra e accettare di nuovo.",
       "STEP_RESULTS_TITLE": "I tuoi risultati",
       "STEP_RESULTS_BODY": "Ogni fit accettato compare qui come una riga con il segnale, il fondo e le metriche di qualità. Puoi eliminare una riga e accettare di nuovo se vuoi una finestra migliore.",
+      "STEP_RAA_PLOT_TITLE": "R_AA vs. partecipanti",
+      "STEP_RAA_PLOT_BODY": "Ogni centralità Pb-Pb accettata compare anche qui come un punto: R_AA confrontato con il numero di partecipanti alla collisione. Un punto sotto la linea tratteggiata a 1 significa che in quella collisione sopravvivono meno J/psi di quanti ne prevederebbe una semplice scalatura pp.",
       "STEP_DATASET_TITLE": "Il secondo sistema di collisione",
       "STEP_DATASET_BODY": "Passa ora al protone-piombo e ripeti l’intera analisi. Il tuo lavoro sul protone-protone resta esattamente come lo hai lasciato."
     },

@@ -130,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Ereignis",
     "RESULTS": "Ergebnisse",
-    "PP_REFERENCE_NOTE": "Nur Pb-Pb-Zeilen werden angezeigt; R_AA verwendet eine feste pp-Referenz bei 5.02 TeV statt einer Schülermessung (siehe Anleitung)",
     "EFFICIENCY_TOOLTIP": "Acc × ε:",
     "COLLISION_SYSTEM": "Kollisionssystem",
     "NO_PARTICIPANTS": "Anz. Teilnehmer",

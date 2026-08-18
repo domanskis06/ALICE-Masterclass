@@ -544,6 +544,17 @@
       "UPLOAD_SUCCESS": "Results uploaded to your teacher.",
       "UPLOAD_ERROR": "Could not upload results. Please try again."
     },
+    "RAA": {
+      "TITLE": "Results",
+      "PLOT_TITLE": "Calculated R_AA",
+      "NO_PARTICIPANTS": "Participants",
+      "NO_EVENTS": "Events",
+      "EFFICIENCY": "Efficiency",
+      "EFFICIENCY_TOOLTIP": "Acceptance x efficiency:",
+      "YIELD": "Yield",
+      "X_AXIS": "Number of participants",
+      "Y_AXIS": "R_AA"
+    },
     "WELCOME": {
       "TITLE": "Looking for the J/psi particle",
       "P1": "The J/psi is a rare particle made of a charm quark and its antiquark. It lives for a tiny fraction of a second and sometimes decays into an electron and a positron.",
@@ -585,6 +596,8 @@
       "STEP_ACCEPT_BODY": "<strong>Accept result</strong> stores this measurement in your table. You can always change the window and accept again.",
       "STEP_RESULTS_TITLE": "Your results",
       "STEP_RESULTS_BODY": "Every accepted fit lands here as a row with the signal, background, and quality metrics. You can delete a row and accept again if you want a better window.",
+      "STEP_RAA_PLOT_TITLE": "R_AA vs. participants",
+      "STEP_RAA_PLOT_BODY": "Each accepted Pb-Pb centrality also lands here as a point: R_AA compared to the number of participants in the collision. A dot below the dashed line at 1 means fewer J/psi survive in that collision than a simple pp scaling would predict.",
       "STEP_DATASET_TITLE": "The second collision system",
       "STEP_DATASET_BODY": "Now switch to proton-lead and repeat the whole analysis. Your proton-proton work stays exactly as you left it."
     },

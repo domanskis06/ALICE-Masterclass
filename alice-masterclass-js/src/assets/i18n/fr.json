@@ -546,6 +546,17 @@
       "UPLOAD_SUCCESS": "Les résultats ont été envoyés à ton enseignant.",
       "UPLOAD_ERROR": "Impossible d'envoyer les résultats. Réessaie."
     },
+    "RAA": {
+      "TITLE": "Résultats",
+      "PLOT_TITLE": "R_AA calculé",
+      "NO_PARTICIPANTS": "Participants",
+      "NO_EVENTS": "Événements",
+      "EFFICIENCY": "Efficacité",
+      "EFFICIENCY_TOOLTIP": "Acceptance x efficacité :",
+      "YIELD": "Rendement",
+      "X_AXIS": "Nombre de participants",
+      "Y_AXIS": "R_AA"
+    },
     "WELCOME": {
       "TITLE": "À la recherche de la particule J/psi",
       "P1": "Le J/psi est une particule rare formée d'un quark charmé et de son antiquark. Il vit une infime fraction de seconde et se désintègre parfois en un électron et un positron.",
@@ -587,6 +598,8 @@
       "STEP_ACCEPT_BODY": "<strong>Valider le résultat</strong> enregistre cette mesure dans ton tableau. Tu peux toujours changer la fenêtre et valider de nouveau.",
       "STEP_RESULTS_TITLE": "Tes résultats",
       "STEP_RESULTS_BODY": "Chaque ajustement validé apparaît ici comme une ligne avec le signal, le bruit de fond et les métriques de qualité. Tu peux supprimer une ligne et valider à nouveau si tu veux une meilleure fenêtre.",
+      "STEP_RAA_PLOT_TITLE": "R_AA vs. participants",
+      "STEP_RAA_PLOT_BODY": "Chaque centralité Pb-Pb validée apparaît aussi ici comme un point : R_AA comparé au nombre de participants à la collision. Un point sous la ligne pointillée à 1 signifie que moins de J/psi survivent dans cette collision que ne le prédirait une simple mise à l'échelle pp.",
       "STEP_DATASET_TITLE": "Le deuxième système de collision",
       "STEP_DATASET_BODY": "Passe maintenant à proton-plomb et refais toute l'analyse. Ton travail sur proton-proton reste exactement où tu l'as laissé."
     },

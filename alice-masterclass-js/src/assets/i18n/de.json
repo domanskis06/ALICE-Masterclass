@@ -544,6 +544,17 @@
       "UPLOAD_SUCCESS": "Ergebnisse wurden an die Lehrkraft gesendet.",
       "UPLOAD_ERROR": "Ergebnisse konnten nicht gesendet werden. Bitte versuche es erneut."
     },
+    "RAA": {
+      "TITLE": "Ergebnisse",
+      "PLOT_TITLE": "Berechnetes R_AA",
+      "NO_PARTICIPANTS": "Teilnehmer",
+      "NO_EVENTS": "Ereignisse",
+      "EFFICIENCY": "Effizienz",
+      "EFFICIENCY_TOOLTIP": "Akzeptanz x Effizienz:",
+      "YIELD": "Ausbeute",
+      "X_AXIS": "Anzahl der Teilnehmer",
+      "Y_AXIS": "R_AA"
+    },
     "WELCOME": {
       "TITLE": "Auf der Suche nach dem J/psi",
       "P1": "Das J/psi ist ein seltenes Teilchen aus einem Charm-Quark und seinem Antiquark. Es lebt nur den Bruchteil einer Sekunde und zerfällt manchmal in ein Elektron und ein Positron.",
@@ -585,6 +596,8 @@
       "STEP_ACCEPT_BODY": "<strong>Ergebnis übernehmen</strong> speichert diese Messung in deiner Tabelle. Du kannst das Fenster jederzeit ändern und erneut übernehmen.",
       "STEP_RESULTS_TITLE": "Deine Ergebnisse",
       "STEP_RESULTS_BODY": "Jeder übernommene Fit erscheint hier als Zeile mit Signal, Untergrund und Qualitätsmaßen. Du kannst eine Zeile löschen und erneut übernehmen, wenn du ein besseres Fenster willst.",
+      "STEP_RAA_PLOT_TITLE": "R_AA vs. Teilnehmer",
+      "STEP_RAA_PLOT_BODY": "Jede übernommene Pb-Pb-Zentralität erscheint hier ebenfalls als Punkt: R_AA im Vergleich zur Anzahl der Teilnehmer an der Kollision. Ein Punkt unterhalb der gestrichelten Linie bei 1 bedeutet, dass in dieser Kollision weniger J/psi überleben, als eine einfache pp-Skalierung vorhersagen würde.",
       "STEP_DATASET_TITLE": "Das zweite Kollisionssystem",
       "STEP_DATASET_BODY": "Wechsle jetzt zu Proton-Blei und wiederhole die ganze Analyse. Deine Proton-Proton-Arbeit bleibt genau so, wie du sie verlassen hast."
     },

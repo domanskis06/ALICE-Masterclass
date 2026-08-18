@@ -130,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Wydarzenie",
     "RESULTS": "Wyniki",
-    "PP_REFERENCE_NOTE": "Widoczne są tylko wiersze Pb-Pb; R_AA używa stałej referencji pp przy 5.02 TeV, a nie pomiaru ucznia (patrz Instrukcje)",
     "EFFICIENCY_TOOLTIP": "Acc × ε:",
     "COLLISION_SYSTEM": "Układ zderzenia",
     "NO_PARTICIPANTS": "Liczba uczestników",

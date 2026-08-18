@@ -185,7 +185,14 @@ export class RaaPlotComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateErrorBars(): void {
-    const barsSelection = this.errorBarsSelector.selectAll<SVGLineElement, JpsiRaaPlotEntry>('line').data(this.data);
+    // Centralities with no real submission yet have raa === raaError === 0 (see
+    // JpsiRaaService.relativeStatError); drawing a zero-length bar there is harmless, but a
+    // low-statistics bin with a spurious near-zero signal can still round to a visible sliver.
+    // Only draw a bar where there is an actual measurement.
+    const measured = this.data.filter((d) => d.raa > 0);
+    const barsSelection = this.errorBarsSelector
+      .selectAll<SVGLineElement, JpsiRaaPlotEntry>('line')
+      .data(measured, (d) => d.centralityId);
 
     barsSelection
       .join(

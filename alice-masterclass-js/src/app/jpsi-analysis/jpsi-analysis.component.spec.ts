@@ -3,12 +3,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 
+import { DemoConfig } from '../shared/demo/demo-config.service';
 import { CompactEvent, JpsiManifest } from './models/jpsi.models';
+import { PbPbYieldRow } from './models/pbpb-minv.models';
 import { JpsiAnalysisComponent } from './jpsi-analysis.component';
 import { JpsiAnalysisModule } from './jpsi-analysis.module';
 import { JpsiAnalysisStateService } from './services/jpsi-analysis-state.service';
 import { JpsiDataService } from './services/jpsi-data.service';
 import { JpsiTutorialService } from './services/jpsi-tutorial.service';
+import { PbPbMinvStateService } from './services/pbpb-minv-state.service';
 
 const MANIFEST: JpsiManifest = {
   batchSize: 100,
@@ -36,6 +39,8 @@ describe('JpsiAnalysisComponent', () => {
 
   beforeEach(async () => {
     tutorial = jasmine.createSpyObj('JpsiTutorialService', [
+      'shouldShow',
+      'dismiss',
       'startMainTour',
       'destroyDriver',
       'notifyDatasetSwitched',
@@ -46,9 +51,8 @@ describe('JpsiAnalysisComponent', () => {
       'setActiveCollisionSystem',
       'registerViewSwitcher',
     ]);
-
-    // The welcome dialog is opened once per tab; specs must not depend on that order.
-    sessionStorage.setItem('alice_mc_jpsi_welcomeSeen_v1', '1');
+    // Auto welcome only offers itself in the demo build; specs must not depend on that order.
+    tutorial.shouldShow.and.returnValue(false);
 
     await TestBed.configureTestingModule({
       imports: [JpsiAnalysisModule, TranslateModule.forRoot()],
@@ -64,10 +68,6 @@ describe('JpsiAnalysisComponent', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => {
-    sessionStorage.removeItem('alice_mc_jpsi_welcomeSeen_v1');
-  });
-
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -81,15 +81,26 @@ describe('JpsiAnalysisComponent', () => {
     expect(component.totalEvents).toBe(2300);
   });
 
-  it('shows the welcome dialog only on the first visit of a tab', () => {
+  it('does not offer the welcome dialog outside the demo build', () => {
     const dialog = TestBed.inject(MatDialog);
     const open = spyOn(dialog, 'open').and.callThrough();
 
-    // The flag set in beforeEach is still there, so a second component must stay quiet.
     const second = TestBed.createComponent(JpsiAnalysisComponent);
     second.detectChanges();
 
     expect(open).not.toHaveBeenCalled();
+    second.destroy();
+  });
+
+  it('offers the welcome dialog once per session in the demo build', () => {
+    tutorial.shouldShow.and.returnValue(true);
+    const dialog = TestBed.inject(MatDialog);
+    const open = spyOn(dialog, 'open').and.callThrough();
+
+    const second = TestBed.createComponent(JpsiAnalysisComponent);
+    second.detectChanges();
+
+    expect(open).toHaveBeenCalled();
     second.destroy();
   });
 
@@ -159,5 +170,94 @@ describe('JpsiAnalysisComponent', () => {
     expect(state.state.appliedCut).toBeNull();
     expect(state.state.cut.dedxMin).toBe(20);
     expect(state.state.panelMode).toBe('explore');
+  });
+});
+
+describe('JpsiAnalysisComponent (demo build)', () => {
+  let component: JpsiAnalysisComponent;
+  let fixture: ComponentFixture<JpsiAnalysisComponent>;
+  let pbPbState: PbPbMinvStateService;
+
+  const acceptedRow = (centralityId: PbPbYieldRow['centralityId']): PbPbYieldRow => ({
+    centralityId,
+    centralityLabel: `Pb-Pb ${centralityId}`,
+    fit: {
+      backgroundFitRange: [0, 1],
+      signalWindow: [0, 1],
+      pol1: [0, 0],
+      total: 1000,
+      residualBackground: 0,
+      combinatorialBackground: 0,
+      background: 0,
+      signal: 1000,
+      signalError: 32,
+      signalToBackground: null,
+      significance: 0,
+    },
+    published: {
+      nTotal: 0,
+      nTotalErr: 0,
+      nBkg: 0,
+      nBkgErr: 0,
+      nJpsi: 0,
+      nJpsiErr: 0,
+      sOverB: 0,
+      significance: 0,
+      significanceNote: '',
+    },
+    acceptedAt: 0,
+  });
+
+  beforeEach(async () => {
+    const tutorial = jasmine.createSpyObj('JpsiTutorialService', [
+      'shouldShow',
+      'dismiss',
+      'startMainTour',
+      'destroyDriver',
+      'notifyDatasetSwitched',
+      'notifyRunStarted',
+      'notifyCutsChanged',
+      'notifySubtracted',
+      'notifyAccepted',
+      'setActiveCollisionSystem',
+      'registerViewSwitcher',
+    ]);
+    tutorial.shouldShow.and.returnValue(false);
+
+    await TestBed.configureTestingModule({
+      imports: [JpsiAnalysisModule, TranslateModule.forRoot()],
+      providers: [
+        { provide: JpsiDataService, useClass: StubDataService },
+        { provide: JpsiTutorialService, useValue: tutorial },
+        { provide: DemoConfig, useValue: { enabled: true } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(JpsiAnalysisComponent);
+    component = fixture.componentInstance;
+    pbPbState = TestBed.inject(PbPbMinvStateService);
+    fixture.detectChanges();
+  });
+
+  it('renders the ported Results table / R_AA plot instead of the workshop upload buttons', () => {
+    expect(component.demo).toBeTrue();
+
+    const compiled: HTMLElement = fixture.nativeElement;
+    expect(compiled.querySelector('#jpsi-tour-upload-button')).toBeNull();
+    expect(compiled.querySelector('#jpsi-tour-pbpb-upload-button')).toBeNull();
+    expect(compiled.querySelector('#jpsi-demo-results-table')).not.toBeNull();
+    expect(compiled.querySelector('#jpsi-demo-raa-plot')).not.toBeNull();
+  });
+
+  it('refreshes the R_AA rows/plot after accepting a Pb-Pb fit', () => {
+    expect(component.raaRows.every((row) => !row.measured)).toBeTrue();
+
+    spyOnProperty(pbPbState, 'rows', 'get').and.returnValue([acceptedRow('pbPb_0_5')]);
+    component.onAcceptPbPbResult();
+
+    const row = component.raaRows.find((r) => r.centralityId === 'pbPb_0_5');
+    expect(row?.measured).toBeTrue();
+    expect(row?.signal).toBe(1000);
+    expect(component.raaPlotData.some((p) => p.measured)).toBeTrue();
   });
 });

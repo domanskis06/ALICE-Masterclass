@@ -13,7 +13,8 @@
   font-size: 16px;
   margin-bottom: 4px;
   // Match mat-card-content horizontal inset (same as the opposite-charge pairs button).
-  // Extra top inset so Reset range sits slightly below the card's top edge.
+  // Extra top inset so Reset range sits slightly below the card's top edge; align-items:
+  // center keeps it vertically centred with the title text as the row grows.
   padding-top: 12px;
   padding-left: 16px;
   padding-right: 16px;

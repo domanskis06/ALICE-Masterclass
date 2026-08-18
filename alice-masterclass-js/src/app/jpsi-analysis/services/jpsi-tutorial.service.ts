@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { driver, type DriveStep, type Driver } from 'driver.js';
 
+import { DemoConfig } from '../../shared/demo/demo-config.service';
 import { InstructionsDialogComponent } from '../../instructions-dialog/instructions-dialog.component';
 import {
   PID_ELECTRON_BANDS_IMG,
@@ -22,6 +23,9 @@ const SELECTOR_HEATMAP = '#jpsi-tour-heatmap';
  */
 const SELECTOR_MASS_PANEL = '#jpsi-tour-mass-panel';
 const SELECTOR_RESULTS = '#jpsi-tour-results';
+/** Demo build only — replaces `SELECTOR_RESULTS` as the tour's last stop(s). */
+const SELECTOR_RESULTS_DEMO = '#jpsi-demo-results-table';
+const SELECTOR_RAA_PLOT = '#jpsi-demo-raa-plot';
 
 /**
  * Guided tour of the J/psi exercise, built on driver.js like the strangeness tutorials.
@@ -32,8 +36,11 @@ const SELECTOR_RESULTS = '#jpsi-tour-results';
  */
 @Injectable()
 export class JpsiTutorialService {
+  private readonly demo = inject(DemoConfig).enabled;
+
   private driverInstance: Driver | null = null;
   private suppressDismissOnDestroy = false;
+  /** In-memory only — resets on full page reload so the welcome dialog shows again. */
   private dismissedThisSession = false;
 
   private stepIndexQuickAnalysis = -1;
@@ -61,6 +68,14 @@ export class JpsiTutorialService {
 
   isActive(): boolean {
     return this.driverInstance?.isActive() ?? false;
+  }
+
+  /**
+   * Whether to auto-open the Skip / Start welcome dialog on module entry.
+   * Only the standalone demo offers this; workshop apps start the tour from Help.
+   */
+  shouldShow(): boolean {
+    return this.demo && !this.dismissedThisSession;
   }
 
   dismiss(): void {
@@ -321,16 +336,40 @@ export class JpsiTutorialService {
       onHighlighted: () => this.refreshStageSoon(),
     });
 
-    push({
-      element: SELECTOR_RESULTS,
-      popover: {
-        title: t('STEP_RESULTS_TITLE'),
-        description: t('STEP_RESULTS_BODY'),
-        side: 'top',
-        align: 'start',
-      },
-      onHighlighted: () => this.refreshStageSoon(),
-    });
+    if (this.demo) {
+      // Demo build: the ported Results table / R_AA plot replace the workshop results table.
+      push({
+        element: SELECTOR_RESULTS_DEMO,
+        popover: {
+          title: t('STEP_RESULTS_TITLE'),
+          description: t('STEP_RESULTS_BODY'),
+          side: 'top',
+          align: 'start',
+        },
+        onHighlighted: () => this.refreshStageSoon(),
+      });
+      push({
+        element: SELECTOR_RAA_PLOT,
+        popover: {
+          title: t('STEP_RAA_PLOT_TITLE'),
+          description: t('STEP_RAA_PLOT_BODY'),
+          side: 'top',
+          align: 'start',
+        },
+        onHighlighted: () => this.refreshStageSoon(),
+      });
+    } else {
+      push({
+        element: SELECTOR_RESULTS,
+        popover: {
+          title: t('STEP_RESULTS_TITLE'),
+          description: t('STEP_RESULTS_BODY'),
+          side: 'top',
+          align: 'start',
+        },
+        onHighlighted: () => this.refreshStageSoon(),
+      });
+    }
 
     this.stepIndexDatasetSwitch = push({
       element: SELECTOR_DATASET,

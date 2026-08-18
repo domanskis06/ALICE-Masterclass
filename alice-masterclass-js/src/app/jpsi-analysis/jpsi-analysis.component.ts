@@ -12,8 +12,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 
+import { DemoConfig } from '../shared/demo/demo-config.service';
 import { ApiService, JpsiSignalEntry } from '../shared/services/api.service';
 import { InstructionsProvider } from '../shared/interfaces';
+import { JpsiRaaPlotEntry, JpsiRaaResultRow, JpsiRaaService } from '../services/jpsi-raa.service';
 import { SeriesEntry, SERIES_COLOURS } from './components/mass-panel/mass-panel.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import {
@@ -49,7 +51,6 @@ import { JpsiTutorialService } from './services/jpsi-tutorial.service';
 import { PbPbMinvStateService } from './services/pbpb-minv-state.service';
 import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.component';
 
-const WELCOME_SEEN_STORAGE_KEY = 'alice_mc_jpsi_welcomeSeen_v1';
 const SNACKBAR_DURATION_MS = 3000;
 
 @Component({
@@ -94,6 +95,14 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   private readonly destroyRef = inject(DestroyRef);
 
+  /** Demo build only: gates the ported Results table / R_AA plot in place of the upload flow. */
+  readonly demo = inject(DemoConfig).enabled;
+  private readonly raaService = inject(JpsiRaaService);
+
+  raaRows: JpsiRaaResultRow[] = [];
+  raaPlotData: JpsiRaaPlotEntry[] = [];
+  readonly raaParticipantsDomain: [number, number] = this.raaService.participantsDomain();
+
   constructor(
     private readonly data: JpsiDataService,
     public readonly state: JpsiAnalysisStateService,
@@ -129,6 +138,11 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
         },
         error: () => this.notify('JPSI.ERRORS.MANIFEST'),
       });
+
+    if (this.demo) {
+      // Picks up anything PbPbMinvStateService already restored from DemoResultsStore.
+      this.refreshRaa();
+    }
 
     this.maybeShowWelcome();
   }
@@ -372,10 +386,23 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
 
   onAcceptPbPbResult(): void {
     this.pbPbState.acceptResult();
+    if (this.demo) {
+      this.refreshRaa();
+    }
   }
 
   onRemovePbPbResult(id: PbPbCentralityId): void {
     this.pbPbState.removeResult(id);
+    if (this.demo) {
+      this.refreshRaa();
+    }
+  }
+
+  /** Demo build only: rebuild the R_AA table/plot from the currently accepted Pb-Pb rows. */
+  private refreshRaa(): void {
+    const accepted = new Map(this.pbPbRows.map((row) => [row.centralityId, row]));
+    this.raaRows = this.raaService.buildRows(accepted);
+    this.raaPlotData = this.raaService.buildPlotEntries(this.raaRows);
   }
 
   onClearFitPbPb(): void {
@@ -431,10 +458,9 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
   }
 
   private maybeShowWelcome(): void {
-    if (sessionStorage.getItem(WELCOME_SEEN_STORAGE_KEY) === '1') {
+    if (!this.tutorial.shouldShow()) {
       return;
     }
-    sessionStorage.setItem(WELCOME_SEEN_STORAGE_KEY, '1');
 
     this.dialog
       .open(JpsiWelcomeDialogComponent, {
@@ -448,7 +474,11 @@ export class JpsiAnalysisComponent implements OnInit, OnDestroy, InstructionsPro
       .subscribe((startTour: boolean | undefined) => {
         if (startTour === true) {
           this.tutorial.startMainTour();
+        } else if (startTour === false) {
+          // Skip for this page load only (resets on refresh).
+          this.tutorial.dismiss();
         }
+        // undefined = dialog closed by some other means — do not dismiss.
       });
   }
 

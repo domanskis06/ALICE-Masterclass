@@ -1,0 +1,52 @@
+.title {
+  line-height: 28px;
+  margin: 0;
+  // Same 16px horizontal inset as the other J/psi panels (PID / mass panel / results tables).
+  padding: 0 16px;
+}
+
+mat-card {
+  display: flex;
+  flex-direction: column;
+}
+
+mat-card-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  // Table always starts at the top of the card, same as the pp/p-Pb layout — any extra height
+  // once the card is stretched to match its sibling panel (R_AA plot / invariant mass) is left
+  // below the table rather than floating it in the middle.
+  justify-content: flex-start;
+  min-height: 0;
+  overflow: auto;
+}
+
+.results-frame {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.raa-table {
+  width: 100%;
+
+  th.mat-mdc-header-cell {
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  td.mat-mdc-cell {
+    font-size: 1rem;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  tr.mat-mdc-row {
+    height: 48px;
+  }
+}
+
+.raa-table__cell--unmeasured {
+  color: rgba(0, 0, 0, 0.4);
+}

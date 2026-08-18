@@ -130,7 +130,6 @@
   "JPSI_ANALYSIS": {
     "EVENT": "Event",
     "RESULTS": "Results",
-    "PP_REFERENCE_NOTE": "Only Pb-Pb rows are shown here; R_AA uses a fixed pp reference yield at 5.02 TeV, not a student measurement (see Instructions)",
     "EFFICIENCY_TOOLTIP": "Acc × ε:",
     "COLLISION_SYSTEM": "Collision system",
     "NO_PARTICIPANTS": "No. participants",
