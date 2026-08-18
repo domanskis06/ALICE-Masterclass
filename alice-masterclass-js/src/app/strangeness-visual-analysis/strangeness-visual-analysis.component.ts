@@ -190,7 +190,11 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
       : 'va-dataset-select-panel';
   }
 
-  uploadDisabledDatasets: Array<Number> = [DATASET_PICKER_DEMO];
+  /** Datasets that can't be submitted, and the tooltip explaining why. */
+  readonly uploadDisabledDatasetTooltips: Map<number, string> = new Map([
+    [DATASET_PICKER_DEMO, 'PASSWORD.DEMO_DATASET_TOOLTIP'],
+    [DATASET_PICKER_FULL_EVENT, 'PASSWORD.PBPB_DATASET_TOOLTIP'],
+  ]);
   
   isLandscape$: Observable<boolean>;
 
@@ -1125,9 +1129,12 @@ export class StrangenessVisualAnalysisComponent implements OnInit, AfterViewInit
 
         this.dataService.submitVisualAnalysisResults(this.datasetID).subscribe({
           next: () => this.snackBar.open(completedTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION}),
-          // A 403 here means the session's event kind isn't `strangeness` (see uploadButtonDisabled
-          // in MassHistogramsComponent) - surface it instead of failing silently.
-          error: () => this.snackBar.open(errorTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION}),
+          // The UI can't tell 403 (wrong session kind) apart from a 400/404/network failure -
+          // log the status so a report of "upload doesn't work" is diagnosable from the console.
+          error: (error: HttpErrorResponse) => {
+            console.error(`Visual analysis upload failed (status ${error.status}, dataset ${this.datasetID}):`, error);
+            this.snackBar.open(errorTranslation, null, {duration: this.dataService.DATA_UPLOAD_COMPLETED_DURATION});
+          },
         });
     });
   }

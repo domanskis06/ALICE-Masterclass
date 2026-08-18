@@ -120,6 +120,8 @@
     "BUTTON_CANCEL": "Abbrechen",
     "NO_TOKEN_TOOLTIP": "Geben Sie zum Aktivieren des Daten-Uploads das Kennwort mit der Option Kennwort im Menü ein.",
     "WRONG_EXERCISE_TOOLTIP": "Diese Sitzung ist nicht für diese Übung eingerichtet.",
+    "DEMO_DATASET_TOOLTIP": "Ergebnisse aus dem Demo-Datensatz können nicht hochgeladen werden - wählen Sie zuerst einen echten Datensatz.",
+    "PBPB_DATASET_TOOLTIP": "Ergebnisse aus dem Pb-Pb-Event-Datensatz können nicht hochgeladen werden - wählen Sie zuerst einen Workshop-Datensatz.",
     "ERROR": "Das eingegebene Kennwort ist falsch.",
     "UPLOADING": "Daten werden hochgeladen...",
     "COMPLETED": "Upload abgeschlossen!",

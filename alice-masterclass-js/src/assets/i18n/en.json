@@ -128,6 +128,8 @@
     "BUTTON_CANCEL": "Cancel",
     "NO_TOKEN_TOOLTIP": "To enable data upload, provide the password using Password option from the Menu.",
     "WRONG_EXERCISE_TOOLTIP": "This session is not set up for this exercise.",
+    "DEMO_DATASET_TOOLTIP": "Results from the Demo dataset can't be submitted - pick a real dataset first.",
+    "PBPB_DATASET_TOOLTIP": "Results from the Pb-Pb event dataset can't be submitted - pick a workshop dataset first.",
     "UPLOADING": "Uploading data...",
     "COMPLETED": "Upload completed!",
     "UPLOAD_ERROR": "Could not upload results. Please try again.",

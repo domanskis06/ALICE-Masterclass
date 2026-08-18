@@ -130,6 +130,8 @@
     "BUTTON_CANCEL": "Annuler",
     "NO_TOKEN_TOOLTIP": "Pour activer l’envoi des données, fournissez le mot de passe via l’option Mot de passe du Menu.",
     "WRONG_EXERCISE_TOOLTIP": "Cette session n’est pas configurée pour cet exercice.",
+    "DEMO_DATASET_TOOLTIP": "Les résultats du jeu de données Demo ne peuvent pas être envoyés - sélectionnez d’abord un jeu de données réel.",
+    "PBPB_DATASET_TOOLTIP": "Les résultats du jeu de données Pb-Pb event ne peuvent pas être envoyés - sélectionnez d’abord un jeu de données de l’atelier.",
     "UPLOADING": "Envoi des données…",
     "COMPLETED": "Envoi terminé !",
     "UPLOAD_ERROR": "Impossible d’envoyer les résultats. Veuillez réessayer.",

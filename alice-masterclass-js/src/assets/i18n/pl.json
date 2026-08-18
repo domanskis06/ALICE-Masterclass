@@ -130,6 +130,8 @@
     "BUTTON_CANCEL": "Anuluj",
     "NO_TOKEN_TOOLTIP": "Aby włączyć przesyłanie danych, podaj hasło w opcji Hasło w menu.",
     "WRONG_EXERCISE_TOOLTIP": "Ta sesja nie jest przeznaczona dla tego ćwiczenia.",
+    "DEMO_DATASET_TOOLTIP": "Wyników z zestawu Demo nie można wysłać - najpierw wybierz właściwy zestaw danych.",
+    "PBPB_DATASET_TOOLTIP": "Wyników z zestawu Pb-Pb event nie można wysłać - najpierw wybierz zestaw warsztatowy.",
     "UPLOADING": "Przesyłanie danych...",
     "COMPLETED": "Przesyłanie zakończone!",
     "UPLOAD_ERROR": "Nie udało się przesłać wyników. Spróbuj ponownie.",

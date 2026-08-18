@@ -37,8 +37,8 @@
       </div>
       @if (!demo) {
         <span
-          [matTooltipDisabled]="apiService.isAuthenticated && !wrongExerciseKind"
-          [matTooltip]="(apiService.isAuthenticated ? 'PASSWORD.WRONG_EXERCISE_TOOLTIP' : 'PASSWORD.NO_TOKEN_TOOLTIP') | translate" matTooltipPosition="before"
+          [matTooltipDisabled]="uploadTooltipKey === null"
+          [matTooltip]="(uploadTooltipKey || 'PASSWORD.NO_TOKEN_TOOLTIP') | translate" matTooltipPosition="before"
         >
           <button
             id="va-tour-upload"
