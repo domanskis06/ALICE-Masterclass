@@ -1,9 +1,16 @@
 <section class="nmf-sa-classes" data-testid="nmf-centrality-table" id="nmf-sa-tour-classes">
   <header class="nmf-sa-classes-head">
-    <h3
-      class="nmf-sa-classes-title"
-      [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_TITLE' | translate"
-    ></h3>
+    <span class="nmf-sa-classes-heading">
+      <h3
+        class="nmf-sa-classes-title"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_TITLE' | translate"
+      ></h3>
+      <span
+        class="nmf-sa-badge nmf-sa-badge--reference"
+        data-testid="nmf-centrality-badge"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_BADGE' | translate"
+      ></span>
+    </span>
     @if (usedClasses.length) {
       <span class="nmf-sa-classes-meta">
         {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.META_EVENTS' | translate }}

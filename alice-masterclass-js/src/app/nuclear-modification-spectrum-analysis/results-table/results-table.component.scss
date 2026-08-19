@@ -24,8 +24,23 @@
   align-items: center;
 }
 
+.nmf-sa-results-heading {
+  @include nmf.card-heading;
+}
+
 .nmf-sa-results-title {
   @include nmf.card-title;
+}
+
+.nmf-sa-badge--results {
+  @include nmf.badge(#4ade80);
+}
+
+.nmf-sa-results-lead {
+  margin: 0;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 :host ::ng-deep .nmf-sa-results-title sub,

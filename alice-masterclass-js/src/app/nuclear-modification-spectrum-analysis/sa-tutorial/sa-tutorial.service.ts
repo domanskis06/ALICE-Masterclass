@@ -6,7 +6,6 @@ import {
   NMF_SA_CLASSES_TO_COLLECT,
   NMF_SA_GATES,
   NMF_SA_SELECTOR_CLASSES,
-  NMF_SA_SELECTOR_EXTRACT,
   NMF_SA_SELECTOR_PAGE,
   NMF_SA_SELECTOR_PLOTS,
   NMF_SA_SELECTOR_RESULTS,
@@ -680,17 +679,6 @@ export class NmfSaTutorialService {
           title: 'Your numbers',
           description:
             'Every class you plot fills a line of this sheet with R<sub>AA</sub> at <strong>5.5 GeV/c</strong> and <strong>10 GeV/c</strong> — the two momenta the moderator collects. <strong>Copy</strong> hands the whole table over at once.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-      {
-        element: NMF_SA_SELECTOR_EXTRACT,
-        disableActiveInteraction: false,
-        popover: {
-          title: 'Any other bin',
-          description:
-            'For a momentum that is not one of those two, read it off here — or with the <strong>Read value at</strong> block, which marks the number in the sheet above as read on purpose.',
           side: 'left',
           align: 'start',
         },

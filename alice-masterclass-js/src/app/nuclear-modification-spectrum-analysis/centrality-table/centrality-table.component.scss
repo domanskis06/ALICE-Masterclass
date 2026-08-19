@@ -22,8 +22,16 @@
   @include nmf.card-head;
 }
 
+.nmf-sa-classes-heading {
+  @include nmf.card-heading;
+}
+
 .nmf-sa-classes-title {
   @include nmf.card-title;
+}
+
+.nmf-sa-badge--reference {
+  @include nmf.badge(#64748b);
 }
 
 :host ::ng-deep .nmf-sa-classes-title sub,

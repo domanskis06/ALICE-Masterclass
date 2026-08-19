@@ -13,7 +13,6 @@ import { NmfRaaPlotsComponent } from './raa-plots/raa-plots.component';
 import { NmfSeriesPlotComponent } from './series-plot/series-plot.component';
 import { NmfHeatmapPlotComponent } from './heatmap-plot/heatmap-plot.component';
 import { NmfPlotDialogComponent } from './plot-dialog/plot-dialog.component';
-import { NmfExtractPanelComponent } from './extract-panel/extract-panel.component';
 import { NmfCentralityTableComponent } from './centrality-table/centrality-table.component';
 import { NmfResultsTableComponent } from './results-table/results-table.component';
 import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
@@ -28,7 +27,6 @@ import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
     NmfSeriesPlotComponent,
     NmfHeatmapPlotComponent,
     NmfPlotDialogComponent,
-    NmfExtractPanelComponent,
     NmfCentralityTableComponent,
     NmfResultsTableComponent,
   ],

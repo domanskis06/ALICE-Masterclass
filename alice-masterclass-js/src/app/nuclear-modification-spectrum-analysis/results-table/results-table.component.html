@@ -1,9 +1,16 @@
 <section class="nmf-sa-results-table" data-testid="nmf-results-table" id="nmf-sa-tour-results">
   <header class="nmf-sa-results-head">
-    <h3
-      class="nmf-sa-results-title"
-      [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_TITLE' | translate"
-    ></h3>
+    <span class="nmf-sa-results-heading">
+      <h3
+        class="nmf-sa-results-title"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_TITLE' | translate"
+      ></h3>
+      <span
+        class="nmf-sa-badge nmf-sa-badge--results"
+        data-testid="nmf-results-badge"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_BADGE' | translate"
+      ></span>
+    </span>
     @if (hasRows) {
       <button
         mat-stroked-button
@@ -17,6 +24,11 @@
       </button>
     }
   </header>
+
+  <p
+    class="nmf-sa-results-lead"
+    [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_LEAD' | translate"
+  ></p>
 
   @if (!hasRows) {
     <p

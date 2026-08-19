@@ -123,6 +123,36 @@
   line-height: 1.25;
 }
 
+/** Title plus a status pill, side by side, wrapping together as one unit. */
+@mixin card-heading {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+/**
+ * Marks a card as either input data to look up (reference) or the student's
+ * own accumulating output (results) — the two "Centrality classes" and
+ * "Collected R_AA" panels look alike enough at a glance that this distinction
+ * needs to be visible, not just explained in body copy.
+ */
+@mixin badge($tint) {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: color-mix(in srgb, $tint 65%, black);
+  background: color-mix(in srgb, $tint 20%, transparent);
+  border: 1px solid color-mix(in srgb, $tint 45%, transparent);
+}
+
 @mixin card-meta {
   display: flex;
   flex-wrap: wrap;

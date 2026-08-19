@@ -20,10 +20,8 @@ export const NMF_SA_STEP_NCOLL = 11;
 export const NMF_SA_STEP_RAA = 12;
 /** The collected-results sheet. */
 export const NMF_SA_STEP_RESULTS = 13;
-/** The read-off panel for any other bin. */
-export const NMF_SA_STEP_EXTRACT = 14;
-export const NMF_SA_STEP_COLLECT = 15;
-export const NMF_SA_STEP_DONE = 16;
+export const NMF_SA_STEP_COLLECT = 14;
+export const NMF_SA_STEP_DONE = 15;
 
 /** Centrality class the tour builds its example with. */
 export const NMF_SA_TOUR_CENTRALITY = '0-5';
@@ -37,7 +35,6 @@ export const NMF_SA_SELECTOR_RUN = '#nmf-sa-tour-run';
 export const NMF_SA_SELECTOR_PLOTS = '#nmf-sa-tour-plots';
 export const NMF_SA_SELECTOR_CLASSES = '#nmf-sa-tour-classes';
 export const NMF_SA_SELECTOR_RESULTS = '#nmf-sa-tour-results';
-export const NMF_SA_SELECTOR_EXTRACT = '#nmf-sa-tour-extract';
 
 export type NmfSaToolboxCategory = 'events' | 'tracks' | 'normalise' | 'plot';
 
