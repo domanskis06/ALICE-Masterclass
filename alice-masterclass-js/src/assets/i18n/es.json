@@ -106,6 +106,7 @@
       "CLASSES_NEVT": "N<sub>evt</sub>",
       "CLASSES_NCOLL": "N<sub>coll</sub>",
       "CLASSES_NOTE": "La barra muestra N<sub>coll</sub> respecto a 0–5%. Dividir por ese número es lo que hace comparable un rendimiento Pb–Pb con uno protón–protón — de eso trata R<sub>AA</sub>.",
+      "CLASSES_LOCKED": "Primero traza un espectro en p<sub>T</sub> para una clase de centralidad — esta tabla se completa en cuanto tengas un resultado.",
       "RESULTS_TITLE": "R<sub>AA</sub> recogidos",
       "RESULTS_EMPTY": "Todavía no hay nada — dibuja R<sub>AA</sub> para una clase de centralidad y su fila aparecerá aquí.",
       "RESULTS_COPY": "Copiar",

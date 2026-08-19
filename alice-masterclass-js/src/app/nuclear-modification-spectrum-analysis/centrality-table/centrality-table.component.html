@@ -4,10 +4,12 @@
       class="nmf-sa-classes-title"
       [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_TITLE' | translate"
     ></h3>
-    <span class="nmf-sa-classes-meta">
-      {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.META_EVENTS' | translate }}
-      {{ totalEvents | number }}
-    </span>
+    @if (usedClasses.length) {
+      <span class="nmf-sa-classes-meta">
+        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.META_EVENTS' | translate }}
+        {{ totalEvents | number }}
+      </span>
+    }
   </header>
 
   <p
@@ -15,62 +17,70 @@
     [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_LEAD' | translate"
   ></p>
 
-  <div class="nmf-sa-classes-scroll">
-    <table class="nmf-sa-classes-table">
-      <thead>
-        <tr>
-          <th scope="col">
-            {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CENTRALITY' | translate }}
-          </th>
-          <th scope="col">
-            <span [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_NEVT' | translate"></span>
-          </th>
-          <th scope="col">
-            <span [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_NCOLL' | translate"></span>
-          </th>
-          <th scope="col" class="nmf-sa-classes-bar-col" aria-hidden="true"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of rows; track row.key) {
-          <tr
-            [class.nmf-sa-classes-row--used]="isUsed(row)"
-            [style.--nmf-plot-accent]="row.color"
-            [attr.data-testid]="'nmf-centrality-row-' + row.key"
-          >
-            <td>
-              <span class="nmf-sa-classes-name">
-                <svg
-                  class="nmf-collision-icon nmf-collision-icon--sm"
-                  viewBox="0 0 64 44"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  <g [attr.transform]="'translate(0 ' + (22 - row.impact) + ')'">
-                    <line x1="4" y1="0" x2="26" y2="0" />
-                    <polyline points="18,-6 28,0 18,6" />
-                  </g>
-                  <g [attr.transform]="'translate(0 ' + (22 + row.impact) + ')'">
-                    <line x1="60" y1="0" x2="38" y2="0" />
-                    <polyline points="46,-6 36,0 46,6" />
-                  </g>
-                </svg>
-                {{ row.label }}
-              </span>
-            </td>
-            <td>{{ row.nEvents | number }}</td>
-            <td>{{ row.nColl | number: '1.0-2' }}</td>
-            <td class="nmf-sa-classes-bar-col">
-              <span class="nmf-sa-classes-bar" [style.width.%]="row.share * 100"></span>
-            </td>
+  @if (usedClasses.length) {
+    <div class="nmf-sa-classes-scroll">
+      <table class="nmf-sa-classes-table">
+        <thead>
+          <tr>
+            <th scope="col">
+              {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CENTRALITY' | translate }}
+            </th>
+            <th scope="col">
+              <span [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_NEVT' | translate"></span>
+            </th>
+            <th scope="col">
+              <span [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_NCOLL' | translate"></span>
+            </th>
+            <th scope="col" class="nmf-sa-classes-bar-col" aria-hidden="true"></th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (row of rows; track row.key) {
+            <tr
+              [class.nmf-sa-classes-row--used]="isUsed(row)"
+              [style.--nmf-plot-accent]="row.color"
+              [attr.data-testid]="'nmf-centrality-row-' + row.key"
+            >
+              <td>
+                <span class="nmf-sa-classes-name">
+                  <svg
+                    class="nmf-collision-icon nmf-collision-icon--sm"
+                    viewBox="0 0 64 44"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <g [attr.transform]="'translate(0 ' + (22 - row.impact) + ')'">
+                      <line x1="4" y1="0" x2="26" y2="0" />
+                      <polyline points="18,-6 28,0 18,6" />
+                    </g>
+                    <g [attr.transform]="'translate(0 ' + (22 + row.impact) + ')'">
+                      <line x1="60" y1="0" x2="38" y2="0" />
+                      <polyline points="46,-6 36,0 46,6" />
+                    </g>
+                  </svg>
+                  {{ row.label }}
+                </span>
+              </td>
+              <td>{{ row.nEvents | number }}</td>
+              <td>{{ row.nColl | number: '1.0-2' }}</td>
+              <td class="nmf-sa-classes-bar-col">
+                <span class="nmf-sa-classes-bar" [style.width.%]="row.share * 100"></span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
 
-  <p
-    class="nmf-sa-classes-note"
-    [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_NOTE' | translate"
-  ></p>
+    <p
+      class="nmf-sa-classes-note"
+      [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_NOTE' | translate"
+    ></p>
+  } @else {
+    <p
+      class="nmf-sa-classes-locked"
+      data-testid="nmf-centrality-locked"
+      [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLASSES_LOCKED' | translate"
+    ></p>
+  }
 </section>
