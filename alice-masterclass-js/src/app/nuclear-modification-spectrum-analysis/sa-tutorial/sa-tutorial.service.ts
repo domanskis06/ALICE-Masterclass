@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { driver, type DriveStep, type Driver } from 'driver.js';
+import { driver, type DriveStep, type Driver, type PopoverDOM } from 'driver.js';
 
 import { RaaStep, RaaStepKind } from '../../shared/models/raa/spectrum';
 import {
@@ -29,6 +29,9 @@ export interface NmfSaTutorialHostHooks {
   refreshHost: () => void;
 }
 
+/** Left edge of the docked tour window, under the block-picker column. */
+const NMF_SA_DOCKED_POPOVER_LEFT = 16;
+
 /** Injected only in NuclearModificationSpectrumAnalysisModule. */
 @Injectable()
 export class NmfSaTutorialService {
@@ -39,6 +42,18 @@ export class NmfSaTutorialService {
   private hooks: NmfSaTutorialHostHooks | null = null;
   /** Standalone ?-button walkthroughs; they must not dismiss the main tour. */
   private helpTourActive = false;
+
+  /**
+   * Main-tour popover position, `{left, top}` in viewport pixels, dragged by
+   * the student via the title bar. `null` means "not dragged yet this tour" —
+   * `applyPopoverPosition` then falls back to nudging driver.js's own
+   * per-step placement toward the block picker instead of pinning one exact
+   * spot, since a fixed spot would cover the picker or the canvas on some
+   * steps. Once dragged, the same offset is re-applied on every following
+   * step so the window stays where the student put it.
+   */
+  private popoverPosition: { left: number; top: number } | null = null;
+  private popoverDragCleanup: (() => void) | null = null;
 
   /* —— gate state —— */
 
@@ -335,6 +350,7 @@ export class NmfSaTutorialService {
     this.ranWithCurrentRecipe = false;
     this.classesCollected = 0;
     this.advancePending = false;
+    this.popoverPosition = null;
     this.hooks?.clearWorkspace();
 
     const d = driver({
@@ -344,18 +360,31 @@ export class NmfSaTutorialService {
       overlayClickBehavior: () => {
         /* overlay click must not close the tour */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: this tour sits beside the blocks the student is actively
+      // dragging, and a darkened page made it feel heavier than the shorter
+      // ?-button tours right next to it, which never dim at all.
+      overlayOpacity: 0,
       stagePadding: 2,
       stageRadius: 4,
-      popoverClass: 'lsa-driver-popover',
+      popoverClass: 'lsa-driver-popover nmf-sa-draggable-popover',
       nextBtnText: 'Next &rarr;',
       prevBtnText: '&larr; Previous',
       doneBtnText: 'Done',
       showButtons: ['next', 'previous', 'close'],
       steps: this.buildSteps(),
+      onPopoverRender: (popover, opts) => {
+        this.makePopoverDraggable(popover);
+        const isBuildingStep = opts.state.activeStep?.element === NMF_SA_SELECTOR_WORKSPACE;
+        // driver.js repositions the popover itself after this hook runs (it
+        // measures and places it against the newly-highlighted element on the
+        // same render pass), which clobbered a pin applied synchronously here.
+        // Re-assert on the next frame, once driver.js's own layout is done.
+        requestAnimationFrame(() => this.applyPopoverPosition(popover, isBuildingStep));
+      },
       onDestroyed: () => {
         this.detachEnterAdvance();
+        this.popoverDragCleanup?.();
+        this.popoverDragCleanup = null;
         if (!this.suppressDismissOnDestroy) {
           this.dismiss();
         }
@@ -370,6 +399,99 @@ export class NmfSaTutorialService {
     this.attachEnterAdvance();
     this.hooks?.refreshHost();
     setTimeout(() => d.drive(0), 0);
+  }
+
+  /**
+   * Grab the title bar to move the whole popover; the position sticks for the
+   * rest of the tour (`applyPopoverPosition` re-applies it on every step).
+   */
+  private makePopoverDraggable(popover: PopoverDOM): void {
+    this.popoverDragCleanup?.();
+    const handle = popover.title;
+    handle.classList.add('nmf-sa-popover-drag-handle');
+
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let originLeft = 0;
+    let originTop = 0;
+
+    const onPointerDown = (event: PointerEvent) => {
+      // Buttons live in the footer, not the title — only the title starts a drag.
+      dragging = true;
+      startX = event.clientX;
+      startY = event.clientY;
+      const rect = popover.wrapper.getBoundingClientRect();
+      originLeft = rect.left;
+      originTop = rect.top;
+      handle.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (!dragging) {
+        return;
+      }
+      const left = originLeft + (event.clientX - startX);
+      const top = originTop + (event.clientY - startY);
+      this.popoverPosition = { left, top };
+      this.pinPopoverAt(popover, left, top);
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      dragging = false;
+      handle.releasePointerCapture(event.pointerId);
+    };
+
+    handle.addEventListener('pointerdown', onPointerDown);
+    handle.addEventListener('pointermove', onPointerMove);
+    handle.addEventListener('pointerup', onPointerUp);
+    this.popoverDragCleanup = () => {
+      handle.removeEventListener('pointerdown', onPointerDown);
+      handle.removeEventListener('pointermove', onPointerMove);
+      handle.removeEventListener('pointerup', onPointerUp);
+    };
+  }
+
+  /**
+   * A drag always wins, on any step. Failing that: steps that ask the student
+   * to build something (`element` is the workspace) dock the window at a
+   * fixed spot under the block picker and *keep it there* while blocks are
+   * being dragged in and out — the user's own instruction was that it must
+   * not hop around mid-build. Steps that instead point at one specific
+   * component (Run, the plots, a results panel…) are left to driver.js's own
+   * per-element placement, since "showing a component" is exactly when moving
+   * next to it is the point.
+   */
+  private applyPopoverPosition(popover: PopoverDOM, isBuildingStep: boolean): void {
+    if (this.popoverPosition) {
+      this.pinPopoverAt(popover, this.popoverPosition.left, this.popoverPosition.top);
+      return;
+    }
+    if (isBuildingStep) {
+      this.pinPopoverAt(popover, NMF_SA_DOCKED_POPOVER_LEFT, null);
+    }
+    // Otherwise: leave driver.js's own placement for this render alone.
+  }
+
+  /**
+   * `top: null` docks to the bottom of the viewport instead of a `top` pixel
+   * value — the fixed "under the blocks" spot for building steps, stable
+   * regardless of how tall the popover's own content is for that step.
+   */
+  private pinPopoverAt(popover: PopoverDOM, left: number, top: number | null): void {
+    const wrapper = popover.wrapper;
+    const maxLeft = window.innerWidth - wrapper.offsetWidth - 8;
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = `${Math.min(Math.max(8, left), Math.max(8, maxLeft))}px`;
+    wrapper.style.right = 'auto';
+    if (top === null) {
+      wrapper.style.top = 'auto';
+      wrapper.style.bottom = '16px';
+    } else {
+      const maxTop = window.innerHeight - wrapper.offsetHeight - 8;
+      wrapper.style.top = `${Math.min(Math.max(8, top), Math.max(8, maxTop))}px`;
+      wrapper.style.bottom = 'auto';
+    }
+    wrapper.style.margin = '0';
   }
 
   /** Blockly drags need a clear hit target, so the SVG mask must not eat events. */
@@ -433,7 +555,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Count what is inside them',
           description:
-            'Now ask what came out of those collisions: one entry per event, counting the accepted charged tracks. Run when the chain looks right.',
+            'Now build a histogram of what each of those collisions actually contained: one entry per event, counting its accepted charged tracks. Attach the block that fills it, then press Run.',
           side: 'right',
           align: 'start',
           ...gated,

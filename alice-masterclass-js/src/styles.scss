@@ -2,6 +2,27 @@
 @import url('material-icons/iconfont/material-icons.css');
 @import "driver.js/dist/driver.css";
 
+/**
+ * Spectrum Analysis's main tour only (`nmf-sa-draggable-popover`, added
+ * alongside `lsa-driver-popover` — the shorter ?-button tours keep the plain
+ * class and are untouched). The title bar becomes a drag handle so the
+ * student can move the window instead of it sitting wherever driver.js last
+ * computed relative to the highlighted element.
+ */
+.driver-popover.nmf-sa-draggable-popover {
+  cursor: default;
+}
+
+.driver-popover.nmf-sa-draggable-popover .nmf-sa-popover-drag-handle {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.driver-popover.nmf-sa-draggable-popover .nmf-sa-popover-drag-handle:active {
+  cursor: grabbing;
+}
+
 .driver-popover.lsa-driver-popover .driver-popover-title {
   font-size: 1.1rem;
   font-weight: 600;
