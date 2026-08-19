@@ -332,8 +332,12 @@ function niceUpperBound(max: number): number {
 
 /**
  * `multCentHist` from `Analyse.C` — the plot that shows where centrality classes
- * come from. Filled from every event, not only the selected class, with the
- * selected range marked so the student can place their own choice on the map.
+ * come from. When the recipe has filtered to one class (`If centrality`), this
+ * plot shows that class alone, marked with the same dashed range the block
+ * picked — a deliberate product choice: filtering everything else in the chain
+ * by the selected class and then leaving this one plot unfiltered read as
+ * inconsistent, even though the full unfiltered map is arguably more
+ * physically informative on its own.
  */
 export function multiplicityVsCentrality(
   asset: RaaEventsAsset,
@@ -341,6 +345,8 @@ export function multiplicityVsCentrality(
 ): RaaHeatmap {
   const xBins = options.xBins ?? 60;
   const yBins = options.yBins ?? 50;
+  const range = options.highlight ? centralityRange(options.highlight) : null;
+
   const xUpper = niceUpperBound(maxOf(asset.mult));
   const xEdges = Array.from({ length: xBins + 1 }, (_, i) => (i * xUpper) / xBins);
   const yEdges = Array.from({ length: yBins + 1 }, (_, i) => (i * 100) / yBins);
@@ -348,6 +354,9 @@ export function multiplicityVsCentrality(
   const grid = new Map<number, number>();
   let maxCount = 0;
   for (let i = 0; i < asset.mult.length; i++) {
+    if (range && (asset.cent[i] < range.from || asset.cent[i] >= range.to)) {
+      continue;
+    }
     const ix = Math.min(Math.floor((asset.mult[i] / xUpper) * xBins), xBins - 1);
     const iy = Math.min(Math.floor((asset.cent[i] / 100) * yBins), yBins - 1);
     if (ix < 0 || iy < 0) {

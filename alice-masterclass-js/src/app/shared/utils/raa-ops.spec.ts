@@ -217,6 +217,13 @@ describe('raa-ops event part', () => {
     const heatmap = multiplicityVsCentrality(events, { highlight: '10-20' });
     expect(heatmap.highlight).toEqual({ from: 10, to: 20, centrality: '10-20' });
   });
+
+  it('restricts the map to the selected class once one is chosen', () => {
+    // 75.0 and 72.5 fall in 70–80%; the other three (2.0, 1.0, 65.0) do not.
+    const heatmap = multiplicityVsCentrality(events, { highlight: '70-80' });
+    const total = heatmap.cells.reduce((sum, cell) => sum + cell.count, 0);
+    expect(total).toBe(2);
+  });
 });
 
 describe('raa-ops asset reading', () => {
