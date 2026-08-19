@@ -2,210 +2,758 @@ import { Injectable } from '@angular/core';
 import { forkJoin, map, Observable } from 'rxjs';
 
 import {
-  RaaAnalysisResult,
-  RaaPipelineStep,
-  RaaPipelineStepKind,
-  RaaPlotSeries,
-} from '../shared/models/raa/raa';
+  RaaCentralityPreset,
+  RaaEventsAsset,
+  RaaEventSample,
+  RaaHeatmap,
+  RaaHistogram,
+  RaaOp,
+  RaaPlotTarget,
+  RaaPoint,
+  RaaPpAsset,
+  RaaProblem,
+  RaaReadout,
+  RaaReported,
+  RaaRunResult,
+  RaaSeries,
+  RaaSpectrum,
+  RaaStep,
+  RaaStepKind,
+  RaaTrackSample,
+  RaaTracksFineAsset,
+  RaaBinningId,
+} from '../shared/models/raa/spectrum';
+import {
+  binAt,
+  centersOf,
+  cloneSpectrum,
+  divideByBinWidth,
+  divideByEvents,
+  divideByNColl,
+  divideBySpectrum,
+  eventSampleOf,
+  histogramPt,
+  multiplicityHistogram,
+  multiplicityVsCentrality,
+  ppSpectrum,
+  trackSampleOf,
+  unitLabel,
+} from '../shared/utils/raa-ops';
+import { centralityColor, centralityLabel } from '../shared/utils/raa-centrality';
 import { RaaDataService } from './raa-data.service';
 
-/** Preferred pedagogical chain for a complete R_AA measurement. */
-export const RAA_CANONICAL_CHAIN: RaaPipelineStepKind[] = [
-  'load_pbpb',
-  'filter_centrality',
-  'histogram_pt',
-  'norm_events',
-  'norm_ncoll',
-  'divide_pp',
-  'compute_raa',
-  'plot',
-];
+/** The class R_CP divides by, as in the Münster notebook's extra task. */
+export const RAA_PERIPHERAL_KEY = '70-80';
 
+export const RAA_PRESET_CLASSES: Record<RaaCentralityPreset, string[]> = {
+  three: ['0-5', '30-40', '70-80'],
+  five: ['0-5', '10-20', '30-40', '50-60', '70-80'],
+};
+
+interface RaaAssets {
+  tracks: RaaTracksFineAsset;
+  events: RaaEventsAsset;
+  pp: RaaPpAsset;
+}
+
+/** Mutable interpreter state while walking the student's recipe. */
+interface ExecCtx {
+  eventsLoaded: boolean;
+  eventCentrality: string | null;
+  eventSample: RaaEventSample | null;
+  nEvt: number | null;
+  tracksLoaded: boolean;
+  trackCentrality: string | null;
+  trackSample: RaaTrackSample | null;
+  ptCut: number;
+  pendingBinning: RaaBinningId | null;
+  spectrum: RaaSpectrum | null;
+  savedSpectrum: RaaSpectrum | null;
+  nColl: number | null;
+  nCollSource: string | null;
+  ppLoaded: boolean;
+  peripheral: RaaSpectrum | null;
+  drawLineAtOne: boolean;
+  histogram: RaaHistogram | null;
+  heatmap: RaaHeatmap | null;
+  /** Scalings already applied to `spectrum`, reused when building the peripheral. */
+  appliedScalings: RaaStepKind[];
+}
+
+interface Accumulators {
+  pt: RaaSeries[];
+  raa: RaaSeries[];
+  rcp: RaaSeries[];
+  readouts: RaaReadout[];
+  /** Kept apart from `readouts`: a single read must not replace a whole series. */
+  reported: RaaReported[];
+  problems: RaaProblem[];
+}
+
+/**
+ * Runs the student's recipe on the real sample.
+ *
+ * Nothing is pre-computed: the recipe is executed step by step over the
+ * 0.01 GeV/c track tally, and whatever comes out is what gets plotted,
+ * including a wrong answer. Validation talks about physics — units, whether
+ * the number of collisions matches the selected class — not block names.
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class RaaAnalysisService {
   constructor(private readonly data: RaaDataService) {}
 
-  validate(pipeline: RaaPipelineStep[]): { valid: boolean; warnings: string[] } {
-    const warnings: string[] = [];
-    const kinds = pipeline.map((s) => s.kind);
-
-    if (kinds.length === 0) {
-      return { valid: false, warnings: ['Pipeline is empty. Add blocks and connect them.'] };
-    }
-    if (!kinds.includes('load_pbpb')) {
-      warnings.push('Missing “Load Pb–Pb data”.');
-    }
-    if (!kinds.includes('filter_centrality')) {
-      warnings.push('Missing “Filter centrality”.');
-    }
-    if (!kinds.includes('histogram_pt')) {
-      warnings.push('Missing “Histogram pT”.');
-    }
-    if (!kinds.includes('norm_events')) {
-      warnings.push('Missing “Normalize by N_evt” — yields will be wrong.');
-    }
-    if (!kinds.includes('norm_ncoll')) {
-      warnings.push('Missing “Divide by ⟨N_coll⟩” — R_AA scale will be wrong.');
-    }
-    if (!kinds.includes('divide_pp')) {
-      warnings.push('Missing “Divide by pp reference”.');
-    }
-    if (!kinds.includes('compute_raa') && !kinds.includes('compute_rcp')) {
-      warnings.push('Missing “Compute R_AA” or “Compute R_CP”.');
-    }
-    if (!kinds.includes('plot')) {
-      warnings.push('Missing “Plot” block.');
-    }
-
-    // Order checks for the main R_AA path
-    const idx = (k: RaaPipelineStepKind) => kinds.indexOf(k);
-    const orderPairs: [RaaPipelineStepKind, RaaPipelineStepKind][] = [
-      ['load_pbpb', 'filter_centrality'],
-      ['filter_centrality', 'histogram_pt'],
-      ['histogram_pt', 'norm_events'],
-      ['norm_events', 'norm_ncoll'],
-      ['norm_ncoll', 'divide_pp'],
-      ['divide_pp', 'compute_raa'],
-    ];
-    for (const [a, b] of orderPairs) {
-      if (idx(a) >= 0 && idx(b) >= 0 && idx(a) > idx(b)) {
-        warnings.push(`“${b}” should come after “${a}”.`);
-      }
-    }
-
-    const valid =
-      kinds.includes('load_pbpb') &&
-      kinds.includes('filter_centrality') &&
-      kinds.includes('histogram_pt') &&
-      kinds.includes('norm_events') &&
-      kinds.includes('norm_ncoll') &&
-      kinds.includes('divide_pp') &&
-      (kinds.includes('compute_raa') || kinds.includes('compute_rcp')) &&
-      kinds.includes('plot') &&
-      warnings.every((w) => !w.includes('should come after'));
-
-    return { valid, warnings };
+  run(recipe: RaaStep[]): Observable<RaaRunResult> {
+    return forkJoin({
+      tracks: this.data.getTracksFine(),
+      events: this.data.getEvents(),
+      pp: this.data.getPpReference(),
+    }).pipe(map((assets) => this.execute(recipe, assets)));
   }
 
-  run(pipeline: RaaPipelineStep[]): Observable<RaaAnalysisResult> {
-    const { valid, warnings } = this.validate(pipeline);
-    const centrality =
-      pipeline.find((s) => s.kind === 'filter_centrality')?.centrality ?? '0-5';
-    const wantRaa = pipeline.some((s) => s.kind === 'compute_raa');
-    const wantRcp = pipeline.some((s) => s.kind === 'compute_rcp');
-    const hasNormEvents = pipeline.some((s) => s.kind === 'norm_events');
-    const hasNormNcoll = pipeline.some((s) => s.kind === 'norm_ncoll');
-    const hasDividePp = pipeline.some((s) => s.kind === 'divide_pp');
+  private execute(recipe: RaaStep[], assets: RaaAssets): RaaRunResult {
+    const empty = emptyResult();
+    if (!recipe.length) {
+      return { ...empty, problems: [{ key: 'EMPTY', severity: 'error' }] };
+    }
 
-    return forkJoin({
-      meta: this.data.getMetadata(),
-      spectra: this.data.getPtSpectra(),
-      pp: this.data.getPpReference(),
-    }).pipe(
-      map(({ meta, spectra, pp }) => {
-        const bins = spectra.bins;
-        const centers = binCenters(bins);
-        const peripheralKey = '70-80';
+    const acc: Accumulators = {
+      pt: [],
+      raa: [],
+      rcp: [],
+      readouts: [],
+      reported: [],
+      problems: [],
+    };
+    const ctx = freshCtx();
+    this.runSteps(recipe, assets, ctx, acc);
 
-        const buildYield = (key: string): number[] => {
-          const entry = spectra.spectra[key];
-          if (!entry) {
-            return centers.map(() => 0);
-          }
-          let y = [...entry.counts];
-          if (hasNormEvents) {
-            y = y.map((v) => v / Math.max(entry.nEvents, 1));
-          }
-          if (hasNormNcoll) {
-            const nc = meta.nColl[key] ?? 1;
-            y = y.map((v) => v / nc);
-          }
-          return y;
+    if (
+      !acc.pt.length &&
+      !acc.raa.length &&
+      !acc.rcp.length &&
+      !ctx.histogram &&
+      !ctx.heatmap &&
+      ctx.spectrum
+    ) {
+      acc.problems.push({ key: 'NOTHING_PLOTTED', severity: 'warning' });
+    }
+
+    const ok =
+      !acc.problems.some((problem) => problem.severity === 'error') &&
+      (acc.raa.length > 0 || acc.rcp.length > 0);
+
+    return {
+      ok,
+      problems: acc.problems,
+      ptSpectra: acc.pt,
+      raa: acc.raa,
+      rcp: acc.rcp,
+      multiplicity: ctx.histogram,
+      multVsCentrality: ctx.heatmap,
+      readouts: acc.readouts,
+      reported: acc.reported,
+      ppReference: ctx.ppLoaded ? ppReferenceSeries(assets.pp) : null,
+      nEvents: ctx.nEvt,
+      centrality: ctx.trackCentrality ?? ctx.eventCentrality,
+    };
+  }
+
+  private runSteps(
+    recipe: RaaStep[],
+    assets: RaaAssets,
+    ctx: ExecCtx,
+    acc: Accumulators,
+  ): void {
+    for (const step of recipe) {
+      this.runStep(step, assets, ctx, acc);
+    }
+  }
+
+  private runStep(
+    step: RaaStep,
+    assets: RaaAssets,
+    ctx: ExecCtx,
+    acc: Accumulators,
+  ): void {
+    switch (step.kind) {
+      case 'load_events':
+        ctx.eventsLoaded = true;
+        break;
+
+      case 'if_centrality': {
+        if (!ctx.eventsLoaded) {
+          acc.problems.push({ key: 'EVENTS_NOT_LOADED', severity: 'error' });
+          break;
+        }
+        const centrality = step.centrality ?? '0-5';
+        ctx.eventCentrality = centrality;
+        ctx.eventSample = eventSampleOf(assets.events, centrality);
+        if (!ctx.eventSample.nEvents) {
+          acc.problems.push({
+            key: 'NO_EVENTS',
+            severity: 'error',
+            params: { centrality },
+          });
+        }
+        break;
+      }
+
+      case 'count_events': {
+        if (!ctx.eventSample) {
+          acc.problems.push({ key: 'COUNT_WITHOUT_EVENTS', severity: 'error' });
+          break;
+        }
+        ctx.nEvt = ctx.eventSample.nEvents;
+        break;
+      }
+
+      case 'fill_multiplicity': {
+        if (!ctx.eventSample || !ctx.eventCentrality) {
+          acc.problems.push({ key: 'MULT_WITHOUT_EVENTS', severity: 'error' });
+          break;
+        }
+        const filled = multiplicityHistogram(ctx.eventSample);
+        ctx.histogram = {
+          edges: filled.edges,
+          counts: filled.counts,
+          label: centralityLabel(ctx.eventCentrality),
+          color: centralityColor(ctx.eventCentrality),
+          centrality: ctx.eventCentrality,
+          entries: ctx.eventSample.nEvents,
         };
+        break;
+      }
 
-        const yCent = buildYield(centrality);
-        const yPeriph = buildYield(peripheralKey);
-        const ppVals = [...pp.values];
+      case 'plot_mult_vs_centrality':
+        ctx.heatmap = multiplicityVsCentrality(assets.events, {
+          highlight: ctx.eventCentrality ?? undefined,
+        });
+        break;
 
-        const ptSpectra: RaaPlotSeries[] = [
-          {
-            id: `pt_${centrality}`,
-            label: `Pb–Pb ${centrality}%`,
-            x: centers,
-            y: yCent,
-            yErr: yCent.map((v) => Math.sqrt(Math.max(v, 0)) * 0.05 + 1e-9),
-          },
-          {
-            id: 'pt_pp',
-            label: 'pp reference',
-            x: centers,
-            y: ppVals,
-            yErr: ppVals.map((v) => v * 0.1),
-          },
-        ];
+      case 'load_tracks':
+        ctx.tracksLoaded = true;
+        break;
 
-        let raa: RaaPlotSeries[] = [];
-        if (wantRaa) {
-          const raaY = yCent.map((v, i) => {
-            const denom = hasDividePp ? Math.max(ppVals[i], 1e-12) : 1;
-            // Without divide_pp / ncoll the curve stays unphysically large — pedagogical.
-            return v / denom;
+      case 'select_centrality': {
+        if (!ctx.tracksLoaded) {
+          acc.problems.push({ key: 'TRACKS_NOT_LOADED', severity: 'error' });
+          break;
+        }
+        const centrality = step.centrality ?? '0-5';
+        const sample = trackSampleOf(assets.tracks, centrality);
+        if (!sample) {
+          acc.problems.push({
+            key: 'NO_TRACKS',
+            severity: 'error',
+            params: { centrality },
           });
-          raa = [
-            {
-              id: `raa_${centrality}`,
-              label: `R_AA ${centrality}%`,
-              x: centers,
-              y: raaY,
-              yErr: raaY.map((v) => Math.abs(v) * 0.12 + 0.01),
-            },
-          ];
+          break;
         }
-
-        let rcp: RaaPlotSeries[] = [];
-        if (wantRcp) {
-          const rcpY = yCent.map((v, i) => v / Math.max(yPeriph[i], 1e-12));
-          rcp = [
-            {
-              id: `rcp_${centrality}`,
-              label: `R_CP ${centrality}% / ${peripheralKey}%`,
-              x: centers,
-              y: rcpY,
-              yErr: rcpY.map((v) => Math.abs(v) * 0.15 + 0.01),
+        ctx.trackCentrality = centrality;
+        ctx.trackSample = sample;
+        if (
+          ctx.eventCentrality &&
+          ctx.eventCentrality !== centrality
+        ) {
+          acc.problems.push({
+            key: 'CENTRALITY_MISMATCH',
+            severity: 'error',
+            params: {
+              events: centralityLabel(ctx.eventCentrality),
+              tracks: centralityLabel(centrality),
             },
-          ];
-        }
-
-        const extract: Record<string, { value: number; error: number }> = {};
-        const seriesForExtract = raa[0] ?? rcp[0];
-        if (seriesForExtract) {
-          seriesForExtract.y.forEach((value, i) => {
-            extract[`${centrality}|${i}`] = {
-              value,
-              error: seriesForExtract.yErr?.[i] ?? 0,
-            };
           });
         }
+        break;
+      }
 
-        return {
-          warnings,
-          valid,
-          ptSpectra,
-          raa,
-          rcp,
-          extract,
-        } satisfies RaaAnalysisResult;
-      }),
+      case 'cut_pt':
+        ctx.ptCut = step.ptCut ?? 0.15;
+        break;
+
+      case 'create_hist':
+        ctx.pendingBinning = step.binning ?? 'alice';
+        break;
+
+      case 'fill_hist': {
+        if (!ctx.trackSample || !ctx.trackCentrality) {
+          acc.problems.push({ key: 'HIST_WITHOUT_TRACKS', severity: 'error' });
+          break;
+        }
+        if (!ctx.pendingBinning) {
+          acc.problems.push({ key: 'FILL_WITHOUT_HIST', severity: 'error' });
+          break;
+        }
+        ctx.spectrum = histogramPt(ctx.trackSample, ctx.pendingBinning, ctx.ptCut);
+        ctx.appliedScalings = [];
+        break;
+      }
+
+      case 'lookup_ncoll': {
+        const key =
+          step.nCollCentrality ?? step.centrality ?? ctx.trackCentrality ?? '0-5';
+        const nColl = assets.tracks.classes[key]?.nColl ?? 0;
+        if (!nColl) {
+          acc.problems.push({
+            key: 'NCOLL_UNKNOWN',
+            severity: 'error',
+            params: { centrality: key },
+          });
+          break;
+        }
+        ctx.nColl = nColl;
+        ctx.nCollSource = key;
+        if (ctx.trackCentrality && key !== ctx.trackCentrality) {
+          acc.problems.push({
+            key: 'NCOLL_MISMATCH',
+            severity: 'error',
+            params: {
+              chosen: centralityLabel(key),
+              tracks: centralityLabel(ctx.trackCentrality),
+            },
+          });
+        }
+        break;
+      }
+
+      case 'divide_bin_width':
+        this.applyScaling(ctx, acc, 'divide_bin_width', (spectrum) =>
+          divideByBinWidth(spectrum),
+        );
+        break;
+
+      case 'divide_events': {
+        if (ctx.nEvt === null) {
+          acc.problems.push({ key: 'MISSING_NEVT_VAR', severity: 'error' });
+          break;
+        }
+        const nEvt = ctx.nEvt;
+        this.applyScaling(ctx, acc, 'divide_events', (spectrum) =>
+          divideByEvents(spectrum, nEvt),
+        );
+        break;
+      }
+
+      case 'divide_ncoll': {
+        if (ctx.nColl === null) {
+          acc.problems.push({ key: 'MISSING_NCOLL_VAR', severity: 'error' });
+          break;
+        }
+        const nColl = ctx.nColl;
+        this.applyScaling(ctx, acc, 'divide_ncoll', (spectrum) =>
+          divideByNColl(spectrum, nColl),
+        );
+        break;
+      }
+
+      case 'clone_spectrum':
+        if (!ctx.spectrum) {
+          acc.problems.push({ key: 'CLONE_WITHOUT_SPECTRUM', severity: 'error' });
+          break;
+        }
+        ctx.savedSpectrum = cloneSpectrum(ctx.spectrum);
+        break;
+
+      case 'load_pp':
+        ctx.ppLoaded = true;
+        break;
+
+      case 'load_peripheral': {
+        if (!ctx.spectrum || !ctx.pendingBinning) {
+          acc.problems.push({ key: 'PERIPHERAL_WITHOUT_SPECTRUM', severity: 'error' });
+          break;
+        }
+        if (ctx.trackCentrality === RAA_PERIPHERAL_KEY) {
+          acc.problems.push({ key: 'RCP_SELF_DIVISION', severity: 'error' });
+          break;
+        }
+        const peripheralSample = trackSampleOf(assets.tracks, RAA_PERIPHERAL_KEY);
+        if (!peripheralSample) {
+          acc.problems.push({ key: 'NO_PERIPHERAL', severity: 'error' });
+          break;
+        }
+        let peripheral = histogramPt(
+          peripheralSample,
+          ctx.spectrum.binning,
+          ctx.ptCut,
+        );
+        for (const kind of ctx.appliedScalings) {
+          if (kind === 'divide_bin_width') {
+            peripheral = divideByBinWidth(peripheral);
+          } else if (kind === 'divide_events') {
+            peripheral = divideByEvents(peripheral, peripheralSample.nEvents);
+          } else if (kind === 'divide_ncoll') {
+            peripheral = divideByNColl(peripheral, peripheralSample.nColl);
+          }
+        }
+        ctx.peripheral = peripheral;
+        break;
+      }
+
+      case 'divide_reference': {
+        if (!ctx.spectrum) {
+          acc.problems.push({ key: 'DIVIDE_WITHOUT_SPECTRUM', severity: 'error' });
+          break;
+        }
+        const which = step.reference ?? 'pp';
+        if (which === 'pp') {
+          if (!ctx.ppLoaded) {
+            acc.problems.push({ key: 'PP_NOT_LOADED', severity: 'error' });
+            break;
+          }
+          if (ctx.spectrum.binning !== 'alice') {
+            acc.problems.push({
+              key: 'PP_NEEDS_ALICE_BINNING',
+              severity: 'error',
+              params: { binning: binningLabel(ctx.spectrum.binning) },
+            });
+            break;
+          }
+          if (ctx.spectrum.ops.includes('divide_pp') || ctx.spectrum.ops.includes('divide_peripheral')) {
+            acc.problems.push({ key: 'TWO_REFERENCES', severity: 'error' });
+            break;
+          }
+          ctx.spectrum = divideBySpectrum(
+            ctx.spectrum,
+            ppSpectrum(assets.pp),
+            'divide_pp',
+          );
+        } else {
+          if (!ctx.peripheral) {
+            acc.problems.push({ key: 'PERIPHERAL_NOT_LOADED', severity: 'error' });
+            break;
+          }
+          if (ctx.spectrum.ops.includes('divide_pp') || ctx.spectrum.ops.includes('divide_peripheral')) {
+            acc.problems.push({ key: 'TWO_REFERENCES', severity: 'error' });
+            break;
+          }
+          ctx.spectrum = divideBySpectrum(
+            ctx.spectrum,
+            ctx.peripheral,
+            'divide_peripheral',
+          );
+        }
+        this.reportChain(ctx.spectrum, acc.problems);
+        break;
+      }
+
+      case 'for_each_centrality': {
+        const classes = RAA_PRESET_CLASSES[step.centralityPreset ?? 'three'];
+        const body = step.body ?? [];
+        if (!body.length) {
+          acc.problems.push({ key: 'FOR_EACH_EMPTY', severity: 'error' });
+          break;
+        }
+        for (const centrality of classes) {
+          const branch = branchCtx(ctx);
+          branch.tracksLoaded = true;
+          const sample = trackSampleOf(assets.tracks, centrality);
+          if (!sample) {
+            acc.problems.push({
+              key: 'NO_TRACKS',
+              severity: 'error',
+              params: { centrality },
+            });
+            continue;
+          }
+          branch.trackCentrality = centrality;
+          branch.trackSample = sample;
+          if (branch.eventsLoaded) {
+            branch.eventCentrality = centrality;
+            branch.eventSample = eventSampleOf(assets.events, centrality);
+            branch.nEvt = branch.eventSample.nEvents;
+          }
+          this.runSteps(body, assets, branch, acc);
+          // Keep the last branch's histogram/heatmap/nEvt visible on the outer ctx.
+          ctx.histogram = branch.histogram ?? ctx.histogram;
+          ctx.heatmap = branch.heatmap ?? ctx.heatmap;
+          ctx.nEvt = branch.nEvt ?? ctx.nEvt;
+          ctx.trackCentrality = branch.trackCentrality;
+          ctx.spectrum = branch.spectrum;
+        }
+        break;
+      }
+
+      case 'plot':
+        this.plotSpectrum(ctx, acc, step.plotAs ?? 'raa');
+        break;
+
+      case 'draw_line_at_one':
+        ctx.drawLineAtOne = true;
+        break;
+
+      case 'read_value': {
+        if (!ctx.spectrum || !ctx.trackCentrality) {
+          acc.problems.push({ key: 'READ_WITHOUT_SPECTRUM', severity: 'error' });
+          break;
+        }
+        const pt = step.readAt ?? 5.5;
+        const index = binAt(ctx.spectrum.edges, pt);
+        if (index < 0 || ctx.spectrum.empty[index]) {
+          acc.problems.push({
+            key: 'READ_NO_BIN',
+            severity: 'warning',
+            params: { pt },
+          });
+          break;
+        }
+        acc.reported.push({
+          centrality: ctx.trackCentrality,
+          target: targetOf(ctx.spectrum),
+          pt,
+          value: ctx.spectrum.values[index],
+          error:
+            Math.abs(ctx.spectrum.values[index]) * ctx.spectrum.relErr[index],
+        });
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  private applyScaling(
+    ctx: ExecCtx,
+    acc: Accumulators,
+    kind: RaaStepKind & RaaOp,
+    apply: (spectrum: RaaSpectrum) => RaaSpectrum,
+  ): void {
+    if (!ctx.spectrum) {
+      acc.problems.push({ key: 'DIVIDE_WITHOUT_SPECTRUM', severity: 'error' });
+      return;
+    }
+    if (ctx.spectrum.ops.includes(kind)) {
+      acc.problems.push({
+        key: 'DUPLICATE_DIVISION',
+        severity: 'error',
+        params: { op: kind },
+      });
+      return;
+    }
+    ctx.spectrum = apply(ctx.spectrum);
+    ctx.appliedScalings.push(kind);
+  }
+
+  private reportChain(spectrum: RaaSpectrum, problems: RaaProblem[]): void {
+    if (spectrum.unit.ratio) {
+      if (!spectrum.ops.includes('divide_bin_width')) {
+        problems.push({ key: 'MISSING_BIN_WIDTH', severity: 'error' });
+      }
+      if (!spectrum.ops.includes('divide_events')) {
+        problems.push({ key: 'MISSING_EVENTS', severity: 'error' });
+      }
+      if (!spectrum.ops.includes('divide_ncoll')) {
+        problems.push({ key: 'MISSING_NCOLL', severity: 'error' });
+      }
+    } else {
+      problems.push({ key: 'NO_REFERENCE', severity: 'error' });
+    }
+
+    const emptyBins = spectrum.empty.filter(Boolean).length;
+    if (emptyBins) {
+      problems.push({
+        key: 'EMPTY_BINS',
+        severity: 'warning',
+        params: { count: emptyBins },
+      });
+    }
+  }
+
+  private plotSpectrum(
+    ctx: ExecCtx,
+    acc: Accumulators,
+    target: RaaPlotTarget,
+  ): void {
+    if (!ctx.spectrum || !ctx.trackCentrality) {
+      acc.problems.push({ key: 'PLOT_WITHOUT_SPECTRUM', severity: 'error' });
+      return;
+    }
+    const spectrum = ctx.spectrum;
+    const centrality = ctx.trackCentrality;
+    const isRatio = target !== 'pt';
+
+    if (isRatio && !spectrum.unit.ratio) {
+      acc.problems.push({
+        key: target === 'raa' ? 'RAA_NOT_A_RATIO' : 'RCP_NOT_A_RATIO',
+        severity: 'error',
+      });
+      return;
+    }
+    if (target === 'raa' && !spectrum.ops.includes('divide_pp')) {
+      acc.problems.push({ key: 'RAA_NEEDS_PP', severity: 'error' });
+      return;
+    }
+    if (target === 'rcp' && !spectrum.ops.includes('divide_peripheral')) {
+      acc.problems.push({ key: 'RCP_NEEDS_PERIPHERAL', severity: 'error' });
+      return;
+    }
+    if (target === 'pt' && spectrum.unit.ratio) {
+      acc.problems.push({ key: 'PT_IS_A_RATIO', severity: 'warning' });
+    }
+
+    const series = seriesOf(
+      spectrum,
+      target,
+      centrality,
+      isRatio && ctx.drawLineAtOne ? 1 : null,
     );
+    if (target === 'pt') {
+      acc.pt.push(series);
+    } else if (target === 'raa') {
+      acc.raa.push(series);
+    } else {
+      acc.rcp.push(series);
+    }
+    acc.readouts.push({ centrality, target, points: series.points });
   }
 }
 
-function binCenters(bins: number[]): number[] {
-  const out: number[] = [];
-  for (let i = 0; i < bins.length - 1; i++) {
-    out.push((bins[i] + bins[i + 1]) / 2);
+function freshCtx(): ExecCtx {
+  return {
+    eventsLoaded: false,
+    eventCentrality: null,
+    eventSample: null,
+    nEvt: null,
+    tracksLoaded: false,
+    trackCentrality: null,
+    trackSample: null,
+    ptCut: 0.15,
+    pendingBinning: null,
+    spectrum: null,
+    savedSpectrum: null,
+    nColl: null,
+    nCollSource: null,
+    ppLoaded: false,
+    peripheral: null,
+    drawLineAtOne: false,
+    histogram: null,
+    heatmap: null,
+    appliedScalings: [],
+  };
+}
+
+/** Copy outer context for a for-each branch without sharing mutable spectrum state. */
+function branchCtx(outer: ExecCtx): ExecCtx {
+  return {
+    ...outer,
+    spectrum: null,
+    savedSpectrum: null,
+    peripheral: null,
+    pendingBinning: null,
+    nColl: null,
+    nCollSource: null,
+    ppLoaded: false,
+    drawLineAtOne: outer.drawLineAtOne,
+    appliedScalings: [],
+    histogram: null,
+    heatmap: null,
+  };
+}
+
+function emptyResult(): RaaRunResult {
+  return {
+    ok: false,
+    problems: [],
+    ptSpectra: [],
+    raa: [],
+    rcp: [],
+    multiplicity: null,
+    multVsCentrality: null,
+    readouts: [],
+    reported: [],
+    ppReference: null,
+    nEvents: null,
+    centrality: null,
+  };
+}
+
+function seriesOf(
+  spectrum: RaaSpectrum,
+  target: RaaPlotTarget,
+  centrality: string,
+  referenceLine: number | null,
+): RaaSeries {
+  const centers = centersOf(spectrum.edges);
+  const points: RaaPoint[] = [];
+  for (let i = 0; i < spectrum.values.length; i++) {
+    if (spectrum.empty[i]) {
+      continue;
+    }
+    points.push({
+      x: centers[i],
+      xLow: spectrum.edges[i],
+      xHigh: spectrum.edges[i + 1],
+      y: spectrum.values[i],
+      yErr: Math.abs(spectrum.values[i]) * spectrum.relErr[i],
+    });
   }
-  return out;
+  return {
+    id: `${target}_${centrality}`,
+    label: centralityLabel(centrality),
+    centrality,
+    color: centralityColor(centrality),
+    points,
+    unit: unitLabel(spectrum.unit),
+    referenceLine,
+  };
+}
+
+function targetOf(spectrum: RaaSpectrum): RaaPlotTarget {
+  if (spectrum.ops.includes('divide_pp')) {
+    return 'raa';
+  }
+  if (spectrum.ops.includes('divide_peripheral')) {
+    return 'rcp';
+  }
+  return 'pt';
+}
+
+function binningLabel(id: RaaSpectrum['binning']): string {
+  switch (id) {
+    case 'alice':
+      return 'ALICE';
+    case 'equal-0.5':
+      return 'equal 0.5 GeV/c';
+    case 'equal-1':
+      return 'equal 1 GeV/c';
+    case 'coarse':
+      return 'coarse';
+  }
+}
+
+/**
+ * The published pp spectrum as a drawable series.
+ *
+ * The desktop app puts Pb–Pb and pp on the same canvas before dividing them, and
+ * that picture is the whole argument for R_AA: two spectra of the same shape,
+ * one sitting below the other. Dashed, because the student did not measure it.
+ */
+function ppReferenceSeries(asset: RaaPpAsset): RaaSeries {
+  const spectrum = ppSpectrum(asset);
+  const centers = centersOf(spectrum.edges);
+  const points: RaaPoint[] = [];
+  for (let i = 0; i < spectrum.values.length; i++) {
+    if (spectrum.empty[i]) {
+      continue;
+    }
+    points.push({
+      x: centers[i],
+      xLow: spectrum.edges[i],
+      xHigh: spectrum.edges[i + 1],
+      y: spectrum.values[i],
+      yErr: spectrum.values[i] * spectrum.relErr[i],
+    });
+  }
+  return {
+    id: 'pp_reference',
+    label: 'pp',
+    color: '#cbd5e1',
+    points,
+    unit: unitLabel(spectrum.unit),
+    render: 'steps',
+    dashed: true,
+  };
 }

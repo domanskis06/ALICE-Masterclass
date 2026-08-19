@@ -284,3 +284,12 @@ div.mat-mdc-select-panel.calculator-particle-select-panel {
   background: #0a1832;
   color: #ffffff;
 }
+
+/* Event Exploration is a light exercise (Visual Analysis / Particle Propagation
+   palette), so its copy of the same dialog gets a white surface. Spectrum
+   Analysis keeps the dark one above. */
+.nmf-histogram-dialog-panel.nmf-histogram-dialog-panel--light .mat-mdc-dialog-container,
+.nmf-histogram-dialog-panel.nmf-histogram-dialog-panel--light .mdc-dialog__surface {
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.82);
+}
