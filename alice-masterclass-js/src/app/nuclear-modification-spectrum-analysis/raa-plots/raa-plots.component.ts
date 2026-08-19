@@ -64,6 +64,16 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
   cards: NmfPlotCard[] = [];
 
   /**
+   * One plot showing at a time, tab strip above it, instead of a grid of every
+   * card at once. As soon as a new card exists (the student's chain produced a
+   * figure that was not there before — e.g. the p_T spectrum appearing once a
+   * Plot block runs), its tab is added and it becomes the active one, so the
+   * result the student just produced is what they land on, not whatever was
+   * showing before.
+   */
+  activeCardKey: string | null = null;
+
+  /**
    * Empty-state brief, grouped under the four toolbox categories instead of a
    * flat 1–10 list — the same categories and colours as the build column, so
    * the two halves of the page read as one plan rather than a wall of text
@@ -118,16 +128,45 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
     // so switching the language has to rebuild the cards rather than wait for
     // the next run.
     this.langChange = this.translate.onLangChange.subscribe(() => {
+      const keys = new Set(this.cards.map((c) => c.key));
       this.cards = this.buildCards();
+      this.selectNewestOrFallback(keys);
     });
   }
 
   ngOnChanges(): void {
+    const previousKeys = new Set(this.cards.map((c) => c.key));
     this.cards = this.buildCards();
+    this.selectNewestOrFallback(previousKeys);
   }
 
   ngOnDestroy(): void {
     this.langChange?.unsubscribe();
+  }
+
+  get activeCard(): NmfPlotCard | null {
+    return this.cards.find((c) => c.key === this.activeCardKey) ?? null;
+  }
+
+  selectCard(key: string): void {
+    this.activeCardKey = key;
+  }
+
+  /**
+   * Jump to whichever card is new since the last change. Cards never disappear
+   * on their own (Clear resets the workspace, not the results — see the host's
+   * onClear), so "new" always means "just appeared", never "replaced" — a plain
+   * set difference is enough, no need to track order or content.
+   */
+  private selectNewestOrFallback(previousKeys: Set<string>): void {
+    const added = this.cards.find((c) => !previousKeys.has(c.key));
+    if (added) {
+      this.activeCardKey = added.key;
+      return;
+    }
+    if (!this.cards.some((c) => c.key === this.activeCardKey)) {
+      this.activeCardKey = this.cards[0]?.key ?? null;
+    }
   }
 
   accent(card: NmfPlotCard): string {

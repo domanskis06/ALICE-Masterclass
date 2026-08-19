@@ -2,7 +2,7 @@
   "NUCLEAR_MODIFICATION": {
     "SPECTRUM_ANALYSIS_MENU": "Análisis del espectro",
     "SPECTRUM_ANALYSIS": {
-      "PIPELINE_TITLE": "Cadena de análisis (bloques)",
+      "PIPELINE_TITLE": "Receta de análisis",
       "WORKSPACE_EMPTY": "Arrastra un bloque de la lista de la izquierda para empezar a construir tu análisis.",
       "PLOTS_TITLE": "Resultados",
       "RUN": "Ejecutar",

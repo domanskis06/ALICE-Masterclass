@@ -444,7 +444,7 @@
   "NUCLEAR_MODIFICATION": {
     "SPECTRUM_ANALYSIS_MENU": "Analiza widma",
     "SPECTRUM_ANALYSIS": {
-      "PIPELINE_TITLE": "Przepis analizy (klocki)",
+      "PIPELINE_TITLE": "Przepis analizy",
       "WORKSPACE_EMPTY": "Przeciągnij klocek z listy po lewej, aby zacząć budować analizę.",
       "PLOTS_TITLE": "Wyniki",
       "RUN": "Uruchom",

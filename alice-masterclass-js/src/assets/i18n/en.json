@@ -496,7 +496,7 @@
       "AXIS_TPC_TRACKS": "#TPC tracks"
     },
     "SPECTRUM_ANALYSIS": {
-      "PIPELINE_TITLE": "Analysis pipeline (blocks)",
+      "PIPELINE_TITLE": "Analysis recipe",
       "WORKSPACE_EMPTY": "Drag a block from the list on the left to start building your analysis.",
       "PLOTS_TITLE": "Results",
       "RUN": "Run",

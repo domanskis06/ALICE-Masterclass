@@ -444,7 +444,7 @@
   "NUCLEAR_MODIFICATION": {
     "SPECTRUM_ANALYSIS_MENU": "Analyse du spectre",
     "SPECTRUM_ANALYSIS": {
-      "PIPELINE_TITLE": "Chaîne d'analyse (blocs)",
+      "PIPELINE_TITLE": "Recette d'analyse",
       "WORKSPACE_EMPTY": "Fais glisser un bloc depuis la liste de gauche pour commencer ta chaîne d’analyse.",
       "PLOTS_TITLE": "Résultats",
       "RUN": "Lancer",

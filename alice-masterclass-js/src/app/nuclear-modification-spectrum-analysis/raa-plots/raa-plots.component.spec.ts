@@ -153,4 +153,53 @@ describe('NmfRaaPlotsComponent', () => {
 
     expect(opened.length).toBe(1);
   });
+
+  it('selects the only card once it appears', () => {
+    component.multiplicity = multiplicity;
+    render();
+    expect(component.activeCardKey).toBe('multiplicity');
+  });
+
+  it('jumps to a newly-appeared card instead of staying on the old one', () => {
+    component.multiplicity = multiplicity;
+    render();
+    expect(component.activeCardKey).toBe('multiplicity');
+
+    // A second card appears (e.g. after Plot multiplicity vs centrality runs) —
+    // the tab strip should land the student on what they just produced. A plain
+    // ngOnChanges (not a full detectChanges) here, like the accent test above:
+    // re-checking the template after swapping an input by hand trips Angular's
+    // dev-mode double check, which is a test artefact, not a real bug.
+    component.multVsCentrality = map;
+    component.ngOnChanges();
+    expect(component.activeCardKey).toBe('mult-vs-centrality');
+  });
+
+  it('a manual tab switch survives a re-render that adds no new card', () => {
+    // Built up one card at a time, as a real run always does — two cards
+    // cannot genuinely appear in the same instant outside a contrived test.
+    component.multiplicity = multiplicity;
+    render();
+    component.multVsCentrality = map;
+    component.ngOnChanges();
+    expect(component.activeCardKey).toBe('mult-vs-centrality');
+
+    component.selectCard('multiplicity');
+    expect(component.activeCardKey).toBe('multiplicity');
+
+    // Re-evaluating with the exact same cards (e.g. a language change) must not
+    // silently snap the student back to whatever was newest.
+    component.ngOnChanges();
+    expect(component.activeCardKey).toBe('multiplicity');
+  });
+
+  it('activeCard resolves the selected key back to its card', () => {
+    component.multiplicity = multiplicity;
+    render();
+    component.multVsCentrality = map;
+    component.ngOnChanges();
+
+    component.selectCard('multiplicity');
+    expect(component.activeCard?.key).toBe('multiplicity');
+  });
 });
