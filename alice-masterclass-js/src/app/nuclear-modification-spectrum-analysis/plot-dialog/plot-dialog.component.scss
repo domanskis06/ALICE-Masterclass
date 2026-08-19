@@ -1,8 +1,16 @@
-/* Same enlarged-plot chrome as the exercise-1 histogram dialog. */
+@use '../../../styles/nmf-panel' as nmf;
+
+/* The dialog is a CDK overlay attached to <body>, outside the exercise host, so
+   the palette does not cascade in — declare it on this component's own host,
+   exactly as exercise 1's histogram dialog does. */
+:host {
+  @include nmf.light-tokens;
+}
+
 .nmf-sa-dialog {
   position: relative;
-  background: var(--va-bg-panel-solid, #0a1832);
-  color: var(--va-text, #ffffff);
+  background: var(--va-bg-panel-solid, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   min-width: min(80vw, 720px);
 }
 
@@ -18,7 +26,7 @@
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   font-size: 1.15rem;
   font-weight: 700;
 }
@@ -31,7 +39,7 @@
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
 }
 
 .nmf-sa-dialog-content {
@@ -73,8 +81,8 @@
 .nmf-sa-dialog-footer {
   margin: 10px 0 0;
   padding-top: 8px;
-  border-top: 1px solid rgba(148, 163, 184, 0.18);
-  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  border-top: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
   font-size: 0.82rem;
   line-height: 1.45;
 
@@ -83,7 +91,7 @@
   }
 
   ::ng-deep strong {
-    color: var(--va-text, #ffffff);
+    color: var(--va-text, rgba(0, 0, 0, 0.82));
     font-weight: 700;
   }
 }

@@ -12,7 +12,7 @@
   max-height: 132px;
   overflow-y: auto;
   list-style: none;
-  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
   font-size: 0.76rem;
   line-height: 1.45;
   @include nmf.card;
@@ -56,7 +56,9 @@
 }
 
 .nmf-sa-problem--error {
-  color: #fca5a5;
+  /* #fca5a5 is a pastel salmon, legible on the dark card this used to be —
+     next to invisible as text on white. Full-strength ALICE red reads on both. */
+  color: #b71c1c;
 
   &::before {
     background: #f87171;

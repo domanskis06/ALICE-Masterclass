@@ -274,22 +274,15 @@ div.mat-mdc-select-panel.calculator-particle-select-panel {
   }
 }
 
-/* NMF single-histogram dialog (CDK overlay — outside component host). */
+/* NMF single-histogram dialog (CDK overlay — outside component host). Both
+   nuclear-modification exercises are light (Visual Analysis / Particle
+   Propagation palette), so this is the only variant now. */
 .cdk-overlay-pane.nmf-histogram-dialog-panel {
   z-index: 1100;
 }
 
 .nmf-histogram-dialog-panel .mat-mdc-dialog-container,
 .nmf-histogram-dialog-panel .mdc-dialog__surface {
-  background: #0a1832;
-  color: #ffffff;
-}
-
-/* Event Exploration is a light exercise (Visual Analysis / Particle Propagation
-   palette), so its copy of the same dialog gets a white surface. Spectrum
-   Analysis keeps the dark one above. */
-.nmf-histogram-dialog-panel.nmf-histogram-dialog-panel--light .mat-mdc-dialog-container,
-.nmf-histogram-dialog-panel.nmf-histogram-dialog-panel--light .mdc-dialog__surface {
   background: #ffffff;
   color: rgba(0, 0, 0, 0.82);
 }

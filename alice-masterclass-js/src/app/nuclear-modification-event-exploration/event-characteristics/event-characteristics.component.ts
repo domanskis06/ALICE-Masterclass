@@ -119,7 +119,7 @@ export class NmfEventCharacteristicsComponent {
     this.dialog
       .open(NmfHistogramDialogComponent, {
         data: { spec: h, stats: this.stats(h) },
-        panelClass: ['nmf-histogram-dialog-panel', 'nmf-histogram-dialog-panel--light'],
+        panelClass: 'nmf-histogram-dialog-panel',
         autoFocus: false,
         hasBackdrop: true,
         disableClose: false,

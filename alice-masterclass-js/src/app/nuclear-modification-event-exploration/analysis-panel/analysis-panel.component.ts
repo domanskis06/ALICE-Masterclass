@@ -104,7 +104,7 @@ export class NmfAnalysisPanelComponent implements OnChanges {
     this.dialog
       .open(NmfHistogramDialogComponent, {
         data: { spec: c.ptSpec, stats },
-        panelClass: ['nmf-histogram-dialog-panel', 'nmf-histogram-dialog-panel--light'],
+        panelClass: 'nmf-histogram-dialog-panel',
         autoFocus: false,
         hasBackdrop: true,
         disableClose: false,

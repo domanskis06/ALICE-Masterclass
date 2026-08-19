@@ -1,36 +1,45 @@
 <div class="nmf-sa-plots" data-testid="nmf-raa-plots">
   @if (!cards.length) {
     <aside class="nmf-sa-mission" data-testid="nmf-sa-mission">
-      <h3 class="nmf-sa-mission-title">
-        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_TITLE' | translate }}
-      </h3>
-      <ol class="nmf-sa-mission-steps">
-        @for (step of missionSteps; track step) {
-          <li [innerHTML]="step | translate"></li>
-        }
-      </ol>
-      <p
-        class="nmf-sa-mission-footer"
-        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_FOOTER' | translate"
-      ></p>
-      <div class="nmf-sa-mission-actions">
-        <button
-          mat-raised-button
-          color="primary"
-          type="button"
-          data-testid="nmf-sa-mission-start"
-          (click)="startTutorial.emit()"
-        >
-          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_START' | translate }}
-        </button>
-        <button
-          mat-stroked-button
-          type="button"
-          data-testid="nmf-sa-mission-help"
-          (click)="openHelp.emit()"
-        >
-          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_HELP' | translate }}
-        </button>
+      <div class="nmf-sa-mission-card">
+        <h3 class="nmf-sa-mission-title">
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_TITLE' | translate }}
+        </h3>
+        <div class="nmf-sa-mission-groups">
+          @for (group of missionGroups; track group.name) {
+            <section class="nmf-sa-mission-group" [style.--group-accent]="group.accent">
+              <h4 class="nmf-sa-mission-group-title">{{ group.name }}</h4>
+              <ol class="nmf-sa-mission-steps">
+                @for (step of group.steps; track step) {
+                  <li [innerHTML]="step | translate"></li>
+                }
+              </ol>
+            </section>
+          }
+        </div>
+        <p
+          class="nmf-sa-mission-footer"
+          [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_FOOTER' | translate"
+        ></p>
+        <div class="nmf-sa-mission-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            data-testid="nmf-sa-mission-start"
+            (click)="startTutorial.emit()"
+          >
+            {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_START' | translate }}
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="nmf-sa-mission-help"
+            (click)="openHelp.emit()"
+          >
+            {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_HELP' | translate }}
+          </button>
+        </div>
       </div>
     </aside>
   }

@@ -19,7 +19,7 @@
 
   .nmf-heatmap-highlight {
     fill: none;
-    stroke: #ffffff;
+    stroke: var(--va-text, rgba(15, 23, 42, 0.82));
     stroke-width: 1.4;
     stroke-dasharray: 6 4;
   }

@@ -72,10 +72,12 @@ export const RAA_READ_OPTIONS: [string, string][] = [
  * The same value is the toolbox category colour, so the rail, the flyout blocks
  * and the blocks on the canvas all agree.
  */
-const HUE_DATA = '#2563eb';
-const HUE_FILL = '#0f766e';
-const HUE_NORM = '#b45309';
-const HUE_OUTPUT = '#7c3aed';
+/** Toolbox category hues — exported so the mission brief's step groups can
+ * reuse the exact colours instead of drifting off with their own copies. */
+export const HUE_DATA = '#2563eb';
+export const HUE_FILL = '#0f766e';
+export const HUE_NORM = '#b45309';
+export const HUE_OUTPUT = '#7c3aed';
 
 const STATEMENT = { previousStatement: null, nextStatement: null };
 
@@ -357,9 +359,9 @@ export function buildRaaToolbox(): Blockly.utils.toolbox.ToolboxInfo {
   };
 }
 
-export function createRaaDarkTheme(): Blockly.Theme {
-  return Blockly.Theme.defineTheme('nmfDark', {
-    name: 'nmfDark',
+export function createRaaLightTheme(): Blockly.Theme {
+  return Blockly.Theme.defineTheme('nmfLight', {
+    name: 'nmfLight',
     base: Blockly.Themes.Classic,
     /**
      * Blockly measures label text with these values, so the font has to be set
@@ -372,19 +374,20 @@ export function createRaaDarkTheme(): Blockly.Theme {
       size: 11.5,
     },
     componentStyles: {
-      // Three tones of the same navy: rail, canvas, flyout. Each surface is a
-      // step apart so the three regions read as separate without a hard seam.
-      workspaceBackgroundColour: '#0a1832',
-      toolboxBackgroundColour: '#0c1f3f',
-      toolboxForegroundColour: '#e5edf7',
-      flyoutBackgroundColour: '#102546',
-      flyoutForegroundColour: '#e5edf7',
-      flyoutOpacity: 0.98,
-      scrollbarColour: '#64748b',
-      insertionMarkerColour: '#38bdf8',
-      insertionMarkerOpacity: 0.6,
-      scrollbarOpacity: 0.45,
-      cursorColour: '#f8fafc',
+      // Three tones of near-white: rail, canvas, flyout. Each surface is a step
+      // apart so the three regions read as separate without a hard seam —
+      // mirrors exercise 1's filter-builder theme (nmfFilterLight).
+      workspaceBackgroundColour: '#ffffff',
+      toolboxBackgroundColour: '#f1f5f9',
+      toolboxForegroundColour: '#0f172a',
+      flyoutBackgroundColour: '#f8fafc',
+      flyoutForegroundColour: '#0f172a',
+      flyoutOpacity: 1,
+      scrollbarColour: '#94a3b8',
+      insertionMarkerColour: '#b71c1c',
+      insertionMarkerOpacity: 0.4,
+      scrollbarOpacity: 0.5,
+      cursorColour: '#0f172a',
     },
   });
 }

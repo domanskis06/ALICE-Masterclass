@@ -12,9 +12,10 @@
   padding: 10px 12px 12px;
   box-sizing: border-box;
   @include nmf.card;
-  /* Outlined fields and stroked buttons need the dark palette spelled out, or
-     they render in the light theme's ink and vanish against the panel. */
-  @include nmf.dark-controls;
+  /* Outlined fields and stroked buttons need the panel's own palette spelled
+     out, or Material renders them in its default ink regardless of the card
+     underneath. */
+  @include nmf.form-controls;
 }
 
 .nmf-sa-extract-head {
@@ -31,7 +32,7 @@
 
 .nmf-sa-extract-empty {
   margin: 0;
-  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
   font-size: 0.8rem;
 }
 
@@ -68,32 +69,33 @@
 
 /**
  * Material renders this panel's outlined select and its two shortcut buttons in
- * the default light-theme ink — near-black on the dark card, so the field labels
- * and the momentum shortcuts were effectively invisible. `nmf.dark-controls`
- * sets the documented `--mdc-*` tokens, but this Material version does not read
- * them here (the button even carries `mat-unthemed`), so set the colour itself.
+ * its own default ink regardless of the card colour underneath — `mat-unthemed`
+ * is on the button, and this Material version does not pick up `form-controls`'s
+ * `--mdc-*` tokens here — so the field labels and momentum shortcuts were
+ * effectively invisible against the dark card this used to be. Set the colour
+ * directly instead.
  */
 :host ::ng-deep {
   .mdc-floating-label,
   .mat-mdc-floating-label,
   .mat-mdc-select-value-text,
   .mat-mdc-select-min-line {
-    color: var(--va-text, #ffffff) !important;
+    color: var(--va-text, rgba(15, 23, 42, 0.82)) !important;
   }
 
   .mat-mdc-form-field:not(.mat-focused) .mdc-floating-label {
-    color: var(--va-muted, rgba(255, 255, 255, 0.7)) !important;
+    color: var(--va-muted, rgba(15, 23, 42, 0.55)) !important;
   }
 
   .mat-mdc-select-arrow svg {
-    fill: var(--va-muted, rgba(255, 255, 255, 0.7)) !important;
+    fill: var(--va-muted, rgba(15, 23, 42, 0.55)) !important;
   }
 
   .nmf-sa-extract-shortcuts .mat-mdc-outlined-button:not(:disabled) .mdc-button__label {
-    color: var(--va-text, #ffffff) !important;
+    color: var(--va-text, rgba(15, 23, 42, 0.82)) !important;
   }
 
   .nmf-sa-extract-shortcuts .mat-mdc-outlined-button:disabled .mdc-button__label {
-    color: rgba(255, 255, 255, 0.38) !important;
+    color: color-mix(in srgb, var(--va-muted, rgba(15, 23, 42, 0.55)) 55%, transparent) !important;
   }
 }

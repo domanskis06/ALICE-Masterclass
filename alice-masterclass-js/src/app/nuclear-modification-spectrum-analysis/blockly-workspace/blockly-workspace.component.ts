@@ -19,7 +19,7 @@ import {
 import {
   appendRecipeBlocks,
   buildRaaToolbox,
-  createRaaDarkTheme,
+  createRaaLightTheme,
   recipeFromWorkspace,
   registerRaaBlocks,
 } from './raa-blockly';
@@ -63,7 +63,7 @@ export class NmfBlocklyWorkspaceComponent implements AfterViewInit, OnDestroy {
     registerRaaBlocks();
     this.workspace = Blockly.inject(this.blocklyDiv.nativeElement, {
       toolbox: buildRaaToolbox(),
-      theme: createRaaDarkTheme(),
+      theme: createRaaLightTheme(),
       // The block picker is docked under the category list instead of flying out
       // over the canvas. Passed per injection, so exercise 1 keeps the stock one.
       plugins: {

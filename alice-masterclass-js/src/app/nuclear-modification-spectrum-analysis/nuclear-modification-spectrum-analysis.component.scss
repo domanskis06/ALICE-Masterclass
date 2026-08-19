@@ -2,7 +2,7 @@
 
 :host {
   display: block;
-  @include nmf.tokens;
+  @include nmf.light-tokens;
 }
 
 .nmf-sa-page {
@@ -39,6 +39,7 @@
   }
 }
 
+/** Sits above a card now, so it takes the same left inset as one. */
 .nmf-sa-col-head {
   flex: 0 0 auto;
   display: flex;
@@ -46,6 +47,7 @@
   align-items: center;
   gap: 4px 10px;
   min-height: 40px;
+  padding-left: 2px;
 }
 
 /** Run / Clear / status, moved here from the old bottom bar. */
@@ -75,14 +77,13 @@
   line-height: 18px;
 }
 
-/** Material's default outline is near-invisible on the dark panel. */
 .nmf-sa-clear-button {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.45);
+  color: var(--va-text, rgba(15, 23, 42, 0.82));
+  border-color: var(--va-border, rgba(15, 23, 42, 0.16));
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.75);
-    background: rgba(255, 255, 255, 0.06);
+    border-color: color-mix(in srgb, var(--va-text, rgba(15, 23, 42, 0.82)) 60%, var(--va-border, rgba(15, 23, 42, 0.16)));
+    background: var(--nmf-surface-hover, #eaf1fb);
   }
 }
 
@@ -115,14 +116,16 @@
   }
 }
 
+/* #4ade80 / #fbbf24 read fine on a dark card but fail text contrast on white
+   (~1.7:1); the 700-weight shades below hold the same hue at ~5:1. */
 .nmf-sa-status--ok {
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.12);
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.1);
 }
 
 .nmf-sa-status--warn {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.12);
+  color: #b45309;
+  background: rgba(180, 83, 9, 0.1);
 }
 
 /** Separates the two things you do to the pipeline from the two ways to get help. */
@@ -151,21 +154,17 @@
   color: var(--va-text);
 }
 
-/** A tick in the workspace's accent colour, so the header belongs to the card. */
-.nmf-sa-col--build .nmf-sa-section-title::before {
+/** A red tick, ALICE's own accent, so the header belongs to the card and the
+ * two columns read as one branded page rather than borrowed exercise-1 blue. */
+.nmf-sa-section-title::before {
   content: '';
   display: inline-block;
   width: 3px;
   height: 0.95em;
   margin-right: 8px;
   border-radius: 2px;
-  background: #38bdf8;
+  background: #b71c1c;
   vertical-align: -0.1em;
-}
-
-/** The header sits above a card now, so it needs the same left inset as one. */
-.nmf-sa-col--build .nmf-sa-col-head {
-  padding-left: 2px;
 }
 
 .nmf-sa-help {

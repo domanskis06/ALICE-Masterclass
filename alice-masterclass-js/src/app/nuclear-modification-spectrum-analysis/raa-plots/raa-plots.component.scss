@@ -31,40 +31,77 @@
   overflow: hidden;
 }
 
+/**
+ * Outer region: centres a bounded card rather than letting bare text float in
+ * the whole tile strip. A flat wall of "1. … 10. …" text with no frame read as
+ * an abandoned to-do list — the card gives it an edge, and grouping the steps
+ * under the same four categories and colours as the build column ties this
+ * brief to the palette sitting right next to it instead of repeating it blind.
+ */
 .nmf-sa-mission {
   grid-column: 1 / -1;
   flex: 1 1 auto;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 14px;
   min-height: 0;
-  margin: 0;
-  padding: 4px 4px 8px;
+  padding: 12px;
   box-sizing: border-box;
+}
+
+.nmf-sa-mission-card {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  box-sizing: border-box;
+  @include nmf.card;
 }
 
 .nmf-sa-mission-title {
   margin: 0;
-  font-size: clamp(1.15rem, 1.6vw, 1.5rem);
+  font-size: clamp(1.1rem, 1.4vw, 1.3rem);
   font-weight: 700;
   line-height: 1.2;
   color: var(--va-text, #ffffff);
 }
 
+.nmf-sa-mission-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 20px;
+}
+
+.nmf-sa-mission-group {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--group-accent, var(--va-border));
+}
+
+.nmf-sa-mission-group-title {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--group-accent, var(--va-muted)) 65%, black);
+}
+
 .nmf-sa-mission-steps {
   margin: 0;
-  padding: 0 0 0 1.35rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 6px 28px;
+  padding: 0 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   color: var(--va-text, #ffffff);
-  font-size: clamp(0.9rem, 1.05vw, 1.05rem);
+  font-size: 0.86rem;
   font-weight: 600;
   line-height: 1.3;
 
   li::marker {
-    color: #b71c1c;
+    color: var(--group-accent, #b71c1c);
     font-weight: 700;
   }
 
@@ -75,8 +112,8 @@
 
 .nmf-sa-mission-footer {
   margin: 0;
-  color: var(--va-muted, rgba(255, 255, 255, 0.7));
-  font-size: 0.95rem;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font-size: 0.85rem;
   font-weight: 600;
   line-height: 1.4;
 
@@ -89,17 +126,16 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 4px;
 }
 
 .nmf-sa-mission-actions [mat-stroked-button],
 .nmf-sa-mission-actions .mat-mdc-outlined-button {
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: var(--va-text, rgba(15, 23, 42, 0.82)) !important;
+  border-color: var(--va-border, rgba(15, 23, 42, 0.16)) !important;
 }
 
 .nmf-sa-plot {
-  --nmf-plot-accent: #38bdf8;
+  --nmf-plot-accent: #b71c1c;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -166,7 +202,7 @@
   margin: 6px 0 0;
   padding-top: 6px;
   border-top: 1px solid rgba(148, 163, 184, 0.14);
-  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
   font-size: 0.76rem;
   line-height: 1.4;
 

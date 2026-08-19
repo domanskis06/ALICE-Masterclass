@@ -1,33 +1,17 @@
 /**
- * Shared look of the two nuclear-modification exercises.
- *
- * Exercise 1 (Event Exploration) is the source of truth: these are its values,
- * lifted out so Spectrum Analysis cannot drift away from them again. Before this
- * partial the two modules disagreed on --va-text (#ffffff vs #e5edf7) and
- * --va-muted, which made the same UI look subtly different between exercises.
+ * Shared look of the two nuclear-modification exercises. Both are light now —
+ * Event Exploration (exercise 1) set the palette first, and Spectrum Analysis
+ * (exercise 2) originally shipped dark before switching to match it. The dark
+ * palette this partial used to also export is gone: nothing else ever
+ * consumed it, so a second theme was pure risk with no reader.
  */
 
-/** Dark palette. Include inside a `:host` (or any) selector. */
-@mixin tokens {
-  --va-bg-panel-solid: #0a1832;
-  --va-bg: var(--va-bg-panel-solid);
-  --va-bg-elevated: var(--va-bg-panel-solid);
-  --va-bg-panel: var(--va-bg-panel-solid);
-  --va-border: rgba(148, 163, 184, 0.28);
-  --va-text: #ffffff;
-  --va-muted: rgba(255, 255, 255, 0.7);
-  --va-control-bg: rgba(15, 23, 42, 0.94);
-}
-
 /**
- * Light palette — Event Exploration (exercise 1).
- *
  * Mirrors Particle Propagation's default `--pp-*` values
  * (particle-propagation.component.scss) and Visual Analysis with
- * `visualDarkMode = false`, so the three light exercises read as one theme.
- *
- * ADDITIVE: the dark `tokens` mixin above is deliberately untouched — Spectrum
- * Analysis includes it and must stay pixel-identical.
+ * `visualDarkMode = false`, so all four exercises read as one theme —
+ * red-and-white, CERN/ALICE branded. Include inside a `:host` (or any)
+ * selector.
  */
 @mixin light-tokens {
   --va-bg-panel-solid: #ffffff;
@@ -67,32 +51,34 @@
   padding: 0;
 }
 
-/** Panel / card surface used for every result block. */
 /**
- * Every panel used to carry a 3px accent bar in its own colour. With the results
- * column on one screen that put blue, green, amber and up to ten centrality
- * colours side by side, and the eye had nowhere to land. The bar is opt-in now:
- * colour belongs to the data — plot series, centrality chips, row swatches — not
- * to the frame around it. Pass `'left'` deliberately if a panel must stand out.
+ * Panel / card surface used for every result block: a hair off the page white,
+ * a soft shadow to lift it rather than a flat colour block, and a red-brand
+ * left rail on request. Every panel used to carry that rail by default — with
+ * the results column on one screen that put blue, green, amber and up to ten
+ * centrality colours side by side, and the eye had nowhere to land. The rail
+ * is opt-in now: colour belongs to the data, not to the frame around it.
  */
 @mixin card($accent: 'none') {
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
   border-radius: 10px;
-  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+  background: var(--nmf-surface, #f7f9fc);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 1px rgba(15, 23, 42, 0.03);
 
   @if $accent == 'left' {
-    border-left: 3px solid var(--nmf-plot-accent, #38bdf8);
+    border-left: 3px solid var(--nmf-plot-accent, #b71c1c);
   }
 }
 
 @mixin card-interactive {
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover,
   &:focus-visible {
-    background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 72%, #1e3a5f);
-    border-color: rgba(148, 163, 184, 0.42);
+    background: var(--nmf-surface-hover, #eaf1fb);
+    border-color: color-mix(in srgb, var(--nmf-plot-accent, #b71c1c) 40%, var(--nmf-surface-border, rgba(15, 23, 42, 0.16)));
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
     outline: none;
   }
 }
@@ -108,10 +94,16 @@
   min-width: 0;
   box-sizing: border-box;
   padding-bottom: 4px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  border-bottom: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
 }
 
-/** Small uppercase class name, e.g. `0–5%`. */
+/**
+ * Small uppercase class name, e.g. `0–5%`. The centrality scale
+ * (`centralityColor()`) is pastel by design — legible as an icon stroke or a
+ * swatch on a light card, too pale to read as text (a 0–5% pink measured
+ * 2.5:1 against the card, an amber class as low as 1.6:1). Darkening it 45%
+ * toward black keeps each class's hue identity while clearing AA contrast.
+ */
 @mixin class-label {
   flex: 0 0 auto;
   margin: 0;
@@ -119,7 +111,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--nmf-plot-accent, rgba(226, 232, 240, 0.62));
+  color: color-mix(in srgb, var(--nmf-plot-accent, var(--va-muted)) 55%, black);
   white-space: nowrap;
 }
 
@@ -138,7 +130,7 @@
   gap: 4px 10px;
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(226, 232, 240, 0.55);
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
   white-space: nowrap;
 }
 
@@ -163,7 +155,7 @@
   width: 48px;
   height: 30px;
   overflow: visible;
-  color: var(--nmf-plot-accent, #38bdf8);
+  color: var(--nmf-plot-accent, var(--va-muted));
 
   line {
     stroke: currentColor;
@@ -278,18 +270,18 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
-    color: rgba(226, 232, 240, 0.62);
+    background: var(--nmf-surface, #f7f9fc);
+    color: var(--va-muted, rgba(15, 23, 42, 0.55));
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+    border-bottom: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
   }
 
   tbody td {
-    color: var(--va-text, #ffffff);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    color: var(--va-text, rgba(15, 23, 42, 0.82));
+    border-bottom: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
   }
 
   tbody tr:last-child td {
@@ -297,23 +289,25 @@
   }
 
   .nmf-cell-muted {
-    color: rgba(226, 232, 240, 0.45);
+    color: color-mix(in srgb, var(--va-muted, rgba(15, 23, 42, 0.55)) 75%, transparent);
   }
 }
 
 /**
- * Angular Material controls sitting directly on the dark panel. Without this an
- * outlined field and a stroked button both render in the light theme's ink and
- * all but disappear — which is what happened to the read-off panel.
+ * Angular Material controls sitting directly on a card, spelled out in the
+ * panel's own tokens. Without this an outlined field and a stroked button
+ * render in Material's default ink, which does not track the card surface and
+ * can all but disappear against it (this is what happened to the read-off
+ * panel when the surface was still dark).
  */
-@mixin dark-controls {
+@mixin form-controls {
   .mat-mdc-form-field {
     --mdc-outlined-text-field-input-text-color: #{'var(--va-text)'};
     --mdc-outlined-text-field-label-text-color: #{'var(--va-muted)'};
     --mdc-outlined-text-field-hover-label-text-color: #{'var(--va-text)'};
     --mdc-outlined-text-field-focus-label-text-color: #ff6f00;
     --mdc-outlined-text-field-outline-color: #{'var(--va-border)'};
-    --mdc-outlined-text-field-hover-outline-color: rgba(226, 232, 240, 0.55);
+    --mdc-outlined-text-field-hover-outline-color: #{'var(--va-text)'};
     --mdc-outlined-text-field-focus-outline-color: #ff6f00;
     --mat-select-enabled-trigger-text-color: #{'var(--va-text)'};
     --mat-select-enabled-arrow-color: #{'var(--va-muted)'};
@@ -322,12 +316,12 @@
 
   .mat-mdc-outlined-button:not(:disabled) {
     --mdc-outlined-button-label-text-color: #{'var(--va-text)'};
-    --mdc-outlined-button-outline-color: rgba(255, 255, 255, 0.55);
+    --mdc-outlined-button-outline-color: #{'var(--va-border)'};
   }
 
   .mat-mdc-outlined-button:disabled {
-    --mdc-outlined-button-disabled-label-text-color: rgba(255, 255, 255, 0.32);
-    --mdc-outlined-button-disabled-outline-color: rgba(255, 255, 255, 0.16);
+    --mdc-outlined-button-disabled-label-text-color: color-mix(in srgb, var(--va-muted) 55%, transparent);
+    --mdc-outlined-button-disabled-outline-color: color-mix(in srgb, var(--va-border) 55%, transparent);
   }
 }
 
@@ -337,13 +331,13 @@
  */
 @mixin plot-chrome {
   text {
-    fill: var(--va-text, #ffffff);
+    fill: var(--va-text, rgba(15, 23, 42, 0.82));
     font-size: 11px;
   }
 
   .nmf-plot-axis path,
   .nmf-plot-axis line {
-    stroke: rgba(226, 232, 240, 0.55);
+    stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
   }
 
   .nmf-plot-axis text {
@@ -361,12 +355,12 @@
   }
 
   .nmf-plot-grid line {
-    stroke: rgba(148, 163, 184, 0.16);
+    stroke: var(--nmf-grid, rgba(15, 23, 42, 0.14));
     stroke-width: 1;
   }
 
   .nmf-plot-empty {
-    fill: var(--va-muted, rgba(255, 255, 255, 0.7));
+    fill: var(--va-muted, rgba(15, 23, 42, 0.55));
     font-size: 12px;
   }
 
@@ -377,7 +371,7 @@
   }
 
   .nmf-plot-statbox text {
-    fill: rgba(226, 232, 240, 0.62);
+    fill: var(--nmf-axis, rgba(15, 23, 42, 0.62));
     font-weight: 500;
   }
 }

@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 
 import { RaaHeatmap, RaaHistogram, RaaSeries } from '../../shared/models/raa/spectrum';
 import { centralityColor, centralityImpactOffset } from '../../shared/utils/raa-centrality';
+import { HUE_DATA, HUE_FILL, HUE_NORM, HUE_OUTPUT } from '../blockly-workspace/raa-blockly';
 import { NmfPlotDialogComponent } from '../plot-dialog/plot-dialog.component';
 import { histogramAsSeries, NmfSeriesMode } from '../series-plot/series-plot.component';
 
@@ -62,18 +63,47 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
 
   cards: NmfPlotCard[] = [];
 
-  /** Empty-state brief: what the pipeline must do, in order. */
-  readonly missionSteps = [
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_1',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_2',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_3',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_4',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_5',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_6',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_7',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_8',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_9',
-    'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_10',
+  /**
+   * Empty-state brief, grouped under the four toolbox categories instead of a
+   * flat 1–10 list — the same categories and colours as the build column, so
+   * the two halves of the page read as one plan rather than a wall of text
+   * next to an unrelated block palette.
+   */
+  readonly missionGroups: { name: string; accent: string; steps: string[] }[] = [
+    {
+      name: 'Events',
+      accent: HUE_DATA,
+      steps: [
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_1',
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_2',
+      ],
+    },
+    {
+      name: 'Tracks',
+      accent: HUE_FILL,
+      steps: [
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_3',
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_4',
+      ],
+    },
+    {
+      name: 'Normalise',
+      accent: HUE_NORM,
+      steps: [
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_5',
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_6',
+      ],
+    },
+    {
+      name: 'References & plot',
+      accent: HUE_OUTPUT,
+      steps: [
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_7',
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_8',
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_9',
+        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_10',
+      ],
+    },
   ];
 
   constructor(
@@ -101,7 +131,7 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   accent(card: NmfPlotCard): string {
-    return card.centrality ? centralityColor(card.centrality) : '#38bdf8';
+    return card.centrality ? centralityColor(card.centrality) : '#b71c1c';
   }
 
   impactOffset(card: NmfPlotCard): number {
