@@ -184,21 +184,19 @@
 /* —— results column: one screen, no tabs —— */
 
 /**
- * Plots across the top, then the centrality reference and the collected numbers
- * side by side. `minmax(0, …)` on both axes is what stops a long table from
- * pushing the grid taller than the column — each panel scrolls inside itself.
+ * Plots on top, the collected numbers below. `minmax(0, …)` on both axes is
+ * what stops a long table from pushing the grid taller than the column —
+ * each panel scrolls inside itself.
  */
 .nmf-sa-screen {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 8px;
   min-height: 0;
 }
 
 .nmf-sa-screen-plots {
-  grid-column: 1 / -1;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -210,25 +208,17 @@
   min-height: 0;
 }
 
-.nmf-sa-screen-classes,
 .nmf-sa-screen-results {
   min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-/**
- * Safety valve for short viewports: the two stacked panels scroll as a unit
- * rather than being crushed. The page itself still never scrolls.
- */
-.nmf-sa-screen-results {
+  /* Safety valve for short viewports: scrolls as a unit rather than being
+     crushed. The page itself still never scrolls. */
   overflow-y: auto;
 }
 
-/** The two lower panels own their scrollbars; the page never gets one. */
-.nmf-sa-screen-classes > *,
 .nmf-sa-screen-results > * {
   min-height: 0;
 }

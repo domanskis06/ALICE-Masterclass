@@ -131,17 +131,6 @@ export class NuclearModificationSpectrumAnalysisComponent
     this.problems = [];
   }
 
-  /** Centrality classes the accumulated results cover, for the reference table. */
-  get usedClasses(): string[] {
-    return [
-      ...new Set(
-        [...this.raa, ...this.rcp, ...this.ptSpectra]
-          .map((entry) => entry.centrality)
-          .filter((entry): entry is string => !!entry),
-      ),
-    ];
-  }
-
   onToggleResultsFullscreen(): void {
     this.resultsFullscreen = !this.resultsFullscreen;
   }

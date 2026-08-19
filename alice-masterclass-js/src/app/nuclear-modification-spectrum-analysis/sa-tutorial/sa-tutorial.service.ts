@@ -5,7 +5,6 @@ import { RaaStep, RaaStepKind } from '../../shared/models/raa/spectrum';
 import {
   NMF_SA_CLASSES_TO_COLLECT,
   NMF_SA_GATES,
-  NMF_SA_SELECTOR_CLASSES,
   NMF_SA_SELECTOR_PAGE,
   NMF_SA_SELECTOR_PLOTS,
   NMF_SA_SELECTOR_RESULTS,
@@ -634,23 +633,12 @@ export class NmfSaTutorialService {
         onHighlighted: () => this.prepareWorkspaceStep('normalise'),
       },
       {
-        element: NMF_SA_SELECTOR_CLASSES,
-        disableActiveInteraction: false,
-        popover: {
-          title: 'Where N_coll comes from',
-          description:
-            'This table is <strong>input</strong>, not a measurement: a Glauber model turns the centrality of a collision into the average number of nucleon–nucleon collisions inside it. A 0–5% collision contains a few hundred times more of them than an 80–90% one — the factor R<sub>AA</sub> exists to divide out.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-      {
         element: NMF_SA_SELECTOR_WORKSPACE,
         disableActiveInteraction: false,
         popover: {
           title: 'One nucleon–nucleon collision',
           description:
-            'A central Pb–Pb collision contains hundreds of nucleon–nucleon collisions. Scale your yield down to a single one of them, taking N<sub>coll</sub> from the table you just saw. Read it for the wrong class and your R<sub>AA</sub> is off by a large factor.',
+            'A central Pb–Pb collision contains hundreds of nucleon–nucleon collisions. Scale your yield down to a single one of them with the <strong>Look up number of collisions</strong> block. Read it for the wrong class and your R<sub>AA</sub> is off by a large factor.',
           side: 'right',
           align: 'start',
           ...gated,

@@ -14,14 +14,12 @@ export const NMF_SA_STEP_HIST_PT = 6;
 export const NMF_SA_STEP_LOOK_AT_KINKS = 7;
 export const NMF_SA_STEP_BIN_WIDTH = 8;
 export const NMF_SA_STEP_EVENTS_NORM = 9;
-/** The Glauber lookup table, shown before the block that reads from it. */
-export const NMF_SA_STEP_CLASSES_TABLE = 10;
-export const NMF_SA_STEP_NCOLL = 11;
-export const NMF_SA_STEP_RAA = 12;
+export const NMF_SA_STEP_NCOLL = 10;
+export const NMF_SA_STEP_RAA = 11;
 /** The collected-results sheet. */
-export const NMF_SA_STEP_RESULTS = 13;
-export const NMF_SA_STEP_COLLECT = 14;
-export const NMF_SA_STEP_DONE = 15;
+export const NMF_SA_STEP_RESULTS = 12;
+export const NMF_SA_STEP_COLLECT = 13;
+export const NMF_SA_STEP_DONE = 14;
 
 /** Centrality class the tour builds its example with. */
 export const NMF_SA_TOUR_CENTRALITY = '0-5';
@@ -33,7 +31,6 @@ export const NMF_SA_SELECTOR_PAGE = '#nmf-sa-tour-page';
 export const NMF_SA_SELECTOR_WORKSPACE = '#nmf-sa-tour-workspace';
 export const NMF_SA_SELECTOR_RUN = '#nmf-sa-tour-run';
 export const NMF_SA_SELECTOR_PLOTS = '#nmf-sa-tour-plots';
-export const NMF_SA_SELECTOR_CLASSES = '#nmf-sa-tour-classes';
 export const NMF_SA_SELECTOR_RESULTS = '#nmf-sa-tour-results';
 
 export type NmfSaToolboxCategory = 'events' | 'tracks' | 'normalise' | 'plot';
