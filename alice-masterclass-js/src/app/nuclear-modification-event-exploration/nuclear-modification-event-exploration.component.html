@@ -134,6 +134,38 @@
               </tbody>
             </table>
           </div>
+
+          @if (!demo) {
+            <span
+              class="nmf-upload-wrap"
+              [matTooltipDisabled]="apiService.isAuthenticated && allEventsAnalyzed"
+              [matTooltip]="
+                (apiService.isAuthenticated
+                  ? 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.UPLOAD_INCOMPLETE_TOOLTIP'
+                  : 'PASSWORD.NO_TOKEN_TOOLTIP'
+                ) | translate
+              "
+              matTooltipPosition="above"
+            >
+              <button
+                id="nmf-tour-upload"
+                type="button"
+                mat-raised-button
+                color="warn"
+                class="nmf-upload-btn"
+                data-testid="nmf-upload-results"
+                [disabled]="!apiService.isAuthenticated || !allEventsAnalyzed"
+                (click)="onUploadResults()"
+              >
+                @if (apiService.isAuthenticated) {
+                  <mat-icon class="material-icons-outlined">cloud_upload</mat-icon>
+                } @else {
+                  <mat-icon class="material-icons-outlined">cloud_off</mat-icon>
+                }
+                {{ 'PASSWORD.UPLOAD_DATA' | translate }}
+              </button>
+            </span>
+          }
         </div>
       </div>
     </app-event-display>

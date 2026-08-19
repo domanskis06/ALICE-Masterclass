@@ -349,7 +349,7 @@ export class NmfEeTutorialService {
           description:
             '<strong>R<sub>AA</sub></strong> is the <em>nuclear modification factor</em>. It asks: after a Pb–Pb collision, do we see as many particles as we would expect from <strong>N<sub>coll</sub></strong> separate proton–proton collisions?<br/><br/>' +
             '<code style="display:inline-block;margin:0.35rem 0;padding:0.35rem 0.55rem;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);border-radius:6px;">R<sub>AA</sub> = Y(Pb–Pb) / (N<sub>coll</sub> × Y(pp))</code><br/><br/>' +
-            '<strong>Y</strong> means “how many charged primary tracks we counted”. <strong>Y(pp)</strong> is the average from your ~30 pp events. <strong>Y(Pb–Pb)</strong> is the count from that one Pb–Pb event. <strong>N<sub>coll</sub></strong> is given for each centrality class.<br/><br/>' +
+            '<strong>Y</strong> means “how many charged primary tracks we counted”. <strong>Y(pp)</strong> is the average from the roughly 30 pp events you looked at. <strong>Y(Pb–Pb)</strong> is the count from that one Pb–Pb event. <strong>N<sub>coll</sub></strong> is given for each centrality class.<br/><br/>' +
             'If <strong>R<sub>AA</sub> ≈ 1</strong>, Pb–Pb looks like a simple pile-up of pp collisions. If it is clearly <strong>not 1</strong>, the nuclear medium changed particle production (for example by jet quenching).',
           side: 'left',
           align: 'start',
@@ -637,7 +637,7 @@ export class NmfEeTutorialService {
           title: 'R<sub>AA</sub> Analysis tab',
           description:
             'This tab shows your <strong>results</strong>. At the top you get three R<sub>AA</sub> numbers — <strong>Peripheral</strong>, <strong>SemiCentral</strong>, and <strong>Central</strong> — for how head-on the Pb–Pb smash was. Underneath are three plots of <strong>Counts vs p<sub>T</sub></strong> (how hard particles were kicked sideways).<br/><br/>' +
-            'R<sub>AA</sub> compares each Pb–Pb multiplicity to the average from your ~30 pp events, scaled by <strong>N<sub>coll</sub></strong>. The numbers fill in as you analyse events. Press <strong>?</strong> here anytime for a short reminder.',
+            'R<sub>AA</sub> compares each Pb–Pb multiplicity to the average from the roughly 30 pp events you looked at, scaled by <strong>N<sub>coll</sub></strong>. The numbers fill in as you analyse events. Press <strong>?</strong> here anytime for a short reminder.',
           side: 'left',
           align: 'start',
         },

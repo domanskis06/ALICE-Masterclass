@@ -385,6 +385,28 @@
     color: var(--va-text);
   }
 
+  /** Same shape as Visual Analysis's own upload button, sized for this narrow
+   * sidebar instead of sharing a toolbar row with icon-only actions. */
+  .nmf-upload-wrap {
+    display: block;
+    margin-top: 10px;
+  }
+
+  .nmf-upload-btn {
+    width: 100%;
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .nmf-upload-btn mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
   /* Same select styling as Visual Analysis's dataset picker in light mode. */
   .dataset-controls {
     .mat-mdc-form-field,
