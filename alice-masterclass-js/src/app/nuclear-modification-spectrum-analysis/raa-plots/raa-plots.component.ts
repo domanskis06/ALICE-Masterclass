@@ -159,9 +159,19 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
    * set difference is enough, no need to track order or content.
    */
   private selectNewestOrFallback(previousKeys: Set<string>): void {
-    const added = this.cards.find((c) => !previousKeys.has(c.key));
-    if (added) {
-      this.activeCardKey = added.key;
+    // `buildCards()` always inserts in the same pipeline order — multiplicity,
+    // mult-vs-centrality, p_T, R_AA, R_CP — which happens to be the order the
+    // exercise itself progresses in. A student who builds several blocks before
+    // ever pressing Run (skipping the tour's one-gate-at-a-time pacing) can make
+    // more than one card appear from a single run; picking the FIRST of those
+    // (the old behaviour) landed on the earliest, least-advanced one — e.g. on
+    // "Multiplicity per event" right after the student had just finished adding
+    // Plot multiplicity vs centrality, the thing they actually wanted to look
+    // at. The LAST newly-added card is the better guess: it is the most
+    // advanced result the chain just unlocked.
+    const added = this.cards.filter((c) => !previousKeys.has(c.key));
+    if (added.length) {
+      this.activeCardKey = added[added.length - 1].key;
       return;
     }
     if (!this.cards.some((c) => c.key === this.activeCardKey)) {
