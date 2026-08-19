@@ -43,6 +43,17 @@ export class NmfSaTutorialService {
   /* —— gate state —— */
 
   private recipeKinds = new Set<RaaStepKind>();
+  /**
+   * Guards against advancing more than one step per gate resolution. Blockly
+   * fires several change events for a single drag (create, move, select…), and
+   * `notifyRecipeChanged` re-evaluates the gate on every one of them. Without
+   * this flag, each of those redundant calls queued its own
+   * `setTimeout(moveNext)`, and `moveNext()` does not re-check the gate before
+   * executing — so a single drag that satisfied a gate could fire moveNext
+   * three or four times in a row, blowing straight through the next one or two
+   * *gated* steps without their requirements ever being met.
+   */
+  private advancePending = false;
   /** Run was pressed and the recipe has not changed since. */
   private ranWithCurrentRecipe = false;
   private classesCollected = 0;
@@ -125,7 +136,7 @@ export class NmfSaTutorialService {
   }
 
   private evaluateGate(): void {
-    if (!this.driverInstance?.isActive()) {
+    if (!this.driverInstance?.isActive() || this.advancePending) {
       return;
     }
     const gate = this.activeGate();
@@ -142,7 +153,9 @@ export class NmfSaTutorialService {
     if (gate.classes !== undefined && this.classesCollected < gate.classes) {
       return;
     }
+    this.advancePending = true;
     setTimeout(() => {
+      this.advancePending = false;
       this.driverInstance?.refresh();
       this.driverInstance?.moveNext();
     }, 0);
@@ -321,6 +334,7 @@ export class NmfSaTutorialService {
     this.recipeKinds.clear();
     this.ranWithCurrentRecipe = false;
     this.classesCollected = 0;
+    this.advancePending = false;
     this.hooks?.clearWorkspace();
 
     const d = driver({
@@ -394,7 +408,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Run, and honest feedback',
           description:
-            '<strong>Run</strong> executes your blocks on the real data; <strong>Clear</strong> empties the workspace and the plots. Nothing is pre-assembled for you, and nothing is silently fixed: if a normalisation is missing, notes appear under this header explaining what is <em>physically</em> wrong with the result — not which block you forgot.',
+            '<strong>Run</strong> executes your blocks on the real data; <strong>Clear</strong> empties the workspace so you can start the next centrality class — your plots and the collected R_AA sheet stay. Nothing is pre-assembled for you, and nothing is silently fixed: if a normalisation is missing, notes appear under this header explaining what is <em>physically</em> wrong with the result — not which block you forgot.',
           side: 'bottom',
           align: 'end',
         },
@@ -453,7 +467,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Now the momenta',
           description:
-            'Switch from counting events to counting tracks. You want the transverse-momentum distribution of the tracks in that same centrality class, binned the way ALICE bins it. Mind the class — it has to match the one you counted events for.',
+            'Switch from counting events to counting tracks. You want the transverse-momentum distribution of the tracks in that same centrality class, binned the way ALICE bins it — then plot it, from <strong>References &amp; plot</strong>, so there is something to look at. Mind the class — it has to match the one you counted events for.',
           side: 'right',
           align: 'start',
           ...gated,

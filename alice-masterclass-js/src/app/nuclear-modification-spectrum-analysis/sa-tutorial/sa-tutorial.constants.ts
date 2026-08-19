@@ -64,7 +64,9 @@ export const NMF_SA_GATES: Record<number, NmfSaGate> = {
     requireRun: true,
   },
   [NMF_SA_STEP_HIST_PT]: {
-    kinds: ['load_tracks', 'select_centrality', 'create_hist', 'fill_hist'],
+    // 'plot' too: nothing lands on the p_T tile until a Plot block draws it, and
+    // the very next tour step points straight at that tile.
+    kinds: ['load_tracks', 'select_centrality', 'create_hist', 'fill_hist', 'plot'],
     requireRun: true,
   },
   [NMF_SA_STEP_BIN_WIDTH]: { kinds: ['divide_bin_width'], requireRun: true },

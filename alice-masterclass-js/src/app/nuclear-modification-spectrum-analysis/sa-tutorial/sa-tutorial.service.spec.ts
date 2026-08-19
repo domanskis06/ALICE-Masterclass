@@ -7,6 +7,16 @@ import {
 } from './sa-tutorial.constants';
 import { NmfSaTutorialService } from './sa-tutorial.service';
 
+/** Just enough of driver.js's `Driver` surface for `evaluateGate` to call. */
+function fakeDriver(activeIndex: number) {
+  return {
+    isActive: () => true,
+    getActiveIndex: () => activeIndex,
+    refresh: () => undefined,
+    moveNext: jasmine.createSpy('moveNext'),
+  };
+}
+
 describe('NmfSaTutorialService', () => {
   let service: NmfSaTutorialService;
   let seeded: unknown[];
@@ -63,5 +73,31 @@ describe('NmfSaTutorialService', () => {
     ]);
     service.notifyRunCompleted(1);
     expect(category).toBeNull();
+  });
+
+  it('advances exactly one step even when Blockly fires several change events for one drag', (done) => {
+    // A single drag-and-drop in Blockly fires BLOCK_CREATE, one or more
+    // BLOCK_MOVE, SELECTED, CLICK… — every one of them used to reach
+    // notifyRecipeChanged and independently queue its own moveNext(), so a
+    // drag that satisfied a gate could fire moveNext three or four times in a
+    // row and blow straight through the next gated step's requirements.
+    const driver = fakeDriver(NMF_SA_STEP_LOAD_EVENTS);
+    (service as unknown as { driverInstance: unknown }).driverInstance = driver;
+
+    const recipe = [
+      { kind: 'load_events' },
+      { kind: 'if_centrality', centrality: '0-5' },
+      { kind: 'count_events' },
+    ];
+    // Same recipe, notified four times — as Blockly would for one drag.
+    service.notifyRecipeChanged(recipe as never);
+    service.notifyRecipeChanged(recipe as never);
+    service.notifyRecipeChanged(recipe as never);
+    service.notifyRecipeChanged(recipe as never);
+
+    setTimeout(() => {
+      expect(driver.moveNext).toHaveBeenCalledTimes(1);
+      done();
+    }, 10);
   });
 });

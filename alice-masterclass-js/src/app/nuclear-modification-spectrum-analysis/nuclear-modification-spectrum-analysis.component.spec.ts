@@ -116,12 +116,15 @@ describe('NuclearModificationSpectrumAnalysisComponent', () => {
     expect(tutorial.notifyRunCompleted).toHaveBeenCalledWith(2);
   });
 
-  it('Clear empties both the workspace and the accumulated plots', () => {
+  it('Clear empties the workspace status but keeps the accumulated plots', () => {
     next = result({ raa: [series('0-5', 0.3)], readouts: [] });
     component.onRun();
     component.onClear();
 
-    expect(component.raa).toEqual([]);
+    // The next centrality class starts from a clean canvas and a clean status
+    // chip — but a student who already plotted a class must not lose it the
+    // moment they clear the workspace to build the next one.
+    expect(component.raa).toEqual([series('0-5', 0.3)]);
     expect(component.ok).toBeNull();
     expect(component.problems).toEqual([]);
   });

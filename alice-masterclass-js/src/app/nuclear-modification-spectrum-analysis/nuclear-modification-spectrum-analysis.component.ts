@@ -118,23 +118,17 @@ export class NuclearModificationSpectrumAnalysisComponent
     });
   }
 
+  /**
+   * Empties the Blockly canvas so the next centrality class can be built —
+   * nothing else. Plots and the collected R_AA sheet accumulate across runs by
+   * design (see the *Store fields below); Clear used to wipe them too, which
+   * threw away every class already plotted the moment a student started the
+   * next one.
+   */
   onClear(): void {
     this.blockly?.clearWorkspace();
     this.ok = null;
     this.problems = [];
-    this.ptStore.clear();
-    this.raaStore.clear();
-    this.rcpStore.clear();
-    this.readoutStore.clear();
-    this.reportedStore.clear();
-    this.ptSpectra = [];
-    this.raa = [];
-    this.rcp = [];
-    this.readouts = [];
-    this.reported = [];
-    this.multiplicity = null;
-    this.multVsCentrality = null;
-    this.ppReference = null;
   }
 
   /** Centrality classes the accumulated results cover, for the reference table. */
