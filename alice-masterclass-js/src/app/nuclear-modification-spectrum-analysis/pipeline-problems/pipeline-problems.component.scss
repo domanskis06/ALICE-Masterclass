@@ -1,0 +1,64 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+:host {
+  display: contents;
+}
+
+.nmf-sa-problems {
+  --nmf-plot-accent: #fbbf24;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 12px;
+  max-height: 132px;
+  overflow-y: auto;
+  list-style: none;
+  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.76rem;
+  line-height: 1.45;
+  @include nmf.card;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  li + li {
+    margin-top: 4px;
+  }
+
+  /**
+   * A dot instead of a bullet: it carries the severity colour, so an error is
+   * visible before the sentence is read.
+   */
+  li::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 6px;
+    height: 6px;
+    margin-top: 0.15em;
+    border-radius: 50%;
+    background: #fbbf24;
+  }
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+/** One error is enough to repaint the whole strip: the run did not work. */
+.nmf-sa-problems--error {
+  --nmf-plot-accent: #f87171;
+}
+
+.nmf-sa-problem-text {
+  min-width: 0;
+}
+
+.nmf-sa-problem--error {
+  color: #fca5a5;
+
+  &::before {
+    background: #f87171;
+  }
+}

@@ -1,0 +1,16 @@
+@if (problems.length) {
+  <ul
+    class="nmf-sa-problems"
+    [class.nmf-sa-problems--error]="hasError"
+    data-testid="nmf-pipeline-problems"
+  >
+    @for (problem of problems; track problem.key + problem.severity) {
+      <li [class.nmf-sa-problem--error]="problem.severity === 'error'">
+        <span
+          class="nmf-sa-problem-text"
+          [innerHTML]="translationKey(problem) | translate: params(problem)"
+        ></span>
+      </li>
+    }
+  </ul>
+}

@@ -1,7 +1,17 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+/**
+ * The workspace is a panel, like every block on the results side. Before this it
+ * was a bare rectangle bleeding into the page background, which is what made the
+ * build column read as a hole rather than as a card.
+ */
 :host {
+  position: relative;
   display: block;
   height: 100%;
   min-height: 360px;
+  overflow: hidden;
+  @include nmf.card;
 }
 
 .blockly-host,
@@ -9,4 +19,220 @@
   width: 100%;
   height: 100%;
   min-height: 360px;
+}
+
+.blockly-host {
+  position: relative;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* —— empty-state hint —— */
+
+/**
+ * Covers the canvas only: `--nmf-toolbox-w` is written by the component from the
+ * real rail width, so the category list stays visible and clickable. `inert`
+ * pointer-events keep a drag that ends here from being swallowed.
+ */
+.blockly-empty {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--nmf-toolbox-w, 150px);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.blockly-empty-art {
+  width: 108px;
+  height: 78px;
+  opacity: 0.5;
+}
+
+/** Staggered so the three silhouettes read as a stack being assembled. */
+.blockly-empty-stack path {
+  fill-opacity: 0.85;
+
+  & + path {
+    fill-opacity: 0.6;
+  }
+
+  & + path + path {
+    fill-opacity: 0.4;
+  }
+}
+
+.blockly-empty-text {
+  max-width: 22em;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(226, 232, 240, 0.55);
+}
+
+/* —— Blockly chrome —— */
+
+:host ::ng-deep {
+  /** The rail: its own tone, hairline against the canvas, room to breathe. */
+  .blocklyToolboxDiv {
+    box-sizing: border-box;
+    padding: 10px 8px !important;
+    border-right: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .blocklyToolboxContents {
+    padding: 0;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .blocklyToolboxCategory {
+    padding: 0 !important;
+  }
+
+  /**
+   * Blockly writes `border-left: 8px solid <category colour>` and, while
+   * selected, `background-color: <category colour>` inline. Only the width is
+   * overridden — the colour is the one piece of category identity in the rail.
+   */
+  .blocklyTreeRow {
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+    margin: 0 0 4px !important;
+    padding: 0 10px !important;
+    border-radius: 8px;
+    border-left-width: 2px !important;
+    background-color: rgba(148, 163, 184, 0.08);
+    color: var(--va-muted, rgba(255, 255, 255, 0.7));
+    transition: background-color 0.14s ease, color 0.14s ease;
+  }
+
+  /** Blockly's own hover rule is one point more specific, hence `!important`. */
+  .blocklyTreeRow:not(.blocklyTreeSelected):hover {
+    background-color: rgba(148, 163, 184, 0.2) !important;
+    color: var(--va-text, #ffffff);
+  }
+
+  .blocklyTreeSelected {
+    color: #ffffff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .blocklyTreeRowContentContainer {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  /** An empty presentation span that only stole horizontal room from the label. */
+  .blocklyTreeIcon {
+    display: none !important;
+  }
+
+  .blocklyTreeLabel {
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    color: inherit;
+  }
+
+  /** The flyout is an overlay over the canvas, so it needs an edge of its own. */
+  .blocklyFlyoutBackground {
+    stroke: rgba(148, 163, 184, 0.35);
+    stroke-width: 1.5px;
+  }
+
+  .blocklyScrollbarHandle {
+    fill: rgba(148, 163, 184, 0.4) !important;
+  }
+
+  .blocklyScrollbarHandle:hover {
+    fill: rgba(203, 213, 225, 0.65) !important;
+  }
+
+  /** Fields on a block: readable on the saturated block colours. */
+  .blocklyEditableField > rect.blocklyFieldRect {
+    stroke: rgba(255, 255, 255, 0.35);
+  }
+}
+
+/**
+ * driver.js re-arms every descendant of the highlighted element with
+ * `pointer-events: auto` (`.driver-active .driver-active-element *`). Blockly
+ * relies on `none` in several places, and each one breaks differently once the
+ * tour overrides it:
+ *
+ *  - the drag surfaces and the animation layer start swallowing clicks, so no
+ *    block can be dragged;
+ *  - `.blocklyTreeRowContentContainer` stops being transparent, so a click on a
+ *    category *label* is delivered to the `<span>` instead of the row. Blockly's
+ *    toolbox handler reads `event.target.getAttribute('id')` and looks the item
+ *    up by it; the span's id is `blockly-2.label`, which matches no item, so the
+ *    click is dropped. Long labels (`Normalise`, `References & plot`) fill the
+ *    row, so they became unreachable during the tutorial while the short ones
+ *    still worked if you happened to click beside the text.
+ *
+ * Re-assert Blockly's own intent; it outranks the tour's blanket rule.
+ */
+:host ::ng-deep {
+  .blocklyAnimationLayer,
+  .blocklyBlockDragSurface,
+  .blocklyWsDragSurface,
+  .blocklyDragSurface,
+  .blocklyNoPointerEvents,
+  .blocklyScrollbarBackground,
+  .blocklyVerticalMarker,
+  .blocklyNonEditableText > text,
+  .blocklyTreeRowContentContainer,
+  .blocklyTreeRowContentContainer * {
+    pointer-events: none !important;
+  }
+}
+
+/**
+ * Docked picker vs toolbox, a stacking conflict with two separate symptoms.
+ *
+ * Blockly gives `.blocklyToolboxDiv` z-index 70 and sizes it to the *full*
+ * column height rather than to its category list, while the flyout it owns sits
+ * at z-index 20. Everything below the last category is therefore toolbox surface
+ * lying over the picker, which both (a) paints its own background over the
+ * blocks, so the strip looks empty although the blocks are in the DOM with
+ * correct geometry, and (b) swallows every press aimed at one, so nothing can be
+ * dragged out.
+ *
+ * Lift the picker over the toolbox — it starts below the last category, so it
+ * never covers them — and make the leftover toolbox surface inert as well, so a
+ * press lands on a block rather than on the strip. `!important` throughout
+ * because a tour step re-arms every descendant of the highlighted element.
+ */
+:host ::ng-deep {
+  .blocklyFlyout {
+    z-index: 71 !important;
+  }
+
+  .blocklyFlyoutScrollbar {
+    z-index: 72 !important;
+  }
+
+  .blocklyToolboxDiv {
+    pointer-events: none !important;
+  }
+
+  .blocklyToolboxDiv .blocklyToolboxCategory,
+  .blocklyToolboxDiv .blocklyTreeRow {
+    pointer-events: auto !important;
+  }
 }

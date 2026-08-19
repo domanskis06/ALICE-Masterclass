@@ -8,18 +8,29 @@ import { NuclearModificationSpectrumAnalysisRoutingModule } from './nuclear-modi
 import { NuclearModificationSpectrumAnalysisComponent } from './nuclear-modification-spectrum-analysis.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { NmfBlocklyWorkspaceComponent } from './blockly-workspace/blockly-workspace.component';
-import { NmfPipelineRunBarComponent } from './pipeline-run-bar/pipeline-run-bar.component';
+import { NmfPipelineProblemsComponent } from './pipeline-problems/pipeline-problems.component';
 import { NmfRaaPlotsComponent } from './raa-plots/raa-plots.component';
+import { NmfSeriesPlotComponent } from './series-plot/series-plot.component';
+import { NmfHeatmapPlotComponent } from './heatmap-plot/heatmap-plot.component';
+import { NmfPlotDialogComponent } from './plot-dialog/plot-dialog.component';
 import { NmfExtractPanelComponent } from './extract-panel/extract-panel.component';
+import { NmfCentralityTableComponent } from './centrality-table/centrality-table.component';
+import { NmfResultsTableComponent } from './results-table/results-table.component';
+import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
 
 @NgModule({
   declarations: [
     NuclearModificationSpectrumAnalysisComponent,
     InstructionsComponent,
     NmfBlocklyWorkspaceComponent,
-    NmfPipelineRunBarComponent,
+    NmfPipelineProblemsComponent,
     NmfRaaPlotsComponent,
+    NmfSeriesPlotComponent,
+    NmfHeatmapPlotComponent,
+    NmfPlotDialogComponent,
     NmfExtractPanelComponent,
+    NmfCentralityTableComponent,
+    NmfResultsTableComponent,
   ],
   imports: [
     CommonModule,
@@ -27,5 +38,7 @@ import { NmfExtractPanelComponent } from './extract-panel/extract-panel.componen
     AngularModule,
     NuclearModificationSpectrumAnalysisRoutingModule,
   ],
+  // Tour state is per-visit, so it must not outlive the lazily loaded module.
+  providers: [NmfSaTutorialService],
 })
 export class NuclearModificationSpectrumAnalysisModule {}

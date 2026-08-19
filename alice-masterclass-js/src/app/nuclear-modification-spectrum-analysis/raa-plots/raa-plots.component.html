@@ -1,5 +1,111 @@
-<div class="plots" data-testid="nmf-raa-plots">
-  <svg #ptSvg class="plot"></svg>
-  <svg #raaSvg class="plot"></svg>
-  <svg #rcpSvg class="plot"></svg>
+<div class="nmf-sa-plots" data-testid="nmf-raa-plots">
+  @if (!cards.length) {
+    <aside class="nmf-sa-mission" data-testid="nmf-sa-mission">
+      <h3 class="nmf-sa-mission-title">
+        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_TITLE' | translate }}
+      </h3>
+      <ol class="nmf-sa-mission-steps">
+        @for (step of missionSteps; track step) {
+          <li [innerHTML]="step | translate"></li>
+        }
+      </ol>
+      <p
+        class="nmf-sa-mission-footer"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_FOOTER' | translate"
+      ></p>
+      <div class="nmf-sa-mission-actions">
+        <button
+          mat-raised-button
+          color="primary"
+          type="button"
+          data-testid="nmf-sa-mission-start"
+          (click)="startTutorial.emit()"
+        >
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_START' | translate }}
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="nmf-sa-mission-help"
+          (click)="openHelp.emit()"
+        >
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_HELP' | translate }}
+        </button>
+      </div>
+    </aside>
+  }
+
+  @for (card of cards; track card.key) {
+    <section
+      class="nmf-sa-plot"
+      [style.--nmf-plot-accent]="accent(card)"
+      [attr.data-testid]="'nmf-sa-plot-' + card.key"
+      role="button"
+      tabindex="0"
+      (click)="openPlot(card, $event)"
+      (keydown.enter)="openPlot(card, $event)"
+      (keydown.space)="openPlot(card, $event); $event.preventDefault()"
+    >
+      <div class="nmf-sa-plot-head">
+        <div class="nmf-sa-plot-heading">
+          @if (card.centrality) {
+            <svg
+              class="nmf-collision-icon nmf-collision-icon--sm"
+              viewBox="0 0 64 44"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <g [attr.transform]="'translate(0 ' + (22 - impactOffset(card)) + ')'">
+                <line x1="4" y1="0" x2="26" y2="0" />
+                <polyline points="18,-6 28,0 18,6" />
+              </g>
+              <g [attr.transform]="'translate(0 ' + (22 + impactOffset(card)) + ')'">
+                <line x1="60" y1="0" x2="38" y2="0" />
+                <polyline points="46,-6 36,0 46,6" />
+              </g>
+            </svg>
+            <span class="nmf-sa-plot-class">{{ card.centrality.replace('-', '–') }}%</span>
+          }
+          <h3 class="nmf-sa-plot-title" [innerHTML]="card.titleKey | translate"></h3>
+        </div>
+        @if (card.meta.length) {
+          <div class="nmf-sa-plot-meta">
+            @for (entry of card.meta; track entry.labelKey) {
+              <span>{{ entry.labelKey | translate }} {{ entry.value }}</span>
+            }
+          </div>
+        }
+      </div>
+      <div class="nmf-sa-plot-body">
+        @if (card.kind === 'series') {
+          <app-nmf-series-plot
+            [series]="card.series"
+            [mode]="card.mode"
+            [xLog]="card.xLog"
+            [yLog]="card.yLog"
+            [yDomain]="card.yDomain"
+            [referenceLine]="card.referenceLine"
+            [xLabel]="card.xLabel"
+            [yLabel]="card.yLabel"
+            [emptyLabel]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_EMPTY' | translate"
+          ></app-nmf-series-plot>
+        } @else {
+          <app-nmf-heatmap-plot
+            [heatmap]="card.heatmap"
+            [xLabel]="card.xLabel"
+            [yLabel]="card.yLabel"
+            [emptyLabel]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_EMPTY' | translate"
+          ></app-nmf-heatmap-plot>
+        }
+      </div>
+
+      @if (card.footerKey) {
+        <p
+          class="nmf-sa-plot-footer"
+          [attr.data-testid]="'nmf-sa-footer-' + card.key"
+          [innerHTML]="card.footerKey | translate"
+        ></p>
+      }
+    </section>
+  }
 </div>

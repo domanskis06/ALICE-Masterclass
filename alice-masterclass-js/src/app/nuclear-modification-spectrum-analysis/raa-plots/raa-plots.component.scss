@@ -1,23 +1,181 @@
+@use '../../../styles/nmf-panel' as nmf;
+
 :host {
-  display: block;
+  /* A flex column so the list below inherits a usable height. The host's own
+     height comes from `flex: 1 1 auto` set by the tab body. */
+  display: flex;
+  flex-direction: column;
 }
 
-.plots {
+/**
+ * Tiles, not a stack: a student can run up to ten centrality classes, and the
+ * screen has a fixed height. `auto-fill` packs as many per row as fit, and the
+ * strip scrolls only when even that runs out — the rest of the screen stays put.
+ */
+.nmf-sa-plots {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-auto-rows: minmax(min-content, 1fr);
   gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding-right: 2px;
 }
 
-.plot {
+/** The empty-state brief takes the whole strip and centres in it. */
+.nmf-sa-plots:has(> .nmf-sa-mission) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nmf-sa-mission {
+  grid-column: 1 / -1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  min-height: 0;
+  margin: 0;
+  padding: 4px 4px 8px;
+  box-sizing: border-box;
+}
+
+.nmf-sa-mission-title {
+  margin: 0;
+  font-size: clamp(1.15rem, 1.6vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--va-text, #ffffff);
+}
+
+.nmf-sa-mission-steps {
+  margin: 0;
+  padding: 0 0 0 1.35rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 6px 28px;
+  color: var(--va-text, #ffffff);
+  font-size: clamp(0.9rem, 1.05vw, 1.05rem);
+  font-weight: 600;
+  line-height: 1.3;
+
+  li::marker {
+    color: #b71c1c;
+    font-weight: 700;
+  }
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+.nmf-sa-mission-footer {
+  margin: 0;
+  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+.nmf-sa-mission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.nmf-sa-mission-actions [mat-stroked-button],
+.nmf-sa-mission-actions .mat-mdc-outlined-button {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.nmf-sa-plot {
+  --nmf-plot-accent: #38bdf8;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  @include nmf.card;
+  @include nmf.card-interactive;
+  overflow: visible;
+}
+
+.nmf-sa-plot-head {
+  @include nmf.card-head;
+}
+
+.nmf-sa-plot-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nmf-collision-icon {
+  @include nmf.collision-icon;
+}
+
+.nmf-collision-icon--sm {
+  @include nmf.collision-icon-small;
+}
+
+.nmf-sa-plot-class {
+  @include nmf.class-label;
+}
+
+.nmf-sa-plot-title {
+  @include nmf.card-title;
+}
+
+:host ::ng-deep .nmf-sa-plot-title sub {
+  font-size: 0.72em;
+}
+
+.nmf-sa-plot-meta {
+  @include nmf.card-meta;
+}
+
+.nmf-sa-plot-body {
+  position: relative;
+  /* Grows into whatever the tile row gives it; the floor keeps the axes legible
+     once enough classes are plotted that the tiles wrap onto a second row. */
+  flex: 1 1 auto;
   width: 100%;
-  height: 220px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
-  border-radius: 6px;
+  min-height: 132px;
+  margin-top: 6px;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
-@media (min-width: 1100px) {
-  .plots {
-    grid-template-columns: 1fr 1fr 1fr;
+/**
+ * One sentence saying what the plot shows. It is the moderator's line in the
+ * desktop exercise, written down so a group working alone still gets it.
+ */
+.nmf-sa-plot-footer {
+  flex: 0 0 auto;
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.76rem;
+  line-height: 1.4;
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+
+  ::ng-deep strong {
+    color: var(--va-text, #ffffff);
+    font-weight: 700;
   }
 }

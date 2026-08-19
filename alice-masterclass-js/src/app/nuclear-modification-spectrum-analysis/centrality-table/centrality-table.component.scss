@@ -1,0 +1,95 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.nmf-sa-classes {
+  --nmf-plot-accent: #38bdf8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+  @include nmf.card;
+}
+
+.nmf-sa-classes-head {
+  @include nmf.card-head;
+}
+
+.nmf-sa-classes-title {
+  @include nmf.card-title;
+}
+
+:host ::ng-deep .nmf-sa-classes-title sub,
+:host ::ng-deep .nmf-sa-classes-table sub {
+  font-size: 0.72em;
+}
+
+.nmf-sa-classes-meta {
+  @include nmf.card-meta;
+}
+
+.nmf-sa-classes-lead,
+.nmf-sa-classes-note {
+  margin: 0;
+  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.nmf-sa-classes-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.nmf-sa-classes-table {
+  @include nmf.data-table;
+}
+
+.nmf-sa-classes-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.nmf-collision-icon {
+  @include nmf.collision-icon;
+}
+
+.nmf-collision-icon--sm {
+  @include nmf.collision-icon-small;
+  width: 30px;
+  height: 18px;
+}
+
+/** N_coll relative to the most central class: two decades at a glance. */
+.nmf-sa-classes-bar-col {
+  width: 84px;
+  padding-right: 0;
+}
+
+.nmf-sa-classes-bar {
+  display: block;
+  height: 6px;
+  min-width: 2px;
+  border-radius: 3px;
+  background: var(--nmf-plot-accent, #38bdf8);
+  opacity: 0.75;
+}
+
+/** Rows the student's own results cover. */
+.nmf-sa-classes-row--used td {
+  background: color-mix(in srgb, var(--nmf-plot-accent, #38bdf8) 12%, transparent);
+}
+
+.nmf-sa-classes-row--used td:first-child {
+  box-shadow: inset 3px 0 0 0 var(--nmf-plot-accent, #38bdf8);
+}

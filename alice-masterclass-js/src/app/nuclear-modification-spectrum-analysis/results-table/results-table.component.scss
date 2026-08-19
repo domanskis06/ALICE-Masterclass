@@ -1,0 +1,119 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nmf-sa-results-table {
+  --nmf-plot-accent: #4ade80;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+  @include nmf.card;
+  @include nmf.dark-controls;
+}
+
+.nmf-sa-results-head {
+  @include nmf.card-head;
+  align-items: center;
+}
+
+.nmf-sa-results-title {
+  @include nmf.card-title;
+}
+
+:host ::ng-deep .nmf-sa-results-title sub,
+:host ::ng-deep .nmf-sa-results-grid sub {
+  font-size: 0.72em;
+}
+
+.nmf-sa-results-copy {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  line-height: 30px;
+
+  ::ng-deep .mat-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    font-size: 16px;
+  }
+}
+
+.nmf-sa-results-empty,
+.nmf-sa-results-note {
+  margin: 0;
+  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.nmf-sa-results-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Never collapse to a sliver: about four classes stay readable without
+     scrolling, and the panel scrolls past that. */
+  min-height: 112px;
+  overflow: auto;
+}
+
+.nmf-sa-results-grid {
+  @include nmf.data-table;
+
+  thead tr:first-child th {
+    text-align: center;
+    border-bottom: none;
+  }
+
+  thead tr:first-child th:first-child {
+    text-align: left;
+  }
+}
+
+.nmf-sa-results-sub {
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.nmf-sa-results-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.nmf-collision-icon {
+  @include nmf.collision-icon;
+}
+
+.nmf-collision-icon--sm {
+  @include nmf.collision-icon-small;
+  width: 30px;
+  height: 18px;
+}
+
+.nmf-sa-results-value {
+  font-weight: 700;
+}
+
+/** Marked when a `Read value at` block pulled this exact number out. */
+.nmf-sa-results-value--read {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--nmf-plot-accent, #4ade80) 22%, transparent);
+}
+
+.nmf-sa-results-err {
+  margin-left: 4px;
+  color: rgba(226, 232, 240, 0.5);
+  font-size: 0.9em;
+}

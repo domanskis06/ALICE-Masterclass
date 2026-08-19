@@ -1,21 +1,99 @@
+@use '../../../styles/nmf-panel' as nmf;
+
 :host {
   display: block;
 }
 
-.nmf-panel {
-  background: var(--va-bg-panel-solid, #0a1832);
-  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
-  color: var(--va-text, #e5edf7);
+.nmf-sa-extract {
+  --nmf-plot-accent: #4ade80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+  @include nmf.card;
+  /* Outlined fields and stroked buttons need the dark palette spelled out, or
+     they render in the light theme's ink and vanish against the panel. */
+  @include nmf.dark-controls;
 }
 
-.row {
+.nmf-sa-extract-head {
+  @include nmf.card-head;
+}
+
+.nmf-sa-extract-title {
+  @include nmf.card-title;
+}
+
+:host ::ng-deep .nmf-sa-extract-title sub {
+  font-size: 0.72em;
+}
+
+.nmf-sa-extract-empty {
+  margin: 0;
+  color: var(--va-muted, rgba(255, 255, 255, 0.7));
+  font-size: 0.8rem;
+}
+
+.nmf-sa-extract-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
-.result {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 4px 0 0;
+.nmf-sa-extract-field {
+  flex: 1 1 160px;
+  min-width: 0;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.nmf-sa-extract-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nmf-sa-extract-shortcuts-label {
+  @include nmf.card-meta;
+}
+
+.nmf-sa-extract-result {
+  margin: 0;
+  @include nmf.readout-value;
+}
+
+/**
+ * Material renders this panel's outlined select and its two shortcut buttons in
+ * the default light-theme ink — near-black on the dark card, so the field labels
+ * and the momentum shortcuts were effectively invisible. `nmf.dark-controls`
+ * sets the documented `--mdc-*` tokens, but this Material version does not read
+ * them here (the button even carries `mat-unthemed`), so set the colour itself.
+ */
+:host ::ng-deep {
+  .mdc-floating-label,
+  .mat-mdc-floating-label,
+  .mat-mdc-select-value-text,
+  .mat-mdc-select-min-line {
+    color: var(--va-text, #ffffff) !important;
+  }
+
+  .mat-mdc-form-field:not(.mat-focused) .mdc-floating-label {
+    color: var(--va-muted, rgba(255, 255, 255, 0.7)) !important;
+  }
+
+  .mat-mdc-select-arrow svg {
+    fill: var(--va-muted, rgba(255, 255, 255, 0.7)) !important;
+  }
+
+  .nmf-sa-extract-shortcuts .mat-mdc-outlined-button:not(:disabled) .mdc-button__label {
+    color: var(--va-text, #ffffff) !important;
+  }
+
+  .nmf-sa-extract-shortcuts .mat-mdc-outlined-button:disabled .mdc-button__label {
+    color: rgba(255, 255, 255, 0.38) !important;
+  }
 }

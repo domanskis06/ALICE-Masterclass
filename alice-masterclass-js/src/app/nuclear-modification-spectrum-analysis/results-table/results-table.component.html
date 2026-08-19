@@ -1,0 +1,114 @@
+<section class="nmf-sa-results-table" data-testid="nmf-results-table" id="nmf-sa-tour-results">
+  <header class="nmf-sa-results-head">
+    <h3
+      class="nmf-sa-results-title"
+      [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_TITLE' | translate"
+    ></h3>
+    @if (hasRows) {
+      <button
+        mat-stroked-button
+        type="button"
+        class="nmf-sa-results-copy"
+        data-testid="nmf-results-copy"
+        (click)="copy()"
+      >
+        <mat-icon>{{ copied ? 'check' : 'content_copy' }}</mat-icon>
+        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_COPY' | translate }}
+      </button>
+    }
+  </header>
+
+  @if (!hasRows) {
+    <p
+      class="nmf-sa-results-empty"
+      [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_EMPTY' | translate"
+    ></p>
+  } @else {
+    <div class="nmf-sa-results-scroll">
+      <table class="nmf-sa-results-grid">
+        <thead>
+          <tr>
+            <th scope="col" rowspan="2">
+              {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CENTRALITY' | translate }}
+            </th>
+            <th scope="colgroup" [attr.colspan]="momenta.length">
+              <span [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.AXIS_RAA_HTML' | translate"></span>
+            </th>
+            @if (showRcp) {
+              <th scope="colgroup" [attr.colspan]="momenta.length">
+                <span [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.AXIS_RCP_HTML' | translate"></span>
+              </th>
+            }
+          </tr>
+          <tr>
+            @for (pt of momenta; track pt) {
+              <th scope="col" class="nmf-sa-results-sub">{{ pt }} GeV/c</th>
+            }
+            @if (showRcp) {
+              @for (pt of momenta; track pt) {
+                <th scope="col" class="nmf-sa-results-sub">{{ pt }} GeV/c</th>
+              }
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row.key) {
+            <tr [style.--nmf-plot-accent]="row.color" [attr.data-testid]="'nmf-results-row-' + row.key">
+              <td>
+                <span class="nmf-sa-results-name">
+                  <svg
+                    class="nmf-collision-icon nmf-collision-icon--sm"
+                    viewBox="0 0 64 44"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <g [attr.transform]="'translate(0 ' + (22 - row.impact) + ')'">
+                      <line x1="4" y1="0" x2="26" y2="0" />
+                      <polyline points="18,-6 28,0 18,6" />
+                    </g>
+                    <g [attr.transform]="'translate(0 ' + (22 + row.impact) + ')'">
+                      <line x1="60" y1="0" x2="38" y2="0" />
+                      <polyline points="46,-6 36,0 46,6" />
+                    </g>
+                  </svg>
+                  {{ row.label }}
+                </span>
+              </td>
+              @for (cell of row.raa; track cell.pt) {
+                <td [class.nmf-cell-muted]="cell.value === null">
+                  @if (cell.value !== null) {
+                    <span class="nmf-sa-results-value" [class.nmf-sa-results-value--read]="cell.confirmed">
+                      {{ cell.value | number: '1.3-3' }}
+                    </span>
+                    <span class="nmf-sa-results-err">± {{ cell.error | number: '1.3-3' }}</span>
+                  } @else {
+                    —
+                  }
+                </td>
+              }
+              @if (showRcp) {
+                @for (cell of row.rcp; track cell.pt) {
+                  <td [class.nmf-cell-muted]="cell.value === null">
+                    @if (cell.value !== null) {
+                      <span class="nmf-sa-results-value" [class.nmf-sa-results-value--read]="cell.confirmed">
+                        {{ cell.value | number: '1.3-3' }}
+                      </span>
+                      <span class="nmf-sa-results-err">± {{ cell.error | number: '1.3-3' }}</span>
+                    } @else {
+                      —
+                    }
+                  </td>
+                }
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <p
+        class="nmf-sa-results-note"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_NOTE' | translate"
+      ></p>
+    </div>
+  }
+</section>

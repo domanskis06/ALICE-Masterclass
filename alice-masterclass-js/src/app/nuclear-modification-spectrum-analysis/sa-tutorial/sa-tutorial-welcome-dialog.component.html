@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>Spectrum Analysis short tutorial</h2>
+<mat-dialog-content class="welcome-body">
+  <p>
+    In the first exercise you looked at single collisions. Now you analyse the <strong>whole
+    data sample</strong>: about 40 000 Pb–Pb events, sorted into ten centrality classes, plus a
+    proton–proton reference measured by ALICE.
+  </p>
+  <p>
+    You build the analysis yourself out of <strong>blocks</strong>. Each block is one step a real
+    physicist performs: take the tracks of a centrality class, fill a p<sub>T</sub> histogram, and
+    then normalise it — per GeV/c of bin width, per event, and per
+    <strong>number of collisions</strong> — before dividing by the pp reference to get
+    <strong>R<sub>AA</sub></strong>.
+  </p>
+  <p>
+    Nothing is prepared for you: an incomplete chain gives a wrong answer, and the module tells you
+    what is missing. You can <strong>skip</strong> this tour anytime with <strong>×</strong>, and the
+    <strong>?</strong> buttons above the workspace and the plots open short guides you can read
+    whenever you are stuck.
+  </p>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="skip()">Skip</button>
+  <button mat-raised-button color="primary" type="button" (click)="start()">Start tutorial</button>
+</mat-dialog-actions>
