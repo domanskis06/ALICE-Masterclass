@@ -43,7 +43,7 @@
               [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.STATUS_OK' | translate"
             ></span>
           </span>
-        } @else if (ok === false) {
+        } @else if (ok === false && problems.length) {
           <span class="nmf-sa-status nmf-sa-status--warn">
             <mat-icon>error_outline</mat-icon>
             <span
