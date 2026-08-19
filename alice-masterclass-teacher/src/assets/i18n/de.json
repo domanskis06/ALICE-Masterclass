@@ -20,7 +20,9 @@
     "SESSION": "Sitzung",
     "STRANGENESS": "Strangeness",
     "VISUAL_ANALYSIS": "Visuelle Analyse",
-    "LARGE_SCALE_ANALYSIS": "Großskalige Analyse"
+    "LARGE_SCALE_ANALYSIS": "Großskalige Analyse",
+    "NUCLEAR_MODIFICATION": "Nukleare Modifikation",
+    "EVENT_EXPLORATION": "Ereignis-Erkundung"
   },
   "SESSION": {
     "TITLE": "Ereignisse",
@@ -119,6 +121,35 @@
       "TIP": "Nutzen Sie die farbigen Markierungen in der Tabelle zusammen mit dem Diagramm, um eine bestimmte Zentralitätsklasse mit ihrem Punkt im Graphen zu verbinden.",
       "FORMULA_ENHANCEMENT": "Verstärkung",
       "FORMULA_YIELD": "Ausbeute"
+    }
+  },
+  "EVENT_EXPLORATION": {
+    "SESSION": "Sitzung",
+    "COLLECTED_RAA": "Gesammelte R<sub>AA</sub>-Messungen",
+    "RESULTS": "Ergebnisse",
+    "STUDENT": "Schüler",
+    "STUDENT_GROUP": "Schülergruppe",
+    "DATASET": "Datensatz",
+    "PERIPHERAL": "Peripher",
+    "SEMI_CENTRAL": "Semi-zentral",
+    "CENTRAL": "Zentral",
+    "ALL_PT": "alle p<sub>T</sub>",
+    "MIN_PT": "p<sub>T</sub> &gt; 1 GeV/<em>c</em>",
+    "NO_SELECTION": "Wählen Sie Schüler in der Ergebnistabelle aus, um ihre Messungen in die Diagramme aufzunehmen.",
+    "INSTRUCTIONS": {
+      "TITLE": "Über die Ereignis-Erkundung",
+      "INTRO": "Dieses Modul sammelt die nuklearen Modifikationsfaktoren aus Teil 1, die die Schüler durch Zählen geladener primärer Spuren in 30 pp-Ereignissen und in den drei Pb–Pb-Ereignissen (peripher, semi-zentral, zentral) gemessen haben.",
+      "HOW_TO_USE": "Verwendung",
+      "STEP_1": "Wählen Sie eine Sitzung im Auswahlfeld über der Ergebnistabelle.",
+      "STEP_2": "Wählen Sie in der Ergebnistabelle Schüler aus oder ab, um ihre Messungen in die Diagramme aufzunehmen bzw. daraus zu entfernen.",
+      "STEP_3": "Jede Zeile zeigt die zwei Zahlen pro Klasse: R<sub>AA</sub> über alle p<sub>T</sub> und R<sub>AA</sub> nur für p<sub>T</sub> &gt; 1 GeV/<em>c</em>.",
+      "STEP_4": "Nutzen Sie die Aktualisieren-Schaltfläche, wenn weitere Schüler ihre Ergebnisse hochgeladen haben.",
+      "HOW_TO_READ": "Wie die Diagramme zu lesen sind",
+      "HOW_TO_READ_INTRO": "Die sechs Felder folgen dem Layout des Desktop-Werkzeugs für Kursleiter: Zeilen sind die drei Pb–Pb-Zentralitätsklassen, Spalten die zwei p<sub>T</sub>-Bereiche.",
+      "READ_COLUMNS": "Linke Spalte: R<sub>AA</sub> aus allen geladenen primären Spuren. Rechte Spalte: nur Spuren mit p<sub>T</sub> &gt; 1 GeV/<em>c</em>, mit offenen Markern gezeichnet.",
+      "READ_UNITY": "Die graue gestrichelte Linie markiert R<sub>AA</sub> = 1, den Wert, der zu erwarten wäre, wenn eine Pb–Pb-Kollision nur eine Überlagerung unabhängiger Nukleon–Nukleon-Kollisionen wäre.",
+      "READ_MEAN": "Die farbige gestrichelte Linie ist der Mittelwert über die ausgewählten Schüler; die Kopfzeile zeigt diesen Mittelwert und die Anzahl der gemittelten Schüler.",
+      "READ_SPREAD": "Die Streuung um den Mittelwert ist die statistische Unsicherheit einer Einzelereignis-Messung — sie sollte groß sein, und für periphere Kollisionen größer als für zentrale."
     }
   },
   "PAGINATOR": {

@@ -8,6 +8,9 @@
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/strangeness-visual-analysis" routerLinkActive #rlaVisual="routerLinkActive" [activated]="rlaVisual.isActive">{{ 'NAV.VISUAL_ANALYSIS' | translate }}</a>
         <a mat-list-item routerLink="/strangeness-large-scale-analysis" routerLinkActive #rlaLsa="routerLinkActive" [activated]="rlaLsa.isActive">{{ 'NAV.LARGE_SCALE_ANALYSIS' | translate }}</a>
+        <h1 matSubheader>{{ 'NAV.NUCLEAR_MODIFICATION' | translate }}</h1>
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/nuclear-modification-event-exploration" routerLinkActive #rlaNmfEe="routerLinkActive" [activated]="rlaNmfEe.isActive">{{ 'NAV.EVENT_EXPLORATION' | translate }}</a>
       </mat-nav-list>
     </div>
   </mat-sidenav>

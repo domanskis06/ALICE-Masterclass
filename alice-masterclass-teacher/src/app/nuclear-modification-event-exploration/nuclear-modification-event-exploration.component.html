@@ -1,0 +1,23 @@
+<div fxFlex="grow">
+  <div class="container" fxFlex="grow" fxLayoutGap="10px" fxLayout="column">
+    <app-nmf-collect-plots
+      [series]="collectSeries"
+      [maxStudent]="maxStudent"
+    ></app-nmf-collect-plots>
+    <app-nmf-results
+      [resultsData]="studentResults"
+      (studentSelectedEvent)="onStudentSelected($event)"
+      (allSelectedEvent)="onAllSelected($event)"
+      (reloadClickedEvent)="onReload()"
+    >
+      <mat-form-field sessionSelector appearance="outline" class="selector" color="primary">
+        <mat-label>{{ 'EVENT_EXPLORATION.SESSION' | translate }}</mat-label>
+        <mat-select [(ngModel)]="sessionID" (selectionChange)="onSessionChange()">
+          @for (s of sessions; track s.id) {
+            <mat-option [value]="s.id">{{ s.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </app-nmf-results>
+  </div>
+</div>

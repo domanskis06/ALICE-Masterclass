@@ -18,6 +18,7 @@ import { SelectSessionDialogComponent } from './select-session-dialog/select-ses
 
 import { StrangenessVisualAnalysisModule } from './strangeness-visual-analysis/strangeness-visual-analysis.module';
 import { StrangenessLargeScaleAnalysisModule } from './strangeness-large-scale-analysis/strangeness-large-scale-analysis.module';
+import { NuclearModificationEventExplorationModule } from './nuclear-modification-event-exploration/nuclear-modification-event-exploration.module';
 import { ConfirmDialogComponent } from './session/confirm-dialog/confirm-dialog.component';
 import { AddEventDialogComponent } from './session/add-event-dialog/add-event-dialog.component';
 import { SelectEventDialogComponent } from './select-event-dialog/select-event-dialog.component';
@@ -55,7 +56,8 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
           }
         }),
         StrangenessVisualAnalysisModule,
-        StrangenessLargeScaleAnalysisModule], providers: [
+        StrangenessLargeScaleAnalysisModule,
+        NuclearModificationEventExplorationModule], providers: [
         { provide: HTTP_INTERCEPTORS, useClass: UnauthorizedInterceptor, multi: true },
         { provide: MatPaginatorIntl, useClass: TranslatedPaginatorIntl },
         AuthGuard,

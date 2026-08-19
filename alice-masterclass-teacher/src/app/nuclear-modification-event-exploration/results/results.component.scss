@@ -1,0 +1,51 @@
+table {
+  width: 100%;
+}
+
+th,
+td {
+  overflow: hidden;
+  width: auto;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.results-body {
+  gap: 12px;
+}
+
+.results-toolbar {
+  width: 100%;
+}
+
+.results-header {
+  gap: 10px;
+  align-items: stretch;
+}
+
+.title {
+  line-height: 1.2;
+  margin: 0;
+  padding: 0;
+}
+
+.results-frame {
+  width: 100%;
+}
+
+.minpt {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.missing {
+  color: rgba(0, 0, 0, 0.38);
+}
+
+:host ::ng-deep .selector {
+  width: 280px;
+  margin: 0;
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}

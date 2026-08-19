@@ -156,7 +156,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_fullclean',
     'masterclass.apps.MasterclassConfig',
-    'strangeness.apps.StrangenessConfig'
+    'strangeness.apps.StrangenessConfig',
+    'nuclear_modification.apps.NuclearModificationConfig'
 ]
 
 MIDDLEWARE = [

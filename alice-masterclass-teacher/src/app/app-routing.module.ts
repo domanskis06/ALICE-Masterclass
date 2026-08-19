@@ -7,6 +7,7 @@ import { SessionRoutingModule } from './session/session-routing.module';
 import { LoginRoutingModule } from './login/login-routing.module';
 import { StrangenessVisualAnalysisRoutingModule } from './strangeness-visual-analysis/strangeness-visual-analysis-routing.module';
 import { StrangenessLargeScaleAnalysisRoutingModule } from './strangeness-large-scale-analysis/strangeness-large-scale-analysis-routing.module';
+import { NuclearModificationEventExplorationRoutingModule } from './nuclear-modification-event-exploration/nuclear-modification-event-exploration-routing.module';
 
 export const routes: Routes = [
   {
@@ -21,7 +22,14 @@ export const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes), SessionRoutingModule, LoginRoutingModule, StrangenessVisualAnalysisRoutingModule, StrangenessLargeScaleAnalysisRoutingModule],
+  imports: [
+    RouterModule.forRoot(routes),
+    SessionRoutingModule,
+    LoginRoutingModule,
+    StrangenessVisualAnalysisRoutingModule,
+    StrangenessLargeScaleAnalysisRoutingModule,
+    NuclearModificationEventExplorationRoutingModule
+  ],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
