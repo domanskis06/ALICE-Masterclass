@@ -12,11 +12,13 @@
   min-height: 0;
   padding: 8px 10px 12px;
   box-sizing: border-box;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   overflow: auto;
 }
 
-/* —— R_AA summary cards —— */
+/* —— R_AA summary cards ——
+   Accents are the 600-weight hues of the light theme; the dark theme's
+   #38bdf8 / #fbbf24 / #f472b6 were too pale to read on a white card. */
 .nmf-analysis-results {
   flex: 0 0 auto;
   display: flex;
@@ -27,29 +29,29 @@
 }
 
 .nmf-raa-group {
-  --nmf-raa-accent: #38bdf8;
+  --nmf-raa-accent: #0284c7;
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px 14px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
   border-left: 3px solid var(--nmf-raa-accent);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+  background: var(--nmf-surface, #f7f9fc);
 }
 
 .nmf-raa-group[data-class='pbPbPeripheral'] {
-  --nmf-raa-accent: #38bdf8;
+  --nmf-raa-accent: #0284c7;
 }
 
 .nmf-raa-group[data-class='pbPbSemiCentral'] {
-  --nmf-raa-accent: #fbbf24;
+  --nmf-raa-accent: #d97706;
 }
 
 .nmf-raa-group[data-class='pbPbCentral'] {
-  --nmf-raa-accent: #f472b6;
+  --nmf-raa-accent: #db2777;
 }
 
 .nmf-raa-group-head {
@@ -64,7 +66,7 @@
   width: 48px;
   height: 30px;
   overflow: visible;
-  color: var(--nmf-raa-accent, #38bdf8);
+  color: var(--nmf-raa-accent, #0284c7);
 
   line {
     stroke: currentColor;
@@ -94,10 +96,10 @@
 .nmf-raa-class {
   margin: 0;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(226, 232, 240, 0.62);
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -113,7 +115,7 @@
 .nmf-raa-symbol {
   font-size: 0.78rem;
   font-weight: 600;
-  color: rgba(226, 232, 240, 0.72);
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
   line-height: 1.2;
 
   sub {
@@ -127,7 +129,7 @@
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -135,7 +137,7 @@
 
 .nmf-raa-value--empty {
   font-weight: 500;
-  color: rgba(226, 232, 240, 0.35);
+  color: rgba(0, 0, 0, 0.34);
 }
 
 /* —— p_T spectra —— */
@@ -155,37 +157,37 @@
 }
 
 .nmf-analysis-plot {
-  --nmf-plot-accent: #38bdf8;
+  --nmf-plot-accent: #0284c7;
   --nmf-plot-meta-h: 40px;
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 10px 12px 12px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
   border-radius: 10px;
-  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 88%, #000);
+  background: var(--nmf-surface, #f7f9fc);
   overflow: visible;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .nmf-analysis-plot[data-class='pbPbPeripheral'] {
-  --nmf-plot-accent: #38bdf8;
+  --nmf-plot-accent: #0284c7;
 }
 
 .nmf-analysis-plot[data-class='pbPbSemiCentral'] {
-  --nmf-plot-accent: #fbbf24;
+  --nmf-plot-accent: #d97706;
 }
 
 .nmf-analysis-plot[data-class='pbPbCentral'] {
-  --nmf-plot-accent: #f472b6;
+  --nmf-plot-accent: #db2777;
 }
 
 .nmf-analysis-plot:hover,
 .nmf-analysis-plot:focus-visible {
-  background: color-mix(in srgb, var(--va-bg-panel-solid, #0a1832) 72%, #1e3a5f);
-  border-color: color-mix(in srgb, var(--nmf-plot-accent) 45%, rgba(148, 163, 184, 0.35));
+  background: var(--nmf-surface-hover, #eaf1fb);
+  border-color: color-mix(in srgb, var(--nmf-plot-accent) 55%, transparent);
   outline: none;
 }
 
@@ -200,7 +202,7 @@
   min-height: var(--nmf-plot-meta-h);
   box-sizing: border-box;
   padding-bottom: 4px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  border-bottom: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
 }
 
 .nmf-analysis-plot-heading {
@@ -228,7 +230,7 @@
   margin: 0;
   font-size: 0.92rem;
   font-weight: 700;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   line-height: 1.25;
 }
 
@@ -243,7 +245,7 @@
   gap: 4px;
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
-  color: rgba(226, 232, 240, 0.55);
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
   white-space: nowrap;
 }
 
@@ -296,7 +298,7 @@
   }
 
   text {
-    fill: var(--va-text, #ffffff);
+    fill: var(--va-text, rgba(0, 0, 0, 0.82));
   }
 
   #title,
@@ -311,7 +313,7 @@
 
   path,
   line {
-    stroke: rgba(226, 232, 240, 0.55);
+    stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
   }
 }
 

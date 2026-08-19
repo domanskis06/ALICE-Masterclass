@@ -1,52 +1,77 @@
 <div class="nmf-filter-builder" id="nmf-tour-filter-builder" data-testid="nmf-filter-builder">
   <header class="nmf-filter-header">
-    <div class="nmf-filter-header-text">
-      <span class="nmf-filter-eyebrow">Primary selection</span>
-      <h2>Build a primary track filter</h2>
-    </div>
-    <button
-      type="button"
-      class="nmf-filter-close"
-      mat-icon-button
-      aria-label="Close"
-      (click)="onClose()"
-    >
+    <h2>Build a primary track filter</h2>
+    <button type="button" mat-icon-button aria-label="Close" (click)="onClose()">
       <mat-icon>close</mat-icon>
     </button>
   </header>
 
-  <div class="nmf-filter-brief">
-    <p class="nmf-filter-hint">
-      Build the same selection physicists use. Keep a track when it is
-      <strong>charged</strong> and its distance of closest approach to the
-      <strong>primary vertex</strong> passes the analysis DCA cuts — use the named
-      primary cuts, not numbers you invent.
-    </p>
-    <ul class="nmf-filter-recipe" aria-label="Filter conditions">
-      <li class="nmf-filter-chip">charged</li>
-      <li class="nmf-filter-chip">|DCA<sub>xy</sub>| &lt; cut</li>
-      <li class="nmf-filter-chip">|DCA<sub>z</sub>| &lt; cut</li>
-    </ul>
-  </div>
+  <div class="nmf-filter-body">
+    <section class="nmf-filter-section" aria-labelledby="nmf-filter-dca-title">
+      <h3 id="nmf-filter-dca-title">What is DCA?</h3>
+      <p>
+        <strong>DCA</strong> means <em>distance of closest approach</em>: how near a track comes to the
+        <strong>primary vertex</strong> (the collision point near the centre of the detector).
+      </p>
+      <p>
+        Particles born in the collision itself (<strong>primaries</strong>) point back to that vertex, so their
+        DCA is small. Tracks from decays, material hits or pile-up (<strong>secondaries</strong>) usually miss it,
+        so their DCA is larger.
+      </p>
+      <p>
+        We split DCA into two parts because the beam runs along <strong>z</strong>, so “across” and “along”
+        the beam are different directions:
+      </p>
+      <ul class="nmf-filter-dca-list">
+        <li>
+          <strong>DCA<sub>xy</sub></strong> — miss distance in the plane <em>perpendicular</em> to the beam
+          (the face-on view of the collision).
+        </li>
+        <li>
+          <strong>DCA<sub>z</sub></strong> — miss distance <em>along</em> the beam. Extra collisions (pile-up)
+          are often shifted in <strong>z</strong>, so this cut helps reject them.
+        </li>
+      </ul>
+      <p>
+        The detector also measures these two directions with different precision, so analyses use
+        <strong>separate cuts</strong> on |DCA<sub>xy</sub>| and |DCA<sub>z</sub>| instead of one single number.
+      </p>
+    </section>
 
-  <div class="nmf-filter-workspace">
-    <div class="nmf-filter-workspace-label">Drag blocks from the toolbox</div>
-    <div #blocklyDiv class="nmf-filter-blockly" data-testid="nmf-filter-blockly"></div>
-  </div>
+    <section class="nmf-filter-section" aria-labelledby="nmf-filter-task-title">
+      <h3 id="nmf-filter-task-title">Your task</h3>
+      <p class="nmf-filter-hint">
+        Build the same selection physicists use. Keep a track when it is
+        <strong>charged</strong>&ngsp;<strong>and</strong>
+        |DCA<sub>xy</sub>| &lt; primary DCA<sub>xy</sub> cut <strong>and</strong>
+        |DCA<sub>z</sub>| &lt; primary DCA<sub>z</sub> cut.
+        Use the named cut blocks — not numbers you invent.
+      </p>
+    </section>
 
-  @if (submitError) {
-    <p class="nmf-filter-msg nmf-filter-msg--error" data-testid="nmf-filter-error" role="alert">
-      {{ submitError }}
-    </p>
-  }
-  @if (submitSuccess) {
-    <p class="nmf-filter-msg nmf-filter-msg--ok" data-testid="nmf-filter-success" role="status">
-      {{ submitSuccess }}
-    </p>
-  }
+    <div class="nmf-filter-workspace">
+      <div #blocklyDiv class="nmf-filter-blockly" data-testid="nmf-filter-blockly"></div>
+    </div>
+
+    @if (submitError) {
+      <p
+        class="nmf-filter-msg nmf-filter-msg--error"
+        data-testid="nmf-filter-error"
+        role="alert"
+        [innerHTML]="submitError"
+      ></p>
+    }
+    @if (submitSuccess) {
+      <p class="nmf-filter-msg nmf-filter-msg--ok" data-testid="nmf-filter-success" role="status">
+        {{ submitSuccess }}
+      </p>
+    }
+  </div>
 
   <footer class="nmf-filter-footer">
     <button
+      mat-raised-button
+      color="primary"
       type="button"
       id="nmf-tour-submit-filter"
       class="nmf-filter-submit"

@@ -348,7 +348,7 @@ export class NmfEeTutorialService {
           title: '2 / 3 — What is R<sub>AA</sub>? (quick reminder)',
           description:
             '<strong>R<sub>AA</sub></strong> is the <em>nuclear modification factor</em>. It asks: after a Pb–Pb collision, do we see as many particles as we would expect from <strong>N<sub>coll</sub></strong> separate proton–proton collisions?<br/><br/>' +
-            '<code style="display:inline-block;margin:0.35rem 0;padding:0.35rem 0.55rem;background:rgba(0,0,0,0.35);border-radius:6px;">R<sub>AA</sub> = Y(Pb–Pb) / (N<sub>coll</sub> × Y(pp))</code><br/><br/>' +
+            '<code style="display:inline-block;margin:0.35rem 0;padding:0.35rem 0.55rem;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);border-radius:6px;">R<sub>AA</sub> = Y(Pb–Pb) / (N<sub>coll</sub> × Y(pp))</code><br/><br/>' +
             '<strong>Y</strong> means “how many charged primary tracks we counted”. <strong>Y(pp)</strong> is the average from your ~30 pp events. <strong>Y(Pb–Pb)</strong> is the count from that one Pb–Pb event. <strong>N<sub>coll</sub></strong> is given for each centrality class.<br/><br/>' +
             'If <strong>R<sub>AA</sub> ≈ 1</strong>, Pb–Pb looks like a simple pile-up of pp collisions. If it is clearly <strong>not 1</strong>, the nuclear medium changed particle production (for example by jet quenching).',
           side: 'left',
@@ -728,7 +728,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Build your track filter',
           description:
-            'Build a filter we will use to analyse our events, one no physicist would be ashamed of. Keep <strong>charged</strong> tracks whose <strong>DCA</strong> to the primary vertex passes the analysis cuts (|DCA<sub>xy</sub>| and |DCA<sub>z</sub>| below the named primary cuts).',
+            'First read <strong>What is DCA?</strong> in the window — why we split <strong>DCA<sub>xy</sub></strong> (across the beam) and <strong>DCA<sub>z</sub></strong> (along the beam). Then build the filter: keep <strong>charged</strong> tracks with |DCA<sub>xy</sub>| and |DCA<sub>z</sub>| below the named primary cuts.',
           side: 'top',
           align: 'center',
         },

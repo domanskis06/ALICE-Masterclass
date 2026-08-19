@@ -1,5 +1,5 @@
 <div
-  class="container nmf-dark-mode"
+  class="container nmf-light-mode"
   fxFlex="grow"
   data-testid="nmf-event-exploration-page"
 >
@@ -7,12 +7,12 @@
   <div class="nmf-event-display-wrap">
     <app-event-display
       [decaysShown]="decaysShown"
-      [backgroundColor]="darkBackgroundColor"
+      [backgroundColor]="lightBackgroundColor"
       [hasClusters]="hasClusters"
       [landscape]="(isLandscape$ | async)"
       [detectorModel]="ALICE_DETECTOR_MODEL"
       [showThemeToggle]="false"
-      [darkMode]="true"
+      [darkMode]="false"
       [event]="displayEvent"
       [sideViewsShown]="sideViewsShown"
       [detectorShown]="detectorShown"

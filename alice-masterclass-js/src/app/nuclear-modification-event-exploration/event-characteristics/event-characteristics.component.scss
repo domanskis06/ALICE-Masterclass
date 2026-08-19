@@ -27,7 +27,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
 }
 
 .nmf-hist-grid {
@@ -47,16 +47,21 @@
   grid-auto-rows: minmax(320px, 1fr);
 }
 
+/**
+ * Tile tints are the 600-weight version of each series colour: the pastel dark-theme
+ * hues (#62d9ff, #4ade80 …) were invisible as bars and borders on a white surface.
+ * Keep in sync with the `barColor` values in event-characteristics.component.ts.
+ */
 .nmf-hist-item {
-  --nmf-hist-tint: 148, 163, 184;
+  --nmf-hist-tint: 71, 85, 105;
   position: relative;
   min-width: 0;
   min-height: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  background: rgba(var(--nmf-hist-tint), 0.09);
-  border: 1px solid rgba(var(--nmf-hist-tint), 0.28);
+  background: rgba(var(--nmf-hist-tint), 0.06);
+  border: 1px solid rgba(var(--nmf-hist-tint), 0.32);
   border-radius: 8px;
   padding: 6px;
   cursor: pointer;
@@ -67,33 +72,33 @@
 }
 
 .nmf-hist-item[data-hist-key='multiplicity'] {
-  --nmf-hist-tint: 98, 217, 255; /* #62d9ff */
+  --nmf-hist-tint: 2, 132, 199; /* #0284c7 */
 }
 
 .nmf-hist-item[data-hist-key='multiplicityMinPt'] {
-  --nmf-hist-tint: 255, 159, 67; /* #ff9f43 */
+  --nmf-hist-tint: 234, 88, 12; /* #ea580c */
 }
 
 .nmf-hist-item[data-hist-key='secondaries'] {
-  --nmf-hist-tint: 167, 139, 250; /* #a78bfa */
+  --nmf-hist-tint: 124, 58, 237; /* #7c3aed */
 }
 
 .nmf-hist-item[data-hist-key='pt'] {
-  --nmf-hist-tint: 74, 222, 128; /* #4ade80 */
+  --nmf-hist-tint: 22, 163, 74; /* #16a34a */
 }
 
 .nmf-hist-item[data-hist-key='charge'] {
-  --nmf-hist-tint: 244, 114, 182; /* #f472b6 */
+  --nmf-hist-tint: 219, 39, 119; /* #db2777 */
 }
 
 .nmf-hist-item[data-hist-key='phi'] {
-  --nmf-hist-tint: 251, 191, 36; /* #fbbf24 */
+  --nmf-hist-tint: 217, 119, 6; /* #d97706 */
 }
 
 .nmf-hist-item:hover,
 .nmf-hist-item:focus-visible {
-  background: rgba(var(--nmf-hist-tint), 0.16);
-  border-color: rgba(var(--nmf-hist-tint), 0.48);
+  background: rgba(var(--nmf-hist-tint), 0.13);
+  border-color: rgba(var(--nmf-hist-tint), 0.55);
   outline: none;
 }
 
@@ -103,7 +108,7 @@
   min-height: 0;
   width: 100%;
   height: 100%;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   pointer-events: none;
 }
 
@@ -145,7 +150,7 @@
 .nmf-hist-title {
   font-size: 12px;
   font-weight: 700;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
 }
 
 :host ::ng-deep .nmf-hist-title sub {
@@ -184,12 +189,14 @@
   user-select: none;
 }
 
+/* Plot ink. `text` inherits the light token; axis rules/ticks must be dark
+   strokes — the dark theme's rgba(226, 232, 240, .55) is invisible on white. */
 :host ::ng-deep app-histogram svg {
   background: transparent;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
 
   text {
-    fill: var(--va-text, #ffffff);
+    fill: var(--va-text, rgba(0, 0, 0, 0.82));
   }
 
   #title,
@@ -204,6 +211,6 @@
 
   path,
   line {
-    stroke: rgba(226, 232, 240, 0.55);
+    stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
   }
 }

@@ -119,7 +119,7 @@ export class NmfEventCharacteristicsComponent {
     this.dialog
       .open(NmfHistogramDialogComponent, {
         data: { spec: h, stats: this.stats(h) },
-        panelClass: 'nmf-histogram-dialog-panel',
+        panelClass: ['nmf-histogram-dialog-panel', 'nmf-histogram-dialog-panel--light'],
         autoFocus: false,
         hasBackdrop: true,
         disableClose: false,
@@ -141,13 +141,15 @@ export class NmfEventCharacteristicsComponent {
 
   private buildSpecs(): NmfHistogramSpec[] {
     // Binning / OX ranges match desktop Raa::TRaaStatistics (libRaa.dylib ctor).
+    // Bar colours are the 600-weight hues of the light theme — keep in sync with
+    // the `--nmf-hist-tint` tile tints in event-characteristics.component.scss.
     return [
       {
         key: 'multiplicity',
         data: this.multiplicityData,
         xDomain: [0, 50],
         bins: this.binsFor('multiplicity', 10),
-        barColor: '#62d9ff',
+        barColor: '#0284c7',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_MULTIPLICITY_TITLE',
         xAxisLabelKey: this.PREFIX + 'AXIS_MULTIPLICITY',
@@ -158,7 +160,7 @@ export class NmfEventCharacteristicsComponent {
         data: this.multiplicityMinPtData,
         xDomain: [0, 50],
         bins: this.binsFor('multiplicityMinPt', 10),
-        barColor: '#ff9f43',
+        barColor: '#ea580c',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_MULTIPLICITY_MIN_PT_TITLE',
         xAxisLabelKey: this.PREFIX + 'AXIS_TPC_TRACKS',
@@ -169,7 +171,7 @@ export class NmfEventCharacteristicsComponent {
         data: this.secondariesData,
         xDomain: [0, 20],
         bins: this.binsFor('secondaries', 20),
-        barColor: '#a78bfa',
+        barColor: '#7c3aed',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_SECONDARIES_TITLE',
         xAxisLabelKey: this.PREFIX + 'AXIS_TPC_TRACKS',
@@ -180,7 +182,7 @@ export class NmfEventCharacteristicsComponent {
         data: this.ptData,
         xDomain: [0, 20],
         bins: this.binsFor('pt', 20),
-        barColor: '#4ade80',
+        barColor: '#16a34a',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_PT_TITLE',
         xAxisLabelKey: this.PREFIX + 'AXIS_PT',
@@ -193,7 +195,7 @@ export class NmfEventCharacteristicsComponent {
         xDomain: [-1.5, 1.5],
         bins: 2,
         discreteValues: [-1, 1],
-        barColor: '#f472b6',
+        barColor: '#db2777',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_CHARGE_TITLE',
         xAxisLabelKey: this.PREFIX + 'AXIS_CHARGE',
@@ -204,7 +206,7 @@ export class NmfEventCharacteristicsComponent {
         data: this.phiData,
         xDomain: [-Math.PI, Math.PI],
         bins: this.binsFor('phi', 20),
-        barColor: '#fbbf24',
+        barColor: '#d97706',
         expandDomainToData: false,
         titleKey: this.PREFIX + 'HIST_PHI_TITLE',
         xAxisLabelKey: this.PREFIX + 'AXIS_PHI',

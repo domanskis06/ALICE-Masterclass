@@ -104,8 +104,8 @@ export class NuclearModificationEventExplorationComponent
     'assets/models/alice components/L3.glb',
   ];
 
-  /** Forced dark mode — same canvas colour as Visual Analysis dark theme. */
-  readonly darkBackgroundColor = 0x0a1832;
+  /** Forced light mode — same canvas colour as Visual Analysis's light theme. */
+  readonly lightBackgroundColor = 0xffffff;
 
   eventIndex = 0;
   event: Event = { tracks: [], decays: [], clusters: [] };

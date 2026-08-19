@@ -24,44 +24,12 @@ export function registerPrimaryFilterBlocks(): void {
       tooltip: 'A number literal (e.g. 0 for the charged-track check)',
     },
     {
-      type: 'nmf_dca_xy',
-      message0: 'DCA_xy to primary vertex',
-      output: 'Number',
-      colour: 210,
-      tooltip:
-        'How far the track misses the primary vertex in the transverse plane (from reconstruction)',
-    },
-    {
-      type: 'nmf_dca_z',
-      message0: 'DCA_z to primary vertex',
-      output: 'Number',
-      colour: 210,
-      tooltip:
-        'How far the track misses the primary vertex along the beam (from reconstruction)',
-    },
-    {
       type: 'nmf_abs',
       message0: '| %1 |',
       args0: [{ type: 'input_value', name: 'NUM', check: 'Number' }],
       output: 'Number',
       colour: 230,
       tooltip: 'Absolute value — DCA can be signed; the cut uses the magnitude',
-    },
-    {
-      type: 'nmf_dca_cut_xy',
-      message0: 'primary DCA cut (xy)',
-      output: 'Number',
-      colour: 65,
-      tooltip:
-        'Analysis cut on |DCA_xy|: the template physicists chose for this MasterClass (not a number you invent)',
-    },
-    {
-      type: 'nmf_dca_cut_z',
-      message0: 'primary DCA cut (z)',
-      output: 'Number',
-      colour: 65,
-      tooltip:
-        'Analysis cut on |DCA_z|: the template physicists chose for this MasterClass (not a number you invent)',
     },
     {
       type: 'nmf_compare',
@@ -125,6 +93,65 @@ export function registerPrimaryFilterBlocks(): void {
       tooltip: 'Keep this track in the selection',
     },
   ]);
+
+  // DCA labels: small FieldLabel for xy / z (Blockly cannot render HTML <sub>).
+  const sub = (text: string) => new Blockly.FieldLabel(text, 'nmf-blockly-sub');
+
+  Blockly.Blocks['nmf_dca_xy'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('DCA')
+        .appendField(sub('xy'))
+        .appendField(' to primary vertex');
+      this.setOutput(true, 'Number');
+      this.setColour(210);
+      this.setTooltip(
+        'How far the track misses the primary vertex in the transverse plane (from reconstruction)',
+      );
+    },
+  };
+
+  Blockly.Blocks['nmf_dca_z'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('DCA')
+        .appendField(sub('z'))
+        .appendField(' to primary vertex');
+      this.setOutput(true, 'Number');
+      this.setColour(210);
+      this.setTooltip(
+        'How far the track misses the primary vertex along the beam (from reconstruction)',
+      );
+    },
+  };
+
+  Blockly.Blocks['nmf_dca_cut_xy'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('primary DCA')
+        .appendField(sub('xy'))
+        .appendField(' cut');
+      this.setOutput(true, 'Number');
+      this.setColour(65);
+      this.setTooltip(
+        'Analysis cut on |DCA_xy|: the template physicists chose for this MasterClass (not a number you invent)',
+      );
+    },
+  };
+
+  Blockly.Blocks['nmf_dca_cut_z'] = {
+    init(this: Blockly.Block) {
+      this.appendDummyInput()
+        .appendField('primary DCA')
+        .appendField(sub('z'))
+        .appendField(' cut');
+      this.setOutput(true, 'Number');
+      this.setColour(65);
+      this.setTooltip(
+        'Analysis cut on |DCA_z|: the template physicists chose for this MasterClass (not a number you invent)',
+      );
+    },
+  };
 }
 
 export function buildPrimaryFilterToolbox(): Blockly.utils.toolbox.ToolboxInfo {
@@ -152,10 +179,10 @@ export function createPrimaryFilterLightTheme(): Blockly.Theme {
     name: 'nmfFilterLight',
     base: Blockly.Themes.Classic,
     componentStyles: {
-      workspaceBackgroundColour: '#f8fafc',
-      toolboxBackgroundColour: '#eef2f7',
+      workspaceBackgroundColour: '#ffffff',
+      toolboxBackgroundColour: '#f1f5f9',
       toolboxForegroundColour: '#0f172a',
-      flyoutBackgroundColour: '#f1f5f9',
+      flyoutBackgroundColour: '#f8fafc',
       flyoutForegroundColour: '#0f172a',
       flyoutOpacity: 1,
       scrollbarColour: '#94a3b8',

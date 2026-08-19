@@ -39,11 +39,11 @@ export class NmfFilterBuilderComponent implements AfterViewInit, OnDestroy {
     this.workspace = Blockly.inject(this.blocklyDiv.nativeElement, {
       toolbox: buildPrimaryFilterToolbox(),
       theme: createPrimaryFilterLightTheme(),
-      trashcan: true,
+      trashcan: false,
       scrollbars: true,
       move: { scrollbars: true, drag: true, wheel: true },
-      grid: { spacing: 22, length: 2, colour: '#dbe3ee', snap: true },
-      zoom: { controls: true, wheel: true, startScale: 1 },
+      grid: { spacing: 20, length: 2, colour: '#e2e8f0', snap: true },
+      zoom: { controls: false, wheel: true, startScale: 1 },
       media: 'assets/blockly/media/',
     });
 
@@ -74,11 +74,13 @@ export class NmfFilterBuilderComponent implements AfterViewInit, OnDestroy {
     this.submitSuccess = '';
     if (!this.workspace || !isValidPrimaryFilter(this.workspace)) {
       this.submitError =
-        'Your filter is incomplete. Keep the track when it is charged AND |DCA_xy| < primary DCA cut (xy) AND |DCA_z| < primary DCA cut (z).';
+        'Not quite. You need all three: (1) charged — use charge ≠ 0, or (charge = 1) OR (charge = −1); ' +
+        '(2) |DCA<sub>xy</sub>| &lt; primary DCA<sub>xy</sub> cut — wrap DCA<sub>xy</sub> in the |…| block and use the xy cut; ' +
+        '(3) |DCA<sub>z</sub>| &lt; primary DCA<sub>z</sub> cut — same with the z cut (not the xy one).';
       return;
     }
     this.submitSuccess =
-      'Correct! You built the DCA primary-track filter physicists use in this MasterClass.';
+      'Well done! Now we’ve got a filter — no more clicking tracks by hand. Let’s move on with the analysis.';
     this.filterAccepted.emit();
   }
 

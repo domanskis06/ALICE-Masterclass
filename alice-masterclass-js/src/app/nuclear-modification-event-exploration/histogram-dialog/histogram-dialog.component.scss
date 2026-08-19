@@ -1,7 +1,15 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+/* The dialog is a CDK overlay attached to <body>, outside the exercise host, so
+   the palette does not cascade in — declare it on this component's own host. */
+:host {
+  @include nmf.light-tokens;
+}
+
 .nmf-hist-dialog {
   position: relative;
-  background: var(--va-bg-panel-solid, #0a1832);
-  color: var(--va-text, #ffffff);
+  background: var(--va-bg-panel-solid, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   min-width: min(80vw, 720px);
 }
 
@@ -17,7 +25,7 @@
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
   font-size: 1.15rem;
   font-weight: 700;
 }
@@ -30,7 +38,7 @@
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
-  color: var(--va-text, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
 }
 
 /* Same control chrome as Visual Analysis mass-histograms bin picker. */
@@ -217,7 +225,7 @@
   }
 
   text {
-    fill: var(--va-text, #ffffff);
+    fill: var(--va-text, rgba(0, 0, 0, 0.82));
   }
 
   #title,
@@ -232,6 +240,6 @@
 
   path,
   line {
-    stroke: rgba(226, 232, 240, 0.55);
+    stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
   }
 }
