@@ -7,45 +7,42 @@
   </header>
 
   <div class="nmf-filter-body">
-    <section class="nmf-filter-section" aria-labelledby="nmf-filter-dca-title">
+    <section class="nmf-filter-section nmf-filter-section--dca" aria-labelledby="nmf-filter-dca-title">
       <h3 id="nmf-filter-dca-title">What is DCA?</h3>
       <p>
-        <strong>DCA</strong> means <em>distance of closest approach</em>: how near a track comes to the
-        <strong>primary vertex</strong> (the collision point near the centre of the detector).
+        <strong>DCA</strong> is short for <em>distance of closest approach</em>: how close a track passes to the
+        <strong>primary vertex</strong>, where the collision happened.
+        A <strong>primary</strong> track points straight back there, so its DCA is tiny; a
+        <strong>secondary</strong> (a decay, a material hit, pile-up) usually misses by more, so its DCA is
+        larger. That gap is what tells them apart.
       </p>
       <p>
-        Particles born in the collision itself (<strong>primaries</strong>) point back to that vertex, so their
-        DCA is small. Tracks from decays, material hits or pile-up (<strong>secondaries</strong>) usually miss it,
-        so their DCA is larger.
-      </p>
-      <p>
-        We split DCA into two parts because the beam runs along <strong>z</strong>, so “across” and “along”
-        the beam are different directions:
+        DCA splits into two parts because the beam runs along <strong>z</strong>:
       </p>
       <ul class="nmf-filter-dca-list">
         <li>
-          <strong>DCA<sub>xy</sub></strong> — miss distance in the plane <em>perpendicular</em> to the beam
-          (the face-on view of the collision).
+          <strong>DCA<sub>xy</sub></strong>: how far off in the plane <em>perpendicular</em> to the beam, the
+          face-on view of the collision.
         </li>
         <li>
-          <strong>DCA<sub>z</sub></strong> — miss distance <em>along</em> the beam. Extra collisions (pile-up)
-          are often shifted in <strong>z</strong>, so this cut helps reject them.
+          <strong>DCA<sub>z</sub></strong>: how far off <em>along</em> the beam itself. Pile-up is often shifted
+          in <strong>z</strong>, so this cut is what catches it.
         </li>
       </ul>
       <p>
-        The detector also measures these two directions with different precision, so analyses use
-        <strong>separate cuts</strong> on |DCA<sub>xy</sub>| and |DCA<sub>z</sub>| instead of one single number.
+        The detector measures the two directions with different precision, so physicists cut on
+        |DCA<sub>xy</sub>| and |DCA<sub>z</sub>| <strong>separately</strong>, never merged into one number.
       </p>
     </section>
 
-    <section class="nmf-filter-section" aria-labelledby="nmf-filter-task-title">
+    <section class="nmf-filter-section nmf-filter-section--task" aria-labelledby="nmf-filter-task-title">
       <h3 id="nmf-filter-task-title">Your task</h3>
       <p class="nmf-filter-hint">
-        Build the same selection physicists use. Keep a track when it is
+        Build the same selection physicists use: keep a track only when it is
         <strong>charged</strong>&ngsp;<strong>and</strong>
-        |DCA<sub>xy</sub>| &lt; primary DCA<sub>xy</sub> cut <strong>and</strong>
-        |DCA<sub>z</sub>| &lt; primary DCA<sub>z</sub> cut.
-        Use the named cut blocks — not numbers you invent.
+        |DCA<sub>xy</sub>| is under the primary DCA<sub>xy</sub> cut <strong>and</strong>
+        |DCA<sub>z</sub>| is under the primary DCA<sub>z</sub> cut.
+        Use the named cut blocks for the thresholds, not numbers you make up yourself.
       </p>
     </section>
 

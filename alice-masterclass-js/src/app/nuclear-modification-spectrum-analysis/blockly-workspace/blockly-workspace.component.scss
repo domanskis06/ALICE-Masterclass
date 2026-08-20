@@ -27,6 +27,14 @@
   overflow: hidden;
 }
 
+/* Blockly cannot use HTML <sub>; shift the "evt" / "coll" label fields down
+   and left so they sit flush against the "N" that precedes them instead of
+   floating in Blockly's normal field-to-field gap. */
+:host ::ng-deep .blockly-div text.nmf-blockly-sub {
+  font-size: 10px;
+  transform: translate(-7px, 3px);
+}
+
 /* —— empty-state hint —— */
 
 /**

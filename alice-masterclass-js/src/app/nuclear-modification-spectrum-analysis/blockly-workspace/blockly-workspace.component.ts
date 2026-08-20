@@ -15,7 +15,7 @@ import {
   NmfDockedFlyout,
   NmfDockedMetricsManager,
   dockedPickerLayout,
-} from './nmf-docked-flyout';
+} from '../../shared/blockly/nmf-docked-flyout';
 import {
   appendRecipeBlocks,
   buildRaaToolbox,

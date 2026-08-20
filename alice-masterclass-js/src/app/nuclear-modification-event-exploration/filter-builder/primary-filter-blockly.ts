@@ -29,7 +29,7 @@ export function registerPrimaryFilterBlocks(): void {
       args0: [{ type: 'input_value', name: 'NUM', check: 'Number' }],
       output: 'Number',
       colour: 230,
-      tooltip: 'Absolute value — DCA can be signed; the cut uses the magnitude',
+      tooltip: 'Absolute value. DCA can be signed; the cut uses the magnitude.',
     },
     {
       type: 'nmf_compare',
@@ -95,14 +95,19 @@ export function registerPrimaryFilterBlocks(): void {
   ]);
 
   // DCA labels: small FieldLabel for xy / z (Blockly cannot render HTML <sub>).
+  // Blockly still pads every appended field on both sides, which read as a gap
+  // before AND after the subscript — `nmf-blockly-sub` pulls the subscript
+  // left to close the gap on its left, `nmf-blockly-after-sub` pulls the
+  // field that follows left by the same amount to close the gap on its right.
   const sub = (text: string) => new Blockly.FieldLabel(text, 'nmf-blockly-sub');
+  const after = (text: string) => new Blockly.FieldLabel(text, 'nmf-blockly-after-sub');
 
   Blockly.Blocks['nmf_dca_xy'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput()
         .appendField('DCA')
         .appendField(sub('xy'))
-        .appendField(' to primary vertex');
+        .appendField(after('to primary vertex'));
       this.setOutput(true, 'Number');
       this.setColour(210);
       this.setTooltip(
@@ -116,7 +121,7 @@ export function registerPrimaryFilterBlocks(): void {
       this.appendDummyInput()
         .appendField('DCA')
         .appendField(sub('z'))
-        .appendField(' to primary vertex');
+        .appendField(after('to primary vertex'));
       this.setOutput(true, 'Number');
       this.setColour(210);
       this.setTooltip(
@@ -130,7 +135,7 @@ export function registerPrimaryFilterBlocks(): void {
       this.appendDummyInput()
         .appendField('primary DCA')
         .appendField(sub('xy'))
-        .appendField(' cut');
+        .appendField(after('cut'));
       this.setOutput(true, 'Number');
       this.setColour(65);
       this.setTooltip(
@@ -144,7 +149,7 @@ export function registerPrimaryFilterBlocks(): void {
       this.appendDummyInput()
         .appendField('primary DCA')
         .appendField(sub('z'))
-        .appendField(' cut');
+        .appendField(after('cut'));
       this.setOutput(true, 'Number');
       this.setColour(65);
       this.setTooltip(
@@ -154,22 +159,66 @@ export function registerPrimaryFilterBlocks(): void {
   };
 }
 
+/** Category order, matched by index in `FILTER_CATEGORY_INDEX`. */
+export const FILTER_CATEGORY_INDEX: Record<string, number> = {
+  values: 0,
+  dca: 1,
+  cuts: 2,
+  logic: 3,
+  keep: 4,
+};
+
 export function buildPrimaryFilterToolbox(): Blockly.utils.toolbox.ToolboxInfo {
   return {
-    kind: 'flyoutToolbox',
+    kind: 'categoryToolbox',
     contents: [
-      { kind: 'block', type: 'nmf_charge' },
-      { kind: 'block', type: 'nmf_number' },
-      { kind: 'block', type: 'nmf_dca_xy' },
-      { kind: 'block', type: 'nmf_dca_z' },
-      { kind: 'block', type: 'nmf_abs' },
-      { kind: 'block', type: 'nmf_dca_cut_xy' },
-      { kind: 'block', type: 'nmf_dca_cut_z' },
-      { kind: 'block', type: 'nmf_compare' },
-      { kind: 'block', type: 'nmf_filter_and' },
-      { kind: 'block', type: 'nmf_filter_or' },
-      { kind: 'block', type: 'nmf_if' },
-      { kind: 'block', type: 'nmf_keep_track' },
+      {
+        kind: 'category',
+        name: 'Values',
+        colour: '220',
+        contents: [
+          { kind: 'block', type: 'nmf_charge' },
+          { kind: 'block', type: 'nmf_number' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'DCA',
+        colour: '210',
+        contents: [
+          { kind: 'block', type: 'nmf_dca_xy' },
+          { kind: 'block', type: 'nmf_dca_z' },
+          { kind: 'block', type: 'nmf_abs' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Cuts',
+        colour: '65',
+        contents: [
+          { kind: 'block', type: 'nmf_dca_cut_xy' },
+          { kind: 'block', type: 'nmf_dca_cut_z' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Logic',
+        colour: '120',
+        contents: [
+          { kind: 'block', type: 'nmf_compare' },
+          { kind: 'block', type: 'nmf_filter_and' },
+          { kind: 'block', type: 'nmf_filter_or' },
+        ],
+      },
+      {
+        kind: 'category',
+        name: 'Keep',
+        colour: '20',
+        contents: [
+          { kind: 'block', type: 'nmf_if' },
+          { kind: 'block', type: 'nmf_keep_track' },
+        ],
+      },
     ],
   };
 }

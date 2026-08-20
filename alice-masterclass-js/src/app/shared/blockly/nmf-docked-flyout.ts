@@ -10,8 +10,9 @@ import * as Blockly from 'blockly';
  * the gesture that lifts a block out of it is Blockly's own.
  *
  * Both classes are handed to a single `Blockly.inject` through its `plugins`
- * option rather than registered globally — the filter builder in exercise 1 is
- * another Blockly injection in the same app and must keep the stock flyout.
+ * option rather than registered globally, so each Blockly injection in the app
+ * (Event Exploration's primary filter, Spectrum Analysis's recipe) opts in on
+ * its own instead of this becoming Blockly's default everywhere.
  */
 
 /** Geometry of the picker, in pixels of the injection div. */

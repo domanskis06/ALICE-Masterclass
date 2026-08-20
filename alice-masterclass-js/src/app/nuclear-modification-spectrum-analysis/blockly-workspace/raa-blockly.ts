@@ -107,7 +107,8 @@ export function registerRaaBlocks(): void {
     },
     {
       type: 'raa_count_events',
-      message0: 'Count events → N_evt',
+      message0: 'Count events → N%1',
+      args0: [{ type: 'field_label', name: 'SUB', text: 'evt', class: 'nmf-blockly-sub' }],
       ...STATEMENT,
       colour: HUE_DATA,
       tooltip: 'Store the number of selected collisions as N_evt for later divisions.',
@@ -168,9 +169,10 @@ export function registerRaaBlocks(): void {
     },
     {
       type: 'raa_lookup_ncoll',
-      message0: 'Look up number of collisions for %1 → N_coll',
+      message0: 'Look up number of collisions for %1 → N%2',
       args0: [
         { type: 'field_dropdown', name: 'CENTRALITY', options: RAA_CENTRALITY_OPTIONS },
+        { type: 'field_label', name: 'SUB', text: 'coll', class: 'nmf-blockly-sub' },
       ],
       ...STATEMENT,
       colour: HUE_NORM,
@@ -187,14 +189,16 @@ export function registerRaaBlocks(): void {
     },
     {
       type: 'raa_divide_events',
-      message0: 'Divide by N_evt',
+      message0: 'Divide by N%1',
+      args0: [{ type: 'field_label', name: 'SUB', text: 'evt', class: 'nmf-blockly-sub' }],
       ...STATEMENT,
       colour: HUE_NORM,
       tooltip: 'Uses the N_evt you counted. Yield per collision instead of per data sample.',
     },
     {
       type: 'raa_divide_ncoll',
-      message0: 'Divide by N_coll',
+      message0: 'Divide by N%1',
+      args0: [{ type: 'field_label', name: 'SUB', text: 'coll', class: 'nmf-blockly-sub' }],
       ...STATEMENT,
       colour: HUE_NORM,
       tooltip: 'Uses the number of collisions you looked up.',

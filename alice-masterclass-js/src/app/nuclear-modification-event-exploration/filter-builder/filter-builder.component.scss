@@ -12,8 +12,8 @@
 .nmf-filter-builder {
   display: flex;
   flex-direction: column;
-  width: min(980px, 96vw);
-  height: min(820px, 94vh);
+  width: min(880px, 96vw);
+  height: min(720px, 94vh);
   background: #ffffff;
   color: rgba(0, 0, 0, 0.87);
   border-radius: 4px;
@@ -50,23 +50,37 @@
   overflow: auto;
 }
 
+/* Same card language as the R_AA Analysis tab: rounded corners, a hairline
+   border, a coloured left accent per section, on a faint tinted surface. */
 .nmf-filter-section {
+  --nmf-filter-accent: #0284c7;
   flex: 0 0 auto;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-left: 3px solid var(--nmf-filter-accent);
+  border-radius: 10px;
+  background: #f7f9fc;
+}
+
+.nmf-filter-section--task {
+  --nmf-filter-accent: #d97706;
 }
 
 .nmf-filter-section h3 {
-  margin: 0 0 6px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.87);
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nmf-filter-accent);
 }
 
 .nmf-filter-section p,
 .nmf-filter-hint {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
-  line-height: 1.45;
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  line-height: 1.35;
   color: rgba(0, 0, 0, 0.7);
 }
 
@@ -76,10 +90,10 @@
 }
 
 .nmf-filter-dca-list {
-  margin: 0 0 8px;
-  padding-left: 1.25rem;
-  font-size: 0.9rem;
-  line-height: 1.45;
+  margin: 0 0 6px;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
   color: rgba(0, 0, 0, 0.7);
 }
 
@@ -112,28 +126,165 @@
 
 .nmf-filter-workspace {
   flex: 1 1 auto;
-  min-height: 360px;
+  min-height: 250px;
   margin: 4px 0 8px;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 10px;
   overflow: hidden;
   background: #ffffff;
+  position: relative;
 }
 
 .nmf-filter-blockly {
   width: 100%;
   height: 100%;
-  min-height: 360px;
+  min-height: 250px;
   position: relative;
   pointer-events: auto;
   touch-action: none;
 }
 
-/* Blockly cannot use HTML <sub>; shift the "xy" / "z" label fields down. */
+/* Blockly cannot use HTML <sub>; shift the "xy" / "z" label fields down and
+   pull the fields immediately before/after it together to close the gap
+   Blockly's own field spacing otherwise leaves on both sides. */
 :host ::ng-deep .nmf-filter-blockly text.nmf-blockly-sub {
   font-size: 10px;
   /* SVG text: positive dy moves the baseline downward → subscript look. */
-  transform: translateY(3px);
+  transform: translate(-7px, 3px);
+}
+
+:host ::ng-deep .nmf-filter-blockly text.nmf-blockly-after-sub {
+  transform: translateX(-11px);
+}
+
+/* —— docked picker: same rail + block-list-under-categories layout as
+   Spectrum Analysis's Blockly workspace, ported wholesale (see that
+   component's SCSS for the reasoning behind each rule). —— */
+:host ::ng-deep .nmf-filter-blockly {
+  .blocklyToolboxDiv {
+    box-sizing: border-box;
+    padding: 8px 6px !important;
+    border-right: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .blocklyToolboxContents {
+    padding: 0;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .blocklyToolboxCategory {
+    padding: 0 !important;
+  }
+
+  .blocklyTreeRow {
+    display: flex;
+    align-items: center;
+    min-height: 25px;
+    margin: 0 0 3px !important;
+    padding: 0 8px !important;
+    border-radius: 8px;
+    border-left-width: 2px !important;
+    background-color: rgba(148, 163, 184, 0.08);
+    color: rgba(0, 0, 0, 0.55);
+    transition: background-color 0.14s ease, color 0.14s ease;
+  }
+
+  .blocklyTreeRow:not(.blocklyTreeSelected):hover {
+    background-color: rgba(148, 163, 184, 0.2) !important;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .blocklyTreeSelected {
+    color: #ffffff;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .blocklyTreeRowContentContainer {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .blocklyTreeIcon {
+    display: none !important;
+  }
+
+  .blocklyTreeLabel {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    color: inherit;
+  }
+
+  .blocklyFlyoutBackground {
+    stroke: rgba(148, 163, 184, 0.35);
+    stroke-width: 1.5px;
+  }
+
+  .blocklyScrollbarHandle {
+    fill: rgba(148, 163, 184, 0.4) !important;
+  }
+
+  .blocklyScrollbarHandle:hover {
+    fill: rgba(203, 213, 225, 0.65) !important;
+  }
+
+  .blocklyEditableField > rect.blocklyFieldRect {
+    stroke: rgba(255, 255, 255, 0.35);
+  }
+}
+
+/**
+ * Docked picker vs toolbox stacking conflict: Blockly gives `.blocklyToolboxDiv`
+ * z-index 70 and sizes it to the full column height rather than to its category
+ * list, while the flyout it owns sits at z-index 20. Everything below the last
+ * category is therefore toolbox surface lying over the picker. Lift the picker
+ * over the toolbox and make the leftover toolbox surface inert, exactly as
+ * Spectrum Analysis's workspace does.
+ */
+:host ::ng-deep .nmf-filter-blockly {
+  .blocklyFlyout {
+    z-index: 71 !important;
+  }
+
+  .blocklyFlyoutScrollbar {
+    z-index: 72 !important;
+  }
+
+  .blocklyToolboxDiv {
+    pointer-events: none !important;
+  }
+
+  .blocklyToolboxDiv .blocklyToolboxCategory,
+  .blocklyToolboxDiv .blocklyTreeRow {
+    pointer-events: auto !important;
+  }
+}
+
+/**
+ * driver.js re-arms every descendant of the highlighted element with
+ * `pointer-events: auto`, which breaks Blockly's own drag surfaces and makes
+ * long category labels swallow clicks meant for the row underneath. Same fix
+ * as Spectrum Analysis's workspace.
+ */
+:host ::ng-deep .nmf-filter-blockly {
+  .blocklyAnimationLayer,
+  .blocklyBlockDragSurface,
+  .blocklyWsDragSurface,
+  .blocklyDragSurface,
+  .blocklyNoPointerEvents,
+  .blocklyScrollbarBackground,
+  .blocklyVerticalMarker,
+  .blocklyNonEditableText > text,
+  .blocklyTreeRowContentContainer,
+  .blocklyTreeRowContentContainer * {
+    pointer-events: none !important;
+  }
 }
 
 .nmf-filter-msg {
