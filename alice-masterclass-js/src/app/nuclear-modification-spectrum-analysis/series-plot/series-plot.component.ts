@@ -216,7 +216,7 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .attr('transform', `translate(0,${bottom})`)
       .call(
         this.xLog
-          ? d3.axisBottom(x).ticks(10, '~g').tickFormat(labelDecadesOnly)
+          ? d3.axisBottom(x).tickArguments([]).tickFormat(labelDecadesOnly)
           : d3.axisBottom(x).ticks(tight ? 4 : 6),
       );
 
@@ -388,7 +388,22 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
 
 /** Ticks the grid follows; a log axis gets its decades rather than 5 even steps. */
 function yTicksOf(y: d3.ScaleContinuousNumeric<number, number>, log: boolean): number[] {
-  return log ? (y as d3.ScaleLogarithmic<number, number>).ticks(4) : y.ticks(5);
+  // Grid lines span the full plot width, so a log scale's dense 1/2/3/…/9
+  // candidates (see labelDecadesOnly below) would draw as a distracting fan
+  // of lines bunched up near each decade — fine as unlabelled ticks on the
+  // axis itself, not as full-width lines competing with the data. Only the
+  // decades get a grid line.
+  return log
+    ? (y as d3.ScaleLogarithmic<number, number>).ticks().filter(isDecade)
+    : y.ticks(5);
+}
+
+function isDecade(n: number): boolean {
+  if (n <= 0) {
+    return false;
+  }
+  const exponent = Math.log10(n);
+  return Math.abs(exponent - Math.round(exponent)) < 1e-9;
 }
 
 /**
@@ -402,11 +417,7 @@ function yTicksOf(y: d3.ScaleContinuousNumeric<number, number>, log: boolean): n
  */
 function labelDecadesOnly(value: d3.NumberValue): string {
   const n = Number(value);
-  if (n <= 0) {
-    return '';
-  }
-  const exponent = Math.log10(n);
-  return Math.abs(exponent - Math.round(exponent)) < 1e-9 ? d3.format('~g')(n) : '';
+  return isDecade(n) ? d3.format('~g')(n) : '';
 }
 
 /** A histogram drawn by the same renderer: bin outline plus sqrt(N) bars. */
