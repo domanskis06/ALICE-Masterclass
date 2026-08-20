@@ -216,7 +216,10 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .attr('transform', `translate(0,${bottom})`)
       .call(
         this.xLog
-          ? d3.axisBottom(x).tickArguments([]).tickFormat(labelDecades('~g'))
+          ? d3
+              .axisBottom(x)
+              .tickValues(decadeTicks(x as d3.ScaleLogarithmic<number, number>))
+              .tickFormat(d3.format('~g'))
           : d3.axisBottom(x).ticks(tight ? 4 : 6),
       );
 
@@ -226,19 +229,22 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .attr('transform', `translate(${margin.left},0)`)
       .call(
         this.yLog
-          ? d3.axisLeft(y).tickArguments([]).tickFormat(labelDecades('~e'))
+          ? d3
+              .axisLeft(y)
+              .tickValues(decadeTicks(y as d3.ScaleLogarithmic<number, number>))
+              .tickFormat(d3.format('~e'))
           : d3.axisLeft(y).ticks(tight ? 4 : 5),
       );
 
     if (this.xLabel) {
-      drawLabel(plot, this.xLabel)
+      drawLabel(plot, this.xLabel + (this.xLog ? ' (log)' : ''))
         .attr('class', 'nmf-plot-axis-label')
         .attr('x', (margin.left + width - margin.right) / 2)
         .attr('y', height - 8)
         .attr('text-anchor', 'middle');
     }
     if (this.yLabel) {
-      drawLabel(plot, this.yLabel)
+      drawLabel(plot, this.yLabel + (this.yLog ? ' (log)' : ''))
         .attr('class', 'nmf-plot-axis-label')
         .attr('transform', 'rotate(-90)')
         .attr('x', -(margin.top + height - margin.bottom) / 2)
@@ -388,14 +394,7 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
 
 /** Ticks the grid follows; a log axis gets its decades rather than 5 even steps. */
 function yTicksOf(y: d3.ScaleContinuousNumeric<number, number>, log: boolean): number[] {
-  // Grid lines span the full plot width, so a log scale's dense 1/2/3/…/9
-  // candidates (see labelDecadesOnly below) would draw as a distracting fan
-  // of lines bunched up near each decade — fine as unlabelled ticks on the
-  // axis itself, not as full-width lines competing with the data. Only the
-  // decades get a grid line.
-  return log
-    ? (y as d3.ScaleLogarithmic<number, number>).ticks().filter(isDecade)
-    : y.ticks(5);
+  return log ? decadeTicks(y as d3.ScaleLogarithmic<number, number>) : y.ticks(5);
 }
 
 function isDecade(n: number): boolean {
@@ -408,21 +407,23 @@ function isDecade(n: number): boolean {
 
 /**
  * d3's default log-axis tick count picks whichever 1/2/3/…/9 candidates fit,
- * which on a ~2-3 decade domain like ours labels an arbitrary-looking subset
- * (0.2, 0.3, 1, 2, 3, 10…) — every gap between labelled ticks looks like a
- * different size, because it is: some neighbours are one digit apart, others
- * a full decade. Requesting a dense set of ticks but only labelling the
- * powers of ten keeps the unlabelled in-between ticks as a visual cue that
- * this is a log axis, the way a ROOT log axis reads. Used for both axes —
- * X labels plain ("1", "10"), Y keeps its scientific-notation specifier
- * ("1e+2"), so the specifier is the caller's choice.
+ * which on a ~2-3 decade domain like ours draws an arbitrary-looking subset
+ * (0.2, 0.3, 1, 2, 3, 10…) — every gap between ticks looks a different size,
+ * because it is: some neighbours are one digit apart, others a full decade.
+ * A tick or grid line only at each power of ten is the one set that is
+ * genuinely evenly spaced (equal ratios, by construction) and reads the
+ * same as any other log axis: " (log)" on the axis label is the explicit
+ * cue for what the ticks alone cannot say.
  */
-function labelDecades(specifier: string): (value: d3.NumberValue) => string {
-  const format = d3.format(specifier);
-  return (value) => {
-    const n = Number(value);
-    return isDecade(n) ? format(n) : '';
-  };
+function decadeTicks(scale: d3.ScaleLogarithmic<number, number>): number[] {
+  const [low, high] = scale.domain();
+  const first = Math.ceil(Math.log10(low) - 1e-9);
+  const last = Math.floor(Math.log10(high) + 1e-9);
+  const ticks: number[] = [];
+  for (let exponent = first; exponent <= last; exponent++) {
+    ticks.push(10 ** exponent);
+  }
+  return ticks;
 }
 
 /** A histogram drawn by the same renderer: bin outline plus sqrt(N) bars. */

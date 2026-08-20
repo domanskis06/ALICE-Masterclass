@@ -128,7 +128,7 @@ describe('NmfSeriesPlotComponent', () => {
     // `drawLabel` turns `_AA` into a lowered tspan, so the underscore is spent on
     // the markup and never reaches textContent.
     const labels = all('.nmf-plot-axis-label').map((t) => t.textContent);
-    expect(labels).toEqual(['pT (GeV/c)', 'RAA']);
+    expect(labels).toEqual(['pT (GeV/c) (log)', 'RAA']);
     expect(all('.nmf-plot-axis-label .nmf-plot-sub').map((t) => t.textContent)).toEqual(['AA']);
   });
 
