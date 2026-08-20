@@ -81,6 +81,31 @@ export enum CentralityType {
   C090_100 = '090_100'
 }
 
+/** Pb-Pb centrality classes of the Nuclear Modification part-1 data sets. */
+export enum NmfEventClass {
+  PBPB_PERIPHERAL = 'pbPbPeripheral',
+  PBPB_SEMI_CENTRAL = 'pbPbSemiCentral',
+  PBPB_CENTRAL = 'pbPbCentral'
+}
+
+export interface NmfEventExplorationEntryAPI {
+  eventClass: NmfEventClass;
+  nColl: number;
+  multiplicity: number;
+  multiplicityMinPt: number;
+  raa: number;
+  raaMinPt: number;
+}
+
+export interface NmfEventExplorationResultAPI {
+  student: number;
+  dataset: number;
+  ppEvents: number;
+  meanPpMultiplicity: number;
+  meanPpMultiplicityMinPt: number;
+  entries: NmfEventExplorationEntryAPI[];
+}
+
 export interface StrangenesLargeScaleAnalysisResultAPI {
   particle: ParticleType;
   collision: CollisionType;
@@ -188,5 +213,9 @@ export class ApiService {
 
   getJpsiAnalysisResults(eventID: number): Observable<JpsiAnalysisResultAPI[]> {
     return this.get<JpsiAnalysisResultAPI[]>(`jpsi_analysis_results/${eventID}`);
+  }
+
+  getNuclearModificationEventExplorationResults(sessionID: number): Observable<NmfEventExplorationResultAPI[]> {
+    return this.get<NmfEventExplorationResultAPI[]>(`nuclear_modification_event_exploration_results/${sessionID}`);
   }
 }

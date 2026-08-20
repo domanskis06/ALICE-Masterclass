@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
   Type,
@@ -11,15 +12,20 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { map, shareReplay } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 import { Event, Track, TrackType } from '../shared/models';
 import { RaaEventRole, RaaEventSummary } from '../shared/models/raa/raa';
 import { InstructionsProvider } from '../shared/interfaces';
 import { RaaDataService } from '../services/raa-data.service';
+import { ApiService } from '../shared/services/api.service';
+import { DemoConfig } from '../shared/demo/demo-config.service';
+import { buildEventExplorationSubmission } from '../shared/utils/raa-calc';
 import { EventDisplayComponent } from '../shared/components/event-display/event-display.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { NmfEventCharacteristicsComponent } from './event-characteristics/event-characteristics.component';
@@ -104,8 +110,8 @@ export class NuclearModificationEventExplorationComponent
     'assets/models/alice components/L3.glb',
   ];
 
-  /** Forced dark mode — same canvas colour as Visual Analysis dark theme. */
-  readonly darkBackgroundColor = 0x0a1832;
+  /** Forced light mode — same canvas colour as Visual Analysis's light theme. */
+  readonly lightBackgroundColor = 0xffffff;
 
   eventIndex = 0;
   event: Event = { tracks: [], decays: [], clusters: [] };
@@ -195,6 +201,9 @@ export class NuclearModificationEventExplorationComponent
     this.loadCurrentEvent();
   }
 
+  /** Hidden entirely in the offline demo build, which never uploads to Django. */
+  protected readonly demo = inject(DemoConfig).enabled;
+
   constructor(
     private readonly raaData: RaaDataService,
     private readonly breakpointObserver: BreakpointObserver,
@@ -203,6 +212,9 @@ export class NuclearModificationEventExplorationComponent
     private readonly eeTutorial: NmfEeTutorialService,
     private readonly destroyRef: DestroyRef,
     private readonly cdr: ChangeDetectorRef,
+    protected readonly apiService: ApiService,
+    private readonly snackBar: MatSnackBar,
+    private readonly translate: TranslateService,
   ) {
     this.isLandscape$ = this.breakpointObserver.observe('(orientation: landscape)').pipe(
       map((result) => result.matches),
@@ -698,6 +710,29 @@ export class NuclearModificationEventExplorationComponent
       pts: ptsOf(accepted),
     });
     this.analysisRecordsList = [...this.analysisRecords.values()];
+  }
+
+  /**
+   * Sends the part-1 R_AA figures to the teacher's Results table — the same
+   * numbers the R_AA Analysis tab is already showing, reduced to the payload
+   * `SubmitEventExplorationResultsAPI` expects. Mirrors Visual Analysis's own
+   * upload button: fire on click, toast while in flight, toast on success.
+   */
+  onUploadResults(): void {
+    const submission = buildEventExplorationSubmission(this.analysisRecordsList, this.nCollPart1);
+
+    forkJoin([
+      this.translate.get('PASSWORD.UPLOADING'),
+      this.translate.get('PASSWORD.COMPLETED'),
+    ]).subscribe(([uploadingTranslation, completedTranslation]) => {
+      this.snackBar.open(uploadingTranslation, null, { duration: 800 });
+
+      this.apiService
+        .submitEventExplorationResults(this.datasetID ?? 0, submission)
+        .subscribe(() => {
+          this.snackBar.open(completedTranslation, null, { duration: 800 });
+        });
+    });
   }
 }
 

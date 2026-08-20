@@ -74,6 +74,17 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   @Input()
   viewBoxHeight: number | null = null;
 
+  /**
+   * Dashed vertical line at the data's mean, in `barColor`. Opt-in (default
+   * off) since most consumers (VA/LSA mass histograms) have no use for it.
+   */
+  @Input()
+  showMean = false;
+
+  /** Text before the number on the mean line, e.g. "Mean". Caller translates it. */
+  @Input()
+  meanLabel = 'Mean';
+
   /** Subclasses (e.g. FitHistogram) may override W/H. Prefer `svgBox` at call sites. */
   readonly SVG = {
     W: 400,
@@ -218,6 +229,17 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
 
   private get brushSelector(): d3.Selection<SVGGElement, unknown, null, undefined> {
     return d3.select(this.brush);
+  }
+
+  @ViewChild('mean')
+  private meanRef!: ElementRef;
+
+  private get mean(): SVGGElement {
+    return this.meanRef.nativeElement;
+  }
+
+  private get meanSelector(): d3.Selection<SVGGElement, unknown, null, undefined> {
+    return d3.select(this.mean);
   }
 
   protected xScale: d3.ScaleLinear<number,number> = d3.scaleLinear<number>();
@@ -589,6 +611,40 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       .attr('height', (d) => {
         return this.CONTENT_AREA.H - this.yScale(d.length);
       });
+
+    this.updateMean();
+  }
+
+  private updateMean(): void {
+    // FitHistogramComponent (LSA) subclasses this with its own template that
+    // has no #mean element — nothing to draw on, and nothing to clear either.
+    if (!this.meanRef) {
+      return;
+    }
+    this.meanSelector.selectAll('*').remove();
+    if (!this.showMean || !this.data.length) {
+      return;
+    }
+    const mean = d3.mean(this.data);
+    if (mean === undefined || !this.xDomain || mean < this.xDomain[0] || mean > this.xDomain[1]) {
+      return;
+    }
+    const cx = this.xScale(mean);
+    this.meanSelector
+      .append('line')
+      .attr('class', 'histogram-mean-line')
+      .style('stroke', this.barColor)
+      .attr('x1', cx)
+      .attr('x2', cx)
+      .attr('y1', 0)
+      .attr('y2', this.CONTENT_AREA.H);
+    this.meanSelector
+      .append('text')
+      .attr('class', 'histogram-mean-label')
+      .style('fill', this.barColor)
+      .attr('x', cx + 4)
+      .attr('y', 10)
+      .text(`${this.meanLabel} ${mean.toFixed(2)}`);
   }
 
   protected onZoom(event: any): void {

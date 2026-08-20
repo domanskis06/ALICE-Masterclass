@@ -1,35 +1,150 @@
 <div
-  class="container nmf-dark-mode"
-  fxFlex="grow"
-  fxLayout="column"
+  class="nmf-sa-page nmf-light-mode"
+  [class.nmf-sa-page--results-full]="resultsFullscreen"
+  id="nmf-sa-tour-page"
   data-testid="nmf-spectrum-analysis-page"
 >
-  <div class="workspace-row" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutGap="12px">
-    <div class="blockly-col" fxFlex="1 1 55%">
-      <h2 class="section-title">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PIPELINE_TITLE' | translate }}</h2>
-      <app-nmf-blockly-workspace
-        (pipelineChange)="onPipelineChange($event)"
-      ></app-nmf-blockly-workspace>
-      <app-nmf-pipeline-run-bar
-        [running]="running"
-        [valid]="valid"
-        [warnings]="warnings"
-        (run)="onRun()"
-        (clear)="onClear()"
-      ></app-nmf-pipeline-run-bar>
+  <section class="nmf-sa-col nmf-sa-col--build" id="nmf-sa-tour-workspace">
+    <header class="nmf-sa-col-head">
+      <h2 class="nmf-sa-section-title">
+        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PIPELINE_TITLE' | translate }}
+      </h2>
+
+      <!-- Run / Clear sit in the header: the bottom bar they used to own cost the
+           workspace ~90px of height for two buttons. `nmf-sa-tour-run` moves with
+           them, so the tour still points at the control it describes. The status
+           chip is inside the same group, because it is a verdict on the last Run. -->
+      <div class="nmf-sa-run-actions" data-testid="nmf-pipeline-run-bar" id="nmf-sa-tour-run">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="nmf-sa-run-button"
+          data-testid="nmf-run-pipeline"
+          [disabled]="running || runLocked"
+          (click)="onRun()"
+        >
+          <mat-icon>play_arrow</mat-icon>
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RUN' | translate }}
+        </button>
+        <button
+          mat-stroked-button
+          type="button"
+          class="nmf-sa-clear-button"
+          data-testid="nmf-clear-pipeline"
+          (click)="onClear()"
+        >
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLEAR' | translate }}
+        </button>
+        @if (ok === true) {
+          <span class="nmf-sa-status nmf-sa-status--ok">
+            <mat-icon>check_circle</mat-icon>
+            <span
+              [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.STATUS_OK' | translate"
+            ></span>
+          </span>
+        } @else if (ok === false && problems.length) {
+          <span class="nmf-sa-status nmf-sa-status--warn">
+            <mat-icon>error_outline</mat-icon>
+            <span
+              [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.STATUS_WARN' | translate"
+            ></span>
+          </span>
+        }
+      </div>
+
+      <span class="nmf-sa-head-rule" aria-hidden="true"></span>
+
+      <div class="nmf-sa-col-actions">
+        <button
+          mat-icon-button
+          type="button"
+          class="nmf-sa-help"
+          data-testid="nmf-sa-replay-tutorial"
+          [matTooltip]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.REPLAY_TUTORIAL' | translate"
+          (click)="replayTutorial()"
+        >
+          <mat-icon>replay</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          class="nmf-sa-help"
+          data-testid="nmf-sa-block-help"
+          [matTooltip]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.BLOCK_HELP' | translate"
+          (click)="openBlockHelp()"
+        >
+          <mat-icon>help_outline</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <app-nmf-pipeline-problems [problems]="problems"></app-nmf-pipeline-problems>
+
+    <app-nmf-blockly-workspace
+      class="nmf-sa-workspace"
+      (recipeChange)="onRecipeChange($event)"
+    ></app-nmf-blockly-workspace>
+  </section>
+
+  <section class="nmf-sa-col nmf-sa-col--results">
+    <!-- One screen, no tabs: the plots, the centrality reference and the collected
+         numbers are all on it at once. Each panel scrolls inside itself if it has
+         to, so the page never does. -->
+    <header class="nmf-sa-col-head">
+      <h2
+        class="nmf-sa-section-title"
+        [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_TITLE' | translate"
+      ></h2>
+      <div class="nmf-sa-col-actions">
+        <button
+          mat-icon-button
+          type="button"
+          class="nmf-sa-help"
+          data-testid="nmf-sa-plot-help"
+          [matTooltip]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOT_HELP' | translate"
+          (click)="openResultsHelp()"
+        >
+          <mat-icon>help_outline</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          type="button"
+          class="nmf-sa-help"
+          data-testid="nmf-sa-results-fullscreen"
+          [attr.aria-label]="
+            (resultsFullscreen
+              ? 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_EXIT_FULLSCREEN'
+              : 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_FULLSCREEN'
+            ) | translate
+          "
+          (click)="onToggleResultsFullscreen()"
+        >
+          <mat-icon>{{ resultsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <div class="nmf-sa-screen" data-testid="nmf-sa-results-screen">
+      <div class="nmf-sa-screen-plots" id="nmf-sa-tour-plots">
+        <app-nmf-raa-plots
+          [ptSpectra]="ptSpectra"
+          [raa]="raa"
+          [rcp]="rcp"
+          [multiplicity]="multiplicity"
+          [multVsCentrality]="multVsCentrality"
+          [ppReference]="ppReference"
+          (startTutorial)="replayTutorial()"
+          (openHelp)="openBlockHelp()"
+        ></app-nmf-raa-plots>
+      </div>
+
+      <div class="nmf-sa-screen-results">
+        <app-nmf-results-table
+          [readouts]="readouts"
+          [reported]="reported"
+        ></app-nmf-results-table>
+      </div>
     </div>
-    <div class="plots-col" fxFlex="1 1 45%">
-      <h2 class="section-title">{{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_TITLE' | translate }}</h2>
-      <app-nmf-raa-plots
-        [ptSpectra]="ptSpectra"
-        [raa]="raa"
-        [rcp]="rcp"
-      ></app-nmf-raa-plots>
-      <app-nmf-extract-panel
-        [centralityBins]="centralityBins"
-        [binCount]="binCount"
-        [extract]="extract"
-      ></app-nmf-extract-panel>
-    </div>
-  </div>
+  </section>
 </div>

@@ -22,7 +22,9 @@
     "VISUAL_ANALYSIS": "Analyse visuelle",
     "LARGE_SCALE_ANALYSIS": "Analyse à grande échelle",
     "JPSI": "Production de J/ψ",
-    "JPSI_ANALYSIS": "Analyse J/ψ"
+    "JPSI_ANALYSIS": "Analyse J/ψ",
+    "NUCLEAR_MODIFICATION": "Modification nucléaire",
+    "EVENT_EXPLORATION": "Exploration des événements"
   },
   "SESSION": {
     "TITLE": "Événements",
@@ -169,5 +171,34 @@
     "FIRST_PAGE": "Première page",
     "LAST_PAGE": "Dernière page",
     "OF_LABEL": "sur"
+  },
+  "EVENT_EXPLORATION": {
+    "SESSION": "Session",
+    "COLLECTED_RAA": "Mesures de R<sub>AA</sub> collectées",
+    "RESULTS": "Résultats",
+    "STUDENT": "Élève",
+    "STUDENT_GROUP": "Groupe d'élèves",
+    "DATASET": "Jeu de données",
+    "PERIPHERAL": "Périphérique",
+    "SEMI_CENTRAL": "Semi-centrale",
+    "CENTRAL": "Centrale",
+    "ALL_PT": "tout p<sub>T</sub>",
+    "MIN_PT": "p<sub>T</sub> &gt; 1 GeV/<em>c</em>",
+    "NO_SELECTION": "Sélectionnez des élèves dans le tableau Résultats pour ajouter leurs mesures aux graphiques.",
+    "INSTRUCTIONS": {
+      "TITLE": "À propos de l'exploration des événements",
+      "INTRO": "Ce module rassemble les facteurs de modification nucléaire de la partie 1, mesurés par les élèves en comptant les traces primaires chargées dans 30 événements pp et dans les trois événements Pb–Pb (périphérique, semi-centrale, centrale).",
+      "HOW_TO_USE": "Comment l’utiliser",
+      "STEP_1": "Choisissez une session dans la liste au-dessus du tableau Résultats.",
+      "STEP_2": "Dans le tableau Résultats, cochez ou décochez des élèves pour inclure ou exclure leurs mesures des graphiques.",
+      "STEP_3": "Chaque ligne montre les deux nombres par classe : R<sub>AA</sub> sur tout p<sub>T</sub> et R<sub>AA</sub> restreint à p<sub>T</sub> &gt; 1 GeV/<em>c</em>.",
+      "STEP_4": "Utilisez le bouton d’actualisation lorsque d’autres élèves ont envoyé leurs résultats.",
+      "HOW_TO_READ": "Comment lire les graphiques",
+      "HOW_TO_READ_INTRO": "Les six cadres reprennent la disposition de l'outil de bureau destiné à l'encadrant : les lignes sont les trois classes de centralité Pb–Pb, les colonnes les deux fenêtres en p<sub>T</sub>.",
+      "READ_COLUMNS": "Colonne de gauche : R<sub>AA</sub> à partir de toutes les traces primaires chargées. Colonne de droite : seulement les traces avec p<sub>T</sub> &gt; 1 GeV/<em>c</em>, tracées avec des marqueurs creux.",
+      "READ_UNITY": "La ligne grise en pointillés marque R<sub>AA</sub> = 1, la valeur attendue si une collision Pb–Pb n'était qu'une superposition de collisions nucléon–nucléon indépendantes.",
+      "READ_MEAN": "La ligne colorée en pointillés est la moyenne sur les élèves sélectionnés ; l'en-tête indique cette moyenne et le nombre d'élèves moyennés.",
+      "READ_SPREAD": "La dispersion autour de la moyenne est l'incertitude statistique d'une mesure sur un seul événement — elle doit être grande, et plus grande pour les collisions périphériques que pour les centrales."
+    }
   }
 }

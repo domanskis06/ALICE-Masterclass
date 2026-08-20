@@ -157,7 +157,8 @@ INSTALLED_APPS = [
     'django_fullclean',
     'masterclass.apps.MasterclassConfig',
     'strangeness.apps.StrangenessConfig',
-    'jpsi.apps.JpsiConfig'
+    'jpsi.apps.JpsiConfig',
+    'nuclear_modification.apps.NuclearModificationConfig'
 ]
 
 MIDDLEWARE = [

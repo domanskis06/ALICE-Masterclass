@@ -1,0 +1,82 @@
+.pad {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pad-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.pad-title {
+  font-weight: 600;
+}
+
+.pad-mean {
+  color: rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.pad-count {
+  opacity: 0.7;
+}
+
+.plot-frame {
+  position: relative;
+  width: 100%;
+}
+
+svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.plot-tooltip {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  transform: translate(12px, -100%);
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgba(33, 33, 33, 0.92);
+  color: #fff;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+:host ::ng-deep svg {
+  .dots circle {
+    fill: var(--marker-color);
+    stroke: var(--marker-color);
+    cursor: pointer;
+  }
+
+  .dots circle.hollow {
+    fill: transparent;
+  }
+
+  .unity-line {
+    stroke: gray;
+    stroke-dasharray: 5;
+  }
+
+  .mean-line {
+    stroke: var(--marker-color);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 3;
+    opacity: 0.9;
+  }
+
+  #yAxisLabel,
+  #xAxisLabel {
+    font-size: 0.75em;
+  }
+}

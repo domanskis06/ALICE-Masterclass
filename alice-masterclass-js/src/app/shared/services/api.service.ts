@@ -4,6 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { shareReplay } from 'rxjs/operators';
+import { RaaEventExplorationSubmission } from '../utils/raa-calc';
 
 /**
  * Which of the three independent sub-masterclasses a session belongs to. Mirrors
@@ -248,5 +249,19 @@ export class ApiService {
     };
 
     return this.put(`jpsi_analysis/${this.studentID}`, body);
+  }
+
+  /**
+   * Nuclear Modification "Event Exploration" (part 1) upload. `dataset` is
+   * informational — which of the interchangeable data sets the student worked
+   * through — and `results` matches the Django view's expected shape exactly:
+   * see `nuclear_modification/views.py::SubmitEventExplorationResultsAPI`.
+   */
+  submitEventExplorationResults(
+    dataset: number,
+    results: RaaEventExplorationSubmission,
+  ): Observable<any> {
+    const body = { password: this.password, dataset, results };
+    return this.put(`nuclear_modification_event_exploration/${this.studentID}`, body);
   }
 }

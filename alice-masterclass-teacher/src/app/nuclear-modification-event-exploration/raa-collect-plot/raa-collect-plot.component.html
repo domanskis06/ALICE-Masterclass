@@ -1,0 +1,56 @@
+<div class="pad">
+  <div class="pad-header">
+    <span class="pad-title"><ng-content select="[padTitle]"></ng-content></span>
+    @if (mean !== null) {
+      <span class="pad-mean">
+        &#10216;R<sub>AA</sub>&#10217; = {{ mean | number: '1.3-3' }}
+        <span class="pad-count">({{ count }})</span>
+      </span>
+    }
+  </div>
+  <div class="plot-frame" #plotFrame>
+    <svg attr.viewBox="0 0 {{ SVG.W }} {{ SVG.H }}" preserveAspectRatio="xMidYMid meet">
+      <g
+        id="yAxisLabel"
+        attr.transform="translate({{ MARGIN.LEFT_YLABEL }}, {{ MARGIN.TOP }}) rotate(-90)"
+        text-anchor="end"
+      >
+        <ng-content select="[yAxisLabel]"></ng-content>
+      </g>
+      <g attr.transform="translate({{ CONTENT_AREA.X }}, {{ CONTENT_AREA.Y }})">
+        <defs>
+          <clipPath [attr.id]="'clip-' + clipId">
+            <rect
+              x="0"
+              y="0"
+              attr.width="{{ CONTENT_AREA.W }}"
+              attr.height="{{ CONTENT_AREA.H }}"
+            ></rect>
+          </clipPath>
+        </defs>
+        <g class="axis" #yAxis></g>
+        <g class="axis" #xAxis attr.transform="translate(0, {{ CONTENT_AREA.H }})"></g>
+        <g [attr.clip-path]="'url(#clip-' + clipId + ')'">
+          <line class="unity-line" #unityLine></line>
+          <line class="mean-line" #meanLine opacity="0"></line>
+          <g class="dots" #dots></g>
+        </g>
+      </g>
+      <g
+        id="xAxisLabel"
+        attr.transform="translate({{ CONTENT_AREA.X + CONTENT_AREA.W }}, {{
+          SVG.H - MARGIN.BOTTOM_TEXT
+        }})"
+        text-anchor="end"
+      >
+        <ng-content select="[xAxisLabel]"></ng-content>
+      </g>
+    </svg>
+    @if (tooltipVisible && tooltipPoint) {
+      <div class="plot-tooltip" [style.left.px]="tooltipX" [style.top.px]="tooltipY">
+        <div>{{ 'EVENT_EXPLORATION.STUDENT' | translate }}: {{ tooltipPoint.student }}</div>
+        <div>R<sub>AA</sub> = {{ tooltipPoint.value | number: '1.3-3' }}</div>
+      </div>
+    }
+  </div>
+</div>

@@ -20,6 +20,7 @@ from masterclass.views import OAuthAPI, TokenAPI, EventCreateListAPI, EventDelet
 from strangeness.views import SubmitVisualAnalysisResultsAPI, GetVisualAnalysisResultsAPI
 from strangeness.views import SubmitLargeScaleAnalysisResultsAPI, GetLargeScaleAnalysisResultsAPI
 from jpsi.views import SubmitJpsiAnalysisResultsAPI, GetJpsiAnalysisResultsAPI
+from nuclear_modification.views import SubmitEventExplorationResultsAPI, GetEventExplorationResultsAPI
 
 urlpatterns = [
     path('oauth/', OAuthAPI.as_view()),
@@ -35,4 +36,6 @@ urlpatterns = [
     path('api/v1/strangeness_large_scale_analysis_results/<int:id>/', GetLargeScaleAnalysisResultsAPI.as_view()),
     path('api/v1/jpsi_analysis/<int:student>/', SubmitJpsiAnalysisResultsAPI.as_view()),
     path('api/v1/jpsi_analysis_results/<int:id>/', GetJpsiAnalysisResultsAPI.as_view()),
+    path('api/v1/nuclear_modification_event_exploration/<int:student>/', SubmitEventExplorationResultsAPI.as_view()),
+    path('api/v1/nuclear_modification_event_exploration_results/<int:id>/', GetEventExplorationResultsAPI.as_view()),
 ]

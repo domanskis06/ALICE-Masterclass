@@ -23,6 +23,8 @@
           [expandDomainToData]="h.expandDomainToData"
           [compactChrome]="true"
           [viewBoxHeight]="340"
+          [showMean]="true"
+          [meanLabel]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate"
         >
           <span title class="nmf-hist-title" [innerHTML]="h.titleKey | translate"></span>
           <svg:text xAxisLabel>{{ h.xAxisLabelKey | translate }}</svg:text>
@@ -32,10 +34,6 @@
           <span class="nmf-hist-stat-badge">
             {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}:
             {{ stats(h).entries }}
-          </span>
-          <span class="nmf-hist-stat-badge">
-            {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}:
-            {{ stats(h).mean | number: '1.2-2' }}
           </span>
         </div>
       </button>

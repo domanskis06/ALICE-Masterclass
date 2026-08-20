@@ -1,0 +1,126 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+/* The dialog is a CDK overlay attached to <body>, outside the exercise host, so
+   the palette does not cascade in — declare it on this component's own host,
+   exactly as exercise 1's histogram dialog does. */
+:host {
+  @include nmf.light-tokens;
+}
+
+.nmf-sa-dialog {
+  position: relative;
+  background: var(--va-bg-panel-solid, #ffffff);
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
+  width: min(92vw, 1200px);
+}
+
+.nmf-sa-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 8px 0 16px;
+}
+
+.nmf-sa-dialog-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+:host ::ng-deep .nmf-sa-dialog-title sub {
+  font-size: 0.72em;
+}
+
+.nmf-sa-dialog-close {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
+}
+
+.nmf-sa-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px 0;
+}
+
+.nmf-sa-dialog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nmf-sa-dialog-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nmf-sa-dialog-scale-toggle {
+  flex: 0 0 auto;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.55);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 18px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.82);
+    border-color: #b71c1c;
+  }
+}
+
+.nmf-sa-stat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #b71c1c;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.nmf-sa-dialog-plot {
+  width: 100%;
+  height: min(78vh, 760px);
+}
+
+.nmf-sa-dialog-footer {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
+  font-size: 0.82rem;
+  line-height: 1.45;
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+
+  ::ng-deep strong {
+    color: var(--va-text, rgba(0, 0, 0, 0.82));
+    font-weight: 700;
+  }
+}

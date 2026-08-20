@@ -3,13 +3,13 @@
 }
 
 .nmf-panel {
-  background: var(--va-bg-panel-solid, #0a1832);
-  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
-  color: var(--va-text, #e5edf7);
+  background: var(--va-bg-panel-solid, #ffffff);
+  border: 1px solid var(--va-border, rgba(0, 0, 0, 0.14));
+  color: var(--va-text, rgba(0, 0, 0, 0.82));
 }
 
 .muted {
-  color: var(--va-muted, rgba(226, 232, 240, 0.7));
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
 }
 
 .raa-table {
@@ -22,11 +22,11 @@
 .raa-table td {
   text-align: left;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
+  border-bottom: 1px solid var(--va-border, rgba(0, 0, 0, 0.14));
 }
 
 .raa-table th {
-  color: var(--va-muted, rgba(226, 232, 240, 0.7));
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
   font-weight: 500;
 }
 

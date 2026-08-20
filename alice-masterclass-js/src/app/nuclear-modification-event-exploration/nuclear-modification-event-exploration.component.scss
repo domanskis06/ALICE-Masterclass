@@ -1,12 +1,9 @@
+@use '../../styles/nmf-panel' as nmf;
+
 :host {
-  --va-bg-panel-solid: #0a1832;
-  --va-bg: var(--va-bg-panel-solid);
-  --va-bg-elevated: var(--va-bg-panel-solid);
-  --va-bg-panel: var(--va-bg-panel-solid);
-  --va-border: rgba(148, 163, 184, 0.28);
-  --va-text: #ffffff;
-  --va-muted: rgba(255, 255, 255, 0.7);
-  --va-control-bg: rgba(15, 23, 42, 0.94);
+  /* Light theme — same palette as Particle Propagation and Visual Analysis
+     (visualDarkMode = false). Spectrum Analysis keeps `nmf.tokens` (dark). */
+  @include nmf.light-tokens;
 
   display: block;
   width: 100%;
@@ -17,7 +14,7 @@
 
 /* Fixed to exactly the space below the CERN + app toolbars (104px) — never taller,
    so this page can never be scrolled; anything that doesn't fit scrolls internally. */
-.container.nmf-dark-mode {
+.container.nmf-light-mode {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -83,6 +80,9 @@
   display: flex;
   flex-direction: column;
   background: var(--va-bg-panel-solid);
+  /* Hairline against the 3D view: on white the drawer would otherwise bleed
+     into the scene the way the dark panel never did. */
+  border-left: 1px solid var(--va-border);
   transition: flex-basis 0.2s ease, width 0.2s ease;
 }
 
@@ -101,6 +101,7 @@
   flex: 0 0 100vw;
   width: 100vw !important;
   height: 100vh;
+  border-left: none;
   transition: none;
 }
 
@@ -145,62 +146,10 @@
   min-height: 0;
 }
 
-.container.nmf-dark-mode ::ng-deep .nmf-results-tabs {
-  .mat-mdc-tab-header {
-    flex: 0 0 auto;
-    /* Leave room for help + fullscreen controls on the shared toolbar row. */
-    padding-right: 88px;
-    border-bottom: 1px solid var(--va-border);
-    background: var(--va-bg-panel-solid);
-  }
-
-  .mat-mdc-tab-labels {
-    background: transparent;
-  }
-
-  .mdc-tab {
-    min-width: 0;
-    height: 48px;
-    padding: 0 12px;
-  }
-
-  .mdc-tab__text-label,
-  .mat-mdc-tab .mdc-tab__text-label {
-    color: var(--va-muted);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: none;
-  }
-
-  .mdc-tab__text-label sub,
-  .mat-mdc-tab .mdc-tab__text-label sub {
-    font-size: 0.75em;
-  }
-
-  .mdc-tab--active .mdc-tab__text-label,
-  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
-    color: var(--va-text);
-  }
-
-  .mdc-tab-indicator__content--underline {
-    border-color: #ff6f00;
-  }
-
-  .mat-mdc-tab-body-wrapper {
-    flex: 1 1 auto;
-    min-height: 0;
-  }
-
-  .mat-mdc-tab-body-content {
-    height: 100%;
-    overflow: auto;
-  }
-
-  /* mat-tab-group uses flex column only when host is flex; force fill. */
-  &.mat-mdc-tab-group {
-    height: 100%;
-  }
+.container.nmf-light-mode ::ng-deep .nmf-results-tabs {
+  /* Shared with Spectrum Analysis so the two exercises keep one tab strip.
+     Everything in the mixin is token-driven, so it follows the light palette. */
+  @include nmf.results-tabs;
 }
 
 /** Same dataset-picker markup/styling as Visual Analysis (see strangeness-visual-analysis.component.scss). */
@@ -276,12 +225,13 @@
   cursor: crosshair;
 }
 
+/* Sky-600 rather than the dark theme's #38bdf8 — that pale blue vanished on white. */
 .nmf-marquee-box {
   position: fixed;
   z-index: 7;
   pointer-events: none;
-  border: 1.5px solid #38bdf8;
-  background: rgba(56, 189, 248, 0.15);
+  border: 1.5px solid #0284c7;
+  background: rgba(2, 132, 199, 0.14);
 }
 
 /**
@@ -296,10 +246,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(30, 58, 95, 0.35), transparent 70%),
-    rgba(2, 8, 23, 0.72);
-  backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.32);
   padding: 16px;
   box-sizing: border-box;
   pointer-events: auto;
@@ -312,14 +259,15 @@
   gap: 6px;
 }
 
+/* Material green 800 — the dark theme's #4ade80 fails contrast on white. */
 .event-label-row #done {
-  color: #4ade80 !important;
+  color: #2e7d32 !important;
   font-size: 20px;
   width: 20px;
   height: 20px;
 }
 
-.container.nmf-dark-mode ::ng-deep {
+.container.nmf-light-mode ::ng-deep {
   app-event-display {
     color: var(--va-text);
   }
@@ -380,13 +328,12 @@
   }
 
   app-event-display .event-label,
-  app-event-display .event-type-label,
-  app-event-display #done {
+  app-event-display .event-type-label {
     color: var(--va-text);
   }
 
-  /* Angular Material's global theme is light, so slide-toggle / radio labels
-     default to dark text — force them white for this dark-only exercise. */
+  /* Slide-toggle / radio labels: pin to the token so they follow the palette
+     instead of Material's own ink (which is not the same grey). */
   .nmf-options-panel .mdc-label,
   .nmf-options-panel .mat-mdc-slide-toggle .mdc-label,
   .nmf-options-panel .mat-mdc-radio-button .mdc-label,
@@ -400,7 +347,7 @@
     padding: 0;
     border: 1px solid var(--va-border);
     border-radius: 6px;
-    background: rgba(15, 23, 42, 0.55);
+    background: var(--nmf-surface);
     overflow: hidden;
   }
 
@@ -438,28 +385,29 @@
     color: var(--va-text);
   }
 
-  /* Unselected radio rings default to near-black in the light MDC theme;
-     force white so Cluster Size / Track Width / Camera stay visible. */
-  .nmf-options-panel .mat-mdc-radio-button {
-    --mdc-radio-unselected-icon-color: #ffffff;
-    --mdc-radio-unselected-hover-icon-color: #ffffff;
-    --mdc-radio-unselected-focus-icon-color: #ffffff;
-    --mdc-radio-unselected-pressed-icon-color: rgba(255, 255, 255, 0.85);
-    --mat-radio-unselected-icon-color: #ffffff;
-    --mat-radio-unselected-hover-icon-color: #ffffff;
-    --mat-radio-unselected-focus-icon-color: #ffffff;
-    --mat-radio-unselected-pressed-icon-color: rgba(255, 255, 255, 0.85);
+  /** Same shape as Visual Analysis's own upload button, sized for this narrow
+   * sidebar instead of sharing a toolbar row with icon-only actions. */
+  .nmf-upload-wrap {
+    display: block;
+    margin-top: 10px;
   }
 
-  .nmf-options-panel .mat-mdc-radio-button .mdc-radio__outer-circle {
-    border-color: #ffffff;
+  .nmf-upload-btn {
+    width: 100%;
+    text-transform: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
 
-  .nmf-options-panel .mat-mdc-radio-button.mat-mdc-radio-checked .mdc-radio__outer-circle {
-    border-color: var(--mdc-radio-selected-icon-color, #ff6f00);
+  .nmf-upload-btn mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
   }
 
-  /* Same dark-mode select styling as Visual Analysis's dataset picker. */
+  /* Same select styling as Visual Analysis's dataset picker in light mode. */
   .dataset-controls {
     .mat-mdc-form-field,
     .mat-mdc-select,
@@ -470,10 +418,6 @@
     .mdc-text-field,
     .mdc-text-field__input {
       color: var(--va-text);
-    }
-
-    .mdc-text-field--outlined {
-      background: rgba(15, 23, 42, 0.72);
     }
 
     .mdc-notched-outline__leading,

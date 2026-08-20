@@ -1,0 +1,35 @@
+<mat-card fxFill fxLayout="column">
+  <mat-card-content fxFlex="grow" fxLayout="column" class="plots-body">
+    <div class="plots-header" fxLayout="row" fxLayoutAlign="space-between center">
+      <span class="title" [innerHtml]="'EVENT_EXPLORATION.COLLECTED_RAA' | translate"></span>
+      <span class="column-legend">
+        <span class="legend-item"><span class="swatch filled"></span><span [innerHtml]="'EVENT_EXPLORATION.ALL_PT' | translate"></span></span>
+        <span class="legend-item"><span class="swatch hollow"></span><span [innerHtml]="'EVENT_EXPLORATION.MIN_PT' | translate"></span></span>
+      </span>
+    </div>
+
+    @if (!hasData) {
+      <p class="empty">{{ 'EVENT_EXPLORATION.NO_SELECTION' | translate }}</p>
+    }
+
+    <div class="pad-grid">
+      @for (s of series; track trackBy($index, s)) {
+        <app-raa-collect-plot
+          [points]="s.points"
+          [maxStudent]="maxStudent"
+          [color]="colorOf(s)"
+          [hollow]="s.minPt"
+        >
+          <span padTitle>
+            {{ titleKeyOf(s) | translate }}
+            @if (s.minPt) {
+              <span class="pt-cut">&mdash; p<sub>T</sub> &gt; 1 GeV/<em>c</em></span>
+            }
+          </span>
+          <svg:text xAxisLabel>{{ 'EVENT_EXPLORATION.STUDENT_GROUP' | translate }}</svg:text>
+          <svg:text yAxisLabel>R<svg:tspan dy="3" style="font-size: 0.75em">AA</svg:tspan></svg:text>
+        </app-raa-collect-plot>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

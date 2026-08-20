@@ -141,3 +141,15 @@ figure {
   text-align: center;
   line-height: 1;
 }
+
+.histogram-mean-line {
+  stroke-width: 1;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+
+.histogram-mean-label {
+  font-size: 9px;
+  font-weight: 700;
+  pointer-events: none;
+}

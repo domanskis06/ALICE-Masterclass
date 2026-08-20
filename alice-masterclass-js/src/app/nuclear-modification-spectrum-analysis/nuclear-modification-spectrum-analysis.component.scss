@@ -1,64 +1,246 @@
+@use '../../styles/nmf-panel' as nmf;
+
 :host {
-  --va-bg-panel-solid: #0a1832;
-  --va-bg: var(--va-bg-panel-solid);
-  --va-border: rgba(148, 163, 184, 0.28);
-  --va-text: #e5edf7;
-  --va-muted: rgba(226, 232, 240, 0.7);
-  --va-control-bg: rgba(15, 23, 42, 0.94);
-
   display: block;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
+  @include nmf.light-tokens;
 }
 
-.container.nmf-dark-mode {
-  color: var(--va-text);
-  background: var(--va-bg-panel-solid);
-  min-height: calc(100vh - 104px);
-  padding: 12px;
-  box-sizing: border-box;
+.nmf-sa-page {
+  @include nmf.page-shell;
+  flex-direction: row;
+  gap: 10px;
+  padding: 8px 10px 10px;
 }
 
-.section-title {
-  margin: 0 0 8px;
-  font-size: 16px;
+.nmf-sa-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.nmf-sa-col--build {
+  flex: 1 1 52%;
+}
+
+.nmf-sa-col--results {
+  flex: 1 1 48%;
+}
+
+/** Fullscreen hands the whole page to the results, as exercise 1 does. */
+.nmf-sa-page--results-full {
+  .nmf-sa-col--build {
+    display: none;
+  }
+
+  .nmf-sa-col--results {
+    flex: 1 1 100%;
+  }
+}
+
+/** Sits above a card now, so it takes the same left inset as one. */
+.nmf-sa-col-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-height: 40px;
+  padding-left: 2px;
+}
+
+/** Run / Clear / status, moved here from the old bottom bar. */
+.nmf-sa-run-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nmf-sa-run-button,
+.nmf-sa-clear-button {
+  min-width: 0;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-.workspace-row {
+/** The glyph is a hint, not a second label — it must not out-weigh the word. */
+.nmf-sa-run-button ::ng-deep .mat-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.nmf-sa-clear-button {
+  color: var(--va-text, rgba(15, 23, 42, 0.82));
+  border-color: var(--va-border, rgba(15, 23, 42, 0.16));
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--va-text, rgba(15, 23, 42, 0.82)) 60%, var(--va-border, rgba(15, 23, 42, 0.16)));
+    background: var(--nmf-surface-hover, #eaf1fb);
+  }
+}
+
+/**
+ * A chip rather than loose coloured words: the verdict on the last run sits next
+ * to the button that produced it and reads as one object at a glance.
+ */
+.nmf-sa-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+
+  ::ng-deep .mat-icon,
+  .mat-icon {
+    width: 15px;
+    height: 15px;
+    font-size: 15px;
+    line-height: 15px;
+  }
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+/* #4ade80 / #fbbf24 read fine on a dark card but fail text contrast on white
+   (~1.7:1); the 700-weight shades below hold the same hue at ~5:1. */
+.nmf-sa-status--ok {
+  color: #15803d;
+  background: rgba(21, 128, 61, 0.1);
+}
+
+.nmf-sa-status--warn {
+  color: #b45309;
+  background: rgba(180, 83, 9, 0.1);
+}
+
+/** Separates the two things you do to the pipeline from the two ways to get help. */
+.nmf-sa-head-rule {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 1px;
+  margin: 6px 0;
+  background: var(--va-border);
+}
+
+.nmf-sa-col-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/** Title takes the slack so the controls stay hard right. */
+.nmf-sa-section-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--va-text);
+}
+
+/** A red tick, ALICE's own accent, so the header belongs to the card and the
+ * two columns read as one branded page rather than borrowed exercise-1 blue. */
+.nmf-sa-section-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.95em;
+  margin-right: 8px;
+  border-radius: 2px;
+  background: #b71c1c;
+  vertical-align: -0.1em;
+}
+
+.nmf-sa-help {
+  color: var(--va-muted);
+
+  &:hover {
+    color: var(--va-text);
+  }
+}
+
+.nmf-sa-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: block;
+}
+
+/* —— results column: one screen, no tabs —— */
+
+/**
+ * Plots on top, the collected numbers below. `minmax(0, …)` on both axes is
+ * what stops a long table from pushing the grid taller than the column —
+ * each panel scrolls inside itself.
+ */
+.nmf-sa-screen {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 8px;
+  min-height: 0;
+}
+
+.nmf-sa-screen-plots {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nmf-sa-screen-plots > app-nmf-raa-plots {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-.blockly-col {
-  min-height: 420px;
+.nmf-sa-screen-results {
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Safety valve for short viewports: scrolls as a unit rather than being
+     crushed. The page itself still never scrolls. */
+  overflow-y: auto;
 }
 
-.plots-col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.nmf-sa-screen-results > * {
+  min-height: 0;
 }
 
-.container.nmf-dark-mode ::ng-deep {
-  mat-card {
-    background: var(--va-bg-panel-solid);
-    border-color: var(--va-border);
-    color: var(--va-text);
+.nmf-sa-screen-results > app-nmf-results-table {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+  .nmf-sa-page {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 104px);
+    overflow-y: auto;
   }
 
-  .mat-mdc-form-field {
-    .mdc-text-field--outlined {
-      background: var(--va-control-bg);
-    }
-    .mat-mdc-form-field-label,
-    .mat-mdc-select-value,
-    input {
-      color: var(--va-text) !important;
-    }
+  .nmf-sa-workspace {
+    min-height: 420px;
+  }
+
+  .nmf-sa-col--results {
+    min-height: 640px;
   }
 }

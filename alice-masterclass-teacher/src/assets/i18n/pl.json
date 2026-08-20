@@ -22,7 +22,9 @@
     "VISUAL_ANALYSIS": "Analiza wizualna",
     "LARGE_SCALE_ANALYSIS": "Analiza wielkoskalowa",
     "JPSI": "Produkcja J/ψ",
-    "JPSI_ANALYSIS": "Analiza J/ψ"
+    "JPSI_ANALYSIS": "Analiza J/ψ",
+    "NUCLEAR_MODIFICATION": "Modyfikacja jądrowa",
+    "EVENT_EXPLORATION": "Eksploracja przypadków"
   },
   "SESSION": {
     "TITLE": "Wydarzenia",
@@ -169,5 +171,34 @@
     "FIRST_PAGE": "Pierwsza strona",
     "LAST_PAGE": "Ostatnia strona",
     "OF_LABEL": "z"
+  },
+  "EVENT_EXPLORATION": {
+    "SESSION": "Sesja",
+    "COLLECTED_RAA": "Zebrane pomiary R<sub>AA</sub>",
+    "RESULTS": "Wyniki",
+    "STUDENT": "Uczeń",
+    "STUDENT_GROUP": "Grupa uczniów",
+    "DATASET": "Zbiór danych",
+    "PERIPHERAL": "Peryferyczne",
+    "SEMI_CENTRAL": "Półcentralne",
+    "CENTRAL": "Centralne",
+    "ALL_PT": "całe p<sub>T</sub>",
+    "MIN_PT": "p<sub>T</sub> &gt; 1 GeV/<em>c</em>",
+    "NO_SELECTION": "Zaznacz uczniów w tabeli Wyniki, aby dodać ich pomiary do wykresów.",
+    "INSTRUCTIONS": {
+      "TITLE": "O eksploracji przypadków",
+      "INTRO": "Ten moduł zbiera współczynniki modyfikacji jądrowej z części 1, zmierzone przez uczniów przez zliczanie naładowanych torów pierwotnych w 30 przypadkach pp oraz w trzech przypadkach Pb–Pb (peryferycznym, półcentralnym i centralnym).",
+      "HOW_TO_USE": "Jak korzystać",
+      "STEP_1": "Wybierz sesję z listy nad tabelą Wyniki.",
+      "STEP_2": "W tabeli Wyniki zaznacz lub odznacz uczniów, aby dodać lub usunąć ich pomiary z wykresów.",
+      "STEP_3": "Każdy wiersz pokazuje dwie liczby na klasę: R<sub>AA</sub> dla całego p<sub>T</sub> oraz R<sub>AA</sub> dla p<sub>T</sub> &gt; 1 GeV/<em>c</em>.",
+      "STEP_4": "Użyj przycisku odświeżania, gdy kolejni uczniowie prześlą swoje wyniki.",
+      "HOW_TO_READ": "Jak czytać wykresy",
+      "HOW_TO_READ_INTRO": "Sześć paneli odpowiada układowi z aplikacji desktopowej dla prowadzącego: wiersze to trzy klasy centralności Pb–Pb, kolumny to dwa zakresy p<sub>T</sub>.",
+      "READ_COLUMNS": "Lewa kolumna: R<sub>AA</sub> ze wszystkich naładowanych torów pierwotnych. Prawa kolumna: tylko tory o p<sub>T</sub> &gt; 1 GeV/<em>c</em>, rysowane pustymi znacznikami.",
+      "READ_UNITY": "Szara linia przerywana oznacza R<sub>AA</sub> = 1 — wartość oczekiwaną, gdyby zderzenie Pb–Pb było jedynie superpozycją niezależnych zderzeń nukleon–nukleon.",
+      "READ_MEAN": "Kolorowa linia przerywana to średnia z zaznaczonych uczniów; nagłówek podaje tę średnią i liczbę uśrednionych uczniów.",
+      "READ_SPREAD": "Rozrzut wokół średniej to statystyczna niepewność pomiaru z jednego przypadku — powinien być duży, a dla zderzeń peryferycznych większy niż dla centralnych."
+    }
   }
 }

@@ -11,6 +11,9 @@
         <h1 matSubheader>{{ 'NAV.JPSI' | translate }}</h1>
         <mat-divider></mat-divider>
         <a mat-list-item routerLink="/jpsi-analysis" routerLinkActive #rlaJpsi="routerLinkActive" [activated]="rlaJpsi.isActive">{{ 'NAV.JPSI_ANALYSIS' | translate }}</a>
+        <h1 matSubheader>{{ 'NAV.NUCLEAR_MODIFICATION' | translate }}</h1>
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/nuclear-modification-event-exploration" routerLinkActive #rlaNmfEe="routerLinkActive" [activated]="rlaNmfEe.isActive">{{ 'NAV.EVENT_EXPLORATION' | translate }}</a>
       </mat-nav-list>
     </div>
   </mat-sidenav>

@@ -22,7 +22,9 @@
     "VISUAL_ANALYSIS": "Visual Analysis",
     "LARGE_SCALE_ANALYSIS": "Large Scale Analysis",
     "JPSI": "J/ψ production",
-    "JPSI_ANALYSIS": "J/ψ analysis"
+    "JPSI_ANALYSIS": "J/ψ analysis",
+    "NUCLEAR_MODIFICATION": "Nuclear Modification",
+    "EVENT_EXPLORATION": "Event Exploration"
   },
   "SESSION": {
     "TITLE": "Events",
@@ -169,5 +171,34 @@
     "FIRST_PAGE": "First page",
     "LAST_PAGE": "Last page",
     "OF_LABEL": "of"
+  },
+  "EVENT_EXPLORATION": {
+    "SESSION": "Session",
+    "COLLECTED_RAA": "Collected R<sub>AA</sub> measurements",
+    "RESULTS": "Results",
+    "STUDENT": "Student",
+    "STUDENT_GROUP": "Student group",
+    "DATASET": "Dataset",
+    "PERIPHERAL": "Peripheral",
+    "SEMI_CENTRAL": "Semi-central",
+    "CENTRAL": "Central",
+    "ALL_PT": "all p<sub>T</sub>",
+    "MIN_PT": "p<sub>T</sub> &gt; 1 GeV/<em>c</em>",
+    "NO_SELECTION": "Select students in the Results table to add their measurements to the plots.",
+    "INSTRUCTIONS": {
+      "TITLE": "About Event Exploration",
+      "INTRO": "This module collects the part-1 nuclear modification factors the students measured by counting charged primary tracks in 30 pp events and in the three Pb–Pb events (peripheral, semi-central, central).",
+      "HOW_TO_USE": "How to use it",
+      "STEP_1": "Choose a session from the dropdown above the Results table.",
+      "STEP_2": "In the Results table, select or deselect students to include or exclude their measurements from the plots.",
+      "STEP_3": "Each row shows the two numbers a student reports per class: R<sub>AA</sub> over all p<sub>T</sub>, and R<sub>AA</sub> restricted to p<sub>T</sub> &gt; 1 GeV/<em>c</em>.",
+      "STEP_4": "Use the refresh button when more students have uploaded their results.",
+      "HOW_TO_READ": "How to read the plots",
+      "HOW_TO_READ_INTRO": "The six pads follow the layout of the desktop instructor tool: rows are the three Pb–Pb centrality classes, columns are the two p<sub>T</sub> windows.",
+      "READ_COLUMNS": "Left column: R<sub>AA</sub> from all charged primaries. Right column: only tracks with p<sub>T</sub> &gt; 1 GeV/<em>c</em>, drawn with open markers.",
+      "READ_UNITY": "The grey dashed line marks R<sub>AA</sub> = 1, the value expected if a Pb–Pb collision were just a superposition of independent nucleon–nucleon collisions.",
+      "READ_MEAN": "The coloured dashed line is the mean over the selected students; the header shows that mean and how many students it averages.",
+      "READ_SPREAD": "The scatter around the mean is the statistical spread of a single-event measurement — expect it to be large, and larger for peripheral than for central collisions."
+    }
   }
 }

@@ -1,0 +1,89 @@
+<div class="nmf-sa-dialog" data-testid="nmf-sa-plot-dialog">
+  <div class="nmf-sa-dialog-header">
+    <h2
+      mat-dialog-title
+      class="nmf-sa-dialog-title"
+      [innerHTML]="data.card.titleKey | translate"
+    ></h2>
+    <button
+      type="button"
+      mat-icon-button
+      class="nmf-sa-dialog-close"
+      aria-label="Close"
+      data-testid="nmf-sa-plot-dialog-close"
+      (click)="close($event)"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="nmf-sa-dialog-content">
+    <div class="nmf-sa-dialog-toolbar">
+      @if (data.card.meta.length) {
+        <div class="nmf-sa-dialog-stats">
+          @for (entry of data.card.meta; track entry.labelKey + entry.value) {
+            <span class="nmf-sa-stat-badge">
+              {{ entry.labelKey ? (entry.labelKey | translate) + ': ' : '' }}{{ entry.value }}
+            </span>
+          }
+        </div>
+      }
+      @if (data.card.xLog || data.card.yLog) {
+        <button
+          type="button"
+          class="nmf-sa-dialog-scale-toggle"
+          data-testid="nmf-sa-dialog-scale-toggle"
+          [attr.aria-pressed]="linearScale"
+          (click)="toggleScale()"
+        >
+          {{
+            (linearScale
+              ? 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LOG'
+              : 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LINEAR'
+            ) | translate
+          }}
+        </button>
+      }
+    </div>
+
+    <div class="nmf-sa-dialog-plot">
+      @if (data.card.kind === 'series') {
+        <app-nmf-series-plot
+          [series]="data.card.series"
+          [mode]="data.card.mode"
+          [xLog]="xLog"
+          [yLog]="yLog"
+          [yDomain]="data.card.yDomain"
+          [referenceLine]="data.card.referenceLine"
+          [verticalLine]="data.card.verticalLine"
+          [verticalLineLabel]="data.card.verticalLineLabel"
+          [xLabel]="data.card.xLabel"
+          [yLabel]="data.card.yLabel"
+          [statBox]="data.card.stats"
+          [emptyLabel]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_EMPTY' | translate"
+        ></app-nmf-series-plot>
+      } @else {
+        <app-nmf-heatmap-plot
+          [heatmap]="data.card.heatmap"
+          [xLabel]="data.card.xLabel"
+          [yLabel]="data.card.yLabel"
+          [emptyLabel]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_EMPTY' | translate"
+        ></app-nmf-heatmap-plot>
+      }
+    </div>
+
+    @if (data.card.footerKey) {
+      <p
+        class="nmf-sa-dialog-footer"
+        data-testid="nmf-sa-dialog-footer"
+        [innerHTML]="data.card.footerKey | translate"
+      ></p>
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" type="button" (click)="close($event)">
+      {{ 'INSTRUCTIONS_DIALOG.BUTTON_DISMISS' | translate }}
+    </button>
+  </mat-dialog-actions>
+</div>

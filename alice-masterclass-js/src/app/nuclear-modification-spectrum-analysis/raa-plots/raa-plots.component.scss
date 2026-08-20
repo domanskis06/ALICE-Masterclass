@@ -1,23 +1,292 @@
+@use '../../../styles/nmf-panel' as nmf;
+
 :host {
-  display: block;
+  /* A flex column so the list below inherits a usable height. The host's own
+     height comes from `flex: 1 1 auto` set by the tab body. */
+  display: flex;
+  flex-direction: column;
 }
 
-.plots {
-  display: grid;
-  grid-template-columns: 1fr;
+/**
+ * One card at a time behind a tab strip, not a grid of every card at once —
+ * there are at most five (multiplicity, multiplicity-vs-centrality, p_T
+ * spectrum, R_AA, R_CP), each already aggregating however many centrality
+ * classes the student has plotted as separate series on its own axes, so a
+ * grid of them was never "one tile per class"; it was a handful of unrelated
+ * plots each fighting a shared grid row for height. A one-or-two-card grid row
+ * with nothing to constrain it also inflated to ~450px, dwarfing every other
+ * panel on the page. A single active plot fills the region cleanly regardless
+ * of how many tabs exist.
+ */
+.nmf-sa-plots {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
-.plot {
+.nmf-sa-plot-tabstrip {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.nmf-sa-plot-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+
+  &:hover {
+    color: var(--va-text, rgba(15, 23, 42, 0.82));
+    background: var(--nmf-surface-hover, #eaf1fb);
+  }
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+/** A result the student has not looked at yet — from a Run that unlocked more than one at once. */
+.nmf-sa-plot-tab-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nmf-plot-accent, #b71c1c);
+}
+
+.nmf-sa-plot-tab--active {
+  color: var(--va-text, rgba(15, 23, 42, 0.82));
+  background: var(--nmf-surface, #f7f9fc);
+  border-color: var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
+  border-bottom-color: var(--nmf-plot-accent, #b71c1c);
+}
+
+/** The empty-state brief takes the whole strip and centres in it. */
+.nmf-sa-plots:has(> .nmf-sa-mission) {
+  overflow: hidden;
+}
+
+/**
+ * Outer region: centres a bounded card rather than letting bare text float in
+ * the whole tile strip. A flat wall of "1. … 10. …" text with no frame read as
+ * an abandoned to-do list — the card gives it an edge, and grouping the steps
+ * under the same four categories and colours as the build column ties this
+ * brief to the palette sitting right next to it instead of repeating it blind.
+ */
+.nmf-sa-mission {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.nmf-sa-mission-card {
   width: 100%;
-  height: 220px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid var(--va-border, rgba(148, 163, 184, 0.28));
-  border-radius: 6px;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  box-sizing: border-box;
+  @include nmf.card;
 }
 
-@media (min-width: 1100px) {
-  .plots {
-    grid-template-columns: 1fr 1fr 1fr;
+.nmf-sa-mission-title {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.4vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--va-text, #ffffff);
+}
+
+.nmf-sa-mission-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 20px;
+}
+
+.nmf-sa-mission-group {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--group-accent, var(--va-border));
+}
+
+.nmf-sa-mission-group-title {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--group-accent, var(--va-muted)) 65%, black);
+}
+
+.nmf-sa-mission-steps {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--va-text, #ffffff);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.3;
+
+  li::marker {
+    color: var(--group-accent, #b71c1c);
+    font-weight: 700;
+  }
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+.nmf-sa-mission-footer {
+  margin: 0;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+}
+
+.nmf-sa-mission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nmf-sa-mission-actions [mat-stroked-button],
+.nmf-sa-mission-actions .mat-mdc-outlined-button {
+  color: var(--va-text, rgba(15, 23, 42, 0.82)) !important;
+  border-color: var(--va-border, rgba(15, 23, 42, 0.16)) !important;
+}
+
+.nmf-sa-plot {
+  --nmf-plot-accent: #b71c1c;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 8px 10px 10px;
+  @include nmf.card;
+  @include nmf.card-interactive;
+  overflow: visible;
+}
+
+.nmf-sa-plot-head {
+  @include nmf.card-head;
+}
+
+.nmf-sa-plot-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nmf-collision-icon {
+  @include nmf.collision-icon;
+}
+
+.nmf-collision-icon--sm {
+  @include nmf.collision-icon-small;
+}
+
+.nmf-sa-plot-class {
+  @include nmf.class-label;
+}
+
+.nmf-sa-plot-title {
+  @include nmf.card-title;
+}
+
+:host ::ng-deep .nmf-sa-plot-title sub {
+  font-size: 0.72em;
+}
+
+.nmf-sa-plot-meta {
+  @include nmf.card-meta;
+}
+
+.nmf-sa-plot-scale-toggle {
+  flex: 0 0 auto;
+  height: 18px;
+  padding: 0 7px;
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
+  border-radius: 999px;
+  background: var(--nmf-surface, #f7f9fc);
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--va-text, rgba(15, 23, 42, 0.82));
+    border-color: var(--nmf-plot-accent, #b71c1c);
+  }
+}
+
+.nmf-sa-plot-body {
+  position: relative;
+  /* The single active plot, so it can take real space — no shared grid row to
+     divide with siblings any more. */
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 220px;
+  margin-top: 6px;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/**
+ * One sentence saying what the plot shows. It is the moderator's line in the
+ * desktop exercise, written down so a group working alone still gets it.
+ */
+.nmf-sa-plot-footer {
+  flex: 0 0 auto;
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font-size: 0.76rem;
+  line-height: 1.4;
+
+  ::ng-deep sub {
+    font-size: 0.72em;
+  }
+
+  ::ng-deep strong {
+    color: var(--va-text, #ffffff);
+    font-weight: 700;
   }
 }

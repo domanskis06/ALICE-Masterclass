@@ -1,5 +1,160 @@
-<div class="plots" data-testid="nmf-raa-plots">
-  <svg #ptSvg class="plot"></svg>
-  <svg #raaSvg class="plot"></svg>
-  <svg #rcpSvg class="plot"></svg>
+<div class="nmf-sa-plots" data-testid="nmf-raa-plots">
+  @if (!cards.length) {
+    <aside class="nmf-sa-mission" data-testid="nmf-sa-mission">
+      <div class="nmf-sa-mission-card">
+        <h3 class="nmf-sa-mission-title">
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_TITLE' | translate }}
+        </h3>
+        <div class="nmf-sa-mission-groups">
+          @for (group of missionGroups; track group.name) {
+            <section class="nmf-sa-mission-group" [style.--group-accent]="group.accent">
+              <h4 class="nmf-sa-mission-group-title">{{ group.name }}</h4>
+              <ol class="nmf-sa-mission-steps">
+                @for (step of group.steps; track step) {
+                  <li [innerHTML]="step | translate"></li>
+                }
+              </ol>
+            </section>
+          }
+        </div>
+        <p
+          class="nmf-sa-mission-footer"
+          [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_FOOTER' | translate"
+        ></p>
+        <div class="nmf-sa-mission-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            data-testid="nmf-sa-mission-start"
+            (click)="startTutorial.emit()"
+          >
+            {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_START' | translate }}
+          </button>
+          <button
+            mat-stroked-button
+            type="button"
+            data-testid="nmf-sa-mission-help"
+            (click)="openHelp.emit()"
+          >
+            {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_HELP' | translate }}
+          </button>
+        </div>
+      </div>
+    </aside>
+  }
+
+  @if (cards.length) {
+    <div class="nmf-sa-plot-tabstrip" role="tablist" data-testid="nmf-sa-plot-tabstrip">
+      @for (card of cards; track card.key) {
+        <button
+          type="button"
+          role="tab"
+          class="nmf-sa-plot-tab"
+          [class.nmf-sa-plot-tab--active]="card.key === activeCardKey"
+          [style.--nmf-plot-accent]="accent(card)"
+          [attr.aria-selected]="card.key === activeCardKey"
+          [attr.data-testid]="'nmf-sa-plot-tab-' + card.key"
+          (click)="selectCard(card.key)"
+        >
+          <span [innerHTML]="card.titleKey | translate"></span>
+          @if (unseenCardKeys.has(card.key)) {
+            <span class="nmf-sa-plot-tab-dot" data-testid="nmf-sa-plot-tab-dot" aria-hidden="true"></span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (activeCard; as card) {
+      <section
+        class="nmf-sa-plot"
+        [style.--nmf-plot-accent]="accent(card)"
+        [attr.data-testid]="'nmf-sa-plot-' + card.key"
+        role="button"
+        tabindex="0"
+        (click)="openPlot(card, $event)"
+        (keydown.enter)="openPlot(card, $event)"
+        (keydown.space)="openPlot(card, $event); $event.preventDefault()"
+      >
+        <div class="nmf-sa-plot-head">
+          <div class="nmf-sa-plot-heading">
+            @if (card.centrality) {
+              <svg
+                class="nmf-collision-icon nmf-collision-icon--sm"
+                viewBox="0 0 64 44"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <g [attr.transform]="'translate(0 ' + (22 - impactOffset(card)) + ')'">
+                  <line x1="4" y1="0" x2="26" y2="0" />
+                  <polyline points="18,-6 28,0 18,6" />
+                </g>
+                <g [attr.transform]="'translate(0 ' + (22 + impactOffset(card)) + ')'">
+                  <line x1="60" y1="0" x2="38" y2="0" />
+                  <polyline points="46,-6 36,0 46,6" />
+                </g>
+              </svg>
+              <span class="nmf-sa-plot-class">{{ card.centrality.replace('-', '–') }}%</span>
+            }
+            <h3 class="nmf-sa-plot-title" [innerHTML]="card.titleKey | translate"></h3>
+          </div>
+          @if (card.meta.length) {
+            <div class="nmf-sa-plot-meta">
+              @for (entry of card.meta; track entry.labelKey + entry.value) {
+                <span>{{ entry.labelKey ? (entry.labelKey | translate) + ' ' : '' }}{{ entry.value }}</span>
+              }
+            </div>
+          }
+          @if (card.xLog || card.yLog) {
+            <button
+              type="button"
+              class="nmf-sa-plot-scale-toggle"
+              [attr.data-testid]="'nmf-sa-scale-toggle-' + card.key"
+              [attr.aria-pressed]="isLinearScale(card)"
+              (click)="toggleScale(card, $event)"
+            >
+              {{
+                (isLinearScale(card)
+                  ? 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LOG'
+                  : 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LINEAR'
+                ) | translate
+              }}
+            </button>
+          }
+        </div>
+        <div class="nmf-sa-plot-body">
+          @if (card.kind === 'series') {
+            <app-nmf-series-plot
+              [series]="card.series"
+              [mode]="card.mode"
+              [xLog]="effectiveXLog(card)"
+              [yLog]="effectiveYLog(card)"
+              [yDomain]="card.yDomain"
+              [referenceLine]="card.referenceLine"
+              [verticalLine]="card.verticalLine"
+              [verticalLineLabel]="card.verticalLineLabel"
+              [xLabel]="card.xLabel"
+              [yLabel]="card.yLabel"
+              [emptyLabel]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_EMPTY' | translate"
+            ></app-nmf-series-plot>
+          } @else {
+            <app-nmf-heatmap-plot
+              [heatmap]="card.heatmap"
+              [xLabel]="card.xLabel"
+              [yLabel]="card.yLabel"
+              [emptyLabel]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.PLOTS_EMPTY' | translate"
+            ></app-nmf-heatmap-plot>
+          }
+        </div>
+
+        @if (card.footerKey) {
+          <p
+            class="nmf-sa-plot-footer"
+            [attr.data-testid]="'nmf-sa-footer-' + card.key"
+            [innerHTML]="card.footerKey | translate"
+          ></p>
+        }
+      </section>
+    }
+  }
 </div>

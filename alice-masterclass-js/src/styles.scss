@@ -2,6 +2,27 @@
 @import url('material-icons/iconfont/material-icons.css');
 @import "driver.js/dist/driver.css";
 
+/**
+ * Spectrum Analysis's main tour only (`nmf-sa-draggable-popover`, added
+ * alongside `lsa-driver-popover` — the shorter ?-button tours keep the plain
+ * class and are untouched). The title bar becomes a drag handle so the
+ * student can move the window instead of it sitting wherever driver.js last
+ * computed relative to the highlighted element.
+ */
+.driver-popover.nmf-sa-draggable-popover {
+  cursor: default;
+}
+
+.driver-popover.nmf-sa-draggable-popover .nmf-sa-popover-drag-handle {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.driver-popover.nmf-sa-draggable-popover .nmf-sa-popover-drag-handle:active {
+  cursor: grabbing;
+}
+
 .driver-popover.lsa-driver-popover .driver-popover-title {
   font-size: 1.1rem;
   font-weight: 600;
@@ -307,13 +328,15 @@ div.mat-mdc-select-panel.calculator-particle-select-panel {
   }
 }
 
-/* NMF single-histogram dialog (CDK overlay — outside component host). */
+/* NMF single-histogram dialog (CDK overlay — outside component host). Both
+   nuclear-modification exercises are light (Visual Analysis / Particle
+   Propagation palette), so this is the only variant now. */
 .cdk-overlay-pane.nmf-histogram-dialog-panel {
   z-index: 1100;
 }
 
 .nmf-histogram-dialog-panel .mat-mdc-dialog-container,
 .nmf-histogram-dialog-panel .mdc-dialog__surface {
-  background: #0a1832;
-  color: #ffffff;
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.82);
 }

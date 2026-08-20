@@ -1,0 +1,62 @@
+@use '../../../styles/nmf-panel' as nmf;
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.nmf-series-plot-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  background: transparent;
+}
+
+/* Same axis / label treatment as the exercise-1 plots. */
+:host ::ng-deep .nmf-series-plot-svg {
+  @include nmf.plot-chrome;
+
+  .nmf-plot-error {
+    stroke-width: 1.1;
+    stroke-linecap: butt;
+  }
+
+  .nmf-plot-steps {
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+  }
+
+  /* Reference spectra the student did not measure themselves. */
+  .nmf-plot-steps--dashed {
+    stroke-dasharray: 5 3;
+    stroke-width: 1.4;
+  }
+
+  .nmf-plot-reference {
+    stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
+    stroke-width: 1;
+    stroke-dasharray: 5 4;
+  }
+
+  .nmf-plot-reference-label {
+    fill: var(--nmf-axis, rgba(15, 23, 42, 0.62));
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .nmf-plot-vertical-reference {
+    stroke: var(--nmf-plot-accent, #b71c1c);
+    stroke-width: 1;
+    stroke-dasharray: 5 4;
+    opacity: 0.7;
+  }
+
+  .nmf-plot-vertical-reference-label {
+    fill: var(--nmf-plot-accent, #b71c1c);
+    font-size: 10px;
+    font-weight: 700;
+  }
+}

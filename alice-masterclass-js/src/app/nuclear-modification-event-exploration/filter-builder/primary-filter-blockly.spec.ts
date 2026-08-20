@@ -108,8 +108,9 @@ describe('primary filter blockly', () => {
     expect(Blockly.Blocks['nmf_if']).toBeTruthy();
     expect(Blockly.Blocks['nmf_keep_track']).toBeTruthy();
     const toolbox = buildPrimaryFilterToolbox();
-    expect(toolbox.kind).toBe('flyoutToolbox');
-    const types = (toolbox.contents as { type?: string }[]).map((c) => c.type);
+    expect(toolbox.kind).toBe('categoryToolbox');
+    const categories = toolbox.contents as { contents?: { type?: string }[] }[];
+    const types = categories.flatMap((category) => (category.contents ?? []).map((c) => c.type));
     expect(types).toContain('nmf_dca_xy');
     expect(types).toContain('nmf_dca_cut_xy');
     expect(types).not.toContain('nmf_from_primary');

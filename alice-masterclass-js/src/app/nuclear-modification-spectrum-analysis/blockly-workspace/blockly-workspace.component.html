@@ -1,3 +1,22 @@
 <div class="blockly-host" data-testid="nmf-blockly-workspace">
   <div #blocklyDiv class="blockly-div"></div>
+
+  <!-- An empty Blockly canvas is a blank dotted rectangle and says nothing about
+       what to do with it. The hint sits over the canvas only (never over the
+       category rail) and disappears the moment the first block lands. It is
+       inert, so a drag that ends under it still reaches the workspace. -->
+  @if (empty) {
+    <div class="blockly-empty" aria-hidden="true">
+      <svg class="blockly-empty-art" viewBox="0 0 108 78" role="presentation">
+        <g class="blockly-empty-stack">
+          <path d="M4 6h22l3 5h9l3-5h55v18H4z" style="fill: #2563eb" />
+          <path d="M4 30h22l3 5h9l3-5h44v18H4z" style="fill: #0f766e" />
+          <path d="M4 54h22l3 5h9l3-5h33v18H4z" style="fill: #b45309" />
+        </g>
+      </svg>
+      <p class="blockly-empty-text">
+        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.WORKSPACE_EMPTY' | translate }}
+      </p>
+    </div>
+  }
 </div>

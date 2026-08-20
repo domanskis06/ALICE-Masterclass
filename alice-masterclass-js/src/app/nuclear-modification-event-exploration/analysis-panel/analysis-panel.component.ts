@@ -32,10 +32,15 @@ interface NmfRaaClassBlock {
 const PT_BINS = 20;
 const PT_X_MAX = 6;
 
+/**
+ * 600-weight hues of the light theme — keep in sync with the `--nmf-raa-accent` /
+ * `--nmf-plot-accent` values in analysis-panel.component.scss. The pastel dark-theme
+ * colours they replaced were unreadable as bars on a white plot.
+ */
 const CLASS_BAR_COLORS: Record<NmfRaaClassBlock['key'], string> = {
-  pbPbPeripheral: '#38bdf8',
-  pbPbSemiCentral: '#fbbf24',
-  pbPbCentral: '#f472b6',
+  pbPbPeripheral: '#0284c7',
+  pbPbSemiCentral: '#d97706',
+  pbPbCentral: '#db2777',
 };
 
 /**

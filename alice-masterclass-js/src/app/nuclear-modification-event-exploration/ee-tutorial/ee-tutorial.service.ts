@@ -144,8 +144,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* keep the highlight until they pick a dataset or close */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 2,
       stageRadius: 4,
       popoverClass: 'lsa-driver-popover',
@@ -205,7 +206,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-hist-multiplicity"]',
         disableActiveInteraction: false,
         popover: {
-          title: '1 / 7 — Multiplicity distribution',
+          title: '1 / 7: Multiplicity distribution',
           description:
             'One entry per analysed event: the number of accepted charged primary tracks the detector sees in that event. The horizontal axis is multiplicity and the vertical axis is how many events had that multiplicity.',
           side: 'left',
@@ -217,7 +218,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-hist-multiplicityMinPt"]',
         disableActiveInteraction: false,
         popover: {
-          title: '2 / 7 — Multiplicity, p<sub>T</sub> &gt; 1 GeV/c',
+          title: '2 / 7: Multiplicity, p<sub>T</sub> &gt; 1 GeV/c',
           description:
             'This works just like the total multiplicity per event, but we only count primary particle tracks with a transverse momentum above <strong>p<sub>T</sub> &gt; 1&nbsp;GeV/c</strong>. High-momentum (“harder”) particles are rarer and much more sensitive to the hot medium because of jet quenching. This makes high-p<sub>T</sub> multiplicity a clearer, more detailed addition to the main multiplicity plot.',
           side: 'left',
@@ -229,7 +230,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-hist-secondaries"]',
         disableActiveInteraction: false,
         popover: {
-          title: '3 / 7 — Multiplicity of secondaries',
+          title: '3 / 7: Multiplicity of secondaries',
           description:
             'This shows the count of secondary tracks per event, like particle decays, interactions with detector material, or background collisions known as pile up. These tracks must be excluded because R<sub>AA</sub> measures only particles produced directly in the main collision. Including them would distort the final result and give a false signal. This histogram simply shows how much noise your primary filter is cleaning out.',
           side: 'left',
@@ -241,7 +242,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-hist-pt"]',
         disableActiveInteraction: false,
         popover: {
-          title: '4 / 7 — p<sub>T</sub> distribution',
+          title: '4 / 7: p<sub>T</sub> distribution',
           description:
             'This histogram plots the transverse momentum (p<sub>T</sub>) of every accepted primary track. As expected, most particles stay at low p<sub>T</sub>, while high-p<sub>T</sub> particles are extremely rare. The Spectrum Analysis module will later use this distribution to build the R<sub>AA</sub>(p<sub>T</sub>) plot.',
           side: 'left',
@@ -253,7 +254,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-hist-charge"]',
         disableActiveInteraction: false,
         popover: {
-          title: '5 / 7 — Charge distribution',
+          title: '5 / 7: Charge distribution',
           description:
             'Electric charge of accepted tracks. Charged reconstructed tracks are only −1 or +1.',
           side: 'left',
@@ -265,7 +266,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-hist-phi"]',
         disableActiveInteraction: false,
         popover: {
-          title: '6 / 7 — Normalized φ projection',
+          title: '6 / 7: Normalized φ projection',
           description:
             'This histogram shows the direction (φ) in which particles fly around the beam line, covering the full 360-degree space. In an ideal setup, particles spread out equally in all directions, creating a flat line. Any unusual peaks or dips can reveal inactive detector zones or collective physical effects from the collision. “Normalized” simply means we are looking at the overall percentage shape rather than raw counts.',
           side: 'left',
@@ -277,7 +278,7 @@ export class NmfEeTutorialService {
         element: '.nmf-hist-grid',
         disableActiveInteraction: false,
         popover: {
-          title: '7 / 7 — Enlarge a plot',
+          title: '7 / 7: Enlarge a plot',
           description:
             'Want a closer look? <strong>Click any histogram</strong> to open it in a larger window.',
           side: 'left',
@@ -294,8 +295,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* keep the walkthrough until Next / Done / Close */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 6,
       stageRadius: 8,
       popoverClass: 'lsa-driver-popover',
@@ -333,7 +335,7 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-analysis-results"]',
         disableActiveInteraction: false,
         popover: {
-          title: '1 / 3 — Why Peripheral, SemiCentral and Central?',
+          title: '1 / 3: Why Peripheral, SemiCentral and Central?',
           description:
             'Two lead nuclei do not always hit the same way. <strong>Peripheral</strong> means a glancing blow (they barely overlap). <strong>SemiCentral</strong> means a bigger overlap. <strong>Central</strong> means an almost head-on smash. A more central collision creates a hotter, denser “fireball” and involves more nucleon–nucleon collisions inside (a larger <strong>N<sub>coll</sub></strong>). We study all three so you can see how the nuclear effect changes with how central the crash was.',
           side: 'left',
@@ -345,11 +347,11 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-analysis-results"]',
         disableActiveInteraction: false,
         popover: {
-          title: '2 / 3 — What is R<sub>AA</sub>? (quick reminder)',
+          title: '2 / 3: What is R<sub>AA</sub>? (quick reminder)',
           description:
             '<strong>R<sub>AA</sub></strong> is the <em>nuclear modification factor</em>. It asks: after a Pb–Pb collision, do we see as many particles as we would expect from <strong>N<sub>coll</sub></strong> separate proton–proton collisions?<br/><br/>' +
-            '<code style="display:inline-block;margin:0.35rem 0;padding:0.35rem 0.55rem;background:rgba(0,0,0,0.35);border-radius:6px;">R<sub>AA</sub> = Y(Pb–Pb) / (N<sub>coll</sub> × Y(pp))</code><br/><br/>' +
-            '<strong>Y</strong> means “how many charged primary tracks we counted”. <strong>Y(pp)</strong> is the average from your ~30 pp events. <strong>Y(Pb–Pb)</strong> is the count from that one Pb–Pb event. <strong>N<sub>coll</sub></strong> is given for each centrality class.<br/><br/>' +
+            '<code style="display:inline-block;margin:0.35rem 0;padding:0.35rem 0.55rem;background:#f1f5f9;border:1px solid rgba(15,23,42,0.12);border-radius:6px;">R<sub>AA</sub> = Y(Pb–Pb) / (N<sub>coll</sub> × Y(pp))</code><br/><br/>' +
+            '<strong>Y</strong> means “how many charged primary tracks we counted”. <strong>Y(pp)</strong> is the average from the roughly 30 pp events you looked at. <strong>Y(Pb–Pb)</strong> is the count from that one Pb–Pb event. <strong>N<sub>coll</sub></strong> is given for each centrality class.<br/><br/>' +
             'If <strong>R<sub>AA</sub> ≈ 1</strong>, Pb–Pb looks like a simple pile-up of pp collisions. If it is clearly <strong>not 1</strong>, the nuclear medium changed particle production (for example by jet quenching).',
           side: 'left',
           align: 'start',
@@ -359,9 +361,9 @@ export class NmfEeTutorialService {
         element: '[data-testid="nmf-analysis-plots"]',
         disableActiveInteraction: false,
         popover: {
-          title: '3 / 3 — Why Counts vs p<sub>T</sub>?',
+          title: '3 / 3: Why Counts vs p<sub>T</sub>?',
           description:
-            'These plots show <strong>Counts</strong> against transverse momentum <strong>p<sub>T</sub></strong> — how hard a particle was kicked <em>sideways</em> from the beam direction.<br/><br/>' +
+            'These plots show <strong>Counts</strong> against transverse momentum <strong>p<sub>T</sub></strong>, how hard a particle was kicked <em>sideways</em> from the beam direction.<br/><br/>' +
             'Most particles are “soft” (low p<sub>T</sub>). High-p<sub>T</sub> particles are rare, but they feel the hot medium more strongly. Looking at the shape of Counts vs p<sub>T</sub> for each centrality class prepares you for <strong>Spectrum Analysis</strong>, where you build R<sub>AA</sub> as a function of p<sub>T</sub>.',
           side: 'left',
           align: 'start',
@@ -377,8 +379,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* keep the walkthrough until Next / Done / Close */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 6,
       stageRadius: 8,
       popoverClass: 'lsa-driver-popover',
@@ -509,8 +512,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* overlay click must not close the tour */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 2,
       stageRadius: 4,
       popoverClass: 'lsa-driver-popover',
@@ -636,8 +640,8 @@ export class NmfEeTutorialService {
         popover: {
           title: 'R<sub>AA</sub> Analysis tab',
           description:
-            'This tab shows your <strong>results</strong>. At the top you get three R<sub>AA</sub> numbers — <strong>Peripheral</strong>, <strong>SemiCentral</strong>, and <strong>Central</strong> — for how head-on the Pb–Pb smash was. Underneath are three plots of <strong>Counts vs p<sub>T</sub></strong> (how hard particles were kicked sideways).<br/><br/>' +
-            'R<sub>AA</sub> compares each Pb–Pb multiplicity to the average from your ~30 pp events, scaled by <strong>N<sub>coll</sub></strong>. The numbers fill in as you analyse events. Press <strong>?</strong> here anytime for a short reminder.',
+            'This tab shows your <strong>results</strong>. At the top you get three R<sub>AA</sub> numbers, <strong>Peripheral</strong>, <strong>SemiCentral</strong>, and <strong>Central</strong>, for how head-on the Pb–Pb smash was. Underneath are three plots of <strong>Counts vs p<sub>T</sub></strong> (how hard particles were kicked sideways).<br/><br/>' +
+            'R<sub>AA</sub> compares each Pb–Pb multiplicity to the average from the roughly 30 pp events you looked at, scaled by <strong>N<sub>coll</sub></strong>. The numbers fill in as you analyse events. Press <strong>?</strong> here anytime for a short reminder.',
           side: 'left',
           align: 'start',
         },
@@ -692,7 +696,7 @@ export class NmfEeTutorialService {
         element: '#event-display-next-event',
         disableActiveInteraction: false,
         popover: {
-          title: 'Event complete — go further',
+          title: 'Event complete, go further',
           description:
             'You found every primary track in this event. Now click the <strong>Next</strong> button on the event display to continue to the following event.',
           side: 'left',
@@ -713,7 +717,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Why we do not click forever',
           description:
-            'Imagine physicists had to pick every primary track by hand in every collision — LHC analyses would take forever. That is why they write <strong>selection algorithms</strong>: clear rules a computer can apply to millions of tracks. Next you will build one that a physicist would not be ashamed of.',
+            'Imagine physicists had to pick every primary track by hand in every collision - LHC analyses would take forever. That is why they write <strong>selection algorithms</strong>: clear rules a computer can apply to millions of tracks. Next you will build one that a physicist would not be ashamed of.',
           side: 'over',
         },
         onDeselected: () => this.prepareFilterBuilder(),
@@ -728,7 +732,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Build your track filter',
           description:
-            'Build a filter we will use to analyse our events, one no physicist would be ashamed of. Keep <strong>charged</strong> tracks whose <strong>DCA</strong> to the primary vertex passes the analysis cuts (|DCA<sub>xy</sub>| and |DCA<sub>z</sub>| below the named primary cuts).',
+            'First read <strong>What is DCA?</strong> in the window to see why we split <strong>DCA<sub>xy</sub></strong> (across the beam) and <strong>DCA<sub>z</sub></strong> (along the beam). Then build the filter: keep <strong>charged</strong> tracks with |DCA<sub>xy</sub>| and |DCA<sub>z</sub>| below the named primary cuts.',
           side: 'top',
           align: 'center',
         },
@@ -751,7 +755,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Submit your filter',
           description:
-            'When the selection looks right, click <strong>Submit function</strong>. The tour advances only after a valid filter — you cannot skip this step.',
+            'When the selection looks right, click <strong>Submit function</strong>. The tour advances only after a valid filter: you cannot skip this step.',
           side: 'top',
           align: 'center',
           showButtons: ['previous', 'close'],
@@ -783,7 +787,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Select tracks with Shift',
           description:
-            'Hold <strong>Shift</strong>, then press and drag a <strong>rectangle</strong> on the display, and release. Without Shift you can still orbit the detector as usual. That gesture marks the event <strong>analysed</strong>: your filter keeps charged <strong>primary</strong> tracks for the whole event, secondary tracks leave the view, and the histograms update. Try it now — the tour moves on only after you analyse an event.',
+            'Hold <strong>Shift</strong>, then press and drag a <strong>rectangle</strong> on the display, and release. Without Shift you can still orbit the detector as usual. That gesture marks the event <strong>analysed</strong>: your filter keeps charged <strong>primary</strong> tracks for the whole event, secondary tracks leave the view, and the histograms update. Try it now: the tour moves on only after you analyse an event.',
           side: 'left',
           showButtons: ['previous', 'close'],
         },

@@ -1,0 +1,407 @@
+/**
+ * Shared look of the two nuclear-modification exercises. Both are light now —
+ * Event Exploration (exercise 1) set the palette first, and Spectrum Analysis
+ * (exercise 2) originally shipped dark before switching to match it. The dark
+ * palette this partial used to also export is gone: nothing else ever
+ * consumed it, so a second theme was pure risk with no reader.
+ */
+
+/**
+ * Mirrors Particle Propagation's default `--pp-*` values
+ * (particle-propagation.component.scss) and Visual Analysis with
+ * `visualDarkMode = false`, so all four exercises read as one theme —
+ * red-and-white, CERN/ALICE branded. Include inside a `:host` (or any)
+ * selector.
+ */
+@mixin light-tokens {
+  --va-bg-panel-solid: #ffffff;
+  --va-bg: var(--va-bg-panel-solid);
+  --va-bg-elevated: var(--va-bg-panel-solid);
+  --va-bg-panel: var(--va-bg-panel-solid);
+  --va-border: rgba(0, 0, 0, 0.14);
+  --va-text: rgba(0, 0, 0, 0.82);
+  --va-muted: rgba(0, 0, 0, 0.55);
+  --va-control-bg: #f5f5f5;
+
+  /* Card / plot surfaces: a hair off white so panels read against the page. */
+  --nmf-surface: #f7f9fc;
+  --nmf-surface-hover: #eaf1fb;
+  --nmf-surface-border: rgba(15, 23, 42, 0.16);
+  --nmf-hairline: rgba(15, 23, 42, 0.1);
+  /* d3 chrome: axis rules, grid lines, stat-box ink on a white plot. */
+  --nmf-axis: rgba(15, 23, 42, 0.62);
+  --nmf-grid: rgba(15, 23, 42, 0.14);
+}
+
+/**
+ * Fixed to exactly the space below the CERN + app toolbars (104px) — never
+ * taller, so the page itself can never scroll; anything that does not fit
+ * scrolls inside its own panel.
+ */
+@mixin page-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--va-text);
+  background: var(--va-bg-panel-solid);
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(100vh - 104px);
+  padding: 0;
+}
+
+/**
+ * Panel / card surface used for every result block: a hair off the page white,
+ * a soft shadow to lift it rather than a flat colour block, and a red-brand
+ * left rail on request. Every panel used to carry that rail by default — with
+ * the results column on one screen that put blue, green, amber and up to ten
+ * centrality colours side by side, and the eye had nowhere to land. The rail
+ * is opt-in now: colour belongs to the data, not to the frame around it.
+ */
+@mixin card($accent: 'none') {
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
+  border-radius: 10px;
+  background: var(--nmf-surface, #f7f9fc);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 1px rgba(15, 23, 42, 0.03);
+
+  @if $accent == 'left' {
+    border-left: 3px solid var(--nmf-plot-accent, #b71c1c);
+  }
+}
+
+@mixin card-interactive {
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--nmf-surface-hover, #eaf1fb);
+    border-color: color-mix(in srgb, var(--nmf-plot-accent, #b71c1c) 40%, var(--nmf-surface-border, rgba(15, 23, 42, 0.16)));
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.05);
+    outline: none;
+  }
+}
+
+/** Title row of a card, cut off from the body by a hairline. */
+@mixin card-head {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
+}
+
+/**
+ * Small uppercase class name, e.g. `0–5%`. The centrality scale
+ * (`centralityColor()`) is pastel by design — legible as an icon stroke or a
+ * swatch on a light card, too pale to read as text (a 0–5% pink measured
+ * 2.5:1 against the card, an amber class as low as 1.6:1). Darkening it 45%
+ * toward black keeps each class's hue identity while clearing AA contrast.
+ */
+@mixin class-label {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--nmf-plot-accent, var(--va-muted)) 55%, black);
+  white-space: nowrap;
+}
+
+@mixin card-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--va-text, #ffffff);
+  line-height: 1.25;
+}
+
+/** Title plus a status pill, side by side, wrapping together as one unit. */
+@mixin card-heading {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+/**
+ * Marks a card as either input data to look up (reference) or the student's
+ * own accumulating output (results) — the two "Centrality classes" and
+ * "Collected R_AA" panels look alike enough at a glance that this distinction
+ * needs to be visible, not just explained in body copy.
+ */
+@mixin badge($tint) {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: color-mix(in srgb, $tint 65%, black);
+  background: color-mix(in srgb, $tint 20%, transparent);
+  border: 1px solid color-mix(in srgb, $tint 45%, transparent);
+}
+
+@mixin card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  white-space: nowrap;
+}
+
+/** Big result number, e.g. an R_AA readout. */
+@mixin readout-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--va-text, #ffffff);
+  white-space: nowrap;
+}
+
+/**
+ * Two beams approaching with an impact parameter. The vertical offset is set by
+ * the caller (0 head-on, larger for a glancing blow) so the same icon covers
+ * exercise 1's three classes and exercise 2's ten centrality bins.
+ */
+@mixin collision-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 30px;
+  overflow: visible;
+  color: var(--nmf-plot-accent, var(--va-muted));
+
+  line {
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+  }
+
+  polyline {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+@mixin collision-icon-small {
+  width: 36px;
+  height: 22px;
+
+  line,
+  polyline {
+    stroke-width: 2.5;
+  }
+}
+
+/**
+ * Results tab strip — exercise 1's `.nmf-results-tabs` treatment, lifted here so
+ * both exercises show the same header. Apply to the `mat-tab-group` from inside a
+ * `::ng-deep` context; `$actions-width` reserves room for the ? / fullscreen
+ * buttons that sit on the same row.
+ */
+@mixin results-tabs($actions-width: 88px) {
+  .mat-mdc-tab-header {
+    flex: 0 0 auto;
+    padding-right: $actions-width;
+    border-bottom: 1px solid var(--va-border);
+    background: var(--va-bg-panel-solid);
+  }
+
+  .mat-mdc-tab-labels {
+    background: transparent;
+  }
+
+  .mdc-tab {
+    min-width: 0;
+    height: 48px;
+    padding: 0 12px;
+  }
+
+  .mdc-tab__text-label,
+  .mat-mdc-tab .mdc-tab__text-label {
+    color: var(--va-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: none;
+  }
+
+  .mdc-tab__text-label sub,
+  .mat-mdc-tab .mdc-tab__text-label sub {
+    font-size: 0.75em;
+  }
+
+  .mdc-tab--active .mdc-tab__text-label,
+  .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+    color: var(--va-text);
+  }
+
+  .mdc-tab-indicator__content--underline {
+    border-color: #ff6f00;
+  }
+
+  .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .mat-mdc-tab-body-content {
+    height: 100%;
+    overflow: auto;
+  }
+
+  &.mat-mdc-tab-group {
+    height: 100%;
+  }
+}
+
+/**
+ * Reference / result tables (centrality classes, collected R_AA values). Numbers
+ * are tabular so columns line up the way they do in the desktop app's tables.
+ */
+@mixin data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 5px 8px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: left;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--nmf-surface, #f7f9fc);
+    color: var(--va-muted, rgba(15, 23, 42, 0.55));
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
+  }
+
+  tbody td {
+    color: var(--va-text, rgba(15, 23, 42, 0.82));
+    border-bottom: 1px solid var(--nmf-hairline, rgba(15, 23, 42, 0.1));
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .nmf-cell-muted {
+    color: color-mix(in srgb, var(--va-muted, rgba(15, 23, 42, 0.55)) 75%, transparent);
+  }
+}
+
+/**
+ * Angular Material controls sitting directly on a card, spelled out in the
+ * panel's own tokens. Without this an outlined field and a stroked button
+ * render in Material's default ink, which does not track the card surface and
+ * can all but disappear against it (this is what happened to the read-off
+ * panel when the surface was still dark).
+ */
+@mixin form-controls {
+  .mat-mdc-form-field {
+    --mdc-outlined-text-field-input-text-color: #{'var(--va-text)'};
+    --mdc-outlined-text-field-label-text-color: #{'var(--va-muted)'};
+    --mdc-outlined-text-field-hover-label-text-color: #{'var(--va-text)'};
+    --mdc-outlined-text-field-focus-label-text-color: #ff6f00;
+    --mdc-outlined-text-field-outline-color: #{'var(--va-border)'};
+    --mdc-outlined-text-field-hover-outline-color: #{'var(--va-text)'};
+    --mdc-outlined-text-field-focus-outline-color: #ff6f00;
+    --mat-select-enabled-trigger-text-color: #{'var(--va-text)'};
+    --mat-select-enabled-arrow-color: #{'var(--va-muted)'};
+    --mat-select-focused-arrow-color: #ff6f00;
+  }
+
+  .mat-mdc-outlined-button:not(:disabled) {
+    --mdc-outlined-button-label-text-color: #{'var(--va-text)'};
+    --mdc-outlined-button-outline-color: #{'var(--va-border)'};
+  }
+
+  .mat-mdc-outlined-button:disabled {
+    --mdc-outlined-button-disabled-label-text-color: color-mix(in srgb, var(--va-muted) 55%, transparent);
+    --mdc-outlined-button-disabled-outline-color: color-mix(in srgb, var(--va-border) 55%, transparent);
+  }
+}
+
+/**
+ * Ink of the d3 plots. Series and heatmap used to carry two copies of this and
+ * had already started to drift, so it lives here now.
+ */
+@mixin plot-chrome {
+  text {
+    fill: var(--va-text, rgba(15, 23, 42, 0.82));
+    font-size: 11px;
+  }
+
+  .nmf-plot-axis path,
+  .nmf-plot-axis line {
+    stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
+  }
+
+  .nmf-plot-axis text {
+    font-weight: 700;
+  }
+
+  .nmf-plot-axis-label {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /** `AA` of R_AA, `T` of p_T. */
+  .nmf-plot-sub {
+    font-size: 0.72em;
+  }
+
+  .nmf-plot-grid line {
+    stroke: var(--nmf-grid, rgba(15, 23, 42, 0.14));
+    stroke-width: 1;
+  }
+
+  .nmf-plot-empty {
+    fill: var(--va-muted, rgba(15, 23, 42, 0.55));
+    font-size: 12px;
+  }
+
+  .nmf-plot-legend text,
+  .nmf-plot-statbox text {
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+
+  .nmf-plot-statbox text {
+    fill: var(--nmf-axis, rgba(15, 23, 42, 0.62));
+    font-weight: 500;
+  }
+}
