@@ -217,7 +217,7 @@ export class NmfSaTutorialService {
         popover: {
           title: '3 / 5: Look up, then divide',
           description:
-            '<strong>Count events → N_evt</strong> and <strong>Look up number of collisions → N_coll</strong> store variables. Then divide by bin width, by N<sub>evt</sub>, and by N<sub>coll</sub>.',
+            '<strong>Count events → N<sub>evt</sub></strong> and <strong>Look up number of collisions → N<sub>coll</sub></strong> store variables. Then divide by bin width, by N<sub>evt</sub>, and by N<sub>coll</sub>.',
           side: 'right',
           align: 'start',
         },

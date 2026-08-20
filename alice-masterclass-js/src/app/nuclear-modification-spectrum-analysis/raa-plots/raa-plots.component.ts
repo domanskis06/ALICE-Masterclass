@@ -74,6 +74,16 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
   activeCardKey: string | null = null;
 
   /**
+   * Cards that appeared but were not the one auto-selected — e.g. a student
+   * who builds both `Fill multiplicity histogram` and `Plot multiplicity vs
+   * centrality` before ever pressing Run gets both cards from one Run, and
+   * only the more advanced one is landed on. Marked here so their tab can
+   * carry a "new" dot instead of the other result going unnoticed; cleared
+   * the moment the student actually looks at that tab.
+   */
+  unseenCardKeys = new Set<string>();
+
+  /**
    * Empty-state brief, grouped under the four toolbox categories instead of a
    * flat 1–10 list — the same categories and colours as the build column, so
    * the two halves of the page read as one plan rather than a wall of text
@@ -150,6 +160,7 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
 
   selectCard(key: string): void {
     this.activeCardKey = key;
+    this.unseenCardKeys.delete(key);
   }
 
   /**
@@ -171,7 +182,11 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
     // advanced result the chain just unlocked.
     const added = this.cards.filter((c) => !previousKeys.has(c.key));
     if (added.length) {
+      for (const card of added) {
+        this.unseenCardKeys.add(card.key);
+      }
       this.activeCardKey = added[added.length - 1].key;
+      this.unseenCardKeys.delete(this.activeCardKey);
       return;
     }
     if (!this.cards.some((c) => c.key === this.activeCardKey)) {

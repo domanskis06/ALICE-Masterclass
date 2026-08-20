@@ -37,6 +37,9 @@
 
 .nmf-sa-plot-tab {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 6px 12px;
   border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
   border-bottom: 2px solid transparent;
@@ -58,6 +61,15 @@
   ::ng-deep sub {
     font-size: 0.72em;
   }
+}
+
+/** A result the student has not looked at yet — from a Run that unlocked more than one at once. */
+.nmf-sa-plot-tab-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--nmf-plot-accent, #b71c1c);
 }
 
 .nmf-sa-plot-tab--active {

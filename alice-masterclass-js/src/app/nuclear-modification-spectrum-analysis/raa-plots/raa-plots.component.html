@@ -58,6 +58,9 @@
           (click)="selectCard(card.key)"
         >
           <span [innerHTML]="card.titleKey | translate"></span>
+          @if (unseenCardKeys.has(card.key)) {
+            <span class="nmf-sa-plot-tab-dot" data-testid="nmf-sa-plot-tab-dot" aria-hidden="true"></span>
+          }
         </button>
       }
     </div>
