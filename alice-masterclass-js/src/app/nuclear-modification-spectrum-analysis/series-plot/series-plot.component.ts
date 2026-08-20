@@ -216,7 +216,7 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .attr('transform', `translate(0,${bottom})`)
       .call(
         this.xLog
-          ? d3.axisBottom(x).ticks(tight ? 4 : 6, '~g')
+          ? d3.axisBottom(x).ticks(10, '~g').tickFormat(labelDecadesOnly)
           : d3.axisBottom(x).ticks(tight ? 4 : 6),
       );
 
@@ -389,6 +389,24 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
 /** Ticks the grid follows; a log axis gets its decades rather than 5 even steps. */
 function yTicksOf(y: d3.ScaleContinuousNumeric<number, number>, log: boolean): number[] {
   return log ? (y as d3.ScaleLogarithmic<number, number>).ticks(4) : y.ticks(5);
+}
+
+/**
+ * d3's default log-axis tick count picks whichever 1/2/3/…/9 candidates fit,
+ * which on a ~2-3 decade domain like ours labels an arbitrary-looking subset
+ * (0.2, 0.3, 1, 2, 3, 10…) — every gap between labelled ticks looks like a
+ * different size, because it is: some neighbours are one digit apart, others
+ * a full decade. Requesting a dense set of ticks but only labelling the
+ * powers of ten keeps the unlabelled in-between ticks as a visual cue that
+ * this is a log axis, the way a ROOT log axis reads.
+ */
+function labelDecadesOnly(value: d3.NumberValue): string {
+  const n = Number(value);
+  if (n <= 0) {
+    return '';
+  }
+  const exponent = Math.log10(n);
+  return Math.abs(exponent - Math.round(exponent)) < 1e-9 ? d3.format('~g')(n) : '';
 }
 
 /** A histogram drawn by the same renderer: bin outline plus sqrt(N) bars. */

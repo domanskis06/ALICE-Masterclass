@@ -100,8 +100,8 @@
           </div>
           @if (card.meta.length) {
             <div class="nmf-sa-plot-meta">
-              @for (entry of card.meta; track entry.labelKey) {
-                <span>{{ entry.labelKey | translate }} {{ entry.value }}</span>
+              @for (entry of card.meta; track entry.labelKey + entry.value) {
+                <span>{{ entry.labelKey ? (entry.labelKey | translate) + ' ' : '' }}{{ entry.value }}</span>
               }
             </div>
           }

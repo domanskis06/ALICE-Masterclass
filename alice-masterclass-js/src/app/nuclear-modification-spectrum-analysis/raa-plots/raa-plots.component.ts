@@ -349,10 +349,29 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
     return cards;
   }
 
+  /** "1 class" / "3 classes" (Polish also splits out a 2–4 form), not "Classes 1". */
   private seriesMeta(series: RaaSeries[]): { labelKey: string; value: string }[] {
     const prefix = 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.';
-    return [{ labelKey: `${prefix}META_CLASSES`, value: String(series.length) }];
+    const count = series.length;
+    const form = pluralForm(count, this.translate.currentLang || this.translate.defaultLang);
+    const text = this.translate.instant(`${prefix}META_CLASSES_${form}`, { count });
+    return [{ labelKey: '', value: text }];
   }
+}
+
+/** Polish needs its own 2–4 form; everything else here is a plain singular/plural split. */
+function pluralForm(count: number, lang: string | undefined): 'ONE' | 'FEW' | 'OTHER' {
+  if (count === 1) {
+    return 'ONE';
+  }
+  if (lang === 'pl') {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) {
+      return 'FEW';
+    }
+  }
+  return 'OTHER';
 }
 
 /** Entry-weighted mean of a binned series, the `Mean` of a ROOT stat box. */
