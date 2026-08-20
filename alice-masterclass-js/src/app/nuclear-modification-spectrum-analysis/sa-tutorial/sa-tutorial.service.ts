@@ -532,7 +532,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Run, and honest feedback',
           description:
-            '<strong>Run</strong> executes your blocks on the real data. <strong>Clear</strong> empties the workspace so you can start the next centrality class; your plots and the collected R_AA sheet stay. Nothing is pre-assembled for you, and nothing is silently fixed: if a normalisation is missing, notes appear under this header explaining what is <em>physically</em> wrong with the result, not which block you forgot.',
+            '<strong>Run</strong> executes your blocks on the real data. <strong>Clear</strong> empties the workspace so you can start the next centrality class; your plots and the collected R<sub>AA</sub> sheet stay. Nothing is pre-assembled for you, and nothing is silently fixed: if a normalisation is missing, notes appear under this header explaining what is <em>physically</em> wrong with the result, not which block you forgot.',
           side: 'bottom',
           align: 'end',
         },
@@ -568,7 +568,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'That is a real measurement',
           description:
-            'Centrality is not read off a label in the data. It is <em>defined</em> by how many particles come out. Your histogram is the distribution physicists cut into percentiles to build the ten classes in the first place.',
+            'You just measured something, not looked it up. Centrality has no label in the data: it is <em>defined</em> by how many particles a collision produced. This histogram <strong>is</strong> that definition, the exact thing physicists cut into percentiles to build the ten classes in the first place.',
           side: 'over',
         },
       },
@@ -605,7 +605,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Something is wrong with this spectrum',
           description:
-            'Look at the plot: it has <strong>steps</strong> where the binning changes. That is not physics, it is bookkeeping: a bin twice as wide collects twice as many tracks. Raw counts in unequal bins simply cannot be compared.',
+            'See those <strong>steps</strong>, where the binning changes? A bin twice as wide collects twice as many tracks for free, no physics involved. That is bookkeeping, not signal, and it has to be removed before bins can be compared to each other at all.',
           side: 'left',
           align: 'start',
         },
