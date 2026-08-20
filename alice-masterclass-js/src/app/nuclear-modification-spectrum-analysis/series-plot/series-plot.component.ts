@@ -216,7 +216,7 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .attr('transform', `translate(0,${bottom})`)
       .call(
         this.xLog
-          ? d3.axisBottom(x).tickArguments([]).tickFormat(labelDecadesOnly)
+          ? d3.axisBottom(x).tickArguments([]).tickFormat(labelDecades('~g'))
           : d3.axisBottom(x).ticks(tight ? 4 : 6),
       );
 
@@ -226,7 +226,7 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .attr('transform', `translate(${margin.left},0)`)
       .call(
         this.yLog
-          ? d3.axisLeft(y).ticks(4, '~e')
+          ? d3.axisLeft(y).tickArguments([]).tickFormat(labelDecades('~e'))
           : d3.axisLeft(y).ticks(tight ? 4 : 5),
       );
 
@@ -413,11 +413,16 @@ function isDecade(n: number): boolean {
  * different size, because it is: some neighbours are one digit apart, others
  * a full decade. Requesting a dense set of ticks but only labelling the
  * powers of ten keeps the unlabelled in-between ticks as a visual cue that
- * this is a log axis, the way a ROOT log axis reads.
+ * this is a log axis, the way a ROOT log axis reads. Used for both axes —
+ * X labels plain ("1", "10"), Y keeps its scientific-notation specifier
+ * ("1e+2"), so the specifier is the caller's choice.
  */
-function labelDecadesOnly(value: d3.NumberValue): string {
-  const n = Number(value);
-  return isDecade(n) ? d3.format('~g')(n) : '';
+function labelDecades(specifier: string): (value: d3.NumberValue) => string {
+  const format = d3.format(specifier);
+  return (value) => {
+    const n = Number(value);
+    return isDecade(n) ? format(n) : '';
+  };
 }
 
 /** A histogram drawn by the same renderer: bin outline plus sqrt(N) bars. */
