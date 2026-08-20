@@ -7,6 +7,7 @@ import { AngularModule } from '../shared/angular.module';
 import { SharedModule } from '../shared/shared.module';
 import {
   ApiService,
+  ExerciseKind,
   NmfEventClass,
   NmfEventExplorationResultAPI,
   SessionAPI,
@@ -37,8 +38,8 @@ describe('NuclearModificationEventExplorationComponent', () => {
   let spyResults: jasmine.Spy;
 
   const SESSIONS: SessionAPI[] = [
-    { id: 1, event: 'Event A', name: 'Session A', password: 'aaa', maxStudents: 10, created: new Date() },
-    { id: 2, event: 'Event A', name: 'Session B', password: 'bbb', maxStudents: 10, created: new Date() },
+    { id: 1, event: 'Event A', kind: ExerciseKind.RAA, name: 'Session A', password: 'aaa', maxStudents: 10, created: new Date() },
+    { id: 2, event: 'Event A', kind: ExerciseKind.RAA, name: 'Session B', password: 'bbb', maxStudents: 10, created: new Date() },
   ];
 
   const RESULTS: NmfEventExplorationResultAPI[] = [
