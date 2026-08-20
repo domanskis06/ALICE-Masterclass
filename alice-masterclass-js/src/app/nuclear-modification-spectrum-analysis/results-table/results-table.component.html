@@ -11,18 +11,6 @@
         [innerHTML]="'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_BADGE' | translate"
       ></span>
     </span>
-    @if (hasRows) {
-      <button
-        mat-stroked-button
-        type="button"
-        class="nmf-sa-results-copy"
-        data-testid="nmf-results-copy"
-        (click)="copy()"
-      >
-        <mat-icon>{{ copied ? 'check' : 'content_copy' }}</mat-icon>
-        {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.RESULTS_COPY' | translate }}
-      </button>
-    }
   </header>
 
   @if (!hasRows) {

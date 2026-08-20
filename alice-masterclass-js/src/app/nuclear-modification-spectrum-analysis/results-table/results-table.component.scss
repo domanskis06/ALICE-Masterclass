@@ -41,21 +41,6 @@
   font-size: 0.72em;
 }
 
-.nmf-sa-results-copy {
-  flex: 0 0 auto;
-  height: 30px;
-  padding: 0 10px;
-  font-size: 0.75rem;
-  line-height: 30px;
-
-  ::ng-deep .mat-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
-    font-size: 16px;
-  }
-}
-
 .nmf-sa-results-empty,
 .nmf-sa-results-note {
   margin: 0;

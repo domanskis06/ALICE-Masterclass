@@ -11,7 +11,7 @@
   position: relative;
   background: var(--va-bg-panel-solid, #ffffff);
   color: var(--va-text, rgba(0, 0, 0, 0.82));
-  min-width: min(80vw, 720px);
+  width: min(92vw, 1200px);
 }
 
 .nmf-sa-dialog-header {
@@ -74,8 +74,8 @@
 }
 
 .nmf-sa-dialog-plot {
-  width: min(70vw, 640px);
-  height: min(60vh, 420px);
+  width: 100%;
+  height: min(78vh, 760px);
 }
 
 .nmf-sa-dialog-footer {

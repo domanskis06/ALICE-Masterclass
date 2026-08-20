@@ -57,7 +57,6 @@ export class NmfResultsTableComponent implements OnChanges {
   rows: NmfResultRow[] = [];
   /** R_CP columns only appear once a recipe has actually produced an R_CP. */
   showRcp = false;
-  copied = false;
 
   ngOnChanges(): void {
     const classes = [
@@ -83,39 +82,6 @@ export class NmfResultsTableComponent implements OnChanges {
     return this.rows.length > 0;
   }
 
-  /** Comma-separated numbers, ready to paste into the moderator's sheet. */
-  get clipboardText(): string {
-    const header = ['centrality', ...this.columns()].join('\t');
-    const lines = this.rows.map((row) =>
-      [
-        row.label,
-        ...row.raa.map((cell) => format(cell.value)),
-        ...(this.showRcp ? row.rcp.map((cell) => format(cell.value)) : []),
-      ].join('\t'),
-    );
-    return [header, ...lines].join('\n');
-  }
-
-  /** Hand the whole sheet over in one go, tab separated for a spreadsheet. */
-  copy(): void {
-    const written = navigator.clipboard?.writeText(this.clipboardText);
-    if (!written) {
-      return;
-    }
-    written.then(
-      () => {
-        this.copied = true;
-        setTimeout(() => (this.copied = false), 2000);
-      },
-      () => undefined,
-    );
-  }
-
-  private columns(): string[] {
-    const raa = this.momenta.map((pt) => `R_AA(${pt})`);
-    return this.showRcp ? [...raa, ...this.momenta.map((pt) => `R_CP(${pt})`)] : raa;
-  }
-
   private cellsFor(centrality: string, target: RaaPlotTarget): NmfResultCell[] {
     const readout = this.readouts.find(
       (entry) => entry.centrality === centrality && entry.target === target,
@@ -135,8 +101,4 @@ export class NmfResultsTableComponent implements OnChanges {
       };
     });
   }
-}
-
-function format(value: number | null): string {
-  return value === null ? '' : value.toFixed(3);
 }

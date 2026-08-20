@@ -127,9 +127,30 @@ export class NmfBlocklyWorkspaceComponent implements AfterViewInit, OnDestroy {
 
   /* —— docked picker —— */
 
+  /**
+   * A block pulled out of the flyout is already a top-level block in the
+   * workspace the instant the drag begins — Blockly fires BLOCK_CREATE and
+   * SELECTED for it before it even fires its own BLOCK_DRAG(isStart: true),
+   * so tracking "am I dragging" from event order alone missed exactly the
+   * events that mattered most: reading the recipe on the CREATE event
+   * counted the block before it was ever dropped and connected to anything,
+   * which let a gated tutorial step pass on a block that was only passing
+   * through the canvas, mid-air. `workspace.isDragging()` is Blockly's own
+   * live state, current no matter which event triggered the check.
+   */
   private readonly onWorkspaceChange = (event: Blockly.Events.Abstract): void => {
     if (event.type === Blockly.Events.TOOLBOX_ITEM_SELECT) {
       this.rememberOrRestoreCategory();
+      return;
+    }
+    // The drag-end event is the one guaranteed resync: always act on it, in
+    // case isDragging() has already flipped back to false by the time this
+    // runs (harmless either way, since emitRecipe is idempotent).
+    if (event.type === Blockly.Events.BLOCK_DRAG && !(event as Blockly.Events.BlockDrag).isStart) {
+      this.emitRecipe();
+      return;
+    }
+    if (this.workspace?.isDragging()) {
       return;
     }
     this.emitRecipe();
@@ -158,7 +179,18 @@ export class NmfBlocklyWorkspaceComponent implements AfterViewInit, OnDestroy {
 
   private selectCategory(index: number): void {
     this.pickerCategory = index;
-    this.toolbox()?.selectItemByPosition(index);
+    const toolbox = this.toolbox();
+    if (!toolbox) {
+      return;
+    }
+    // Reselecting the category that is already open closes then reopens the
+    // flyout — a visible flash when the tour asks for the same category
+    // across several consecutive steps.
+    const current = toolbox.getSelectedItem();
+    if (current && toolbox.getToolboxItems().indexOf(current) === index) {
+      return;
+    }
+    toolbox.selectItemByPosition(index);
   }
 
   private toolbox(): Blockly.Toolbox | null {

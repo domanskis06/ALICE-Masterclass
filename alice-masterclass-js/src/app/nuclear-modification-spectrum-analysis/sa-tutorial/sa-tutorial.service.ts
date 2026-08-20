@@ -193,7 +193,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_WORKSPACE,
         disableActiveInteraction: false,
         popover: {
-          title: '1 / 5 — Four block categories',
+          title: '1 / 5: Four block categories',
           description:
             '<strong>Events</strong> load and count collisions. <strong>Tracks</strong> build the p<sub>T</sub> histogram. <strong>Normalise</strong> divides by bin width, N<sub>evt</sub> and the number of collisions. <strong>References &amp; plot</strong> loads pp or peripheral, divides, and draws.',
           side: 'right',
@@ -204,7 +204,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_WORKSPACE,
         disableActiveInteraction: false,
         popover: {
-          title: '2 / 5 — Load, select, fill',
+          title: '2 / 5: Load, select, fill',
           description:
             '<strong>Load tracks</strong>, <strong>Select centrality</strong>, <strong>Create empty pT histogram</strong>, then <strong>Fill</strong>. Optional: <strong>Cut pT above</strong> before filling.',
           side: 'right',
@@ -215,7 +215,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_WORKSPACE,
         disableActiveInteraction: false,
         popover: {
-          title: '3 / 5 — Look up, then divide',
+          title: '3 / 5: Look up, then divide',
           description:
             '<strong>Count events → N_evt</strong> and <strong>Look up number of collisions → N_coll</strong> store variables. Then divide by bin width, by N<sub>evt</sub>, and by N<sub>coll</sub>.',
           side: 'right',
@@ -226,7 +226,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_WORKSPACE,
         disableActiveInteraction: false,
         popover: {
-          title: '4 / 5 — References',
+          title: '4 / 5: References',
           description:
             '<strong>Load pp reference</strong> or <strong>Load peripheral</strong>, then <strong>Divide by loaded reference</strong>. <strong>Draw line at 1</strong> before plotting R<sub>AA</sub> or R<sub>CP</sub>.',
           side: 'right',
@@ -237,9 +237,9 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_RUN,
         disableActiveInteraction: false,
         popover: {
-          title: '5 / 5 — Run and read the notes',
+          title: '5 / 5: Run and read the notes',
           description:
-            '<strong>Run</strong> executes your blocks on the real data. If the chain is incomplete or the units do not work out, notes appear under this header saying what is physically wrong — they never tell you which block to drag.',
+            '<strong>Run</strong> executes your blocks on the real data. If the chain is incomplete or the units do not work out, notes appear under this header saying what is physically wrong. They never tell you which block to drag.',
           side: 'bottom',
           align: 'end',
         },
@@ -259,7 +259,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_PLOTS,
         disableActiveInteraction: false,
         popover: {
-          title: '1 / 4 — Multiplicity per class',
+          title: '1 / 4: Multiplicity per class',
           description:
             'One entry per event: how many accepted charged tracks it contained. Central collisions produce far more particles than peripheral ones, which is exactly how centrality is measured in the first place.',
           side: 'left',
@@ -270,7 +270,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_PLOTS,
         disableActiveInteraction: false,
         popover: {
-          title: '2 / 4 — Multiplicity vs centrality',
+          title: '2 / 4: Multiplicity vs centrality',
           description:
             'The two-dimensional map of all ~40 000 events. The colour is how many events fall in a cell, on a logarithmic scale. The band running from top left to bottom right shows that centrality and multiplicity are two views of the same thing.',
           side: 'left',
@@ -281,7 +281,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_PLOTS,
         disableActiveInteraction: false,
         popover: {
-          title: '3 / 4 — The p<sub>T</sub> spectrum',
+          title: '3 / 4: The p<sub>T</sub> spectrum',
           description:
             'Both axes are logarithmic, because particle production falls by many orders of magnitude between 0.15 and 50 GeV/c. Error bars are the statistical uncertainty √N of the entries in that bin; empty bins are reported instead of drawn.',
           side: 'left',
@@ -292,7 +292,7 @@ export class NmfSaTutorialService {
         element: NMF_SA_SELECTOR_PLOTS,
         disableActiveInteraction: false,
         popover: {
-          title: '4 / 4 — R<sub>AA</sub> and the line at one',
+          title: '4 / 4: R<sub>AA</sub> and the line at one',
           description:
             'The dashed line marks <strong>R<sub>AA</sub> = 1</strong>: Pb–Pb behaving like a simple stack of independent pp collisions. Suppression below that line at high p<sub>T</sub> is energy loss in the hot medium. Click any plot to enlarge it.',
           side: 'left',
@@ -483,7 +483,7 @@ export class NmfSaTutorialService {
     wrapper.style.right = 'auto';
     if (top === null) {
       wrapper.style.top = 'auto';
-      wrapper.style.bottom = '16px';
+      wrapper.style.bottom = '4px';
     } else {
       const maxTop = window.innerHeight - wrapper.offsetHeight - 8;
       wrapper.style.top = `${Math.min(Math.max(8, top), Math.max(8, maxTop))}px`;
@@ -505,6 +505,10 @@ export class NmfSaTutorialService {
     requestAnimationFrame(() => this.disarmDriverStage());
     setTimeout(() => this.disarmDriverStage(), 0);
     setTimeout(() => this.disarmDriverStage(), 50);
+    // The gate only re-checks itself on the next workspace change. Landing on
+    // a gated step whose blocks were already built earlier (replaying the
+    // tour, or stepping back and forward) would otherwise sit there forever.
+    this.evaluateGate();
   }
 
   private buildSteps(): DriveStep[] {
@@ -518,7 +522,7 @@ export class NmfSaTutorialService {
           title: 'The whole data sample',
           description:
             'Exercise 1 was one collision at a time. Here you have <strong>every</strong> event ALICE recorded for this Masterclass: ~40 000 Pb–Pb collisions sorted into ten centrality classes, plus the published proton–proton reference.<br/><br/>' +
-            'On the left you build the analysis out of <strong>blocks</strong> — Events, Tracks, Normalise, References &amp; plot. On the right the plots appear, and they <strong>keep older results</strong> so you can compare centrality classes.',
+            'On the left you build the analysis out of <strong>blocks</strong>: Events, Tracks, Normalise, References &amp; plot. On the right the plots appear, and they <strong>keep older results</strong> so you can compare centrality classes.',
           side: 'over',
         },
       },
@@ -528,7 +532,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Run, and honest feedback',
           description:
-            '<strong>Run</strong> executes your blocks on the real data; <strong>Clear</strong> empties the workspace so you can start the next centrality class — your plots and the collected R_AA sheet stay. Nothing is pre-assembled for you, and nothing is silently fixed: if a normalisation is missing, notes appear under this header explaining what is <em>physically</em> wrong with the result — not which block you forgot.',
+            '<strong>Run</strong> executes your blocks on the real data. <strong>Clear</strong> empties the workspace so you can start the next centrality class; your plots and the collected R_AA sheet stay. Nothing is pre-assembled for you, and nothing is silently fixed: if a normalisation is missing, notes appear under this header explaining what is <em>physically</em> wrong with the result, not which block you forgot.',
           side: 'bottom',
           align: 'end',
         },
@@ -539,7 +543,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Start with the events',
           description:
-            'Before touching momenta, ask how many collisions you actually have. Narrow the sample to a single centrality class and get its event count into a variable — every yield you measure later has to be divided by it.',
+            'Before touching momenta, ask how many collisions you actually have. Narrow the sample to a single centrality class and get its event count into a variable. Every yield you measure later has to be divided by it.',
           side: 'right',
           align: 'start',
           ...gated,
@@ -564,7 +568,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'That is a real measurement',
           description:
-            'Centrality is not read off a label in the data — it is <em>defined</em> by how many particles come out. Your histogram is the distribution physicists cut into percentiles to build the ten classes in the first place.',
+            'Centrality is not read off a label in the data. It is <em>defined</em> by how many particles come out. Your histogram is the distribution physicists cut into percentiles to build the ten classes in the first place.',
           side: 'over',
         },
       },
@@ -574,7 +578,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'See the whole sample at once',
           description:
-            'Now put that count against centrality for the whole sample. Every one of the ~40 000 events becomes one point on a two-dimensional map — watch how the band bends: more central (small percentage) means many more particles.',
+            'Now put that count against centrality for the whole sample. Every one of the ~40 000 events becomes one point on a two-dimensional map. Watch how the band bends: more central (small percentage) means many more particles.',
           side: 'right',
           align: 'start',
           ...gated,
@@ -587,7 +591,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Now the momenta',
           description:
-            'Switch from counting events to counting tracks. You want the transverse-momentum distribution of the tracks in that same centrality class, binned the way ALICE bins it — then plot it, from <strong>References &amp; plot</strong>, so there is something to look at. Mind the class — it has to match the one you counted events for.',
+            'Switch from counting events to counting tracks. You want the transverse-momentum distribution of the tracks in that same centrality class, binned the way ALICE bins it, then plot it from <strong>References &amp; plot</strong> so there is something to look at. Mind the class: it has to match the one you counted events for.',
           side: 'right',
           align: 'start',
           ...gated,
@@ -601,7 +605,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Something is wrong with this spectrum',
           description:
-            'Look at the plot: it has <strong>steps</strong> where the binning changes. That is not physics, it is bookkeeping — a bin twice as wide collects twice as many tracks. Raw counts in unequal bins simply cannot be compared.',
+            'Look at the plot: it has <strong>steps</strong> where the binning changes. That is not physics, it is bookkeeping: a bin twice as wide collects twice as many tracks. Raw counts in unequal bins simply cannot be compared.',
           side: 'left',
           align: 'start',
         },
@@ -612,7 +616,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Divide by bin width',
           description:
-            'Fix it. Each bin has to become a density <strong>per GeV/c</strong> instead of a raw count — then the steps disappear and what is left is the physical shape.',
+            'Fix it. Each bin has to become a density <strong>per GeV/c</strong> instead of a raw count. Then the steps disappear and what is left is the physical shape.',
           side: 'right',
           align: 'start',
           ...gated,
@@ -666,7 +670,7 @@ export class NmfSaTutorialService {
         popover: {
           title: 'Your numbers',
           description:
-            'Every class you plot fills a line of this sheet with R<sub>AA</sub> at <strong>5.5 GeV/c</strong> and <strong>10 GeV/c</strong> — the two momenta the moderator collects. <strong>Copy</strong> hands the whole table over at once.',
+            'Every class you plot fills a line of this sheet with R<sub>AA</sub> at <strong>5.5 GeV/c</strong> and <strong>10 GeV/c</strong>, the two momenta the moderator collects.',
           side: 'left',
           align: 'start',
         },
@@ -677,7 +681,7 @@ export class NmfSaTutorialService {
         popover: {
           title: `Now do it for ${NMF_SA_CLASSES_TO_COLLECT} classes`,
           description:
-            'One class is not a measurement. Repeat the chain for other centralities — one at a time, or by making it loop over several at once. Whatever you change, the class has to stay consistent across the whole chain. ' +
+            'One class is not a measurement. Repeat the chain for other centralities, one at a time. Whatever you change, the class has to stay consistent across the whole chain. ' +
             `Collect <strong>${NMF_SA_CLASSES_TO_COLLECT}</strong> different classes: <strong id="nmf-sa-tour-collect-progress">0 / ${NMF_SA_CLASSES_TO_COLLECT}</strong>`,
           side: 'right',
           align: 'start',
@@ -693,7 +697,7 @@ export class NmfSaTutorialService {
           title: 'You measured jet quenching',
           description:
             'Compare your classes: peripheral collisions sit near 1, central ones are suppressed by a factor of several.<br/><br/>' +
-            'Two things left. Build R<sub>CP</sub> as well — the same ratio, but against a peripheral class instead of proton–proton, so it needs no pp measurement at all. And report your values at <strong>5.5</strong> and <strong>10 GeV/c</strong>.',
+            'Two things left. Build R<sub>CP</sub> as well: the same ratio, but against a peripheral class instead of proton–proton, so it needs no pp measurement at all. And report your values at <strong>5.5</strong> and <strong>10 GeV/c</strong>.',
           side: 'over',
         },
       },
