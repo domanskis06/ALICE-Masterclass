@@ -8,18 +8,17 @@ export const NMF_SA_STEP_LAYOUT = 0;
 export const NMF_SA_STEP_RUN_BAR = 1;
 export const NMF_SA_STEP_LOAD_EVENTS = 2;
 export const NMF_SA_STEP_HIST_MULTIPLICITY = 3;
-export const NMF_SA_STEP_INTERLUDE_EVENTS = 4;
-export const NMF_SA_STEP_MULT_VS_CENTRALITY = 5;
-export const NMF_SA_STEP_HIST_PT = 6;
-export const NMF_SA_STEP_LOOK_AT_KINKS = 7;
-export const NMF_SA_STEP_BIN_WIDTH = 8;
-export const NMF_SA_STEP_EVENTS_NORM = 9;
-export const NMF_SA_STEP_NCOLL = 10;
-export const NMF_SA_STEP_RAA = 11;
+export const NMF_SA_STEP_MULT_VS_CENTRALITY = 4;
+export const NMF_SA_STEP_HIST_PT = 5;
+export const NMF_SA_STEP_LOOK_AT_KINKS = 6;
+export const NMF_SA_STEP_BIN_WIDTH = 7;
+export const NMF_SA_STEP_EVENTS_NORM = 8;
+export const NMF_SA_STEP_NCOLL = 9;
+export const NMF_SA_STEP_RAA = 10;
 /** The collected-results sheet. */
-export const NMF_SA_STEP_RESULTS = 12;
-export const NMF_SA_STEP_COLLECT = 13;
-export const NMF_SA_STEP_DONE = 14;
+export const NMF_SA_STEP_RESULTS = 11;
+export const NMF_SA_STEP_COLLECT = 12;
+export const NMF_SA_STEP_DONE = 13;
 
 /** Centrality class the tour builds its example with. */
 export const NMF_SA_TOUR_CENTRALITY = '0-5';

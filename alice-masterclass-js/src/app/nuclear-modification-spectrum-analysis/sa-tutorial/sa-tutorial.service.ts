@@ -565,14 +565,6 @@ export class NmfSaTutorialService {
         onHighlighted: () => this.prepareWorkspaceStep('events'),
       },
       {
-        popover: {
-          title: 'That is a real measurement',
-          description:
-            'You just measured something, not looked it up. Centrality has no label in the data: it is <em>defined</em> by how many particles a collision produced. This histogram <strong>is</strong> that definition, the exact thing physicists cut into percentiles to build the ten classes in the first place.',
-          side: 'over',
-        },
-      },
-      {
         element: NMF_SA_SELECTOR_WORKSPACE,
         disableActiveInteraction: false,
         popover: {
