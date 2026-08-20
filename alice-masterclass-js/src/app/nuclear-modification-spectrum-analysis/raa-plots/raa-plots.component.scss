@@ -235,6 +235,25 @@
   @include nmf.card-meta;
 }
 
+.nmf-sa-plot-scale-toggle {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
+  border-radius: 999px;
+  background: var(--nmf-surface, #f7f9fc);
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--va-text, rgba(15, 23, 42, 0.82));
+    border-color: var(--nmf-plot-accent, #b71c1c);
+  }
+}
+
 .nmf-sa-plot-body {
   position: relative;
   /* The single active plot, so it can take real space — no shared grid row to

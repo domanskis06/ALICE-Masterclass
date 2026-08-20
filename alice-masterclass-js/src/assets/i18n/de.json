@@ -506,6 +506,8 @@
       "BLOCK_HELP": "Was machen die Blöcke?",
       "PLOT_HELP": "Wie lese ich diese Diagramme?",
       "REPLAY_TUTORIAL": "Tutorial wiederholen",
+      "SCALE_LOG": "Log-Skala",
+      "SCALE_LINEAR": "Lineare Skala",
       "PLOTS_EMPTY": "Baue eine Pipeline und drücke Start.",
       "MISSION_TITLE": "Dein Code muss:",
       "MISSION_STEP_1": "Ereignisse laden und eine Zentralität wählen",

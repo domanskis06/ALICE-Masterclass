@@ -454,6 +454,8 @@
       "BLOCK_HELP": "Co robią klocki?",
       "PLOT_HELP": "Jak czytać te wykresy?",
       "REPLAY_TUTORIAL": "Powtórz samouczek",
+      "SCALE_LOG": "Skala log",
+      "SCALE_LINEAR": "Skala liniowa",
       "PLOTS_EMPTY": "Zbuduj przepis i naciśnij Uruchom.",
       "MISSION_TITLE": "Twój kod musi:",
       "MISSION_STEP_1": "Wczytać zdarzenia i wybrać centralność",

@@ -506,6 +506,8 @@
       "BLOCK_HELP": "What do the blocks do?",
       "PLOT_HELP": "How do I read these plots?",
       "REPLAY_TUTORIAL": "Replay tutorial",
+      "SCALE_LOG": "Log scale",
+      "SCALE_LINEAR": "Linear scale",
       "PLOTS_EMPTY": "Build a pipeline and press Run.",
       "MISSION_TITLE": "Your code must:",
       "MISSION_STEP_1": "Load events and select a centrality",

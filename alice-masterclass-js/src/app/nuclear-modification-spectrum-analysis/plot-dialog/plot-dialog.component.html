@@ -18,23 +18,41 @@
   </div>
 
   <mat-dialog-content class="nmf-sa-dialog-content">
-    @if (data.card.meta.length) {
-      <div class="nmf-sa-dialog-stats">
-        @for (entry of data.card.meta; track entry.labelKey) {
-          <span class="nmf-sa-stat-badge">
-            {{ entry.labelKey | translate }}: {{ entry.value }}
-          </span>
-        }
-      </div>
-    }
+    <div class="nmf-sa-dialog-toolbar">
+      @if (data.card.meta.length) {
+        <div class="nmf-sa-dialog-stats">
+          @for (entry of data.card.meta; track entry.labelKey + entry.value) {
+            <span class="nmf-sa-stat-badge">
+              {{ entry.labelKey ? (entry.labelKey | translate) + ': ' : '' }}{{ entry.value }}
+            </span>
+          }
+        </div>
+      }
+      @if (data.card.xLog || data.card.yLog) {
+        <button
+          type="button"
+          class="nmf-sa-dialog-scale-toggle"
+          data-testid="nmf-sa-dialog-scale-toggle"
+          [attr.aria-pressed]="linearScale"
+          (click)="toggleScale()"
+        >
+          {{
+            (linearScale
+              ? 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LOG'
+              : 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LINEAR'
+            ) | translate
+          }}
+        </button>
+      }
+    </div>
 
     <div class="nmf-sa-dialog-plot">
       @if (data.card.kind === 'series') {
         <app-nmf-series-plot
           [series]="data.card.series"
           [mode]="data.card.mode"
-          [xLog]="data.card.xLog"
-          [yLog]="data.card.yLog"
+          [xLog]="xLog"
+          [yLog]="yLog"
           [yDomain]="data.card.yDomain"
           [referenceLine]="data.card.referenceLine"
           [xLabel]="data.card.xLabel"

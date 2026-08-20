@@ -163,6 +163,30 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
     this.unseenCardKeys.delete(key);
   }
 
+  /** Cards switched to a linear scale, by key — buildCards() runs fresh every change, so this can't live on the card itself. */
+  private linearScaleKeys = new Set<string>();
+
+  toggleScale(card: NmfPlotCard, event: Event): void {
+    event.stopPropagation();
+    if (this.linearScaleKeys.has(card.key)) {
+      this.linearScaleKeys.delete(card.key);
+    } else {
+      this.linearScaleKeys.add(card.key);
+    }
+  }
+
+  isLinearScale(card: NmfPlotCard): boolean {
+    return this.linearScaleKeys.has(card.key);
+  }
+
+  effectiveXLog(card: NmfPlotCard): boolean {
+    return card.xLog && !this.isLinearScale(card);
+  }
+
+  effectiveYLog(card: NmfPlotCard): boolean {
+    return card.yLog && !this.isLinearScale(card);
+  }
+
   /**
    * Jump to whichever card is new since the last change. Cards never disappear
    * on their own (Clear resets the workspace, not the results — see the host's

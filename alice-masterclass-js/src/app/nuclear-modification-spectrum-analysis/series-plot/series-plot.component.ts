@@ -152,7 +152,8 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       top: 14,
       right: 18,
       bottom: compact ? 38 : 46,
-      left: leftMarginFor(this.yLabel, this.yLog ? 52 : 44),
+      // Plain-number decade labels ("100,000") run wider than the old "1e+5".
+      left: leftMarginFor(this.yLabel, this.yLog ? 64 : 44),
     };
   }
 
@@ -232,7 +233,7 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
           ? d3
               .axisLeft(y)
               .tickValues(decadeTicks(y as d3.ScaleLogarithmic<number, number>))
-              .tickFormat(d3.format('~e'))
+              .tickFormat(d3.format(',~g'))
           : d3.axisLeft(y).ticks(tight ? 4 : 5),
       );
 

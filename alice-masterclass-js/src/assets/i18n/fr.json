@@ -454,6 +454,8 @@
       "BLOCK_HELP": "À quoi servent les blocs ?",
       "PLOT_HELP": "Comment lire ces graphiques ?",
       "REPLAY_TUTORIAL": "Revoir le tutoriel",
+      "SCALE_LOG": "Échelle log",
+      "SCALE_LINEAR": "Échelle linéaire",
       "PLOTS_EMPTY": "Assemblez une chaîne puis lancez l'analyse.",
       "MISSION_TITLE": "Ton code doit :",
       "MISSION_STEP_1": "Charger les événements et choisir une centralité",

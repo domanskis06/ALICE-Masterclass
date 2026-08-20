@@ -12,6 +12,8 @@
       "BLOCK_HELP": "¿Qué hacen los bloques?",
       "PLOT_HELP": "¿Cómo se leen estas gráficas?",
       "REPLAY_TUTORIAL": "Repetir el tutorial",
+      "SCALE_LOG": "Escala log",
+      "SCALE_LINEAR": "Escala lineal",
       "PLOTS_EMPTY": "Monta una cadena y pulsa Ejecutar.",
       "MISSION_TITLE": "Tu código debe:",
       "MISSION_STEP_1": "Cargar sucesos y elegir una centralidad",

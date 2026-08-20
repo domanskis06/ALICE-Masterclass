@@ -50,10 +50,37 @@
   padding: 8px 16px 0;
 }
 
+.nmf-sa-dialog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .nmf-sa-dialog-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.nmf-sa-dialog-scale-toggle {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: rgba(0, 0, 0, 0.55);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.82);
+    border-color: #b71c1c;
+  }
 }
 
 .nmf-sa-stat-badge {

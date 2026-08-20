@@ -105,14 +105,30 @@
               }
             </div>
           }
+          @if (card.xLog || card.yLog) {
+            <button
+              type="button"
+              class="nmf-sa-plot-scale-toggle"
+              [attr.data-testid]="'nmf-sa-scale-toggle-' + card.key"
+              [attr.aria-pressed]="isLinearScale(card)"
+              (click)="toggleScale(card, $event)"
+            >
+              {{
+                (isLinearScale(card)
+                  ? 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LOG'
+                  : 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.SCALE_LINEAR'
+                ) | translate
+              }}
+            </button>
+          }
         </div>
         <div class="nmf-sa-plot-body">
           @if (card.kind === 'series') {
             <app-nmf-series-plot
               [series]="card.series"
               [mode]="card.mode"
-              [xLog]="card.xLog"
-              [yLog]="card.yLog"
+              [xLog]="effectiveXLog(card)"
+              [yLog]="effectiveYLog(card)"
               [yDomain]="card.yDomain"
               [referenceLine]="card.referenceLine"
               [xLabel]="card.xLabel"
