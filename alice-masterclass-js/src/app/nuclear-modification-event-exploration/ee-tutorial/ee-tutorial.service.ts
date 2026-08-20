@@ -144,8 +144,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* keep the highlight until they pick a dataset or close */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 2,
       stageRadius: 4,
       popoverClass: 'lsa-driver-popover',
@@ -294,8 +295,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* keep the walkthrough until Next / Done / Close */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 6,
       stageRadius: 8,
       popoverClass: 'lsa-driver-popover',
@@ -377,8 +379,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* keep the walkthrough until Next / Done / Close */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 6,
       stageRadius: 8,
       popoverClass: 'lsa-driver-popover',
@@ -509,8 +512,9 @@ export class NmfEeTutorialService {
       overlayClickBehavior: () => {
         /* overlay click must not close the tour */
       },
-      overlayOpacity: 0.72,
-      overlayColor: '#1a1a1a',
+      // No dimming: a red outline (global CSS, .driver-active-element) frames
+      // the highlighted element exactly instead of darkening everything else.
+      overlayOpacity: 0,
       stagePadding: 2,
       stageRadius: 4,
       popoverClass: 'lsa-driver-popover',
