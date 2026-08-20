@@ -55,10 +55,6 @@
         {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_ENTRIES' | translate }}:
         {{ data.stats.entries }}
       </span>
-      <span class="nmf-hist-stat-badge">
-        {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate }}:
-        {{ data.stats.mean | number: '1.2-2' }}
-      </span>
     </div>
 
     <div class="nmf-hist-dialog-plot">
@@ -70,6 +66,8 @@
         [barColor]="data.spec.barColor"
         [expandDomainToData]="data.spec.expandDomainToData"
         [stretchFill]="true"
+        [showMean]="true"
+        [meanLabel]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate"
       >
         <svg:text xAxisLabel>{{ data.spec.xAxisLabelKey | translate }}</svg:text>
         <svg:text yAxisLabel>{{ data.spec.yAxisLabelKey | translate }}</svg:text>

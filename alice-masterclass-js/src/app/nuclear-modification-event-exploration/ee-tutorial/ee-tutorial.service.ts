@@ -717,7 +717,7 @@ export class NmfEeTutorialService {
         popover: {
           title: 'Why we do not click forever',
           description:
-            'Imagine physicists had to pick every primary track by hand in every collision — LHC analyses would take forever. That is why they write <strong>selection algorithms</strong>: clear rules a computer can apply to millions of tracks. Next you will build one that a physicist would not be ashamed of.',
+            'Imagine physicists had to pick every primary track by hand in every collision - LHC analyses would take forever. That is why they write <strong>selection algorithms</strong>: clear rules a computer can apply to millions of tracks. Next you will build one that a physicist would not be ashamed of.',
           side: 'over',
         },
         onDeselected: () => this.prepareFilterBuilder(),

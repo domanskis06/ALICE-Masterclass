@@ -493,7 +493,7 @@
       "ANALYSIS_PERIPHERAL": "Peripheral",
       "ANALYSIS_SEMI_CENTRAL": "Semi-central",
       "ANALYSIS_CENTRAL": "Central",
-      "AXIS_TPC_TRACKS": "#TPC Spuren"
+      "AXIS_TPC_TRACKS": "Erfasste TPC-Spuren"
     },
     "SPECTRUM_ANALYSIS": {
       "PIPELINE_TITLE": "Analyse-Rezept",
