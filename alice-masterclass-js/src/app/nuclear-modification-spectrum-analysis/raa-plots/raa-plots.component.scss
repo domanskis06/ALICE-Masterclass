@@ -237,14 +237,16 @@
 
 .nmf-sa-plot-scale-toggle {
   flex: 0 0 auto;
-  padding: 2px 8px;
+  height: 18px;
+  padding: 0 7px;
   border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.16));
   border-radius: 999px;
   background: var(--nmf-surface, #f7f9fc);
   color: var(--va-muted, rgba(15, 23, 42, 0.55));
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
+  line-height: 16px;
   cursor: pointer;
   white-space: nowrap;
 

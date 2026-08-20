@@ -66,14 +66,16 @@
 
 .nmf-sa-dialog-scale-toggle {
   flex: 0 0 auto;
-  padding: 3px 10px;
+  height: 20px;
+  padding: 0 8px;
   border: 1px solid rgba(0, 0, 0, 0.16);
   border-radius: 999px;
   background: #ffffff;
   color: rgba(0, 0, 0, 0.55);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
+  line-height: 18px;
   cursor: pointer;
   white-space: nowrap;
 
