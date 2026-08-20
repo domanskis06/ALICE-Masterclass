@@ -88,6 +88,8 @@ interface Accumulators {
   /** Kept apart from `readouts`: a single read must not replace a whole series. */
   reported: RaaReported[];
   problems: RaaProblem[];
+  /** Centralities plotted as a p_T spectrum this run, for the end-of-run refresh below. */
+  plottedPt: Set<string>;
 }
 
 /**
@@ -125,9 +127,32 @@ export class RaaAnalysisService {
       readouts: [],
       reported: [],
       problems: [],
+      plottedPt: new Set<string>(),
     };
     const ctx = freshCtx();
     this.runSteps(recipe, assets, ctx, acc);
+
+    // A `Plot as pT spectrum` block snapshots ctx.spectrum the instant the
+    // chain reaches it — usually early, to show the raw histogram's binning
+    // kinks before they're fixed. Later `Divide by ...` blocks placed after
+    // it then never touch what that tab shows, so the tour's own "fix it,
+    // then the steps disappear" never actually happened on screen. Refresh
+    // that same tab with the spectrum's final state, as long as it is still
+    // a plain (non-ratio) spectrum for the class that was plotted.
+    if (
+      ctx.trackCentrality &&
+      ctx.spectrum &&
+      !ctx.spectrum.unit.ratio &&
+      acc.plottedPt.has(ctx.trackCentrality)
+    ) {
+      const refreshed = seriesOf(ctx.spectrum, 'pt', ctx.trackCentrality, null);
+      const index = acc.pt.findIndex((series) => series.id === refreshed.id);
+      if (index >= 0) {
+        acc.pt[index] = refreshed;
+      } else {
+        acc.pt.push(refreshed);
+      }
+    }
 
     if (
       !acc.pt.length &&
@@ -602,6 +627,7 @@ export class RaaAnalysisService {
     );
     if (target === 'pt') {
       acc.pt.push(series);
+      acc.plottedPt.add(centrality);
     } else if (target === 'raa') {
       acc.raa.push(series);
     } else {
