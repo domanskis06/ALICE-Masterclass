@@ -46,4 +46,17 @@
     font-size: 10px;
     font-weight: 700;
   }
+
+  .nmf-plot-vertical-reference {
+    stroke: var(--nmf-plot-accent, #b71c1c);
+    stroke-width: 1;
+    stroke-dasharray: 5 4;
+    opacity: 0.7;
+  }
+
+  .nmf-plot-vertical-reference-label {
+    fill: var(--nmf-plot-accent, #b71c1c);
+    font-size: 10px;
+    font-weight: 700;
+  }
 }

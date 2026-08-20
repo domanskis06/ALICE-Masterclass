@@ -30,6 +30,9 @@ export interface NmfPlotCard {
   series: RaaSeries[];
   heatmap: RaaHeatmap | null;
   referenceLine: number | null;
+  /** Dashed vertical line at this x, e.g. the mean of a histogram. */
+  verticalLine: number | null;
+  verticalLineLabel: string;
   yDomain: [number, number] | null;
   /** Drives the accent colour and the collision icon, as in exercise 1. */
   centrality: string | null;
@@ -256,19 +259,12 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
         series: [histogram],
         heatmap: null,
         referenceLine: null,
+        verticalLine: meanOf(histogram),
+        verticalLineLabel: t(`${prefix}META_MEAN`),
         yDomain: null,
         centrality: this.multiplicity.centrality,
-        meta: [
-          { labelKey: `${prefix}META_EVENTS`, value: String(this.multiplicity.entries) },
-          {
-            labelKey: `${prefix}META_MEAN`,
-            value: meanOf(histogram).toFixed(0),
-          },
-        ],
-        stats: [
-          { label: t(`${prefix}META_EVENTS`), value: String(this.multiplicity.entries) },
-          { label: t(`${prefix}META_MEAN`), value: meanOf(histogram).toFixed(1) },
-        ],
+        meta: [{ labelKey: `${prefix}META_EVENTS`, value: String(this.multiplicity.entries) }],
+        stats: [{ label: t(`${prefix}META_EVENTS`), value: String(this.multiplicity.entries) }],
         footerKey: `${prefix}FOOTER_MULTIPLICITY`,
       });
     }
@@ -286,6 +282,8 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
         series: [],
         heatmap: this.multVsCentrality,
         referenceLine: null,
+        verticalLine: null,
+        verticalLineLabel: '',
         yDomain: null,
         centrality: this.multVsCentrality.highlight?.centrality ?? null,
         meta: [],
@@ -314,6 +312,8 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
         series,
         heatmap: null,
         referenceLine: null,
+        verticalLine: null,
+        verticalLineLabel: '',
         yDomain: null,
         centrality: this.ptSpectra[this.ptSpectra.length - 1].centrality ?? null,
         meta: this.seriesMeta(this.ptSpectra),
@@ -339,6 +339,8 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
         referenceLine: this.raa.some((s) => s.referenceLine != null)
           ? (this.raa.find((s) => s.referenceLine != null)?.referenceLine ?? 1)
           : null,
+        verticalLine: null,
+        verticalLineLabel: '',
         yDomain: [0, 1.6],
         centrality: this.raa[this.raa.length - 1].centrality ?? null,
         meta: this.seriesMeta(this.raa),
@@ -362,6 +364,8 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
         referenceLine: this.rcp.some((s) => s.referenceLine != null)
           ? (this.rcp.find((s) => s.referenceLine != null)?.referenceLine ?? 1)
           : null,
+        verticalLine: null,
+        verticalLineLabel: '',
         yDomain: [0, 2],
         centrality: this.rcp[this.rcp.length - 1].centrality ?? null,
         meta: this.seriesMeta(this.rcp),

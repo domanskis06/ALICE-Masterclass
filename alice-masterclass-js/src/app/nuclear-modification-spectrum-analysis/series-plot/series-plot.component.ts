@@ -46,6 +46,9 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
   @Input() yDomain: [number, number] | null = null;
   /** Horizontal guide, drawn at one for the ratios. */
   @Input() referenceLine: number | null = null;
+  /** Dashed vertical line at this x, e.g. the mean of a histogram. */
+  @Input() verticalLine: number | null = null;
+  @Input() verticalLineLabel = '';
   @Input() xLabel = '';
   @Input() yLabel = '';
   @Input() showLegend = true;
@@ -126,6 +129,9 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
     this.drawAxes(plot, x, y, margin, width, height);
     if (this.referenceLine !== null) {
       this.drawReferenceLine(plot, x, y, this.referenceLine, margin);
+    }
+    if (this.verticalLine !== null) {
+      this.drawVerticalLine(plot, x, y, this.verticalLine, this.verticalLineLabel);
     }
     for (const s of drawable) {
       if ((s.render ?? this.mode) === 'steps') {
@@ -279,6 +285,31 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
       .text(String(at));
   }
 
+  private drawVerticalLine(
+    plot: d3.Selection<SVGGElement, unknown, null, undefined>,
+    x: d3.ScaleContinuousNumeric<number, number>,
+    y: d3.ScaleContinuousNumeric<number, number>,
+    at: number,
+    label: string,
+  ): void {
+    const [yBottom, yTop] = y.range();
+    const cx = x(at);
+    plot
+      .append('line')
+      .attr('class', 'nmf-plot-vertical-reference')
+      .attr('x1', cx)
+      .attr('x2', cx)
+      .attr('y1', yBottom)
+      .attr('y2', yTop);
+    plot
+      .append('text')
+      .attr('class', 'nmf-plot-vertical-reference-label')
+      .attr('x', cx + 5)
+      .attr('y', yTop + 12)
+      .attr('text-anchor', 'start')
+      .text(label ? `${label} ${formatAxisValue(at)}` : formatAxisValue(at));
+  }
+
   private drawPoints(
     plot: d3.Selection<SVGGElement, unknown, null, undefined>,
     s: RaaSeries,
@@ -397,6 +428,8 @@ export class NmfSeriesPlotComponent implements AfterViewInit, OnChanges, OnDestr
 function yTicksOf(y: d3.ScaleContinuousNumeric<number, number>, log: boolean): number[] {
   return log ? decadeTicks(y as d3.ScaleLogarithmic<number, number>) : y.ticks(5);
 }
+
+const formatAxisValue = d3.format(',.0f');
 
 function isDecade(n: number): boolean {
   if (n <= 0) {
