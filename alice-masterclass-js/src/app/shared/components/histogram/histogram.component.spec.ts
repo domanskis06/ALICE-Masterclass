@@ -156,4 +156,76 @@ describe('HistogramComponent', () => {
     expect(incoming!.binCenter).toBeCloseTo(-1, 5);
     expect(incoming!.projectedCount).toBe(3);
   });
+
+  it('styles the mean line inline, since scoped CSS never reaches d3 nodes', () => {
+    component.xDomain = [0, 1];
+    component.showMean = true;
+    component.data = [0.4, 0.6];
+    // showMean flips MARGIN.TOP (adds room for the label above the plot); this test
+    // sets it directly on the component (not through a parent template binding, the
+    // path Angular's checkNoChanges assumes), which trips NG0100 on the resulting
+    // one-time margin change. Skip the extra checkNoChanges pass for this call only.
+    fixture.detectChanges(false);
+
+    const line: SVGLineElement = fixture.nativeElement.querySelector('.histogram-mean-line');
+    const label: SVGTextElement = fixture.nativeElement.querySelector('.histogram-mean-label');
+    expect(line).toBeTruthy();
+    expect(label).toBeTruthy();
+
+    // Regresja: reguły z histogram.component.scss nie obejmują węzłów dokładanych
+    // przez d3 (brak atrybutu _ngcontent-*), więc kreska musi nieść styl inline.
+    expect(line.style.stroke).toBeTruthy();
+    expect(line.style.strokeDasharray).toBeTruthy();
+    expect(line.style.strokeDasharray).not.toBe('none');
+    expect(parseFloat(label.style.fontSize)).toBeLessThan(9);
+    expect(label.textContent).toContain('0.50');
+  });
+
+  it('draws discrete categories as touching bars', () => {
+    component.xDomain = [-2, 2];
+    component.discreteValues = [-1, 1];
+    component.data = [1, -1, 1];
+    fixture.detectChanges();
+
+    const rects: SVGRectElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('#bars rect')
+    );
+    expect(rects.length).toBe(2);
+
+    // Słupki są pozycjonowane przez transform, nie przez atrybut x — ten zostaje zerem.
+    const originX = (rect: SVGRectElement): number =>
+      parseFloat(/translate\(([-\d.]+)/.exec(rect.getAttribute('transform') ?? '')?.[1] ?? 'NaN');
+    const widthOf = (rect: SVGRectElement): number =>
+      parseFloat(rect.getAttribute('width') ?? 'NaN');
+
+    // 1 px przerwy technicznej między słupkami zostaje; chodzi o to, by nie było
+    // dziury na pół kategorii, jak przy szerokości 70% odstępu.
+    const gap = originX(rects[1]) - (originX(rects[0]) + widthOf(rects[0]));
+    expect(gap).toBeGreaterThanOrEqual(0);
+    expect(gap).toBeLessThanOrEqual(2);
+  });
+
+  it('expands the axis when the flag arrives after the data', () => {
+    // Kolejność jak w szablonach: data i xDomain są przypisywane przed flagą.
+    // Kafelek maskował błąd, bo dostaje kolejne `data`; dialog dostaje migawkę
+    // i bez settera zostawał na domenie bazowej.
+    component.xDomain = [0, 30];
+    component.data = [5, 12, 578];
+    expect(component.xDomain).toEqual([0, 30]);
+
+    component.expandDomainToData = true;
+
+    expect(component.xDomain[1]).toBe(578);
+  });
+
+  it('shrinks back to the nominal range when expansion is switched off', () => {
+    component.expandDomainToData = true;
+    component.xDomain = [0, 30];
+    component.data = [5, 578];
+    expect(component.xDomain[1]).toBe(578);
+
+    component.expandDomainToData = false;
+
+    expect(component.xDomain).toEqual([0, 30]);
+  });
 });

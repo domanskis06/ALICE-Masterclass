@@ -5,7 +5,100 @@
     </div>
   }
 
-  <div class="nmf-hist-grid" [class.nmf-hist-grid--fullscreen]="layout === 'fullscreen'">
+  <div class="nmf-system-switch-row">
+    <div
+      class="nmf-system-switch"
+      role="group"
+      data-testid="nmf-system-switch"
+      [attr.aria-label]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.SYSTEM_SWITCH_LABEL' | translate"
+    >
+      <button
+        type="button"
+        class="nmf-system-switch__option"
+        [class.nmf-system-switch__option--active]="system === 'pp'"
+        [attr.aria-pressed]="system === 'pp'"
+        data-testid="nmf-system-pp"
+        (click)="selectSystem('pp')"
+      >pp</button>
+      <button
+        type="button"
+        class="nmf-system-switch__option"
+        [class.nmf-system-switch__option--active]="system === 'pbPb'"
+        [attr.aria-pressed]="system === 'pbPb'"
+        data-testid="nmf-system-pbpb"
+        (click)="selectSystem('pbPb')"
+      >Pb&#8211;Pb</button>
+    </div>
+  </div>
+
+  @if (isPbPb) {
+    <!-- One event per class, so these three are numbers, not distributions. -->
+    <section class="nmf-class-readouts" data-testid="nmf-class-readouts">
+      @for (c of classReadouts; track c.key) {
+        <div
+          class="nmf-class-readout"
+          [class.nmf-class-readout--empty]="!c.present"
+          [attr.data-class]="c.key"
+          [attr.data-testid]="'nmf-class-readout-' + c.key"
+        >
+          <div class="nmf-class-head">
+            <svg class="nmf-collision-icon" viewBox="0 0 64 44" aria-hidden="true" focusable="false">
+              <g [attr.transform]="'translate(0 ' + (22 - impactOffset(c.key)) + ')'">
+                <line x1="4" y1="0" x2="26" y2="0" />
+                <polyline points="18,-6 28,0 18,6" />
+              </g>
+              <g [attr.transform]="'translate(0 ' + (22 + impactOffset(c.key)) + ')'">
+                <line x1="60" y1="0" x2="38" y2="0" />
+                <polyline points="46,-6 36,0 46,6" />
+              </g>
+            </svg>
+            <span class="nmf-class-name">{{ c.titleKey | translate }}</span>
+          </div>
+          @if (c.present) {
+            <dl class="nmf-class-values">
+              <div>
+                <dt>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.AXIS_MULTIPLICITY' | translate }}</dt>
+                <dd>{{ c.multiplicity }}</dd>
+              </div>
+              <div>
+                <dt [innerHTML]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.READOUT_MIN_PT' | translate"></dt>
+                <dd>{{ c.multiplicityMinPt }}</dd>
+              </div>
+              <div>
+                <dt>{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.READOUT_SECONDARIES' | translate }}</dt>
+                <dd>{{ c.secondaries }}</dd>
+              </div>
+            </dl>
+          } @else {
+            <p class="nmf-class-pending">
+              {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.READOUT_PENDING' | translate }}
+            </p>
+          }
+        </div>
+      }
+    </section>
+
+    @if (selectableClasses.length) {
+      <div class="nmf-class-filter" data-testid="nmf-class-filter">
+        <span class="nmf-class-filter-label">
+          {{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.PLOT_CLASSES' | translate }}
+        </span>
+        @for (c of selectableClasses; track c.key) {
+          <mat-checkbox
+            [checked]="isClassSelected(c.key)"
+            [attr.data-testid]="'nmf-class-check-' + c.key"
+            (change)="toggleClass(c.key)"
+          >{{ c.titleKey | translate }}</mat-checkbox>
+        }
+      </div>
+    }
+  }
+
+  <div
+    class="nmf-hist-grid"
+    [class.nmf-hist-grid--fullscreen]="layout === 'fullscreen'"
+    [class.nmf-hist-grid--pbpb]="isPbPb"
+  >
     @for (h of histograms; track h.key) {
       <button
         type="button"
@@ -23,8 +116,10 @@
           [expandDomainToData]="h.expandDomainToData"
           [compactChrome]="true"
           [viewBoxHeight]="340"
-          [showMean]="true"
+          [showMean]="h.showMean ?? true"
           [meanLabel]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate"
+          [showMedian]="h.showMedian ?? true"
+          [medianLabel]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEDIAN' | translate"
         >
           <span title class="nmf-hist-title" [innerHTML]="h.titleKey | translate"></span>
           <svg:text xAxisLabel>{{ h.xAxisLabelKey | translate }}</svg:text>
@@ -39,4 +134,5 @@
       </button>
     }
   </div>
+
 </div>

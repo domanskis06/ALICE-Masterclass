@@ -33,6 +33,10 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.nmf-filter-continue {
+  color: #dc2626;
+}
+
 .nmf-filter-header h2 {
   margin: 0;
   font-size: 1.25rem;
@@ -290,6 +294,26 @@
   border-radius: 4px;
 }
 
+.nmf-filter-error-list {
+  margin: 4px 0 0;
+  padding-left: 1.1rem;
+}
+
+.nmf-filter-error-list li {
+  margin-bottom: 2px;
+}
+
+.nmf-filter-error-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* The error/success message pushes total content past the panel's fixed
+   height; give the Blockly workspace back some of its room rather than
+   letting .nmf-filter-body grow a scrollbar. */
+.nmf-filter-body:has(.nmf-filter-msg) .nmf-filter-workspace {
+  min-height: 260px;
+}
+
 .nmf-filter-msg--error {
   color: #b71c1c;
   background: #fdecea;
@@ -307,7 +331,9 @@
 .nmf-filter-footer {
   flex: 0 0 auto;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   padding: 8px 16px 16px;
 }
 
@@ -323,5 +349,31 @@
   .nmf-filter-body {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+/* Workshop path: the point of having just hand-picked one event's tracks. */
+.nmf-filter-note {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border-left: 3px solid #b71c1c;
+  background: rgba(183, 28, 28, 0.06);
+
+  h3 {
+    margin: 0 0 3px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #b71c1c;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.3;
+    color: rgba(0, 0, 0, 0.72);
   }
 }

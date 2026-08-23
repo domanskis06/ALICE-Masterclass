@@ -1,0 +1,97 @@
+:host {
+  display: block;
+}
+
+.nmf-sa-mission-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--va-panel-alt, rgba(15, 23, 42, 0.03));
+  border: 1px solid var(--va-border, rgba(15, 23, 42, 0.08));
+}
+
+.nmf-sa-mission-strip-label {
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+}
+
+.nmf-sa-mission-strip-chips {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.nmf-sa-mission-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--chip-accent, #94a3b8);
+  cursor: default;
+}
+
+.nmf-sa-mission-chip-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  white-space: normal;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 30;
+
+  ::ng-deep sub {
+    font-size: 0.75em;
+  }
+}
+
+.nmf-sa-mission-chip:hover .nmf-sa-mission-chip-tooltip,
+.nmf-sa-mission-chip:focus-visible .nmf-sa-mission-chip-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.nmf-sa-mission-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--chip-accent, #94a3b8);
+  opacity: 0.55;
+}
+
+.nmf-sa-mission-chip--done {
+  background: var(--chip-accent, #16a34a);
+  border-color: var(--chip-accent, #16a34a);
+}
+
+.nmf-sa-mission-chip-icon {
+  width: 13px;
+  height: 13px;
+  font-size: 13px;
+  line-height: 13px;
+  color: #ffffff;
+}

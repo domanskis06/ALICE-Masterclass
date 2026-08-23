@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { ALICE_EDGES } from '../shared/utils/raa-ops';
+import { ALICE_EDGES, binningOf } from '../shared/utils/raa-ops';
 import {
   RaaEventsAsset,
   RaaPpAsset,
@@ -48,13 +48,20 @@ function syntheticTracks(): RaaTracksFineAsset {
 function syntheticEvents(): RaaEventsAsset {
   const mult: number[] = [];
   const cent: number[] = [];
-  for (let i = 0; i < N_EVENTS; i++) {
-    mult.push(100);
-    cent.push(2);
-  }
-  for (let i = 0; i < N_EVENTS; i++) {
-    mult.push(20);
-    cent.push(75);
+  // One centrality inside each class the five-class preset loops over, so a
+  // for-each run does not trip NO_EVENTS on classes the fixture forgot.
+  const classes: [number, number][] = [
+    [2, 100],
+    [15, 80],
+    [35, 60],
+    [55, 40],
+    [75, 20],
+  ];
+  for (const [centrality, multiplicity] of classes) {
+    for (let i = 0; i < N_EVENTS; i++) {
+      mult.push(multiplicity);
+      cent.push(centrality);
+    }
   }
   return { mult, cent };
 }
@@ -72,7 +79,7 @@ const FULL_CHAIN: RaaStep[] = [
   { kind: 'count_events' },
   { kind: 'load_tracks' },
   { kind: 'select_centrality', centrality: '0-5' },
-  { kind: 'create_hist', binning: 'alice' },
+  { kind: 'create_hist', binning: 'fixed' },
   { kind: 'fill_hist' },
   { kind: 'lookup_ncoll', nCollCentrality: '0-5', centrality: '0-5' },
   { kind: 'divide_bin_width' },
@@ -123,7 +130,7 @@ describe('RaaAnalysisService', () => {
     expect(result.raa[0].referenceLine).toBe(1);
 
     const points = result.raa[0].points;
-    expect(points.length).toBe(ALICE_EDGES.length - 1);
+    expect(points.length).toBe(binningOf('fixed').edges.length - 1);
     for (const point of points) {
       expect(point.y).toBeCloseTo(1, 10);
     }
@@ -145,9 +152,11 @@ describe('RaaAnalysisService', () => {
     const result = run(FULL_CHAIN.filter((step) => step.kind !== 'divide_bin_width'));
     expect(keys(result)).toContain('MISSING_BIN_WIDTH');
     expect(result.ok).toBeFalse();
+    // Every bin is 0.2 GeV/c wide now, so skipping the division scales the
+    // whole spectrum by that one factor instead of tilting it bin by bin.
     const points = result.raa[0].points;
-    expect(points[0].y).toBeCloseTo(0.05, 10);
-    expect(points[points.length - 1].y).toBeCloseTo(1, 10);
+    expect(points[0].y).toBeCloseTo(0.2, 10);
+    expect(points[points.length - 1].y).toBeCloseTo(0.2, 10);
   });
 
   it('⟨N_coll⟩ of the wrong class is reported', () => {
@@ -168,7 +177,7 @@ describe('RaaAnalysisService', () => {
       { kind: 'load_tracks' },
       { kind: 'select_centrality', centrality: '0-5' },
       { kind: 'cut_pt', ptCut: 1.0 },
-      { kind: 'create_hist', binning: 'alice' },
+      { kind: 'create_hist', binning: 'fixed' },
       { kind: 'fill_hist' },
       { kind: 'plot', plotAs: 'pt' },
     ];
@@ -180,7 +189,7 @@ describe('RaaAnalysisService', () => {
 
   it('for-each produces one R_AA series per class in the preset', () => {
     const adaptiveBody: RaaStep[] = [
-      { kind: 'create_hist', binning: 'alice' },
+      { kind: 'create_hist', binning: 'fixed' },
       { kind: 'fill_hist' },
       { kind: 'lookup_ncoll' },
       { kind: 'divide_bin_width' },
@@ -209,7 +218,7 @@ describe('RaaAnalysisService', () => {
       { kind: 'count_events' },
       { kind: 'load_tracks' },
       { kind: 'select_centrality', centrality: '0-5' },
-      { kind: 'create_hist', binning: 'alice' },
+      { kind: 'create_hist', binning: 'fixed' },
       { kind: 'fill_hist' },
       { kind: 'lookup_ncoll', nCollCentrality: '0-5', centrality: '0-5' },
       { kind: 'divide_bin_width' },
@@ -234,6 +243,27 @@ describe('RaaAnalysisService', () => {
     expect(result.multiplicity?.counts.reduce((a, b) => a + b, 0)).toBe(N_EVENTS);
   });
 
+  it('warns when multiplicity vs centrality is built after selecting one centrality class', () => {
+    const result = run([
+      { kind: 'load_events' },
+      { kind: 'if_centrality', centrality: '0-5' },
+      { kind: 'count_events' },
+      { kind: 'fill_multiplicity' },
+      { kind: 'plot_mult_vs_centrality' },
+    ]);
+    expect(keys(result)).toContain('MULT_VS_CENTRALITY_NEEDS_ALL_EVENTS');
+    // The plot itself still covers every event — only the highlighted point differs.
+    expect(result.multVsCentrality?.highlight?.centrality).toBe('0-5');
+  });
+
+  it('does not warn when multiplicity vs centrality is built with no centrality filter', () => {
+    const result = run([
+      { kind: 'load_events' },
+      { kind: 'plot_mult_vs_centrality' },
+    ]);
+    expect(keys(result)).not.toContain('MULT_VS_CENTRALITY_NEEDS_ALL_EVENTS');
+  });
+
   it('tracks that are never filled produce no spectrum', () => {
     expect(
       keys(
@@ -253,5 +283,43 @@ describe('RaaAnalysisService', () => {
         ]),
       ),
     ).toContain('PLOT_WITHOUT_SPECTRUM');
+  });
+
+  it('the auto-built solution runs clean and produces all five classes', () => {
+    // Mirrors what "Build it for me" places: the whole-sample stack first, then
+    // the measurement looped over the five-class preset.
+    const result = run([
+      { kind: 'load_events' },
+      { kind: 'plot_mult_vs_centrality' },
+      { kind: 'load_events' },
+      { kind: 'load_tracks' },
+      {
+        kind: 'for_each_centrality',
+        centralityPreset: 'five',
+        body: [
+          { kind: 'if_centrality', centrality: '@current' },
+          { kind: 'count_events' },
+          { kind: 'fill_multiplicity' },
+          { kind: 'select_centrality', centrality: '@current' },
+          { kind: 'create_hist', binning: 'fixed' },
+          { kind: 'fill_hist' },
+          { kind: 'lookup_ncoll', nCollCentrality: '@current' },
+          { kind: 'divide_bin_width' },
+          { kind: 'divide_events' },
+          { kind: 'divide_ncoll' },
+          { kind: 'load_pp' },
+          { kind: 'divide_reference', reference: 'pp' },
+          { kind: 'draw_line_at_one' },
+          { kind: 'plot', plotAs: 'raa' },
+        ],
+      },
+    ]);
+
+    // The multiplicity-vs-centrality plot must not trip its own warning: it
+    // sits in its own stack, above any centrality filter.
+    expect(keys(result)).not.toContain('MULT_VS_CENTRALITY_NEEDS_ALL_EVENTS');
+    expect(result.multVsCentrality).toBeTruthy();
+    expect(result.raa.length).toBe(5);
+    expect(result.ok).toBeTrue();
   });
 });

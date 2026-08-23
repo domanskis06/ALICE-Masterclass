@@ -142,14 +142,6 @@ figure {
   line-height: 1;
 }
 
-.histogram-mean-line {
-  stroke-width: 1;
-  stroke-dasharray: 5 4;
-  pointer-events: none;
-}
-
-.histogram-mean-label {
-  font-size: 9px;
-  font-weight: 700;
-  pointer-events: none;
-}
+/* Kreska średniej i jej podpis powstają w d3 (updateMean()), więc ich wygląd
+   ustawiany jest inline w histogram.component.ts — węzły dokładane poza szablonem
+   nie mają atrybutu _ngcontent-*, przez co reguły z tego arkusza ich nie obejmują. */

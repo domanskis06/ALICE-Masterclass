@@ -1,0 +1,25 @@
+<div class="nmf-sa-mission-strip" data-testid="nmf-sa-mission-strip">
+  <span class="nmf-sa-mission-strip-label">
+    {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_TITLE' | translate }}
+  </span>
+  <div class="nmf-sa-mission-strip-chips">
+    @for (group of missionGroups; track group.name) {
+      @for (step of group.steps; track step.labelKey) {
+        <span
+          class="nmf-sa-mission-chip"
+          [class.nmf-sa-mission-chip--done]="stepDone(step)"
+          [style.--chip-accent]="group.accent"
+          [attr.data-testid]="'nmf-sa-mission-chip-' + step.labelKey"
+          tabindex="0"
+        >
+          @if (stepDone(step)) {
+            <mat-icon class="nmf-sa-mission-chip-icon" aria-hidden="true">check</mat-icon>
+          } @else {
+            <span class="nmf-sa-mission-chip-dot" aria-hidden="true"></span>
+          }
+          <span class="nmf-sa-mission-chip-tooltip" [innerHTML]="step.labelKey | translate"></span>
+        </span>
+      }
+    }
+  </div>
+</div>

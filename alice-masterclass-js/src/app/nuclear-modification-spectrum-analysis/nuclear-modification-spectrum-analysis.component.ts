@@ -23,6 +23,7 @@ import { RaaAnalysisService } from '../services/raa-analysis.service';
 import { centralityMidpoint } from '../shared/utils/raa-centrality';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { NmfBlocklyWorkspaceComponent } from './blockly-workspace/blockly-workspace.component';
+import { NmfRaaPlotsComponent } from './raa-plots/raa-plots.component';
 import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
 import { NmfSaTutorialWelcomeDialogComponent } from './sa-tutorial/sa-tutorial-welcome-dialog.component';
 
@@ -37,6 +38,9 @@ export class NuclearModificationSpectrumAnalysisComponent
 {
   instructionsComponent: Type<any> = InstructionsComponent;
 
+  @ViewChild(NmfRaaPlotsComponent)
+  private plotsPanel?: NmfRaaPlotsComponent;
+
   @ViewChild(NmfBlocklyWorkspaceComponent)
   blockly?: NmfBlocklyWorkspaceComponent;
 
@@ -50,12 +54,28 @@ export class NuclearModificationSpectrumAnalysisComponent
   raa: RaaSeries[] = [];
   rcp: RaaSeries[] = [];
   multiplicity: RaaHistogram | null = null;
+  /** Every class measured so far, so the plot can switch between them. */
+  multiplicities: RaaHistogram[] = [];
+  private readonly multiplicityStore = new Map<string, RaaHistogram>();
   multVsCentrality: RaaHeatmap | null = null;
   ppReference: RaaSeries | null = null;
   readouts: RaaReadout[] = [];
   reported: RaaReported[] = [];
 
   resultsFullscreen = false;
+
+  /** True once any plot exists — same condition `app-nmf-raa-plots` uses to
+   *  swap its own full mission card for the tab strip. Docks the compact
+   *  mission progress strip beside the block picker from that point on. */
+  get hasAnyResult(): boolean {
+    return (
+      this.multiplicity != null ||
+      this.multVsCentrality != null ||
+      this.ptSpectra.length > 0 ||
+      this.raa.length > 0 ||
+      this.rcp.length > 0
+    );
+  }
 
   /**
    * Results survive between runs, keyed by series id, so changing the centrality
@@ -108,7 +128,7 @@ export class NuclearModificationSpectrumAnalysisComponent
       next: (result) => {
         this.applyResult(result);
         this.running = false;
-        this.tutorial.notifyRunCompleted(this.raaStore.size);
+        this.tutorial.notifyRunCompleted(this.raaStore.size, result.problems);
       },
       error: () => {
         this.running = false;
@@ -131,6 +151,11 @@ export class NuclearModificationSpectrumAnalysisComponent
     this.problems = [];
   }
 
+  /** Escape hatch: put the whole correct chain on the canvas, ready to Run. */
+  onAutoBuild(): void {
+    this.blockly?.buildFullRecipe();
+  }
+
   onToggleResultsFullscreen(): void {
     this.resultsFullscreen = !this.resultsFullscreen;
   }
@@ -145,7 +170,16 @@ export class NuclearModificationSpectrumAnalysisComponent
    * figures and the numbers read off them, so it is always the figure walkthrough.
    */
   openResultsHelp(): void {
-    this.tutorial.startPlotHelpTour();
+    // Kroki budujemy z kart, które faktycznie są na ekranie — bez uruchomionego
+    // przepisu poradnik nadal się otwiera, tylko mówi, co się tu pojawi.
+    const targets = (this.plotsPanel?.cards ?? []).map((card) => ({
+      key: card.key,
+      show: () => {
+        this.plotsPanel?.selectCard(card.key);
+        this.cdr.detectChanges();
+      },
+    }));
+    this.tutorial.startPlotHelpTour(targets);
   }
 
   replayTutorial(): void {
@@ -157,7 +191,12 @@ export class NuclearModificationSpectrumAnalysisComponent
     this.ok = result.ok;
     this.problems = result.problems;
 
-    // The event-level figures describe one class at a time, so the latest run wins.
+    for (const histogram of result.multiplicities) {
+      this.multiplicityStore.set(histogram.centrality, histogram);
+    }
+    if (result.multiplicities.length) {
+      this.multiplicities = sortByCentrality([...this.multiplicityStore.values()]);
+    }
     if (result.multiplicity) {
       this.multiplicity = result.multiplicity;
     }
@@ -223,8 +262,9 @@ function merge(store: Map<string, RaaSeries>, series: RaaSeries[]): void {
 }
 
 /** Most central first, matching the legend order of the published R_AA figure. */
-function sortByCentrality(series: RaaSeries[]): RaaSeries[] {
-  return series.sort(
+/** Central first, peripheral last — the order the published figure uses. */
+function sortByCentrality<T extends { centrality?: string }>(items: T[]): T[] {
+  return items.sort(
     (a, b) => centralityMidpoint(a.centrality ?? '') - centralityMidpoint(b.centrality ?? ''),
   );
 }

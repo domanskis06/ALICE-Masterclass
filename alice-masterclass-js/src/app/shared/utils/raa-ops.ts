@@ -29,6 +29,52 @@ const PT_MIN = 0.15;
 const PT_MAX = 15.0;
 
 /**
+ * The one p_T bin width the exercise uses, in GeV/c. Choosing a binning was a
+ * step students spent time on without learning anything the rest of the chain
+ * did not already teach, so the histogram is now always allocated on this
+ * uniform grid and the pp reference is rebinned onto it to match.
+ */
+export const FIXED_BIN_WIDTH = 0.2;
+
+/** Uniform 0.2 GeV/c edges: 0.2, 0.4, … 15.0 — every edge lands on a round value. */
+function fixedEdges(): number[] {
+  const edges: number[] = [];
+  for (let edge = FIXED_BIN_WIDTH; edge <= PT_MAX + 1e-9; edge += FIXED_BIN_WIDTH) {
+    edges.push(round2(edge));
+  }
+  return edges;
+}
+
+/**
+ * Move a *density* (per GeV/c) from one binning to another: integrate it over
+ * each target bin and divide by that bin's width. Exact wherever the target
+ * edges fall on source edges (true below 4 GeV/c for the ALICE grid) and a
+ * flat-within-source-bin approximation above it, which the smooth published
+ * spectrum tolerates. Needed because the pp reference ships only on the ALICE
+ * grid while the student's histogram is on {@link FIXED_BIN_WIDTH} bins.
+ */
+export function rebinDensity(
+  values: readonly number[],
+  fromEdges: readonly number[],
+  toEdges: readonly number[],
+): number[] {
+  const out: number[] = [];
+  for (let t = 0; t < toEdges.length - 1; t++) {
+    const lo = toEdges[t];
+    const hi = toEdges[t + 1];
+    let integral = 0;
+    for (let s = 0; s < values.length && s < fromEdges.length - 1; s++) {
+      const overlap = Math.min(hi, fromEdges[s + 1]) - Math.max(lo, fromEdges[s]);
+      if (overlap > 0) {
+        integral += values[s] * overlap;
+      }
+    }
+    out.push(hi > lo ? integral / (hi - lo) : 0);
+  }
+  return out;
+}
+
+/**
  * Equal-width edges starting at the first bin with data. The last bin is clipped
  * at 15 GeV/c, so it can end up narrower — which is exactly the situation
  * `divide by bin width` exists for.
@@ -53,14 +99,11 @@ function binning(id: RaaBinningId, edges: number[]): RaaBinning {
 }
 
 const BINNINGS: Record<RaaBinningId, RaaBinning> = {
-  alice: binning('alice', [...ALICE_EDGES]),
-  'equal-0.5': binning('equal-0.5', equalEdges(0.5)),
-  'equal-1': binning('equal-1', equalEdges(1)),
-  coarse: binning('coarse', [0.15, 1, 2, 4, 6, 10, 15]),
+  fixed: binning('fixed', fixedEdges()),
 };
 
 export function binningOf(id: RaaBinningId): RaaBinning {
-  return BINNINGS[id] ?? BINNINGS.alice;
+  return BINNINGS[id] ?? BINNINGS.fixed;
 }
 
 export function allBinnings(): RaaBinning[] {
@@ -272,17 +315,23 @@ export function divideBySpectrum(
 }
 
 /** The pp reference as a spectrum: already dN/dp_T per event, so never rescaled. */
+/**
+ * The published pp reference, rebinned from its own ALICE grid onto the
+ * exercise's fixed binning so it can be divided bin by bin.
+ */
 export function ppSpectrum(asset: RaaPpAsset): RaaSpectrum {
+  const edges = binningOf('fixed').edges;
+  const values = rebinDensity(asset.values, asset.bins, edges);
   return {
-    edges: [...asset.bins],
-    values: [...asset.values],
-    relErr: asset.values.map(() => PP_REL_ERR),
-    counts: asset.values.map(() => 0),
-    empty: asset.values.map((v) => !(v > 0)),
+    edges: [...edges],
+    values,
+    relErr: values.map(() => PP_REL_ERR),
+    counts: values.map(() => 0),
+    empty: values.map((v) => !(v > 0)),
     centrality: 'pp',
     nEvents: 1,
     nColl: 1,
-    binning: 'alice',
+    binning: 'fixed',
     unit: { perGeV: true, perEvent: true, perNColl: false, ratio: false },
     ops: [],
   };
@@ -386,19 +435,12 @@ export function unitLabel(unit: RaaUnit): string {
   if (unit.ratio) {
     return 'ratio';
   }
-  const denominators: string[] = [];
-  if (unit.perEvent) {
-    denominators.push('event');
-  }
-  if (unit.perGeV) {
-    denominators.push('GeV/c');
-  }
-  if (unit.perNColl) {
-    // The symbol, not the words: this string is an axis caption, and the plot
-    // renderer draws `N_coll` with a real subscript.
-    denominators.push('N_coll');
-  }
-  return denominators.length ? `counts / ${denominators.join(' / ')}` : 'counts';
+  // Podpis osi ma zostać krótki. Pełny łańcuch mianowników („counts / event /
+  // GeV/c / N_coll") czytał się jak zbitka ukośników i zjadał margines wykresu,
+  // a i tak nie mówił, skąd każdy z nich się wziął. Rozkłada go na czynniki krok
+  // samouczka przy widmie p_T — tam jest miejsce na wzór i na jego uzasadnienie.
+  const normalised = unit.perEvent || unit.perGeV || unit.perNColl;
+  return normalised ? 'normalised yield' : 'counts';
 }
 
 /** Bin index containing a p_T value, or -1 when it is outside the spectrum. */

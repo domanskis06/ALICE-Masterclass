@@ -14,6 +14,7 @@
       [showThemeToggle]="false"
       [darkMode]="false"
       [event]="displayEvent"
+      [selectedTrackIndices]="filterSelectedIndices"
       [sideViewsShown]="sideViewsShown"
       [detectorShown]="detectorShown"
       [clustersShown]="clustersShown"
@@ -68,6 +69,7 @@
           }
         </div>
 
+
         <div class="nmf-options-panel">
           <div id="nmf-tour-visibility" class="nmf-tour-visibility-block">
             <h4>{{ 'EVENT_DISPLAY.VISIBILITY' | translate }}</h4>
@@ -79,6 +81,11 @@
               }
               <mat-slide-toggle [(ngModel)]="axesShown">{{ 'EVENT_DISPLAY.AXES' | translate }}</mat-slide-toggle>
               <mat-slide-toggle [(ngModel)]="tracksShown">{{ 'EVENT_DISPLAY.TRACKS' | translate }}</mat-slide-toggle>
+              <mat-slide-toggle
+                [(ngModel)]="primaryTracksShown"
+                (ngModelChange)="onPrimaryTracksShownChange()"
+                data-testid="nmf-primary-tracks-toggle"
+              >{{ 'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.PRIMARY_TRACKS' | translate }}</mat-slide-toggle>
               @if (hasSecondaryTracks && isCurrentEventDone) {
                 <mat-slide-toggle
                   [(ngModel)]="secondaryTracksShown"
@@ -92,9 +99,9 @@
           @if (hasClusters) {
             <h4>{{ 'EVENT_DISPLAY.CLUSTER_SIZE' | translate }}</h4>
             <mat-radio-group [(ngModel)]="clusterSize" fxLayout="row" fxLayoutAlign="space-around start">
-              <mat-radio-button [value]="0.1">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
-              <mat-radio-button [value]="0.25">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
-              <mat-radio-button [value]="0.5">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
+              <mat-radio-button [value]="0.05">{{ 'EVENT_DISPLAY.S' | translate }}</mat-radio-button>
+              <mat-radio-button [value]="0.1">{{ 'EVENT_DISPLAY.M' | translate }}</mat-radio-button>
+              <mat-radio-button [value]="0.25">{{ 'EVENT_DISPLAY.L' | translate }}</mat-radio-button>
             </mat-radio-group>
           }
 
@@ -223,6 +230,8 @@
             [event]="event"
             [layout]="charPanelFullscreen ? 'fullscreen' : 'sidebar'"
             [showTitle]="false"
+            [system]="charSystem"
+            (systemChange)="onCharSystemChange($event)"
           ></app-nmf-event-characteristics>
         </mat-tab>
         <mat-tab>
@@ -272,6 +281,9 @@
   @if (filterBuilderOpen) {
     <div class="nmf-filter-overlay" data-testid="nmf-filter-overlay">
       <app-nmf-filter-builder
+        [dismissible]="filterReady"
+        [autoBuildAvailable]="tutorialSkipped"
+        [showHandPickingNote]="showHandPickingNote"
         (filterAccepted)="onFilterAccepted()"
         (closed)="onFilterBuilderClosed()"
       ></app-nmf-filter-builder>

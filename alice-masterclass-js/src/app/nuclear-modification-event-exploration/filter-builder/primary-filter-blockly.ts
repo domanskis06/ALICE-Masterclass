@@ -243,6 +243,83 @@ export function createPrimaryFilterLightTheme(): Blockly.Theme {
   });
 }
 
+/**
+ * Programmatically assembles the one physicist-valid primary filter this
+ * exercise checks for — charged AND |DCA_xy| < cut AND |DCA_z| < cut, then
+ * keep track — into `workspace`, replacing whatever blocks are already there.
+ * Backs the filter builder's "Build it for me" escape hatch (shown only when
+ * the student skipped the guided tutorial).
+ */
+export function buildValidPrimaryFilter(workspace: Blockly.Workspace): void {
+  workspace.clear();
+  Blockly.serialization.blocks.append(
+    {
+      type: 'nmf_if',
+      inputs: {
+        COND: {
+          block: {
+            type: 'nmf_filter_and',
+            inputs: {
+              A: {
+                block: {
+                  type: 'nmf_filter_and',
+                  inputs: {
+                    A: {
+                      block: {
+                        type: 'nmf_compare',
+                        fields: { OP: 'NEQ' },
+                        inputs: {
+                          A: { block: { type: 'nmf_charge' } },
+                          B: { block: { type: 'nmf_number', fields: { NUM: 0 } } },
+                        },
+                      },
+                    },
+                    B: {
+                      block: {
+                        type: 'nmf_compare',
+                        fields: { OP: 'LT' },
+                        inputs: {
+                          A: {
+                            block: {
+                              type: 'nmf_abs',
+                              inputs: { NUM: { block: { type: 'nmf_dca_xy' } } },
+                            },
+                          },
+                          B: { block: { type: 'nmf_dca_cut_xy' } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              B: {
+                block: {
+                  type: 'nmf_compare',
+                  fields: { OP: 'LT' },
+                  inputs: {
+                    A: {
+                      block: {
+                        type: 'nmf_abs',
+                        inputs: { NUM: { block: { type: 'nmf_dca_z' } } },
+                      },
+                    },
+                    B: { block: { type: 'nmf_dca_cut_z' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        DO: { block: { type: 'nmf_keep_track' } },
+      },
+    },
+    workspace,
+  );
+  if (workspace instanceof Blockly.WorkspaceSvg) {
+    workspace.scrollCenter();
+  }
+}
+
 function isChargeValue(block: Blockly.Block): boolean {
   return block.type === 'nmf_charge';
 }

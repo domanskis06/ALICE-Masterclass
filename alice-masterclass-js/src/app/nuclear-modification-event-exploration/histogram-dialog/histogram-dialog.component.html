@@ -65,9 +65,11 @@
         [discreteValues]="data.spec.discreteValues ?? null"
         [barColor]="data.spec.barColor"
         [expandDomainToData]="data.spec.expandDomainToData"
-        [stretchFill]="true"
-        [showMean]="true"
+        [viewBoxHeight]="262"
+        [showMean]="data.spec.showMean ?? true"
         [meanLabel]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEAN' | translate"
+        [showMedian]="data.spec.showMedian ?? true"
+        [medianLabel]="'NUCLEAR_MODIFICATION.EVENT_EXPLORATION.STATS_MEDIAN' | translate"
       >
         <svg:text xAxisLabel>{{ data.spec.xAxisLabelKey | translate }}</svg:text>
         <svg:text yAxisLabel>{{ data.spec.yAxisLabelKey | translate }}</svg:text>

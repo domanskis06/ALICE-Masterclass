@@ -1,5 +1,6 @@
 import {
   buildPrimaryFilterToolbox,
+  buildValidPrimaryFilter,
   isValidPrimaryFilter,
   registerPrimaryFilterBlocks,
 } from './primary-filter-blockly';
@@ -215,6 +216,28 @@ describe('primary filter blockly', () => {
       const wrong = makeCompare(ws, 'EQ', ws.newBlock('nmf_charge'), makeNumber(ws, 0));
       assembleIfKeep(ws, makeFullPrimaryCond(ws, wrong));
       expect(isValidPrimaryFilter(ws)).toBeFalse();
+    } finally {
+      ws.dispose();
+    }
+  });
+
+  it('buildValidPrimaryFilter assembles a filter that passes validation', () => {
+    const ws = new Blockly.Workspace();
+    try {
+      buildValidPrimaryFilter(ws);
+      expect(isValidPrimaryFilter(ws)).toBeTrue();
+    } finally {
+      ws.dispose();
+    }
+  });
+
+  it('buildValidPrimaryFilter replaces whatever was already on the workspace', () => {
+    const ws = new Blockly.Workspace();
+    try {
+      ws.newBlock('nmf_charge');
+      buildValidPrimaryFilter(ws);
+      expect(isValidPrimaryFilter(ws)).toBeTrue();
+      expect(ws.getTopBlocks(false).length).toBe(1);
     } finally {
       ws.dispose();
     }

@@ -14,7 +14,11 @@ export class NmfEeTutorialWelcomeDialogComponent {
     private readonly dialogRef: MatDialogRef<NmfEeTutorialWelcomeDialogComponent, boolean>,
   ) {}
 
-  skip(): void {
+  /**
+   * "I am in a workshop": no guided tour and no forced dataset prompt — the
+   * instructor drives, and the student picks a dataset when told to.
+   */
+  workshop(): void {
     this.dialogRef.close(false);
   }
 

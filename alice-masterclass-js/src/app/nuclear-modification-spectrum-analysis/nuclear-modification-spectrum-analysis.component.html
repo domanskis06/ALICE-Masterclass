@@ -36,6 +36,15 @@
         >
           {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.CLEAR' | translate }}
         </button>
+        <button
+          mat-stroked-button
+          type="button"
+          class="nmf-sa-autobuild-button"
+          data-testid="nmf-autobuild-pipeline"
+          (click)="onAutoBuild()"
+        >
+          {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.AUTO_BUILD' | translate }}
+        </button>
         @if (ok === true) {
           <span class="nmf-sa-status nmf-sa-status--ok">
             <mat-icon>check_circle</mat-icon>
@@ -78,6 +87,10 @@
         </button>
       </div>
     </header>
+
+    @if (hasAnyResult) {
+      <app-nmf-sa-mission-strip></app-nmf-sa-mission-strip>
+    }
 
     <app-nmf-pipeline-problems [problems]="problems"></app-nmf-pipeline-problems>
 
@@ -132,6 +145,7 @@
           [raa]="raa"
           [rcp]="rcp"
           [multiplicity]="multiplicity"
+          [multiplicities]="multiplicities"
           [multVsCentrality]="multVsCentrality"
           [ppReference]="ppReference"
           (startTutorial)="replayTutorial()"

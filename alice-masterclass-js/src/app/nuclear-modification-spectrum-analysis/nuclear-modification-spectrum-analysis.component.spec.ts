@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { NuclearModificationSpectrumAnalysisComponent } from './nuclear-modification-spectrum-analysis.component';
 import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
 import { RaaAnalysisService } from '../services/raa-analysis.service';
-import { RaaRunResult, RaaSeries } from '../shared/models/raa/spectrum';
+import { RaaHistogram, RaaRunResult, RaaSeries } from '../shared/models/raa/spectrum';
 import { centralityColor } from '../shared/utils/raa-centrality';
 
 function series(centrality: string, y: number): RaaSeries {
@@ -21,6 +21,17 @@ function series(centrality: string, y: number): RaaSeries {
   };
 }
 
+function histogram(centrality: string, entries: number): RaaHistogram {
+  return {
+    edges: [0, 10, 20],
+    counts: [entries, 0],
+    label: centrality,
+    color: centralityColor(centrality),
+    centrality,
+    entries,
+  };
+}
+
 function result(overrides: Partial<RaaRunResult> = {}): RaaRunResult {
   return {
     ok: true,
@@ -29,6 +40,7 @@ function result(overrides: Partial<RaaRunResult> = {}): RaaRunResult {
     raa: [],
     rcp: [],
     multiplicity: null,
+    multiplicities: [],
     multVsCentrality: null,
     readouts: [],
     reported: [],
@@ -113,7 +125,7 @@ describe('NuclearModificationSpectrumAnalysisComponent', () => {
     next = result({ raa: [series('10-20', 0.4)] });
     component.onRun();
 
-    expect(tutorial.notifyRunCompleted).toHaveBeenCalledWith(2);
+    expect(tutorial.notifyRunCompleted).toHaveBeenCalledWith(2, []);
   });
 
   it('Clear empties the workspace status but keeps the accumulated plots', () => {
@@ -139,5 +151,30 @@ describe('NuclearModificationSpectrumAnalysisComponent', () => {
 
     expect(component.ok).toBeFalse();
     expect(component.problems.map((p) => p.key)).toEqual(['RUN_FAILED']);
+  });
+
+  it('keeps a multiplicity histogram per class so they can be compared', () => {
+    // A for-each run fills one per class; a later run for another class must
+    // add to them, not replace the lot.
+    next = result({ multiplicities: [histogram('0-5', 100), histogram('30-40', 80)] });
+    component.onRun();
+    next = result({ multiplicities: [histogram('70-80', 60)] });
+    component.onRun();
+
+    expect(component.multiplicities.map((h) => h.centrality)).toEqual([
+      '0-5',
+      '30-40',
+      '70-80',
+    ]);
+  });
+
+  it('re-measuring a class replaces its multiplicity histogram', () => {
+    next = result({ multiplicities: [histogram('0-5', 100)] });
+    component.onRun();
+    next = result({ multiplicities: [histogram('0-5', 250)] });
+    component.onRun();
+
+    expect(component.multiplicities.length).toBe(1);
+    expect(component.multiplicities[0].entries).toBe(250);
   });
 });

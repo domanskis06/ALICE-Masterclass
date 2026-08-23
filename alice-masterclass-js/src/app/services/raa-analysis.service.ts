@@ -40,6 +40,7 @@ import {
   unitLabel,
 } from '../shared/utils/raa-ops';
 import { centralityColor, centralityLabel } from '../shared/utils/raa-centrality';
+import { RAA_CURRENT_CENTRALITY } from '../nuclear-modification-spectrum-analysis/blockly-workspace/raa-blockly';
 import { RaaDataService } from './raa-data.service';
 
 /** The class R_CP divides by, as in the Münster notebook's extra task. */
@@ -50,6 +51,18 @@ export const RAA_PRESET_CLASSES: Record<RaaCentralityPreset, string[]> = {
   five: ['0-5', '10-20', '30-40', '50-60', '70-80'],
 };
 
+/**
+ * Klasa, na której ma pracować krok: albo wpięty literał, albo — dla bloku
+ * „current class" — klasa bieżącego obrotu pętli. Poza pętlą nie ma czego
+ * podstawić i zwracamy null, żeby wywołujący zgłosił to jako problem.
+ */
+function resolveCentrality(value: string | undefined, ctx: ExecCtx): string | null {
+  if (value === RAA_CURRENT_CENTRALITY) {
+    return ctx.loopCentrality;
+  }
+  return value ?? '0-5';
+}
+
 interface RaaAssets {
   tracks: RaaTracksFineAsset;
   events: RaaEventsAsset;
@@ -58,6 +71,8 @@ interface RaaAssets {
 
 /** Mutable interpreter state while walking the student's recipe. */
 interface ExecCtx {
+  /** Class the enclosing `For each centrality` is on, or null outside a loop. */
+  loopCentrality: string | null;
   eventsLoaded: boolean;
   eventCentrality: string | null;
   eventSample: RaaEventSample | null;
@@ -72,7 +87,8 @@ interface ExecCtx {
   nColl: number | null;
   nCollSource: string | null;
   ppLoaded: boolean;
-  peripheral: RaaSpectrum | null;
+  /** Sample for the R_CP denominator; normalised only when it is divided by. */
+  peripheralSample: RaaTrackSample | null;
   drawLineAtOne: boolean;
   histogram: RaaHistogram | null;
   heatmap: RaaHeatmap | null;
@@ -88,6 +104,8 @@ interface Accumulators {
   /** Kept apart from `readouts`: a single read must not replace a whole series. */
   reported: RaaReported[];
   problems: RaaProblem[];
+  /** Multiplicity histograms filled this run, by centrality class. */
+  multiplicities: Map<string, RaaHistogram>;
   /** Centralities plotted as a p_T spectrum this run, for the end-of-run refresh below. */
   plottedPt: Set<string>;
 }
@@ -127,6 +145,7 @@ export class RaaAnalysisService {
       readouts: [],
       reported: [],
       problems: [],
+      multiplicities: new Map<string, RaaHistogram>(),
       plottedPt: new Set<string>(),
     };
     const ctx = freshCtx();
@@ -176,6 +195,7 @@ export class RaaAnalysisService {
       raa: acc.raa,
       rcp: acc.rcp,
       multiplicity: ctx.histogram,
+      multiplicities: [...acc.multiplicities.values()],
       multVsCentrality: ctx.heatmap,
       readouts: acc.readouts,
       reported: acc.reported,
@@ -212,7 +232,11 @@ export class RaaAnalysisService {
           acc.problems.push({ key: 'EVENTS_NOT_LOADED', severity: 'error' });
           break;
         }
-        const centrality = step.centrality ?? '0-5';
+        const centrality = resolveCentrality(step.centrality, ctx);
+        if (centrality === null) {
+          acc.problems.push({ key: 'CURRENT_CLASS_OUTSIDE_LOOP', severity: 'error' });
+          break;
+        }
         ctx.eventCentrality = centrality;
         ctx.eventSample = eventSampleOf(assets.events, centrality);
         if (!ctx.eventSample.nEvents) {
@@ -240,7 +264,7 @@ export class RaaAnalysisService {
           break;
         }
         const filled = multiplicityHistogram(ctx.eventSample);
-        ctx.histogram = {
+        const histogram: RaaHistogram = {
           edges: filled.edges,
           counts: filled.counts,
           label: centralityLabel(ctx.eventCentrality),
@@ -248,10 +272,23 @@ export class RaaAnalysisService {
           centrality: ctx.eventCentrality,
           entries: ctx.eventSample.nEvents,
         };
+        ctx.histogram = histogram;
+        // A for-each run fills one of these per class; keep them all so the
+        // student can switch between the classes they have measured.
+        acc.multiplicities.set(ctx.eventCentrality, histogram);
         break;
       }
 
       case 'plot_mult_vs_centrality':
+        // This plot only means something across the whole sample — every
+        // event is one point, and centrality itself is read off it. Filtering
+        // to one class first (an `if_centrality` earlier in the same chain)
+        // doesn't touch the data here (still all events, just highlighted
+        // differently), but it teaches the wrong idea: that you need to pick a
+        // class before you can see how classes are defined in the first place.
+        if (ctx.eventCentrality) {
+          acc.problems.push({ key: 'MULT_VS_CENTRALITY_NEEDS_ALL_EVENTS', severity: 'warning' });
+        }
         ctx.heatmap = multiplicityVsCentrality(assets.events, {
           highlight: ctx.eventCentrality ?? undefined,
         });
@@ -266,7 +303,11 @@ export class RaaAnalysisService {
           acc.problems.push({ key: 'TRACKS_NOT_LOADED', severity: 'error' });
           break;
         }
-        const centrality = step.centrality ?? '0-5';
+        const centrality = resolveCentrality(step.centrality, ctx);
+        if (centrality === null) {
+          acc.problems.push({ key: 'CURRENT_CLASS_OUTSIDE_LOOP', severity: 'error' });
+          break;
+        }
         const sample = trackSampleOf(assets.tracks, centrality);
         if (!sample) {
           acc.problems.push({
@@ -299,7 +340,7 @@ export class RaaAnalysisService {
         break;
 
       case 'create_hist':
-        ctx.pendingBinning = step.binning ?? 'alice';
+        ctx.pendingBinning = step.binning ?? 'fixed';
         break;
 
       case 'fill_hist': {
@@ -317,8 +358,15 @@ export class RaaAnalysisService {
       }
 
       case 'lookup_ncoll': {
+        const requested = step.nCollCentrality ?? step.centrality;
         const key =
-          step.nCollCentrality ?? step.centrality ?? ctx.trackCentrality ?? '0-5';
+          requested === undefined
+            ? ctx.trackCentrality ?? '0-5'
+            : resolveCentrality(requested, ctx) ?? '';
+        if (!key) {
+          acc.problems.push({ key: 'CURRENT_CLASS_OUTSIDE_LOOP', severity: 'error' });
+          break;
+        }
         const nColl = assets.tracks.classes[key]?.nColl ?? 0;
         if (!nColl) {
           acc.problems.push({
@@ -399,21 +447,14 @@ export class RaaAnalysisService {
           acc.problems.push({ key: 'NO_PERIPHERAL', severity: 'error' });
           break;
         }
-        let peripheral = histogramPt(
-          peripheralSample,
-          ctx.spectrum.binning,
-          ctx.ptCut,
-        );
-        for (const kind of ctx.appliedScalings) {
-          if (kind === 'divide_bin_width') {
-            peripheral = divideByBinWidth(peripheral);
-          } else if (kind === 'divide_events') {
-            peripheral = divideByEvents(peripheral, peripheralSample.nEvents);
-          } else if (kind === 'divide_ncoll') {
-            peripheral = divideByNColl(peripheral, peripheralSample.nColl);
-          }
-        }
-        ctx.peripheral = peripheral;
+        // Only remember the sample here. Normalising it now would freeze in
+        // whatever scalings happened to be applied at this point in the chain,
+        // so a student who dragged this block above the `Divide by …` blocks
+        // got a raw-count denominator against a normalised numerator — wrong
+        // by ~1e5, and with no problem reported. The denominator is built in
+        // `divide_reference`, from the numerator's own ops, so the order of
+        // this block cannot matter.
+        ctx.peripheralSample = peripheralSample;
         break;
       }
 
@@ -428,14 +469,6 @@ export class RaaAnalysisService {
             acc.problems.push({ key: 'PP_NOT_LOADED', severity: 'error' });
             break;
           }
-          if (ctx.spectrum.binning !== 'alice') {
-            acc.problems.push({
-              key: 'PP_NEEDS_ALICE_BINNING',
-              severity: 'error',
-              params: { binning: binningLabel(ctx.spectrum.binning) },
-            });
-            break;
-          }
           if (ctx.spectrum.ops.includes('divide_pp') || ctx.spectrum.ops.includes('divide_peripheral')) {
             acc.problems.push({ key: 'TWO_REFERENCES', severity: 'error' });
             break;
@@ -446,7 +479,7 @@ export class RaaAnalysisService {
             'divide_pp',
           );
         } else {
-          if (!ctx.peripheral) {
+          if (!ctx.peripheralSample) {
             acc.problems.push({ key: 'PERIPHERAL_NOT_LOADED', severity: 'error' });
             break;
           }
@@ -454,9 +487,15 @@ export class RaaAnalysisService {
             acc.problems.push({ key: 'TWO_REFERENCES', severity: 'error' });
             break;
           }
+          // Built here, not at load time, and normalised to match the
+          // numerator exactly — see the comment in `load_peripheral`.
           ctx.spectrum = divideBySpectrum(
             ctx.spectrum,
-            ctx.peripheral,
+            normalisedLike(
+              histogramPt(ctx.peripheralSample, ctx.spectrum.binning, ctx.ptCut),
+              ctx.peripheralSample,
+              ctx.spectrum.ops,
+            ),
             'divide_peripheral',
           );
         }
@@ -473,6 +512,7 @@ export class RaaAnalysisService {
         }
         for (const centrality of classes) {
           const branch = branchCtx(ctx);
+          branch.loopCentrality = centrality;
           branch.tracksLoaded = true;
           const sample = trackSampleOf(assets.tracks, centrality);
           if (!sample) {
@@ -637,8 +677,33 @@ export class RaaAnalysisService {
   }
 }
 
+/**
+ * Apply to `spectrum` exactly the normalisations `ops` records, using `sample`
+ * for its own N_evt / N_coll. Used to build the R_CP denominator so it always
+ * carries the same units as the numerator, whatever order the student's blocks
+ * were in.
+ */
+function normalisedLike(
+  spectrum: RaaSpectrum,
+  sample: RaaTrackSample,
+  ops: readonly RaaOp[],
+): RaaSpectrum {
+  let out = spectrum;
+  if (ops.includes('divide_bin_width')) {
+    out = divideByBinWidth(out);
+  }
+  if (ops.includes('divide_events')) {
+    out = divideByEvents(out, sample.nEvents);
+  }
+  if (ops.includes('divide_ncoll')) {
+    out = divideByNColl(out, sample.nColl);
+  }
+  return out;
+}
+
 function freshCtx(): ExecCtx {
   return {
+    loopCentrality: null,
     eventsLoaded: false,
     eventCentrality: null,
     eventSample: null,
@@ -653,7 +718,7 @@ function freshCtx(): ExecCtx {
     nColl: null,
     nCollSource: null,
     ppLoaded: false,
-    peripheral: null,
+    peripheralSample: null,
     drawLineAtOne: false,
     histogram: null,
     heatmap: null,
@@ -667,7 +732,7 @@ function branchCtx(outer: ExecCtx): ExecCtx {
     ...outer,
     spectrum: null,
     savedSpectrum: null,
-    peripheral: null,
+    peripheralSample: null,
     pendingBinning: null,
     nColl: null,
     nCollSource: null,
@@ -687,6 +752,7 @@ function emptyResult(): RaaRunResult {
     raa: [],
     rcp: [],
     multiplicity: null,
+    multiplicities: [],
     multVsCentrality: null,
     readouts: [],
     reported: [],
@@ -735,19 +801,6 @@ function targetOf(spectrum: RaaSpectrum): RaaPlotTarget {
     return 'rcp';
   }
   return 'pt';
-}
-
-function binningLabel(id: RaaSpectrum['binning']): string {
-  switch (id) {
-    case 'alice':
-      return 'ALICE';
-    case 'equal-0.5':
-      return 'equal 0.5 GeV/c';
-    case 'equal-1':
-      return 'equal 1 GeV/c';
-    case 'coarse':
-      return 'coarse';
-  }
 }
 
 /**

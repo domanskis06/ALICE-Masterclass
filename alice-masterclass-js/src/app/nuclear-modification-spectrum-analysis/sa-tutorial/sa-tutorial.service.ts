@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { driver, type DriveStep, type Driver, type PopoverDOM } from 'driver.js';
 
-import { RaaStep, RaaStepKind } from '../../shared/models/raa/spectrum';
+import { RaaProblem, RaaStep, RaaStepKind } from '../../shared/models/raa/spectrum';
 import {
   NMF_SA_CLASSES_TO_COLLECT,
   NMF_SA_GATES,
@@ -10,8 +10,11 @@ import {
   NMF_SA_SELECTOR_RESULTS,
   NMF_SA_SELECTOR_RUN,
   NMF_SA_SELECTOR_WORKSPACE,
+  MISSION_GROUPS,
   NMF_SA_STEP_COLLECT,
   NMF_SA_TOUR_CENTRALITY,
+  NmfSaGate,
+  NmfSaMissionStep,
   NmfSaToolboxCategory,
   flattenRecipeKinds,
 } from './sa-tutorial.constants';
@@ -31,6 +34,51 @@ export interface NmfSaTutorialHostHooks {
 const NMF_SA_DOCKED_POPOVER_LEFT = 16;
 
 /** Injected only in NuclearModificationSpectrumAnalysisModule. */
+/** A figure the plot walkthrough can visit, in the order the tour visits them. */
+export interface NmfSaPlotTourTarget {
+  key: string;
+  /** Bring this figure on screen — the panel shows one plot at a time. */
+  show: () => void;
+}
+
+/**
+ * Copy for the plot walkthrough. Keys match `NmfPlotCard.key`; a figure the
+ * student has not produced yet is simply skipped, so the tour is as long as
+ * their progress and never describes a plot that is not on screen.
+ */
+const PLOT_HELP_COPY: { key: string; title: string; description: string }[] = [
+  {
+    key: 'multiplicity',
+    title: 'Multiplicity per class',
+    description:
+      'One entry per event: how many accepted charged tracks it contained. Central collisions produce far more particles than peripheral ones, which is exactly how centrality is measured in the first place.',
+  },
+  {
+    key: 'mult-vs-centrality',
+    title: 'Multiplicity vs centrality',
+    description:
+      'The two-dimensional map of all ~40 000 events. The colour is how many events fall in a cell, on a logarithmic scale. The band running from top left to bottom right shows that centrality and multiplicity are two views of the same thing.',
+  },
+  {
+    key: 'pt-spectrum',
+    title: 'The p<sub>T</sub> spectrum',
+    description:
+      'Both axes are logarithmic, because particle production falls by many orders of magnitude between 0.15 and 50 GeV/c. The y axis reads <strong>normalised yield</strong>, which is short for what your normalisation blocks actually did to the raw counts:<br><br><em>1 / (N<sub>evt</sub> · N<sub>coll</sub>) · dN / dp<sub>T</sub></em><br><br>Dividing by the bin width makes bins of different widths comparable; dividing by N<sub>evt</sub> turns a total into a per-collision yield; dividing by N<sub>coll</sub> puts Pb–Pb on the same footing as a stack of pp collisions. Error bars are the statistical uncertainty √N of the entries in that bin; empty bins are reported instead of drawn.',
+  },
+  {
+    key: 'raa',
+    title: 'R<sub>AA</sub> and the line at one',
+    description:
+      'The dashed line marks <strong>R<sub>AA</sub> = 1</strong>: Pb–Pb behaving like a simple stack of independent pp collisions. Suppression below that line at high p<sub>T</sub> is energy loss in the hot medium. Click any plot to enlarge it.',
+  },
+  {
+    key: 'rcp',
+    title: 'R<sub>CP</sub>: central over peripheral',
+    description:
+      'The same comparison without a pp measurement: the central spectrum divided by the peripheral one, each already normalised by its own N<sub>coll</sub>. Peripheral collisions stand in for the unmodified reference, so a dip below one again points at energy loss.',
+  },
+];
+
 @Injectable()
 export class NmfSaTutorialService {
   private driverInstance: Driver | null = null;
@@ -70,6 +118,8 @@ export class NmfSaTutorialService {
   /** Run was pressed and the recipe has not changed since. */
   private ranWithCurrentRecipe = false;
   private classesCollected = 0;
+  /** `RaaProblem.key`s raised by the last Run — checked against gates' `forbidProblemKeys`. */
+  private lastRunProblemKeys = new Set<string>();
 
   private readonly onEnterAdvance = (event: KeyboardEvent): void => {
     if (event.key !== 'Enter' && event.key !== 'NumpadEnter') {
@@ -126,21 +176,24 @@ export class NmfSaTutorialService {
   notifyRecipeChanged(steps: RaaStep[]): void {
     this.recipeKinds = new Set(flattenRecipeKinds(steps));
     this.ranWithCurrentRecipe = false;
+    this.lastRunProblemKeys.clear();
     this.evaluateGate();
   }
 
   /** Run finished; `classes` counts the distinct centralities now on the R_AA plot. */
-  notifyRunCompleted(classes: number): void {
+  notifyRunCompleted(classes: number, problems: RaaProblem[] = []): void {
     this.ranWithCurrentRecipe = true;
     this.classesCollected = classes;
+    this.lastRunProblemKeys = new Set(problems.map((problem) => problem.key));
     this.updateCollectProgress();
+    this.markMissionStepsDone();
     this.evaluateGate();
   }
 
   /* —— gating —— */
 
   /** The gate of the active step, or null when the step is free to skip. */
-  private activeGate(): { kinds: RaaStepKind[]; requireRun?: boolean; classes?: number } | null {
+  private activeGate(): NmfSaGate | null {
     const index = this.driverInstance?.getActiveIndex();
     if (index === undefined) {
       return null;
@@ -166,12 +219,59 @@ export class NmfSaTutorialService {
     if (gate.classes !== undefined && this.classesCollected < gate.classes) {
       return;
     }
+    if (gate.forbidProblemKeys?.some((key) => this.lastRunProblemKeys.has(key))) {
+      return;
+    }
     this.advancePending = true;
+    const from = this.driverInstance.getActiveIndex();
     setTimeout(() => {
       this.advancePending = false;
       this.driverInstance?.refresh();
       this.driverInstance?.moveNext();
+      // The step just landed on may already be satisfied too — "Build it for
+      // me" drops the whole recipe at once, so several gates come true
+      // together. Re-check so the tour walks through them instead of stopping
+      // after one. Only when the index actually moved: if `moveNext` could not
+      // advance (last step, or a driver that refuses), re-evaluating the same
+      // gate would spin. The cascade otherwise halts at the first unmet gate,
+      // typically one waiting on a Run.
+      if (this.driverInstance?.getActiveIndex() !== from) {
+        this.evaluateGate();
+      }
     }, 0);
+  }
+
+  /**
+   * Mission steps ever satisfied by a completed Run — sticky by design: once
+   * checked off, a step stays checked even if the student later removes or
+   * changes the blocks that earned it, same as a paper checklist. Keyed by
+   * `NmfSaMissionStep.labelKey`.
+   */
+  private readonly completedMissionSteps = new Set<string>();
+
+  /**
+   * Whether a mission-card step has ever been satisfied by a completed Run.
+   * Backs the mission card's and the docked strip's per-step checkmark.
+   */
+  isMissionStepDone(step: NmfSaMissionStep): boolean {
+    return this.completedMissionSteps.has(step.labelKey);
+  }
+
+  private markMissionStepsDone(): void {
+    for (const group of MISSION_GROUPS) {
+      for (const step of group.steps) {
+        if (this.completedMissionSteps.has(step.labelKey)) {
+          continue;
+        }
+        const haveKinds = step.gate.kinds.every((kind) => this.recipeKinds.has(kind));
+        const blocked = step.gate.forbidProblemKeys?.some((key) =>
+          this.lastRunProblemKeys.has(key),
+        );
+        if (haveKinds && !blocked && (!step.gate.requireRun || this.ranWithCurrentRecipe)) {
+          this.completedMissionSteps.add(step.labelKey);
+        }
+      }
+    }
   }
 
   private updateCollectProgress(): void {
@@ -249,57 +349,48 @@ export class NmfSaTutorialService {
     this.driveHelp(steps);
   }
 
-  /** ? above the plots: how to read each figure. */
-  startPlotHelpTour(): void {
+  /**
+   * ? above the plots: how to read each figure.
+   *
+   * One step per figure that actually exists, anchored to that figure's tab.
+   * Two reasons for the tab rather than the plot itself: only one plot is
+   * mounted at a time (the panel is a tabstrip), and anchoring every step to the
+   * whole panel — as this tour used to — left the popover parked in one place,
+   * so the walkthrough looked frozen even though the text was changing.
+   */
+  startPlotHelpTour(targets: NmfSaPlotTourTarget[] = []): void {
     this.destroyDriver(true);
     this.helpTourActive = true;
 
-    const steps: DriveStep[] = [
-      {
-        element: NMF_SA_SELECTOR_PLOTS,
-        disableActiveInteraction: false,
-        popover: {
-          title: '1 / 4: Multiplicity per class',
-          description:
-            'One entry per event: how many accepted charged tracks it contained. Central collisions produce far more particles than peripheral ones, which is exactly how centrality is measured in the first place.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-      {
-        element: NMF_SA_SELECTOR_PLOTS,
-        disableActiveInteraction: false,
-        popover: {
-          title: '2 / 4: Multiplicity vs centrality',
-          description:
-            'The two-dimensional map of all ~40 000 events. The colour is how many events fall in a cell, on a logarithmic scale. The band running from top left to bottom right shows that centrality and multiplicity are two views of the same thing.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-      {
-        element: NMF_SA_SELECTOR_PLOTS,
-        disableActiveInteraction: false,
-        popover: {
-          title: '3 / 4: The p<sub>T</sub> spectrum',
-          description:
-            'Both axes are logarithmic, because particle production falls by many orders of magnitude between 0.15 and 50 GeV/c. Error bars are the statistical uncertainty √N of the entries in that bin; empty bins are reported instead of drawn.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-      {
-        element: NMF_SA_SELECTOR_PLOTS,
-        disableActiveInteraction: false,
-        popover: {
-          title: '4 / 4: R<sub>AA</sub> and the line at one',
-          description:
-            'The dashed line marks <strong>R<sub>AA</sub> = 1</strong>: Pb–Pb behaving like a simple stack of independent pp collisions. Suppression below that line at high p<sub>T</sub> is energy loss in the hot medium. Click any plot to enlarge it.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-    ];
+    const available = new Map(targets.map((target) => [target.key, target]));
+    const visible = PLOT_HELP_COPY.filter((copy) => available.has(copy.key));
+
+    const steps: DriveStep[] = visible.length
+      ? visible.map((copy, index) => ({
+          element: `[data-testid="nmf-sa-plot-tab-${copy.key}"]`,
+          disableActiveInteraction: false,
+          popover: {
+            title: `${index + 1} / ${visible.length}: ${copy.title}`,
+            description: copy.description,
+            side: 'bottom' as const,
+            align: 'start' as const,
+          },
+          // Bring the described figure on screen before talking about it.
+          onHighlightStarted: () => available.get(copy.key)?.show(),
+        }))
+      : [
+          {
+            element: NMF_SA_SELECTOR_PLOTS,
+            disableActiveInteraction: false,
+            popover: {
+              title: 'Nothing plotted yet',
+              description:
+                'Figures appear here once you build a chain of blocks and press <strong>Run</strong>. Come back to this button afterwards and it will walk you through every figure you have produced, one at a time.',
+              side: 'left' as const,
+              align: 'start' as const,
+            },
+          },
+        ];
 
     this.driveHelp(steps);
   }
@@ -370,8 +461,19 @@ export class NmfSaTutorialService {
       doneBtnText: 'Done',
       showButtons: ['next', 'previous', 'close'],
       steps: this.buildSteps(),
+      // Fallback for steps with no `onHighlighted` of their own (e.g. the plots
+      // panel steps): keeps every step's stage un-masked, so the student can
+      // switch between plot tabs at any point in the tour, not just while a
+      // workspace step happens to have already disarmed it.
+      onHighlighted: () => this.disarmDriverStageDeferred(),
       onPopoverRender: (popover, opts) => {
         this.makePopoverDraggable(popover);
+        // Belt-and-suspenders alongside the `onHighlighted` disarm above:
+        // this hook is guaranteed to fire on every step (it also drives the
+        // draggable popover), so re-disarm here too in case a given step's
+        // own `onHighlighted` runs before driver.js has finished mounting
+        // the overlay for this step.
+        this.disarmDriverStageDeferred();
         const isBuildingStep = opts.state.activeStep?.element === NMF_SA_SELECTOR_WORKSPACE;
         // driver.js repositions the popover itself after this hook runs (it
         // measures and places it against the newly-highlighted element on the
@@ -500,11 +602,15 @@ export class NmfSaTutorialService {
     }
   }
 
-  private prepareWorkspaceStep(category: NmfSaToolboxCategory): void {
-    this.hooks?.openToolboxCategory(category);
+  private disarmDriverStageDeferred(): void {
     requestAnimationFrame(() => this.disarmDriverStage());
     setTimeout(() => this.disarmDriverStage(), 0);
     setTimeout(() => this.disarmDriverStage(), 50);
+  }
+
+  private prepareWorkspaceStep(category: NmfSaToolboxCategory): void {
+    this.hooks?.openToolboxCategory(category);
+    this.disarmDriverStageDeferred();
     // The gate only re-checks itself on the next workspace change. Landing on
     // a gated step whose blocks were already built earlier (replaying the
     // tour, or stepping back and forward) would otherwise sit there forever.

@@ -17,7 +17,7 @@ import {
 } from '../../models';
 import {
   trackColor, clusterColor, positiveTrackColor, negativeTrackColor, bachelorTrackColor, highlightColor,
-  neonTrackColor, caloBarColorLight, caloBarColorDark
+  neonTrackColor, caloBarColorLight, caloBarColorDark, selectedTrackColor, unselectedTrackColor
 } from '../../globals';
 import { detectorPartAccentColor } from '../../three/detector-part-accent';
 import { optimizeStaticDetectorPart } from '../../three/optimize-detector-part';
@@ -786,6 +786,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   static readonly negativeTrackColor: THREE.Color = new THREE.Color(negativeTrackColor);
   static readonly bachelorTrackColor: THREE.Color = new THREE.Color(bachelorTrackColor);
   static readonly highlightColor: THREE.Color = new THREE.Color(highlightColor);
+  static readonly selectedTrackColor: THREE.Color = new THREE.Color(selectedTrackColor);
+  static readonly unselectedTrackColor: THREE.Color = new THREE.Color(unselectedTrackColor);
 
   static readonly neonTrackColor: THREE.Color = new THREE.Color(neonTrackColor);
   static readonly caloBarColorLight: THREE.Color = new THREE.Color(caloBarColorLight);
@@ -827,6 +829,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   private negativeTrackMaterial: THREE.Material = null;
   private bachelorTrackMaterial: THREE.Material = null;
   private highlightTrackMaterial: THREE.Material = null;
+  private selectedTrackMaterial: THREE.Material = null;
+  private unselectedTrackMaterial: THREE.Material = null;
   private pointsMaterial: THREE.Material = null;
   private layerHitTrdMaterial: THREE.MeshBasicMaterial = null;
   private layerHitTofMaterial: THREE.MeshBasicMaterial = null;
@@ -917,6 +921,8 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
     (this.negativeTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     (this.bachelorTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
     (this.highlightTrackMaterial as LineMaterial).linewidth = this.trackHighlightWidth;
+    (this.selectedTrackMaterial as LineMaterial).linewidth = this.trackDecayWidth;
+    (this.unselectedTrackMaterial as LineMaterial).linewidth = this.effectiveTrackWidth;
   }
 
   @Input()
@@ -3118,7 +3124,12 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       if (!resolved) {
         continue;
       }
-      const line = this.createLine(resolved.points, this.trackMaterial, {
+      const material = this._selectedTrackIndices
+        ? (this._selectedTrackIndices.has(trackIndex)
+            ? this.selectedTrackMaterial
+            : this.unselectedTrackMaterial)
+        : this.trackMaterial;
+      const line = this.createLine(resolved.points, material, {
         geometricStraight: resolved.geometricStraight
       });
       const worldPoints = resolved.points.map((p) => [
@@ -3370,6 +3381,29 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
   }
   private _event: Event;
 
+  /**
+   * Indices into `event.tracks` to draw in the "selected" colour instead of the
+   * plain track colour — the exercise decides what qualifies (Nuclear
+   * Modification passes the set its primary filter keeps), the display only
+   * paints it. `null` (default) means every track keeps the plain colour.
+   *
+   * Persistent state, re-applied by `rebuildTracksFromEvent`, unlike
+   * {@link setEmphasizedTrackIndices}, which paints a transient gold emphasis
+   * straight onto the current line objects and is wiped by the next rebuild.
+   * The two compose: emphasis saves whatever material was underneath it.
+   */
+  @Input()
+  get selectedTrackIndices(): ReadonlySet<number> | null { return this._selectedTrackIndices; }
+  set selectedTrackIndices(indices: ReadonlySet<number> | null) {
+    this._selectedTrackIndices = indices;
+    if (this._event !== null && this._event !== undefined) {
+      this.rebuildTracksFromEvent();
+      this.applyDesiredPhysicsVisibility();
+      this.requestRender(true);
+    }
+  }
+  private _selectedTrackIndices: ReadonlySet<number> | null = null;
+
   @Output()
   trackClickedEvent: EventEmitter<Track> = new EventEmitter<Track>();
 
@@ -3453,6 +3487,18 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       color: EventDisplayComponent.highlightColor,
       ...lineParams,
       linewidth: this.trackHighlightWidth,
+    });
+    // Slightly fatter than a plain track so the kept set reads as emphasised,
+    // not merely recoloured; the rejected ones go thin and pale, so the two
+    // separate on weight and lightness as well as hue.
+    this.selectedTrackMaterial = new LineMaterial({
+      color: EventDisplayComponent.selectedTrackColor,
+      ...lineParams,
+      linewidth: this.trackDecayWidth,
+    });
+    this.unselectedTrackMaterial = new LineMaterial({
+      color: EventDisplayComponent.unselectedTrackColor,
+      ...lineParams,
     });
     this.pointsMaterial = new THREE.PointsMaterial({
       color: EventDisplayComponent.clusterColor,
@@ -4136,7 +4182,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
           this.postiveTrackMaterial,
           this.negativeTrackMaterial,
           this.bachelorTrackMaterial,
-          this.highlightTrackMaterial
+          this.highlightTrackMaterial,
+          this.selectedTrackMaterial,
+      this.unselectedTrackMaterial
         ];
         const snap = this.captureDetectorPartRenderState();
         try {
@@ -4177,7 +4225,9 @@ export class EventDisplayComponent implements AfterViewInit, OnDestroy {
       this.postiveTrackMaterial,
       this.negativeTrackMaterial,
       this.bachelorTrackMaterial,
-      this.highlightTrackMaterial
+      this.highlightTrackMaterial,
+      this.selectedTrackMaterial,
+      this.unselectedTrackMaterial
     ];
     materials.forEach((m: any) => m.resolution?.set(this.cam3DVP.z, this.cam3DVP.w));
     if (this.bloomPass?.enabled && this.composer) {

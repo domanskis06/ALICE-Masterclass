@@ -152,6 +152,12 @@
   font-weight: 600;
   line-height: 1.3;
 
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
   li::marker {
     color: var(--group-accent, #b71c1c);
     font-weight: 700;
@@ -160,6 +166,22 @@
   ::ng-deep sub {
     font-size: 0.72em;
   }
+}
+
+.nmf-sa-mission-step--done {
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.nmf-sa-mission-step-check {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+  color: #16a34a;
 }
 
 .nmf-sa-mission-footer {
@@ -289,4 +311,43 @@
     color: var(--va-text, #ffffff);
     font-weight: 700;
   }
+}
+
+/* Multiplicity card: switch between the classes measured so far. */
+.nmf-sa-class-switch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.nmf-sa-class-switch-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--va-muted, rgba(15, 23, 42, 0.55));
+}
+
+.nmf-sa-class-chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1.5px solid var(--chip-accent, #94a3b8);
+  background: transparent;
+  color: var(--va-text, rgba(15, 23, 42, 0.75));
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nmf-sa-class-chip:hover {
+  background: color-mix(in srgb, var(--chip-accent, #94a3b8) 18%, transparent);
+}
+
+.nmf-sa-class-chip--active {
+  background: var(--chip-accent, #94a3b8);
+  color: #ffffff;
 }

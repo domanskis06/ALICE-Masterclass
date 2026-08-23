@@ -13,8 +13,9 @@ import { Subscription } from 'rxjs';
 
 import { RaaHeatmap, RaaHistogram, RaaSeries } from '../../shared/models/raa/spectrum';
 import { centralityColor, centralityImpactOffset } from '../../shared/utils/raa-centrality';
-import { HUE_DATA, HUE_FILL, HUE_NORM, HUE_OUTPUT } from '../blockly-workspace/raa-blockly';
 import { NmfPlotDialogComponent } from '../plot-dialog/plot-dialog.component';
+import { MISSION_GROUPS, NmfSaMissionStep } from '../sa-tutorial/sa-tutorial.constants';
+import { NmfSaTutorialService } from '../sa-tutorial/sa-tutorial.service';
 import { histogramAsSeries, NmfSeriesMode } from '../series-plot/series-plot.component';
 
 /** Everything a plot card needs; the enlarged dialog renders the same object. */
@@ -57,6 +58,12 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() raa: RaaSeries[] = [];
   @Input() rcp: RaaSeries[] = [];
   @Input() multiplicity: RaaHistogram | null = null;
+  /**
+   * Every class whose multiplicity has been measured. The card shows one at a
+   * time; `multiplicityClass` picks which, and the switcher above the plot only
+   * appears once there is more than one to compare.
+   */
+  @Input() multiplicities: RaaHistogram[] = [];
   @Input() multVsCentrality: RaaHeatmap | null = null;
   /** Drawn beside the measured spectrum once the recipe has loaded it. */
   @Input() ppReference: RaaSeries | null = null;
@@ -76,6 +83,36 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
    */
   activeCardKey: string | null = null;
 
+  /** Centrality shown on the multiplicity card; null = whichever came last. */
+  multiplicityClass: string | null = null;
+
+  /** The histogram the multiplicity card should draw right now. */
+  private get shownMultiplicity(): RaaHistogram | null {
+    if (this.multiplicityClass) {
+      const picked = this.multiplicities.find(
+        (h) => h.centrality === this.multiplicityClass,
+      );
+      if (picked) {
+        return picked;
+      }
+    }
+    return this.multiplicity ?? this.multiplicities[this.multiplicities.length - 1] ?? null;
+  }
+
+  /** Classes offered by the switcher; empty until two exist to switch between. */
+  get multiplicityClasses(): RaaHistogram[] {
+    return this.multiplicities.length > 1 ? this.multiplicities : [];
+  }
+
+  selectMultiplicityClass(centrality: string): void {
+    this.multiplicityClass = centrality;
+    this.cards = this.buildCards();
+  }
+
+  isMultiplicityClassActive(centrality: string): boolean {
+    return this.shownMultiplicity?.centrality === centrality;
+  }
+
   /**
    * Cards that appeared but were not the one auto-selected — e.g. a student
    * who builds both `Fill multiplicity histogram` and `Plot multiplicity vs
@@ -90,49 +127,20 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
    * Empty-state brief, grouped under the four toolbox categories instead of a
    * flat 1–10 list — the same categories and colours as the build column, so
    * the two halves of the page read as one plan rather than a wall of text
-   * next to an unrelated block palette.
+   * next to an unrelated block palette. Shared with the docked strip so both
+   * views (and the checkmark) agree on what each step requires.
    */
-  readonly missionGroups: { name: string; accent: string; steps: string[] }[] = [
-    {
-      name: 'Events',
-      accent: HUE_DATA,
-      steps: [
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_1',
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_2',
-      ],
-    },
-    {
-      name: 'Tracks',
-      accent: HUE_FILL,
-      steps: [
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_3',
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_4',
-      ],
-    },
-    {
-      name: 'Normalise',
-      accent: HUE_NORM,
-      steps: [
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_5',
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_6',
-      ],
-    },
-    {
-      name: 'References & plot',
-      accent: HUE_OUTPUT,
-      steps: [
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_7',
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_8',
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_9',
-        'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_10',
-      ],
-    },
-  ];
+  readonly missionGroups = MISSION_GROUPS;
 
   constructor(
     private readonly dialog: MatDialog,
     private readonly translate: TranslateService,
+    private readonly tutorial: NmfSaTutorialService,
   ) {}
+
+  stepDone(step: NmfSaMissionStep): boolean {
+    return this.tutorial.isMissionStepDone(step);
+  }
 
   private langChange?: Subscription;
 
@@ -208,7 +216,13 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
     // at. The LAST newly-added card is the better guess: it is the most
     // advanced result the chain just unlocked.
     const added = this.cards.filter((c) => !previousKeys.has(c.key));
-    if (added.length) {
+    // During the guided tour, Run fires once per gated step and each one
+    // typically unlocks exactly one new card — auto-jumping every time made
+    // switching back to an earlier plot to compare it pointless, since the
+    // very next Run yanked the view away again. The tour never depends on
+    // which tab is showing, so it's safe to just flag new cards as unseen
+    // and leave the student's own tab choice alone while it's running.
+    if (added.length && !this.tutorial.isActive()) {
       for (const card of added) {
         this.unseenCardKeys.add(card.key);
       }
@@ -216,8 +230,12 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
       this.unseenCardKeys.delete(this.activeCardKey);
       return;
     }
+    for (const card of added) {
+      this.unseenCardKeys.add(card.key);
+    }
     if (!this.cards.some((c) => c.key === this.activeCardKey)) {
       this.activeCardKey = this.cards[0]?.key ?? null;
+      this.unseenCardKeys.delete(this.activeCardKey ?? '');
     }
   }
 
@@ -245,8 +263,9 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
     const t = (key: string) => this.translate.instant(key) as string;
     const prefix = 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.';
 
-    if (this.multiplicity) {
-      const histogram = histogramAsSeries(this.multiplicity);
+    const multiplicity = this.shownMultiplicity;
+    if (multiplicity) {
+      const histogram = histogramAsSeries(multiplicity);
       cards.push({
         key: 'multiplicity',
         kind: 'series',
@@ -262,9 +281,9 @@ export class NmfRaaPlotsComponent implements OnInit, OnChanges, OnDestroy {
         verticalLine: meanOf(histogram),
         verticalLineLabel: t(`${prefix}META_MEAN`),
         yDomain: null,
-        centrality: this.multiplicity.centrality,
-        meta: [{ labelKey: `${prefix}META_EVENTS`, value: String(this.multiplicity.entries) }],
-        stats: [{ label: t(`${prefix}META_EVENTS`), value: String(this.multiplicity.entries) }],
+        centrality: multiplicity.centrality,
+        meta: [{ labelKey: `${prefix}META_EVENTS`, value: String(multiplicity.entries) }],
+        stats: [{ label: t(`${prefix}META_EVENTS`), value: String(multiplicity.entries) }],
         footerKey: `${prefix}FOOTER_MULTIPLICITY`,
       });
     }

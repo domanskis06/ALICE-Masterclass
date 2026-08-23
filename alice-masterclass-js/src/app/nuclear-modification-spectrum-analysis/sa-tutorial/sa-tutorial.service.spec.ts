@@ -1,4 +1,5 @@
 import {
+  MISSION_GROUPS,
   NMF_SA_GATES,
   NMF_SA_STEP_HIST_PT,
   NMF_SA_STEP_LOAD_EVENTS,
@@ -7,13 +8,20 @@ import {
 } from './sa-tutorial.constants';
 import { NmfSaTutorialService } from './sa-tutorial.service';
 
+const missionStep = (labelKey: string) =>
+  MISSION_GROUPS.flatMap((group) => group.steps).find((step) => step.labelKey === labelKey)!;
+
 /** Just enough of driver.js's `Driver` surface for `evaluateGate` to call. */
 function fakeDriver(activeIndex: number) {
+  const state = { index: activeIndex };
+  const moveNext = jasmine.createSpy('moveNext').and.callFake(() => {
+    state.index += 1;
+  });
   return {
     isActive: () => true,
-    getActiveIndex: () => activeIndex,
+    getActiveIndex: () => state.index,
     refresh: () => undefined,
-    moveNext: jasmine.createSpy('moveNext'),
+    moveNext,
   };
 }
 
@@ -73,6 +81,63 @@ describe('NmfSaTutorialService', () => {
     ]);
     service.notifyRunCompleted(1);
     expect(category).toBeNull();
+  });
+
+  it('mission step checkmarks stay checked even after the recipe changes again', () => {
+    const step = missionStep('NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_1');
+    service.notifyRecipeChanged([
+      { kind: 'load_events' },
+      { kind: 'if_centrality', centrality: '0-5' },
+    ]);
+    service.notifyRunCompleted(0);
+    expect(service.isMissionStepDone(step)).toBeTrue();
+
+    // Blocks removed, nothing re-run — a live kind/run check would flip this
+    // back to false; the sticky checklist must not.
+    service.notifyRecipeChanged([]);
+    expect(service.isMissionStepDone(step)).toBeTrue();
+  });
+
+  it('does not check off multiplicity vs centrality when the run warned it needs all events', () => {
+    const step = missionStep('NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.MISSION_STEP_4');
+    service.notifyRecipeChanged([
+      { kind: 'load_events' },
+      { kind: 'if_centrality', centrality: '0-5' },
+      { kind: 'plot_mult_vs_centrality' },
+    ]);
+    service.notifyRunCompleted(0, [
+      { key: 'MULT_VS_CENTRALITY_NEEDS_ALL_EVENTS', severity: 'warning' },
+    ]);
+    expect(service.isMissionStepDone(step)).toBeFalse();
+
+    // Fixed (filter removed) and re-run clean: now it may check off, and stays checked.
+    service.notifyRecipeChanged([
+      { kind: 'load_events' },
+      { kind: 'plot_mult_vs_centrality' },
+    ]);
+    service.notifyRunCompleted(0);
+    expect(service.isMissionStepDone(step)).toBeTrue();
+  });
+
+  it('walks through every gate a single Build-it-for-me satisfies at once', (done) => {
+    // The whole recipe appears in one go, so the gates of several consecutive
+    // steps come true together; the tour has to follow them, not stop after
+    // the first. It should stop at the first gate needing a Run.
+    const driver = fakeDriver(NMF_SA_STEP_LOAD_EVENTS);
+    (service as unknown as { driverInstance: unknown }).driverInstance = driver;
+
+    service.notifyRecipeChanged([
+      { kind: 'load_events' },
+      { kind: 'if_centrality', centrality: '0-5' },
+      { kind: 'count_events' },
+      { kind: 'fill_multiplicity' },
+    ] as never);
+
+    setTimeout(() => {
+      // Advanced off LOAD_EVENTS, then stopped: HIST_MULTIPLICITY needs a Run.
+      expect(driver.getActiveIndex()).toBe(NMF_SA_STEP_LOAD_EVENTS + 1);
+      done();
+    }, 30);
   });
 
   it('advances exactly one step even when Blockly fires several change events for one drag', (done) => {

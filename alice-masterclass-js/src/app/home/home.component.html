@@ -3,18 +3,53 @@
     {{ 'HOME.TITLE' | translate }}
   </h1>
 
-  <a href="https://alice.cern" id="logo">
-    <img fxFlex="grow" src="assets/home/alice_logo.png">
-  </a>
-
-  <div id="text" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutAlign="center center" fxLayoutGap="20px">
-    <div fxFlex="grow">
-      <p [innerHtml]="'HOME.P1' | translate"></p>
-      <p [innerHtml]="'HOME.P2' | translate"></p>
-      <p [innerHtml]="'HOME.P3' | translate"></p>
+  @if (demo.enabled) {
+    <!-- The demo has no instructor to introduce the physics, so the landing page
+         is the exercises themselves: a screenshot of each says more about what
+         the student is about to do than three paragraphs about the quark-gluon
+         plasma, which is why they replace the description block below. -->
+    <div id="demo-tiles">
+      <h2 class="demo-tiles-title">{{ 'HOME.DEMO_TILES_TITLE' | translate }}</h2>
+      <div class="demo-tiles-row">
+        @for (tile of demoTiles; track tile.route) {
+          <a
+            class="demo-tile"
+            [routerLink]="tile.route"
+            [attr.data-testid]="tile.testId"
+          >
+            <span
+              class="demo-tile-shot"
+              [style.background-image]="'url(' + tile.image + ')'"
+              [style.background-position]="tile.focus"
+              aria-hidden="true"
+            ></span>
+            <span class="demo-tile-label">{{ tile.labelKey | translate }}</span>
+          </a>
+        }
+      </div>
     </div>
-    <div fxFlex="grow"><img fxFlex="grow" src="assets/home/alice-detector.png"></div>
-  </div>
+  } @else {
+    <a href="https://alice.cern" id="logo">
+      <img fxFlex="grow" src="assets/home/alice_logo.png">
+    </a>
+
+    <div id="text" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutAlign="center center" fxLayoutGap="20px">
+      <div fxFlex="grow">
+        <p [innerHtml]="'HOME.P1' | translate"></p>
+        <p [innerHtml]="'HOME.P2' | translate"></p>
+        <p [innerHtml]="'HOME.P3' | translate"></p>
+      </div>
+      <div fxFlex="grow"><img fxFlex="grow" src="assets/home/alice-detector.png"></div>
+    </div>
+  }
+
+  @if (demo.enabled) {
+    <!-- Demo: the logo is not a corner mark any more — the tiles own the top of
+         the page — so it joins the credits, centred above the funding row. -->
+    <a href="https://alice.cern" id="logo-bottom">
+      <img src="assets/home/alice_logo.png" alt="ALICE">
+    </a>
+  }
 
   <div id="flags" fxLayout="row" fxLayout.xs="column" fxLayout.sm="column" fxLayoutAlign="space-around">
     <div class="flags-row" fxFlex="grow" fxLayout="row" fxLayoutAlign="space-around">

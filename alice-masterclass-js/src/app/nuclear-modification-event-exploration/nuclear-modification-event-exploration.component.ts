@@ -21,6 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { Event, Track, TrackType } from '../shared/models';
 import { RaaEventRole, RaaEventSummary } from '../shared/models/raa/raa';
+import { NmfSystem, systemOfRole } from './event-characteristics/event-characteristics.component';
 import { InstructionsProvider } from '../shared/interfaces';
 import { RaaDataService } from '../services/raa-data.service';
 import { ApiService } from '../shared/services/api.service';
@@ -55,6 +56,25 @@ function isPrimaryTrack(track: Track): boolean {
 function passesPrimaryFilter(track: Track): boolean {
   return isPrimaryTrack(track) && track.sign !== 0;
 }
+
+/**
+ * The first event of every pack is the 7 TeV pp collision recorded with the
+ * magnet off, so its tracks are straight lines. It is there to be looked at and
+ * explained, not measured: it belongs to no centrality class, its multiplicity
+ * is not comparable with the others, and counting it would bias the pp
+ * reference. Excluded from the histograms and from the upload requirement.
+ */
+function isDemonstrationEvent(index: number): boolean {
+  return index === 0;
+}
+
+/**
+ * Event the tutorial runs its "click every primary" challenge on: the first
+ * real collision, right after the magnet-off demonstration. `metadata.json`
+ * puts a deliberately low-multiplicity event here so clicking them all is a
+ * short exercise rather than a chore.
+ */
+const NMF_EE_PICK_EVENT_INDEX = 1;
 
 /** Desktop `Raa::EventDisplay::NewEvent` labels — index → i18n key under EVENT_EXPLORATION. */
 const EVENT_ROLE_LABEL_KEYS: Record<RaaEventRole, string> = {
@@ -130,7 +150,17 @@ export class NuclearModificationEventExplorationComponent
   tracksShown = true;
   decaysShown = true;
   secondaryTracksShown = true;
-  clusterSize = 0.1;
+  /** Companion to the secondary toggle: hide the tracks the filter keeps. */
+  primaryTracksShown = true;
+  /**
+   * Set once the student's filter has run on this event: the tracks it keeps
+   * are drawn in the selected colour, the rejected ones stay in the plain one.
+   * Cleared when moving to another event, so each one is analysed fresh.
+   */
+  filterHighlightActive = false;
+  /** Passed to the event display; null until the filter has run on this event. */
+  filterSelectedIndices: ReadonlySet<number> | null = null;
+  clusterSize = 0.05;
   trackWidth = 2;
   cameraMode: 'centered' | 'free' = 'centered';
 
@@ -160,6 +190,10 @@ export class NuclearModificationEventExplorationComponent
   resultsTabIndex = 0;
   filterBuilderOpen = false;
   filterReady = false;
+  /** Skip branch only: shows the filter builder's "Build it for me" escape hatch. */
+  tutorialSkipped = false;
+  /** Workshop path: the hand-picking sequence has been started for this pack. */
+  private workshopPickStarted = false;
   marqueeMode = false;
   /** Tutorial: lock Next until every primary on event 1 is clicked. */
   nextEventLocked = false;
@@ -170,6 +204,13 @@ export class NuclearModificationEventExplorationComponent
   private datasetPromptOpened = false;
   /** Start the main tour once a dataset event has loaded (after welcome → Start). */
   private pendingTourStart = false;
+  /** Skipped tutorial: open the filter builder once a dataset is in place. */
+  private pendingFilterPrompt = false;
+
+  /** Który komplet histogramów pokazuje panel charakterystyk. */
+  charSystem: NmfSystem = 'pp';
+  /** Układy, dla których student widział już pierwsze zderzenie. */
+  private systemsSeen = new Set<NmfSystem>();
 
   /** True while Shift is held — arms the marquee layer so OrbitControls stay free otherwise. */
   shiftHeld = false;
@@ -189,8 +230,12 @@ export class NuclearModificationEventExplorationComponent
     this.eventIndex = 0;
     this.visitedByIndex.clear();
     this.analyzedByIndex.clear();
+    this.emptyByIndex.clear();
+    this.workshopPickStarted = false;
     this.analysisRecords.clear();
     this.analysisRecordsList = [];
+    this.systemsSeen.clear();
+    this.charSystem = 'pp';
     this.resultsTabIndex = 0;
     this.characteristics?.resetSession();
     this.selectedTrack = null;
@@ -263,6 +308,13 @@ export class NuclearModificationEventExplorationComponent
         this.cdr.detectChanges();
       },
       ensureFirstEvent: () => {
+        if (this.eventIndex === NMF_EE_PICK_EVENT_INDEX) {
+          return;
+        }
+        this.eventIndex = NMF_EE_PICK_EVENT_INDEX;
+        this.loadCurrentEvent();
+      },
+      showDemonstrationEvent: () => {
         if (this.eventIndex === 0) {
           return;
         }
@@ -364,17 +416,39 @@ export class NuclearModificationEventExplorationComponent
     this.syncDisplayEvent();
   }
 
+  onPrimaryTracksShownChange(): void {
+    this.syncDisplayEvent();
+  }
+
   get allEventsAnalyzed(): boolean {
     const n = this.maxEvents;
     if (n === 0) {
       return false;
     }
     for (let i = 0; i < n; i++) {
-      if (!this.analyzedByIndex.has(i)) {
+      if (isDemonstrationEvent(i)) {
+        continue;
+      }
+      // A handful of converted events genuinely contain no reconstructed
+      // tracks, so they can never be marked analysed; requiring them would
+      // make the upload unreachable in most datasets.
+      if (!this.analyzedByIndex.has(i) && this.eventHasTracks(i) !== false) {
         return false;
       }
     }
     return true;
+  }
+
+  /**
+   * Tracks known to be empty, by index. Only filled in as events are visited —
+   * an unvisited index reports `undefined`, which `allEventsAnalyzed` treats as
+   * "still to do".
+   */
+  private readonly emptyByIndex = new Map<number, boolean>();
+
+  private eventHasTracks(index: number): boolean | undefined {
+    const empty = this.emptyByIndex.get(index);
+    return empty === undefined ? undefined : !empty;
   }
 
   onGoSpectrum(): void {
@@ -428,7 +502,22 @@ export class NuclearModificationEventExplorationComponent
     this.eeTutorial.notifyFilterSubmitted();
   }
 
+  /**
+   * The "why we do not click forever" note belongs to the moment right after
+   * the workshop student has hand-picked one event's primaries — not to every
+   * later visit to the builder.
+   */
+  get showHandPickingNote(): boolean {
+    return this.tutorialSkipped && this.workshopPickStarted && !this.filterReady;
+  }
+
   onFilterBuilderClosed(): void {
+    // Krzyżyk pojawia się dopiero po przyjęciu filtra (patrz [dismissible]),
+    // ale strażnik zostaje: zamknięcie przed tym krokiem przepuściłoby studenta
+    // do ćwiczenia bez narzędzia, którego ono wymaga.
+    if (!this.filterReady) {
+      return;
+    }
     this.filterBuilderOpen = false;
   }
 
@@ -527,15 +616,42 @@ export class NuclearModificationEventExplorationComponent
     // on the whole event (charged + primary); 3D keeps all primaries.
     const accepted = this.event.tracks.filter(passesPrimaryFilter);
     if (!this.analyzedByIndex.has(this.eventIndex)) {
-      this.characteristics?.recordAnalyzedEvent(this.event, accepted);
-      this.recordAnalysisEvent(accepted);
+      // The magnet-off demonstration event is shown, not measured — see
+      // `isDemonstrationEvent`. Marking it analysed still lights its tick, so
+      // the student sees they are done with it; it just contributes nothing.
+      if (!isDemonstrationEvent(this.eventIndex)) {
+        const role = this.eventRoles[this.eventIndex] ?? roleForIndex(this.eventIndex);
+        this.characteristics?.recordAnalyzedEvent(this.event, accepted, role);
+        this.recordAnalysisEvent(accepted);
+      }
       this.analyzedByIndex.add(this.eventIndex);
     }
-    // 3D view: hide secondaries only — keep all primaries (and decays). Never
-    // replace displayEvent.tracks with the marquee subset (empty/partial wipe).
-    this.secondaryTracksShown = false;
+    // 3D view: paint what the filter kept instead of deleting what it rejected.
+    // Removing the secondaries hid the very thing the filter is about — the
+    // student never saw which tracks the rule threw away, only that the picture
+    // got emptier. Colouring shows both halves side by side.
+    this.filterHighlightActive = true;
     this.syncDisplayEvent();
     this.eeTutorial.notifyEventAnalyzed();
+  }
+
+  onCharSystemChange(system: NmfSystem): void {
+    this.charSystem = system;
+  }
+
+  /**
+   * Pierwsze zderzenie danego układu przełącza panel na jego histogramy.
+   * Tylko pierwsze: potem student sam decyduje, na co patrzy, i ręczny wybór
+   * nie ma prawa uciekać mu spod palca przy każdej zmianie zderzenia.
+   */
+  private followSystemOfCurrentEvent(): void {
+    const role = this.eventRoles[this.eventIndex] ?? roleForIndex(this.eventIndex);
+    const system = systemOfRole(role);
+    if (this.systemsSeen.has(system)) {
+      return;
+    }
+    this.systemsSeen.add(system);
+    this.charSystem = system;
   }
 
   private maybeOpenDatasetPrompt(): void {
@@ -574,10 +690,12 @@ export class NuclearModificationEventExplorationComponent
             this.maybeOpenDatasetPrompt();
           }
         } else if (start === false) {
-          // Skip for this page load only (resets on refresh).
+          // Workshop path: the instructor is talking the group through the
+          // events, so nothing is forced — no guided tour, no dataset prompt
+          // and no filter builder popping up. The student picks a dataset from
+          // the menu when told to, and opens the filter builder themselves.
           this.eeTutorial.dismiss();
-          this.filterReady = true;
-          this.maybeOpenDatasetPrompt();
+          this.tutorialSkipped = true;
         } else {
           this.maybeOpenDatasetPrompt();
         }
@@ -590,6 +708,8 @@ export class NuclearModificationEventExplorationComponent
     this.displayEvent = { tracks: [], decays: [], clusters: [] };
     this.selectedTrack = null;
     this.pickedPrimaryIndices.clear();
+    this.filterHighlightActive = false;
+    this.filterSelectedIndices = null;
     this.eventDisplay?.setEmphasizedTrackIndices([]);
   }
 
@@ -604,7 +724,7 @@ export class NuclearModificationEventExplorationComponent
   }
 
   private handleTutorialPrimaryPick(track: Track & { trackIndex?: number }): void {
-    if (this.eventIndex !== 0) {
+    if (this.eventIndex !== NMF_EE_PICK_EVENT_INDEX) {
       return;
     }
     let index = track.trackIndex;
@@ -638,6 +758,27 @@ export class NuclearModificationEventExplorationComponent
     this.eeTutorial.notifyPrimaryPickProgress(this.pickedPrimaryIndices.size, total);
   }
 
+  /**
+   * Workshop path: on reaching the hand-picking event, hand over to the
+   * tutorial's own steps for that stretch — click every primary, move on, hear
+   * why nobody does this by hand, and land in the filter builder. Same steps
+   * the guided tour uses, so there is one implementation of them.
+   */
+  private syncWorkshopPickChallenge(): void {
+    if (
+      !this.tutorialSkipped ||
+      this.workshopPickStarted ||
+      this.filterReady ||
+      this.eeTutorial.isActive() ||
+      this.eventIndex !== NMF_EE_PICK_EVENT_INDEX ||
+      this.event.tracks.length === 0
+    ) {
+      return;
+    }
+    this.workshopPickStarted = true;
+    this.eeTutorial.startHandPickingSequence();
+  }
+
   private loadCurrentEvent(): void {
     if (this.datasetID == null) {
       this.clearDisplayedEvent();
@@ -651,7 +792,10 @@ export class NuclearModificationEventExplorationComponent
     const datasetId = this.datasetID;
     this.visitedByIndex.add(this.eventIndex);
     this.selectedTrack = null;
-    if (!(this.primaryPickChallengeActive && this.eventIndex === 0)) {
+    // Each event is filtered on its own — carrying the highlight over would
+    // colour the next event's tracks before its filter has run.
+    this.filterHighlightActive = this.analyzedByIndex.has(this.eventIndex);
+    if (!(this.primaryPickChallengeActive && this.eventIndex === NMF_EE_PICK_EVENT_INDEX)) {
       this.pickedPrimaryIndices.clear();
       this.eventDisplay?.setEmphasizedTrackIndices([]);
     }
@@ -662,18 +806,25 @@ export class NuclearModificationEventExplorationComponent
           return;
         }
         this.event = ev;
+        this.emptyByIndex.set(this.eventIndex, (ev.tracks?.length ?? 0) === 0);
         this.syncDisplayEvent();
+        this.syncWorkshopPickChallenge();
         this.loading = false;
         queueMicrotask(() => {
           this.eventDisplay?.skipMultipartDetectorAssembly(this.ALICE_DETECTOR_MODEL);
           this.eventDisplay?.hideOuterDetectorPartsAfterAssembly();
-          if (this.primaryPickChallengeActive && this.eventIndex === 0) {
+          if (this.primaryPickChallengeActive && this.eventIndex === NMF_EE_PICK_EVENT_INDEX) {
             this.syncPrimaryPickEmphasis();
             this.reportPrimaryPickProgress();
           }
           if (this.pendingTourStart) {
             this.pendingTourStart = false;
             this.eeTutorial.startMainTour();
+          }
+          this.followSystemOfCurrentEvent();
+          if (this.pendingFilterPrompt) {
+            this.pendingFilterPrompt = false;
+            this.filterBuilderOpen = true;
           }
         });
       },
@@ -688,16 +839,31 @@ export class NuclearModificationEventExplorationComponent
 
   private syncDisplayEvent(): void {
     // Before analysis: always show the full event (toggle is hidden).
-    // After analysis: respect Secondary tracks toggle (default off).
+    // After analysis: respect Secondary tracks toggle (default on — the filter
+    // now marks its selection by colour, so hiding the rest is a separate,
+    // optional step rather than the way the result is shown).
     const showSecondaries = !this.isCurrentEventDone || this.secondaryTracksShown;
-    if (showSecondaries) {
-      this.displayEvent = this.event;
-      return;
+    const keep = (t: Track) =>
+      (isSecondaryTrack(t) ? showSecondaries : this.primaryTracksShown);
+    this.displayEvent =
+      showSecondaries && this.primaryTracksShown
+        ? this.event
+        : { ...this.event, tracks: this.event.tracks.filter(keep) };
+    this.filterSelectedIndices = this.buildFilterSelection(this.displayEvent.tracks);
+  }
+
+  /** Indices (into the *displayed* track list) the student's filter keeps. */
+  private buildFilterSelection(tracks: Track[]): ReadonlySet<number> | null {
+    if (!this.filterHighlightActive) {
+      return null;
     }
-    this.displayEvent = {
-      ...this.event,
-      tracks: this.event.tracks.filter((t) => !isSecondaryTrack(t)),
-    };
+    const selected = new Set<number>();
+    tracks.forEach((track, index) => {
+      if (passesPrimaryFilter(track)) {
+        selected.add(index);
+      }
+    });
+    return selected;
   }
 
   /** Snapshot multiplicities / p_T for the R_AA Analysis tab. */

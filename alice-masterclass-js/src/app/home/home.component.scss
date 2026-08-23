@@ -11,6 +11,82 @@ img {
   height: 100%;
 }
 
+#demo-tiles {
+  /* The tiles are the demo landing page, so they run nearly edge to edge
+     rather than sitting in a column — just enough gutter to keep them off
+     the viewport edge. */
+  margin: 1.5rem 2% 1rem;
+  text-align: center;
+}
+
+.demo-tiles-title {
+  margin: 0 0 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4a4a4a;
+}
+
+.demo-tiles-row {
+  display: grid;
+  /* Three equal columns while they fit; below that they stack rather than
+     shrinking into stamps. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+
+  @media screen and (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.demo-tile {
+  position: relative;
+  /* One shape for all three, so three differently-cropped screenshots still
+     read as a set. */
+  aspect-ratio: 3 / 2;
+  border-radius: 10px;
+  overflow: hidden;
+  /* Brand red sits under the screenshot: at 70% opacity it tints every preview
+     the same way, which ties the three together without hiding what they show. */
+  background: #b71c1c;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  }
+}
+
+.demo-tile-shot {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.demo-tile:hover .demo-tile-shot,
+.demo-tile:focus-visible .demo-tile-shot {
+  opacity: 0.85;
+}
+
+.demo-tile-label {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2.2rem 0.75rem 0.7rem;
+  /* Gradient rather than a solid bar: the title stays legible over a pale
+     screenshot without boxing off the bottom of the image. */
+  background: linear-gradient(to top, rgba(94, 10, 10, 0.92), rgba(94, 10, 10, 0));
+  color: #ffffff;
+  font-size: clamp(1.05rem, 1.4vw, 1.35rem);
+  font-weight: 700;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
 #text {
   margin-left: 10%;
   margin-right: 10%;
@@ -18,6 +94,19 @@ img {
   p {
     font-size: 1.15rem;
     text-align: justify;
+  }
+}
+
+/* Demo only: the logo sits centred just above the funding row instead of
+   floating in the top-left corner, which the exercise tiles now occupy. */
+#logo-bottom {
+  display: block;
+  width: 7em;
+  margin: 1.5rem auto 0.75rem;
+
+  img {
+    width: 100%;
+    height: auto;
   }
 }
 

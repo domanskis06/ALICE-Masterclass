@@ -20,8 +20,11 @@ import {
   appendRecipeBlocks,
   buildRaaToolbox,
   createRaaLightTheme,
+  fullRecipe,
+  placeRecipeStack,
   recipeFromWorkspace,
   registerRaaBlocks,
+  wholeSampleRecipe,
 } from './raa-blockly';
 
 /** Categories, in the order `buildRaaToolbox` lists them. */
@@ -104,6 +107,22 @@ export class NmfBlocklyWorkspaceComponent implements AfterViewInit, OnDestroy {
 
   clearWorkspace(): void {
     this.workspace?.clear();
+    this.emitRecipe();
+  }
+
+  /**
+   * Replace the canvas with the complete solution: the whole-sample stack
+   * (multiplicity vs centrality, which must not sit under a class filter) and
+   * beside it the measurement, looped over the five centrality classes.
+   */
+  buildFullRecipe(): void {
+    if (!this.workspace) {
+      return;
+    }
+    this.workspace.clear();
+    placeRecipeStack(this.workspace, wholeSampleRecipe(), 40, 40);
+    placeRecipeStack(this.workspace, fullRecipe(), 340, 40);
+    this.workspace.scrollCenter();
     this.emitRecipe();
   }
 

@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NmfRaaPlotsComponent } from './raa-plots.component';
 import { RaaHeatmap, RaaHistogram, RaaSeries } from '../../shared/models/raa/spectrum';
 import { centralityColor } from '../../shared/utils/raa-centrality';
+import { NmfSaTutorialService } from '../sa-tutorial/sa-tutorial.service';
 
 function series(centrality: string, unit?: string): RaaSeries {
   return {
@@ -50,6 +51,7 @@ describe('NmfRaaPlotsComponent', () => {
           provide: MatDialog,
           useValue: { open: (_: unknown, config: unknown) => opened.push(config) },
         },
+        NmfSaTutorialService,
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();

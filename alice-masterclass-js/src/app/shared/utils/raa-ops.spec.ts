@@ -39,9 +39,9 @@ function flatSample(overrides: Partial<RaaTrackSample> = {}): RaaTrackSample {
 }
 
 describe('raa-ops binnings', () => {
-  it('every binning starts and ends on the ALICE range', () => {
+  it('the fixed binning spans 0.2 to 15 GeV/c', () => {
     for (const binning of allBinnings()) {
-      expect(binning.edges[0]).toBeCloseTo(0.15, 6);
+      expect(binning.edges[0]).toBeCloseTo(0.2, 6);
       expect(binning.edges[binning.edges.length - 1]).toBeCloseTo(15, 6);
     }
   });
@@ -54,11 +54,10 @@ describe('raa-ops binnings', () => {
     }
   });
 
-  it('marks the ALICE binning as non-uniform and the 1 GeV/c one as uniform apart from the clipped last bin', () => {
-    expect(binningOf('alice').uniform).toBeFalse();
-    const equal = binningOf('equal-1');
-    const widths = widthsOf(equal.edges);
-    expect(widths.slice(0, -1).every((w) => Math.abs(w - 1) < 1e-9)).toBeTrue();
+  it('is uniform: every bin is exactly 0.2 GeV/c wide', () => {
+    const fixed = binningOf('fixed');
+    expect(fixed.uniform).toBeTrue();
+    expect(widthsOf(fixed.edges).every((w) => Math.abs(w - 0.2) < 1e-9)).toBeTrue();
   });
 
   it('bin centres lie inside their bins', () => {
@@ -77,9 +76,14 @@ describe('raa-ops binnings', () => {
 });
 
 describe('raa-ops histogramming', () => {
-  it('conserves tracks: the histogram holds every entry of the fine tally', () => {
+  it('conserves every track at or above the first bin edge', () => {
     const sample = flatSample();
-    const total = sample.counts.reduce((a, b) => a + b, 0);
+    // The fixed grid starts at 0.2 GeV/c, the fine tally at 0.15, so the five
+    // fine bins below the first edge are outside every binning by design.
+    const belowFirstEdge = 5;
+    const total = sample.counts
+      .slice(belowFirstEdge)
+      .reduce((a, b) => a + b, 0);
     for (const binning of allBinnings()) {
       const spectrum = histogramPt(sample, binning.id);
       const filled = spectrum.counts.reduce((a, b) => a + b, 0);
@@ -88,7 +92,7 @@ describe('raa-ops histogramming', () => {
   });
 
   it('starts as raw counts with sqrt(N) uncertainties', () => {
-    const spectrum = histogramPt(flatSample(), 'alice');
+    const spectrum = histogramPt(flatSample(), 'fixed');
     expect(spectrum.unit).toEqual({
       perGeV: false,
       perEvent: false,
@@ -105,14 +109,14 @@ describe('raa-ops histogramming', () => {
     for (let i = Math.round((10 - 0.15) / 0.01); i < counts.length; i++) {
       counts[i] = 0;
     }
-    const spectrum = histogramPt(flatSample({ counts }), 'alice');
+    const spectrum = histogramPt(flatSample({ counts }), 'fixed');
     const lastEmpty = spectrum.empty[spectrum.empty.length - 1];
     expect(lastEmpty).toBeTrue();
     expect(spectrum.empty[0]).toBeFalse();
   });
 
   it('a pT cut drops soft fine bins before the histogram is filled', () => {
-    const spectrum = histogramPt(flatSample(), 'alice', 1.0);
+    const spectrum = histogramPt(flatSample(), 'fixed', 1.0);
     const firstKept = spectrum.edges.findIndex((_, i) => i < spectrum.edges.length - 1 && spectrum.edges[i] >= 1.0);
     expect(spectrum.empty[0]).toBeTrue();
     expect(spectrum.values.some((v, i) => !spectrum.empty[i] && spectrum.edges[i] >= 1.0)).toBeTrue();
@@ -124,7 +128,7 @@ describe('raa-ops normalisations', () => {
   it('divide by bin width removes the binning from the shape', () => {
     // One track per 0.01 GeV/c means a bin holds 100 tracks per GeV/c everywhere,
     // so after the division every bin must agree — however uneven the binning.
-    const spectrum = divideByBinWidth(histogramPt(flatSample(), 'alice'));
+    const spectrum = divideByBinWidth(histogramPt(flatSample(), 'fixed'));
     for (const value of spectrum.values) {
       expect(value).toBeCloseTo(100, 6);
     }
@@ -133,21 +137,21 @@ describe('raa-ops normalisations', () => {
   });
 
   it('divisions by a constant leave the fractional uncertainty untouched', () => {
-    const base = histogramPt(flatSample(), 'alice');
+    const base = histogramPt(flatSample(), 'fixed');
     const scaled = divideByNColl(divideByEvents(divideByBinWidth(base), 100), 1500);
     expect(scaled.relErr).toEqual(base.relErr);
     expect(scaled.counts).toEqual(base.counts);
   });
 
   it('the three constant divisions commute', () => {
-    const base = histogramPt(flatSample(), 'alice');
+    const base = histogramPt(flatSample(), 'fixed');
     const a = divideByNColl(divideByEvents(divideByBinWidth(base), 100), 1500);
     const b = divideByBinWidth(divideByNColl(divideByEvents(base, 100), 1500));
     a.values.forEach((value, i) => expect(value).toBeCloseTo(b.values[i], 12));
   });
 
   it('dividing two spectra adds the fractional uncertainties in quadrature', () => {
-    const base = histogramPt(flatSample(), 'alice');
+    const base = histogramPt(flatSample(), 'fixed');
     const ratio = divideBySpectrum(
       base,
       { values: base.values.map(() => 2), relErr: base.values.map(() => 0.1) },
@@ -159,7 +163,7 @@ describe('raa-ops normalisations', () => {
   });
 
   it('a bin with an empty denominator becomes empty rather than infinite', () => {
-    const base = histogramPt(flatSample(), 'alice');
+    const base = histogramPt(flatSample(), 'fixed');
     const denominator = {
       values: base.values.map((_, i) => (i === 3 ? 0 : 1)),
       relErr: base.values.map(() => 0.1),
@@ -176,12 +180,12 @@ describe('raa-ops normalisations', () => {
     expect(pp.unit.perNColl).toBeFalse();
   });
 
-  it('names the unit after the chain that was applied', () => {
-    const base = histogramPt(flatSample(), 'alice');
+  it('names the unit generically once any normalisation was applied', () => {
+    const base = histogramPt(flatSample(), 'fixed');
     expect(unitLabel(base.unit)).toBe('counts');
-    expect(unitLabel(divideByBinWidth(base).unit)).toBe('counts / GeV/c');
+    expect(unitLabel(divideByBinWidth(base).unit)).toBe('normalised yield');
     const full = divideByNColl(divideByEvents(divideByBinWidth(base), 100), 1500);
-    expect(unitLabel(full.unit)).toBe('counts / event / GeV/c / N_coll');
+    expect(unitLabel(full.unit)).toBe('normalised yield');
     expect(
       unitLabel(divideBySpectrum(full, { values: [1], relErr: [0] }, 'divide_pp').unit),
     ).toBe('ratio');

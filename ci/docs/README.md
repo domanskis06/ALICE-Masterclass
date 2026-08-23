@@ -34,6 +34,7 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 | [`changelog-visual-analysis-construction.md`](changelog-visual-analysis-construction.md) | VA guided detector assembly |
 | [`changelog-visual-analysis-model.md`](changelog-visual-analysis-model.md) | O2 → GLB pipeline + EventDisplay runtime merge/prune |
 | [`changelog-large-scale-analysis.md`](changelog-large-scale-analysis.md) | LSA driver.js tour + fit UX + demo layout notes |
+| [`changelog-nuclear-modification.md`](changelog-nuclear-modification.md) | R_AA parts 1–2: data corrections, fixed binning, R_CP fix, desktop parity |
 | [`changelog-demo-app.md`](changelog-demo-app.md) | Offline demo mode, persistence, enhancement LSA, CI/OKD |
 
 ## Testing

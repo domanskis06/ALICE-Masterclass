@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  Input,
   OnDestroy,
   Output,
   ViewChild,
@@ -16,6 +17,7 @@ import {
 } from '../../shared/blockly/nmf-docked-flyout';
 import {
   buildPrimaryFilterToolbox,
+  buildValidPrimaryFilter,
   createPrimaryFilterLightTheme,
   isValidPrimaryFilter,
   registerPrimaryFilterBlocks,
@@ -35,6 +37,27 @@ export class NmfFilterBuilderComponent implements AfterViewInit, OnDestroy {
 
   @Output() filterAccepted = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
+
+  /**
+   * Whether the panel may be dismissed. The host keeps this false until a valid
+   * filter has been submitted: building the filter is the one step the rest of
+   * the exercise depends on, so there must be no way to click past it.
+   */
+  @Input() dismissible = true;
+
+  /**
+   * Shows the "Build it for me" escape hatch. The host only sets this when the
+   * student skipped the guided tutorial — someone running the exercise without
+   * the tour still needs a way to get past this step.
+   */
+  @Input() autoBuildAvailable = false;
+
+  /**
+   * Shows the "why we do not click forever" note above the task. Set on the
+   * workshop path, where the builder opens right after the student has
+   * hand-picked every primary of one event and the point needs making.
+   */
+  @Input() showHandPickingNote = false;
 
   submitError = '';
   submitSuccess = '';
@@ -94,9 +117,12 @@ export class NmfFilterBuilderComponent implements AfterViewInit, OnDestroy {
     this.submitSuccess = '';
     if (!this.workspace || !isValidPrimaryFilter(this.workspace)) {
       this.submitError =
-        'Not quite. You need all three: (1) charged, using charge ≠ 0 or (charge = 1) OR (charge = −1); ' +
-        '(2) |DCA<sub>xy</sub>| &lt; primary DCA<sub>xy</sub> cut, wrapping DCA<sub>xy</sub> in the |…| block and using the xy cut; ' +
-        '(3) |DCA<sub>z</sub>| &lt; primary DCA<sub>z</sub> cut, the same but with the z cut, not the xy one.';
+        'Not quite. You need all three:' +
+        '<ul class="nmf-filter-error-list">' +
+        '<li>charged (hint: charge ≠ 0)</li>' +
+        '<li>|DCA<sub>xy</sub>| &lt; primary DCA<sub>xy</sub> cut</li>' +
+        '<li>|DCA<sub>z</sub>| &lt; primary DCA<sub>z</sub> cut</li>' +
+        '</ul>';
       return;
     }
     this.submitSuccess =
@@ -106,6 +132,15 @@ export class NmfFilterBuilderComponent implements AfterViewInit, OnDestroy {
 
   onClose(): void {
     this.closed.emit();
+  }
+
+  onAutoBuild(): void {
+    if (!this.workspace) {
+      return;
+    }
+    buildValidPrimaryFilter(this.workspace);
+    this.submitError = '';
+    this.submitSuccess = '';
   }
 
   /* —— docked picker —— */

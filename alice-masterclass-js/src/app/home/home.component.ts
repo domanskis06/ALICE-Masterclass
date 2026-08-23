@@ -18,7 +18,41 @@ export class HomeComponent implements OnInit {
   private readonly passwordDialogDismissedKey: string = 'passwordDialogDismissed';
   private readonly passwordUrlKey: string = 'password';
 
-  private readonly demo = inject(DemoConfig);
+  protected readonly demo = inject(DemoConfig);
+
+  /**
+   * The three exercises the public demo offers, each with a screenshot of
+   * itself.
+   *
+   * `focus` is the horizontal `background-position`; the vertical never has
+   * anything to do, because every screenshot is wider than the tile and `cover`
+   * therefore scales them to its height and trims only the sides. The value
+   * picks what survives that trim: the detector, the barrel end-on, and the PID
+   * map together with the J/psi mass peak.
+   */
+  protected readonly demoTiles = [
+    {
+      route: '/particle-propagation',
+      testId: 'home-tile-particle-propagation',
+      labelKey: 'HOME.TILE_PARTICLE_PROPAGATION',
+      image: 'assets/images/welcome-page/particle_propagation.png',
+      focus: '50%',
+    },
+    {
+      route: '/strangeness-visual-analysis',
+      testId: 'home-tile-strangeness-enhancement',
+      labelKey: 'HOME.TILE_STRANGENESS_ENHANCEMENT',
+      image: 'assets/images/welcome-page/visual_analysis.png',
+      focus: '50%',
+    },
+    {
+      route: '/jpsi-analysis',
+      testId: 'home-tile-jpsi-suppression',
+      labelKey: 'HOME.TILE_JPSI_SUPPRESSION',
+      image: 'assets/images/welcome-page/jpsi.png',
+      focus: '40%',
+    },
+  ];
 
   constructor(
     private apiService: ApiService,

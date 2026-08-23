@@ -14,6 +14,7 @@ import { NmfSeriesPlotComponent } from './series-plot/series-plot.component';
 import { NmfHeatmapPlotComponent } from './heatmap-plot/heatmap-plot.component';
 import { NmfPlotDialogComponent } from './plot-dialog/plot-dialog.component';
 import { NmfResultsTableComponent } from './results-table/results-table.component';
+import { NmfSaMissionStripComponent } from './mission-strip/mission-strip.component';
 import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
 
 @NgModule({
@@ -27,6 +28,7 @@ import { NmfSaTutorialService } from './sa-tutorial/sa-tutorial.service';
     NmfHeatmapPlotComponent,
     NmfPlotDialogComponent,
     NmfResultsTableComponent,
+    NmfSaMissionStripComponent,
   ],
   imports: [
     CommonModule,

@@ -1,17 +1,36 @@
-<h2 mat-dialog-title>Event Exploration short tutorial</h2>
+<h2 mat-dialog-title>Event Exploration</h2>
 <mat-dialog-content class="welcome-body">
+  <p class="welcome-greeting"><strong>Welcome, young apprentice of physics!</strong></p>
   <p>
     In heavy ion collisions a hot, dense medium can form. High momentum particles lose energy in that medium
     (<strong>jet quenching</strong>). The nuclear modification factor <strong>R<sub>AA</sub></strong> compares
     particle production in PbPb to proton proton collisions.
   </p>
   <p>
-    This first exercise builds <strong>intuition on single events</strong>: navigate collisions, read Event
-    Characteristics histograms, and learn to keep only <strong>charged primary tracks</strong>, the same
-    objects real ALICE analyses count for R<sub>AA</sub>.
+    This exercise builds <strong>intuition on single events</strong>: you will look at real collisions and
+    learn to keep only the <strong>charged primary tracks</strong>, the same objects real ALICE analyses
+    count for R<sub>AA</sub>.
   </p>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button type="button" (click)="skip()">Skip</button>
-  <button mat-raised-button color="primary" type="button" (click)="start()">Start tutorial</button>
+  <!-- Workshop path first and in the accent colour: with an instructor talking
+       over the events, the guided tour gets in the way. -->
+  <button
+    mat-raised-button
+    type="button"
+    class="welcome-workshop"
+    data-testid="nmf-ee-welcome-workshop"
+    (click)="workshop()"
+  >
+    I am in a workshop
+  </button>
+  <button
+    mat-stroked-button
+    type="button"
+    class="welcome-tutorial"
+    data-testid="nmf-ee-welcome-tutorial"
+    (click)="start()"
+  >
+    Guide me through it
+  </button>
 </mat-dialog-actions>

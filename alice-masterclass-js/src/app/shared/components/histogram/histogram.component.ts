@@ -27,6 +27,11 @@ export interface HistogramBinTarget {
   binIndex: number;
 }
 
+/** Tusz kreski średniej: przygaszona czerń czytelna na każdym kolorze słupków. */
+const MEAN_INK = '#111827';
+/** Tusz kreski mediany: odcień niebieski, odróżnialny od czerni średniej. */
+const MEDIAN_INK = '#1d4ed8';
+
 @Component({
     selector: 'app-histogram',
     templateUrl: './histogram.component.html',
@@ -49,7 +54,19 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
    * Leave false for LSA (`app-fit-histogram`) and any other shared consumers.
    */
   @Input()
-  expandDomainToData = false;
+  get expandDomainToData(): boolean { return this._expandDomainToData; }
+  set expandDomainToData(expand: boolean) {
+    if (expand === this._expandDomainToData) {
+      return;
+    }
+    this._expandDomainToData = expand;
+    // Zakres osi liczy domainCovering() z tej flagi, więc jej zmiana musi go
+    // przeliczyć. Bez tego rozszerzenie łapie się dopiero przy następnym
+    // podstawieniu `data` — konsument z jednorazową migawką (powiększenie
+    // histogramu w dialogu) nigdy się go nie doczeka i zostaje na domenie bazowej.
+    this.applyEffectiveDomain(this.data);
+  }
+  private _expandDomainToData = false;
 
   /**
    * Tighter axis chrome (smaller Invariant Mass / Counts band, less gap under Ox).
@@ -75,8 +92,10 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   viewBoxHeight: number | null = null;
 
   /**
-   * Dashed vertical line at the data's mean, in `barColor`. Opt-in (default
-   * off) since most consumers (VA/LSA mass histograms) have no use for it.
+   * Dashed vertical line at the data's mean, in a subdued near-black that reads
+   * the same over every bar colour. Opt-in (default off) since most consumers
+   * (VA/LSA mass histograms) have no use for it, and plots of a discrete
+   * category (e.g. charge +-1) have no meaningful mean to draw.
    */
   @Input()
   showMean = false;
@@ -84,6 +103,17 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   /** Text before the number on the mean line, e.g. "Mean". Caller translates it. */
   @Input()
   meanLabel = 'Mean';
+
+  /** Same idea as {@link showMean}, dashed median line in a contrasting colour. */
+  @Input()
+  showMedian = false;
+
+  /** Text before the number on the median line, e.g. "Median". Caller translates it. */
+  @Input()
+  medianLabel = 'Median';
+
+  /** Extra headroom above the plot for the mean/median legend row, so labels never sit on the bars. */
+  private static readonly STATS_LABEL_ROOM = 9;
 
   /** Subclasses (e.g. FitHistogram) may override W/H. Prefer `svgBox` at call sites. */
   readonly SVG = {
@@ -133,10 +163,13 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   get MARGIN() {
     const base = this.compactChrome ? this.MARGIN_COMPACT : this.MARGIN_DEFAULT;
     // Stretch-fill panels clip SVG overflow; leave room for the top y-tick (e.g. "1.0").
-    if (this.stretchFill) {
-      return { ...base, TOP: Math.max(base.TOP, 16) };
-    }
-    return base;
+    // Mean/median labels live in this same band, above the bars, instead of on top of them.
+    const top = Math.max(
+      base.TOP,
+      this.stretchFill ? 16 : 0,
+      this.showMean || this.showMedian ? base.TOP + HistogramComponent.STATS_LABEL_ROOM : 0,
+    );
+    return { ...base, TOP: top };
   }
 
   get preserveAspectRatio(): string {
@@ -314,19 +347,22 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
   get data(): Array<number> { return this._data.getValue(); }
   set data(data: Array<number>) {
     this.applyEffectiveDomain(data);
-
-    const bins = this.buildBins(data, this.xDomain);
-    const yMax = d3.max(bins, (d: d3.Bin<number, number>) => d.length) ?? 0;
-
-    if (yMax !== 0) {
-      this.yDomain = [0, yMax];
-    } else {
-      this.yDomain = [0, 1];
-    }
-
+    this.recomputeYDomain(data);
     this._data.next(data);
   }
   private _data: BehaviorSubject<Array<number>> = new BehaviorSubject<number[]>([]);
+
+  /**
+   * Recompute the Y (counts) domain from the current data under the current
+   * binning. Bin count changes (e.g. the dialog's slider) redistribute counts
+   * across bins just like new data would, so this must run on both, or a
+   * stale yDomain from the old bin count clips/misdraws the bars.
+   */
+  private recomputeYDomain(data: Array<number> = this.data): void {
+    const bins = this.buildBins(data, this.xDomain);
+    const yMax = d3.max(bins, (d: d3.Bin<number, number>) => d.length) ?? 0;
+    this.yDomain = yMax !== 0 ? [0, yMax] : [0, 1];
+  }
   private dataSubscription: Subscription | null = null;
 
   @Input()
@@ -407,6 +443,9 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     });
 
     this.binsSubscription = this._bins.subscribe(() => {
+      // Re-binning redistributes counts per bin — recompute yDomain before
+      // redrawing, or bars render against a stale max from the old bin count.
+      this.recomputeYDomain();
       this.updateBars();
       this.updateXDomain();
     });
@@ -622,29 +661,58 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       return;
     }
     this.meanSelector.selectAll('*').remove();
-    if (!this.showMean || !this.data.length) {
+    if (!this.data.length) {
       return;
     }
-    const mean = d3.mean(this.data);
-    if (mean === undefined || !this.xDomain || mean < this.xDomain[0] || mean > this.xDomain[1]) {
+    if (this.showMean) {
+      this.drawStatLine(d3.mean(this.data), MEAN_INK, this.meanLabel, 'start');
+    }
+    if (this.showMedian) {
+      this.drawStatLine(d3.median(this.data), MEDIAN_INK, this.medianLabel, 'end');
+    }
+  }
+
+  /**
+   * One dashed vertical line + its label, the label sitting in the headroom
+   * `MARGIN.TOP` opens above the plot (see `MARGIN`) rather than over the
+   * bars, where it used to be unreadable against dense bins. Mean sits at the
+   * left edge, median at the right, so the two never collide regardless of
+   * where their lines land.
+   */
+  private drawStatLine(
+    value: number | undefined,
+    ink: string,
+    label: string,
+    edge: 'start' | 'end',
+  ): void {
+    if (value === undefined || !this.xDomain || value < this.xDomain[0] || value > this.xDomain[1]) {
       return;
     }
-    const cx = this.xScale(mean);
+    const cx = this.xScale(value);
+    // Wygląd ustawiamy inline, a nie w SCSS: komponent ma domyślną
+    // ViewEncapsulation.Emulated, a węzły dokładane przez d3 nie dostają atrybutu
+    // _ngcontent-*, więc reguły z arkusza komponentu nigdy w nie nie trafią.
     this.meanSelector
       .append('line')
       .attr('class', 'histogram-mean-line')
-      .style('stroke', this.barColor)
+      .style('stroke', ink)
+      .style('stroke-opacity', 0.55)
+      .style('stroke-width', 1.75)
+      .style('stroke-dasharray', '4 3')
       .attr('x1', cx)
       .attr('x2', cx)
-      .attr('y1', 0)
+      .attr('y1', -3)
       .attr('y2', this.CONTENT_AREA.H);
     this.meanSelector
       .append('text')
       .attr('class', 'histogram-mean-label')
-      .style('fill', this.barColor)
-      .attr('x', cx + 4)
-      .attr('y', 10)
-      .text(`${this.meanLabel} ${mean.toFixed(2)}`);
+      .style('font-size', '7.5px')
+      .style('font-weight', '700')
+      .style('fill', ink)
+      .attr('text-anchor', edge)
+      .attr('x', edge === 'start' ? 0 : this.CONTENT_AREA.W)
+      .attr('y', -5)
+      .text(`${label} ${value.toFixed(2)}`);
   }
 
   protected onZoom(event: any): void {
@@ -689,7 +757,11 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
     return this.binGenerator(data);
   }
 
-  /** One bar centred on each category; width is ~70% of the nearest neighbour spacing. */
+  /**
+   * One bar centred on each category, filling the whole spacing to its neighbour
+   * so adjacent categories touch — a two-category plot then reads as two bins
+   * side by side rather than two islands with a gap between them.
+   */
   private buildDiscreteBins(
     data: number[],
     values: number[]
@@ -698,7 +770,7 @@ export class HistogramComponent implements AfterViewInit, OnDestroy {
       values.length > 1
         ? Math.min(...values.slice(1).map((v, i) => v - values[i]))
         : 1;
-    const half = Math.max(step * 0.35, Number.EPSILON);
+    const half = Math.max(step / 2, Number.EPSILON);
 
     return values.map((category) => {
       const matches = data.filter((d) => d === category) as d3.Bin<number, number>;

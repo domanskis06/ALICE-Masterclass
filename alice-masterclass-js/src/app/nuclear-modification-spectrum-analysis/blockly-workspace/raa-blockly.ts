@@ -32,12 +32,6 @@ export const RAA_CENTRALITY_OPTIONS: [string, string][] = [
   ['80–90%', '80-90'],
 ];
 
-export const RAA_BINNING_OPTIONS: [string, RaaBinningId][] = [
-  ['ALICE bins', 'alice'],
-  ['equal 0.5 GeV/c', 'equal-0.5'],
-  ['equal 1 GeV/c', 'equal-1'],
-  ['coarse', 'coarse'],
-];
 
 export const RAA_PLOT_OPTIONS: [string, RaaPlotTarget][] = [
   ['pT spectrum', 'pt'],
@@ -81,6 +75,23 @@ export const HUE_OUTPUT = '#7c3aed';
 
 const STATEMENT = { previousStatement: null, nextStatement: null };
 
+/**
+ * Wartość wstawiana przez blok „current class". Wykonawca podmienia ją na klasę
+ * bieżącego obrotu pętli `For each centrality`; poza pętlą nie ma czym jej
+ * zastąpić i zgłasza problem.
+ */
+export const RAA_CURRENT_CENTRALITY = '@current';
+
+/** Typ gniazda — pilnuje, by w miejsce klasy dało się wpiąć tylko klasę. */
+const CENTRALITY_CHECK = 'RaaCentrality';
+
+/** Gniazdo na klasę centralności, wspólne dla trzech bloków, które jej używają. */
+const CENTRALITY_INPUT = {
+  type: 'input_value',
+  name: 'CENTRALITY',
+  check: CENTRALITY_CHECK,
+} as const;
+
 /** Register the recipe blocks once per page. */
 export function registerRaaBlocks(): void {
   if ((Blockly.Blocks as Record<string, unknown>)['raa_load_tracks']) {
@@ -98,9 +109,8 @@ export function registerRaaBlocks(): void {
     {
       type: 'raa_if_centrality',
       message0: 'If centrality %1',
-      args0: [
-        { type: 'field_dropdown', name: 'CENTRALITY', options: RAA_CENTRALITY_OPTIONS },
-      ],
+      args0: [{ ...CENTRALITY_INPUT }],
+      inputsInline: true,
       ...STATEMENT,
       colour: HUE_DATA,
       tooltip: 'Keep only the collisions of this centrality class.',
@@ -137,9 +147,8 @@ export function registerRaaBlocks(): void {
     {
       type: 'raa_select_centrality',
       message0: 'Select centrality %1',
-      args0: [
-        { type: 'field_dropdown', name: 'CENTRALITY', options: RAA_CENTRALITY_OPTIONS },
-      ],
+      args0: [{ ...CENTRALITY_INPUT }],
+      inputsInline: true,
       ...STATEMENT,
       colour: HUE_DATA,
       tooltip: 'Use the tracks of one centrality class.',
@@ -154,11 +163,10 @@ export function registerRaaBlocks(): void {
     },
     {
       type: 'raa_create_hist',
-      message0: 'Create empty pT histogram, binning %1',
-      args0: [{ type: 'field_dropdown', name: 'BINNING', options: RAA_BINNING_OPTIONS }],
+      message0: 'Create empty pT histogram (0.2 GeV/c bins)',
       ...STATEMENT,
       colour: HUE_FILL,
-      tooltip: 'Allocate momentum bins. ALICE bins get wider at high pT.',
+      tooltip: 'Allocate momentum bins, 0.2 GeV/c wide from 0.2 to 15 GeV/c.',
     },
     {
       type: 'raa_fill_hist',
@@ -171,9 +179,10 @@ export function registerRaaBlocks(): void {
       type: 'raa_lookup_ncoll',
       message0: 'Look up number of collisions for %1 → N%2',
       args0: [
-        { type: 'field_dropdown', name: 'CENTRALITY', options: RAA_CENTRALITY_OPTIONS },
+        { ...CENTRALITY_INPUT },
         { type: 'field_label', name: 'SUB', text: 'coll', class: 'nmf-blockly-sub' },
       ],
+      inputsInline: true,
       ...STATEMENT,
       colour: HUE_NORM,
       tooltip:
@@ -259,6 +268,30 @@ export function registerRaaBlocks(): void {
     },
   ]);
 
+  Blockly.defineBlocksWithJsonArray([
+    {
+      // Literał klasy — to, co wcześniej było dropdownem wbudowanym w trzy bloki.
+      // Wstawiany jako shadow, więc domyślny wygląd tamtych bloków się nie zmienia.
+      type: 'raa_centrality',
+      message0: '%1',
+      args0: [
+        { type: 'field_dropdown', name: 'CENTRALITY', options: RAA_CENTRALITY_OPTIONS },
+      ],
+      output: CENTRALITY_CHECK,
+      colour: HUE_DATA,
+      tooltip: 'One fixed centrality class.',
+    },
+    {
+      // Zmienna pętli. Ten sam kształt co literał, więc wchodzi w te same gniazda.
+      type: 'raa_current_centrality',
+      message0: 'current class',
+      output: CENTRALITY_CHECK,
+      colour: HUE_OUTPUT,
+      tooltip:
+        'The class the surrounding "For each centrality" loop is on right now. Drop it wherever you would otherwise pin one class, and the same chain runs for every class in the set.',
+    },
+  ]);
+
   Blockly.Blocks['raa_for_each'] = {
     init(this: Blockly.Block) {
       this.appendDummyInput()
@@ -315,7 +348,11 @@ export function buildRaaToolbox(): Blockly.utils.toolbox.ToolboxInfo {
         colour: HUE_DATA,
         contents: [
           { kind: 'block', type: 'raa_load_events' },
-          { kind: 'block', type: 'raa_if_centrality' },
+          {
+            kind: 'block',
+            type: 'raa_if_centrality',
+            inputs: { CENTRALITY: { shadow: { type: 'raa_centrality' } } },
+          },
           { kind: 'block', type: 'raa_count_events' },
           { kind: 'block', type: 'raa_fill_multiplicity' },
           { kind: 'block', type: 'raa_plot_mult_cent' },
@@ -327,7 +364,11 @@ export function buildRaaToolbox(): Blockly.utils.toolbox.ToolboxInfo {
         colour: HUE_FILL,
         contents: [
           { kind: 'block', type: 'raa_load_tracks' },
-          { kind: 'block', type: 'raa_select_centrality' },
+          {
+            kind: 'block',
+            type: 'raa_select_centrality',
+            inputs: { CENTRALITY: { shadow: { type: 'raa_centrality' } } },
+          },
           { kind: 'block', type: 'raa_cut_pt' },
           { kind: 'block', type: 'raa_create_hist' },
           { kind: 'block', type: 'raa_fill_hist' },
@@ -338,11 +379,25 @@ export function buildRaaToolbox(): Blockly.utils.toolbox.ToolboxInfo {
         name: 'Normalise',
         colour: HUE_NORM,
         contents: [
-          { kind: 'block', type: 'raa_lookup_ncoll' },
+          {
+            kind: 'block',
+            type: 'raa_lookup_ncoll',
+            inputs: { CENTRALITY: { shadow: { type: 'raa_centrality' } } },
+          },
           { kind: 'block', type: 'raa_divide_bin_width' },
           { kind: 'block', type: 'raa_divide_events' },
           { kind: 'block', type: 'raa_divide_ncoll' },
-          { kind: 'block', type: 'raa_clone_spectrum' },
+        ],
+      },
+      {
+        // Osobna kategoria, bo te dwa bloki nie należą do żadnego etapu analizy —
+        // wchodzą w gniazdo klasy w trzech różnych miejscach.
+        kind: 'category',
+        name: 'Classes',
+        colour: HUE_OUTPUT,
+        contents: [
+          { kind: 'block', type: 'raa_centrality' },
+          { kind: 'block', type: 'raa_current_centrality' },
         ],
       },
       {
@@ -351,7 +406,6 @@ export function buildRaaToolbox(): Blockly.utils.toolbox.ToolboxInfo {
         colour: HUE_OUTPUT,
         contents: [
           { kind: 'block', type: 'raa_load_pp' },
-          { kind: 'block', type: 'raa_load_peripheral' },
           { kind: 'block', type: 'raa_divide_reference' },
           { kind: 'block', type: 'raa_for_each' },
           { kind: 'block', type: 'raa_plot' },
@@ -429,14 +483,14 @@ function stepOf(block: Blockly.Block): RaaStep | null {
     kind === 'select_centrality' ||
     kind === 'lookup_ncoll'
   ) {
-    const cent = block.getFieldValue('CENTRALITY') || '0-5';
+    const cent = centralityOf(block);
     step.centrality = cent;
     if (kind === 'lookup_ncoll') {
       step.nCollCentrality = cent;
     }
   }
   if (kind === 'create_hist') {
-    step.binning = (block.getFieldValue('BINNING') as RaaBinningId) || 'alice';
+    step.binning = 'fixed';
   }
   if (kind === 'cut_pt') {
     step.ptCut = Number(block.getFieldValue('PT_CUT')) || 0.15;
@@ -459,6 +513,21 @@ function stepOf(block: Blockly.Block): RaaStep | null {
   return step;
 }
 
+/**
+ * Klasa wpięta w gniazdo bloku. Pusty gniazdo traktujemy jak pierwszą klasę —
+ * to samo zachowanie, co dawniej miał dropdown bez wyboru.
+ */
+function centralityOf(block: Blockly.Block): string {
+  const plugged = block.getInputTargetBlock('CENTRALITY');
+  if (!plugged) {
+    return '0-5';
+  }
+  if (plugged.type === 'raa_current_centrality') {
+    return RAA_CURRENT_CENTRALITY;
+  }
+  return plugged.getFieldValue('CENTRALITY') || '0-5';
+}
+
 function stackFrom(start: Blockly.Block | null): RaaStep[] {
   const steps: RaaStep[] = [];
   let block = start;
@@ -476,6 +545,32 @@ function stackFrom(start: Blockly.Block | null): RaaStep[] {
  * Append blocks to the end of the recipe. Used by the tutorial's “place it for
  * me” escape hatch, so a class cannot get stuck on one drag.
  */
+/**
+ * Place `steps` as a stack of their own, at `(x, y)`, without attaching to
+ * anything already on the canvas.
+ */
+export function placeRecipeStack(
+  workspace: Blockly.WorkspaceSvg,
+  steps: RaaStep[],
+  x: number,
+  y: number,
+): void {
+  let previous: Blockly.Block | null = null;
+  for (const step of steps) {
+    const block = createBlock(workspace, step);
+    if (!block) {
+      continue;
+    }
+    if (previous?.nextConnection && block.previousConnection) {
+      previous.nextConnection.connect(block.previousConnection);
+    } else if (!previous) {
+      block.moveBy(x, y);
+    }
+    previous = block;
+  }
+  workspace.render();
+}
+
 export function appendRecipeBlocks(
   workspace: Blockly.WorkspaceSvg,
   steps: RaaStep[],
@@ -495,6 +590,78 @@ export function appendRecipeBlocks(
   workspace.render();
 }
 
+/**
+ * The whole-sample chain, kept as its own stack.
+ *
+ * `Plot multiplicity vs centrality` covers every event and is what *defines*
+ * the classes, so it must not sit under an `If centrality` — doing so raises
+ * `MULT_VS_CENTRALITY_NEEDS_ALL_EVENTS` and its checklist step never ticks.
+ * Hence two separate stacks rather than one long chain.
+ */
+export function wholeSampleRecipe(): RaaStep[] {
+  return [{ kind: 'load_events' }, { kind: 'plot_mult_vs_centrality' }];
+}
+
+/**
+ * The measurement, run once per centrality class.
+ *
+ * Wrapped in `For each centrality` over the five-class preset: that is what the
+ * exercise actually asks for ("repeat for several centrality classes"), and it
+ * collects all five in one Run instead of making the student rebuild the chain
+ * five times. The class is passed as the loop variable, so the same body serves
+ * every turn.
+ */
+export function fullRecipe(): RaaStep[] {
+  const perClass: RaaStep[] = [
+    { kind: 'if_centrality', centrality: RAA_CURRENT_CENTRALITY },
+    { kind: 'count_events' },
+    { kind: 'fill_multiplicity' },
+    { kind: 'select_centrality', centrality: RAA_CURRENT_CENTRALITY },
+    { kind: 'create_hist', binning: 'fixed' },
+    { kind: 'fill_hist' },
+    { kind: 'lookup_ncoll', nCollCentrality: RAA_CURRENT_CENTRALITY },
+    { kind: 'divide_bin_width' },
+    { kind: 'divide_events' },
+    { kind: 'divide_ncoll' },
+    { kind: 'load_pp' },
+    { kind: 'divide_reference', reference: 'pp' },
+    { kind: 'draw_line_at_one' },
+    { kind: 'plot', plotAs: 'raa' },
+    { kind: 'read_value', readAt: 5.5 },
+    { kind: 'read_value', readAt: 10 },
+  ];
+  return [
+    { kind: 'load_events' },
+    { kind: 'load_tracks' },
+    { kind: 'for_each_centrality', centralityPreset: 'five', body: perClass },
+  ];
+}
+
+/**
+ * Fill a block's `CENTRALITY` socket with the right value block: the loop
+ * variable for `@current`, otherwise a plain class literal.
+ */
+function plugCentralityValue(
+  workspace: Blockly.WorkspaceSvg,
+  block: Blockly.Block,
+  centrality: string,
+): void {
+  const input = block.getInput('CENTRALITY');
+  if (!input?.connection) {
+    return;
+  }
+  const value =
+    centrality === RAA_CURRENT_CENTRALITY
+      ? workspace.newBlock('raa_current_centrality')
+      : workspace.newBlock('raa_centrality');
+  if (centrality !== RAA_CURRENT_CENTRALITY) {
+    value.setFieldValue(centrality, 'CENTRALITY');
+  }
+  value.initSvg();
+  value.render();
+  input.connection.connect(value.outputConnection!);
+}
+
 function createBlock(
   workspace: Blockly.WorkspaceSvg,
   step: RaaStep,
@@ -504,26 +671,30 @@ function createBlock(
     return null;
   }
   const block = workspace.newBlock(type);
-  if (step.centrality) {
-    block.setFieldValue(step.centrality, 'CENTRALITY');
-  }
-  if (step.nCollCentrality) {
-    block.setFieldValue(step.nCollCentrality, 'CENTRALITY');
-  }
-  if (step.binning) {
-    block.setFieldValue(step.binning, 'BINNING');
+  // `CENTRALITY` is a value input, not a field: the class arrives as its own
+  // plugged-in block. Setting it as a field throws, which used to abort the
+  // whole recipe after the first block.
+  const centrality = step.centrality ?? step.nCollCentrality;
+  if (centrality && block.getInput('CENTRALITY')) {
+    plugCentralityValue(workspace, block, centrality);
   }
   if (step.ptCut != null && block.getField('PT_CUT')) {
     block.setFieldValue(String(step.ptCut), 'PT_CUT');
   }
   if (step.reference) {
-    block.setFieldValue(step.reference, 'REFERENCE');
+    if (block.getField('REFERENCE')) {
+      block.setFieldValue(step.reference, 'REFERENCE');
+    }
   }
   if (step.centralityPreset) {
-    block.setFieldValue(step.centralityPreset, 'PRESET');
+    if (block.getField('PRESET')) {
+      block.setFieldValue(step.centralityPreset, 'PRESET');
+    }
   }
   if (step.plotAs) {
-    block.setFieldValue(step.plotAs, 'TARGET');
+    if (block.getField('TARGET')) {
+      block.setFieldValue(step.plotAs, 'TARGET');
+    }
   }
   if (step.readAt != null && block.getField('PT')) {
     const key = String(step.readAt);

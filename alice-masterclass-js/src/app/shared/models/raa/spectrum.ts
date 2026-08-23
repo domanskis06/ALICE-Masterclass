@@ -35,7 +35,12 @@ export type RaaOp =
   | 'divide_pp'
   | 'divide_peripheral';
 
-export type RaaBinningId = 'alice' | 'equal-0.5' | 'equal-1' | 'coarse';
+/**
+ * Only one binning now: the exercise fixes the p_T bin width (see
+ * `FIXED_BIN_WIDTH`). Kept as a named type so spectra still say which grid
+ * they are on, and so a second grid could be reintroduced without a rewrite.
+ */
+export type RaaBinningId = 'fixed';
 
 export interface RaaBinning {
   id: RaaBinningId;
@@ -256,6 +261,8 @@ export interface RaaRunResult {
   raa: RaaSeries[];
   rcp: RaaSeries[];
   multiplicity: RaaHistogram | null;
+  /** One per centrality class filled this run; `multiplicity` is the last of them. */
+  multiplicities: RaaHistogram[];
   multVsCentrality: RaaHeatmap | null;
   readouts: RaaReadout[];
   /** Values the `Read value at` blocks pulled out, in the order they ran. */

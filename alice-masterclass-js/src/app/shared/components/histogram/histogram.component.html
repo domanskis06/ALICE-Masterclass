@@ -22,9 +22,11 @@
         <g id="yAxis" #yAxis></g>
         <g id="mainArea" clip-path="url(#clip)">
           <g id="bars" #bars></g>
-          <g id="mean" #mean></g>
           <g id="brush" #brush></g>
         </g>
+        <!-- Outside #mainArea's clip-path: mean/median labels sit in the TOP -->
+        <!-- margin headroom, above y=0, which the clip rect would otherwise cut off. -->
+        <g id="mean" #mean></g>
         <!-- After bars so VA mirrored tick marks stay visible above the plot. -->
         <g id="xAxis" #xAxis attr.transform="translate(0, {{CONTENT_AREA.H}})"></g>
       </g>

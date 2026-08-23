@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 
 import { NmfEeTutorialService } from './ee-tutorial.service';
 
@@ -7,7 +8,11 @@ describe('NmfEeTutorialService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [NmfEeTutorialService],
+      providers: [
+        NmfEeTutorialService,
+        // Atrapa: te testy sprawdzają sterowanie samouczkiem, nie treść kroków.
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+      ],
     });
     service = TestBed.inject(NmfEeTutorialService);
     service.registerHost({
@@ -18,6 +23,7 @@ describe('NmfEeTutorialService', () => {
       refreshHost: () => undefined,
       setPrimaryPickChallenge: () => undefined,
       setNextEventLocked: () => undefined,
+      showDemonstrationEvent: () => undefined,
       ensureFirstEvent: () => undefined,
     });
   });

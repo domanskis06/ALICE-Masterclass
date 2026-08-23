@@ -10,8 +10,13 @@
             <section class="nmf-sa-mission-group" [style.--group-accent]="group.accent">
               <h4 class="nmf-sa-mission-group-title">{{ group.name }}</h4>
               <ol class="nmf-sa-mission-steps">
-                @for (step of group.steps; track step) {
-                  <li [innerHTML]="step | translate"></li>
+                @for (step of group.steps; track step.labelKey) {
+                  <li [class.nmf-sa-mission-step--done]="stepDone(step)">
+                    @if (stepDone(step)) {
+                      <mat-icon class="nmf-sa-mission-step-check" aria-hidden="true">check_circle</mat-icon>
+                    }
+                    <span [innerHTML]="step.labelKey | translate"></span>
+                  </li>
                 }
               </ol>
             </section>
@@ -66,6 +71,27 @@
     </div>
 
     @if (activeCard; as card) {
+      @if (card.key === 'multiplicity' && multiplicityClasses.length) {
+        <!-- One histogram per class was measured; let the student compare them
+             without re-running. Outside the plot's own click target, which
+             opens the enlarged view. -->
+        <div class="nmf-sa-class-switch" data-testid="nmf-sa-multiplicity-classes">
+          <span class="nmf-sa-class-switch-label">
+            {{ 'NUCLEAR_MODIFICATION.SPECTRUM_ANALYSIS.AXIS_CENTRALITY' | translate }}
+          </span>
+          @for (h of multiplicityClasses; track h.centrality) {
+            <button
+              type="button"
+              class="nmf-sa-class-chip"
+              [class.nmf-sa-class-chip--active]="isMultiplicityClassActive(h.centrality)"
+              [style.--chip-accent]="h.color"
+              [attr.aria-pressed]="isMultiplicityClassActive(h.centrality)"
+              [attr.data-testid]="'nmf-sa-multiplicity-class-' + h.centrality"
+              (click)="selectMultiplicityClass(h.centrality)"
+            >{{ h.label }}</button>
+          }
+        </div>
+      }
       <section
         class="nmf-sa-plot"
         [style.--nmf-plot-accent]="accent(card)"

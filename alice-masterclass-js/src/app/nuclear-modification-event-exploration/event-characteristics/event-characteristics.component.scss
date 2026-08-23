@@ -48,6 +48,33 @@
 }
 
 /**
+ * Pb–Pb draws three plots, not six. Two per row left the third one alone in a
+ * corner with a hole beside it; a six-column track lets the first two take
+ * three columns each and the third sit centred underneath, spanning the middle.
+ */
+.nmf-hist-grid--pbpb {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+
+  .nmf-hist-item {
+    grid-column: span 3;
+  }
+
+  .nmf-hist-item:nth-child(3) {
+    grid-column: 2 / span 4;
+  }
+}
+
+/* Wide enough for all three side by side — no orphan to centre. */
+@media (min-width: 1100px) {
+  .nmf-hist-grid--pbpb.nmf-hist-grid--fullscreen {
+    .nmf-hist-item,
+    .nmf-hist-item:nth-child(3) {
+      grid-column: span 2;
+    }
+  }
+}
+
+/**
  * Tile tints are the 600-weight version of each series colour: the pastel dark-theme
  * hues (#62d9ff, #4ade80 …) were invisible as bars and borders on a white surface.
  * Keep in sync with the `barColor` values in event-characteristics.component.ts.
@@ -213,4 +240,177 @@
   line {
     stroke: var(--nmf-axis, rgba(15, 23, 42, 0.62));
   }
+}
+
+/* —— przełącznik pp / Pb–Pb —— */
+/* Na pasku zakładek nie było miejsca: same etykiety zajmują 479 px, przyciski
+   akcji 184 px, a pasek ma 568 px. Dlatego przełącznik siedzi na górze panelu,
+   nad siatką wykresów. Segmentowany, bo to wybór jednej z dwóch równorzędnych
+   stron, a nie przełącznik włącz/wyłącz. */
+.nmf-system-switch-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 8px;
+}
+
+.nmf-system-switch {
+  display: inline-flex;
+  align-items: stretch;
+  height: 26px;
+  border: 1px solid var(--nmf-surface-border, rgba(15, 23, 42, 0.22));
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.nmf-system-switch__option {
+  min-width: 40px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--va-muted, rgba(0, 0, 0, 0.55));
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nmf-system-switch__option:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+/* Kolor wprost, nie var(--nmf-plot-accent): kafelki ustawiają ten token na swój
+   własny odcień, więc dziedziczony wychodził szary i aktywna strona ginęła. */
+.nmf-system-switch__option--active {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.nmf-system-switch__option:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: -2px;
+}
+
+/* —— Pb–Pb: one event per class, so these three are readouts, not histograms —— */
+.nmf-class-readouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.nmf-class-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 8px;
+  background: #f7f9fc;
+}
+
+/* Waiting on its event: dim the card, but keep the class name readable so the
+   student can see which one is still missing. */
+.nmf-class-readout--empty {
+  background: rgba(15, 23, 42, 0.02);
+  border-style: dashed;
+}
+
+.nmf-class-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  /* Labels, not data — dragging across the card should not leave it looking
+     half-highlighted. The measured numbers below stay selectable. */
+  user-select: none;
+}
+
+.nmf-collision-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 24px;
+  stroke: #b71c1c;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nmf-class-readout--empty .nmf-collision-icon {
+  stroke: rgba(15, 23, 42, 0.32);
+}
+
+.nmf-class-name {
+  min-width: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: rgba(0, 0, 0, 0.78);
+}
+
+.nmf-class-values {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    /* Dotted leader keeps label and number visually paired as the card widens. */
+    border-bottom: 1px dotted rgba(15, 23, 42, 0.14);
+    padding-bottom: 2px;
+  }
+
+  div:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  dt {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.86rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgba(0, 0, 0, 0.85);
+  }
+}
+
+.nmf-class-pending {
+  margin: 0;
+  user-select: none;
+  font-size: 0.7rem;
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.42);
+}
+
+.nmf-class-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.nmf-class-filter-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.55);
 }

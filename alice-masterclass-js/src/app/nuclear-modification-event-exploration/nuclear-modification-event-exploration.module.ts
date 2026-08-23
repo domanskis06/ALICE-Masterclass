@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { SharedModule } from '../shared/shared.module';
 import { AngularModule } from '../shared/angular.module';
@@ -29,6 +30,8 @@ import { NmfEventCharacteristicsComponent } from './event-characteristics/event-
     CommonModule,
     SharedModule,
     AngularModule,
+    // AngularModule imports MatCheckboxModule but does not re-export it.
+    MatCheckboxModule,
     NuclearModificationEventExplorationRoutingModule,
     NmfEeTutorialWelcomeDialogComponent,
   ],
