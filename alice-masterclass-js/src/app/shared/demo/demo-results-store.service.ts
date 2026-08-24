@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { DEMO_MODE } from './demo.tokens';
 import { LargeScaleAnalysisResultsEntry, VisualAnalysisResultsEntry } from '../services/api.service';
+import { PbPbCentralityId, PbPbYieldRow } from '../../jpsi-analysis/models/pbpb-minv.models';
 
 /** One accepted fit, plus the value it replaced (null when the bin was empty). */
 export interface DemoLsaUndoEntry {
@@ -37,12 +38,14 @@ export class DemoResultsStore {
   private static readonly KEY_LSA_RESULTS = 'demo:lsa:results';
   /** Accept history for Undo — see `DemoLsaUndoEntry`. */
   private static readonly KEY_LSA_ORDER = 'demo:lsa:order';
+  private static readonly KEY_JPSI_PBPB_RESULTS = 'demo:jpsi:pbpbResults';
 
   private static readonly ALL_KEYS = [
     DemoResultsStore.KEY_VA_RESULTS,
     DemoResultsStore.KEY_VA_TRACK_KEYS,
     DemoResultsStore.KEY_LSA_RESULTS,
     DemoResultsStore.KEY_LSA_ORDER,
+    DemoResultsStore.KEY_JPSI_PBPB_RESULTS,
   ];
 
   constructor() {
@@ -120,6 +123,26 @@ export class DemoResultsStore {
     }
     this.write(DemoResultsStore.KEY_LSA_RESULTS, Array.from(results.entries()));
     this.write(DemoResultsStore.KEY_LSA_ORDER, undoStack);
+  }
+
+  loadJpsiPbPb(): Map<PbPbCentralityId, PbPbYieldRow> | null {
+    if (!this.enabled) {
+      return null;
+    }
+
+    const results = this.readEntries<PbPbYieldRow>(DemoResultsStore.KEY_JPSI_PBPB_RESULTS);
+    if (results === null) {
+      return null;
+    }
+
+    return new Map(results as Array<[PbPbCentralityId, PbPbYieldRow]>);
+  }
+
+  saveJpsiPbPb(results: Map<PbPbCentralityId, PbPbYieldRow>): void {
+    if (!this.enabled) {
+      return;
+    }
+    this.write(DemoResultsStore.KEY_JPSI_PBPB_RESULTS, Array.from(results.entries()));
   }
 
   clear(): void {

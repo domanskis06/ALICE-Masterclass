@@ -17,7 +17,7 @@
     @if (isPublished(activeCollisionSystem)) {
       <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
         <app-jpsi-mass-panel
-          fxFlex="65"
+          [fxFlex]="demo ? 55 : 65"
           [primarySeries]="pbPbPrimarySeries"
           [secondarySeries]="pbPbSecondarySeries"
           [residual]="pbPbResidual"
@@ -46,14 +46,26 @@
           (clearFit)="onClearFitPbPb()"
         ></app-jpsi-mass-panel>
 
-        <app-jpsi-pbpb-results
-          fxFlex="35"
-          [rows]="pbPbRows"
-          [hasOtherResults]="rows.length > 0"
-          (uploadResults)="onUploadResults()"
-          (removeResult)="onRemovePbPbResult($event)"
-        ></app-jpsi-pbpb-results>
+        @if (demo) {
+          <app-jpsi-raa-results fxFlex="45" [rows]="raaRows"></app-jpsi-raa-results>
+        } @else {
+          <app-jpsi-pbpb-results
+            fxFlex="35"
+            [rows]="pbPbRows"
+            [hasOtherResults]="rows.length > 0"
+            (uploadResults)="onUploadResults()"
+            (removeResult)="onRemovePbPbResult($event)"
+          ></app-jpsi-pbpb-results>
+        }
       </div>
+
+      @if (demo) {
+        <app-jpsi-raa-plot
+          class="jpsi-raa-plot-standalone"
+          [xDomain]="raaParticipantsDomain"
+          [data]="raaPlotData"
+        ></app-jpsi-raa-plot>
+      }
     } @else {
       <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
         <mat-card appearance="outlined" fxFlex="50" id="jpsi-tour-heatmap">
@@ -109,12 +121,19 @@
         ></app-jpsi-mass-panel>
       </div>
 
-      <app-jpsi-results-table
-        [rows]="rows"
-        [hasOtherResults]="hasPbPbResults"
-        (uploadResults)="onUploadResults()"
-        (removeResult)="onRemoveResult($event)"
-      ></app-jpsi-results-table>
+      @if (demo) {
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="10px" fxLayoutAlign="start stretch">
+          <app-jpsi-raa-results fxFlex="50" [rows]="raaRows"></app-jpsi-raa-results>
+          <app-jpsi-raa-plot fxFlex="50" [xDomain]="raaParticipantsDomain" [data]="raaPlotData"></app-jpsi-raa-plot>
+        </div>
+      } @else {
+        <app-jpsi-results-table
+          [rows]="rows"
+          [hasOtherResults]="hasPbPbResults"
+          (uploadResults)="onUploadResults()"
+          (removeResult)="onRemoveResult($event)"
+        ></app-jpsi-results-table>
+      }
     }
   </div>
 </div>

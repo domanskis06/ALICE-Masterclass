@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "alice-js-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start:demo", "--prefix", "alice-masterclass-js", "--", "--port", "4210"],
+      "port": 4210
+    }
+  ]
+}

@@ -4,7 +4,8 @@
     "pl": "Polski",
     "de": "Deutsch",
     "fr": "Français",
-    "es": "Español"
+    "es": "Español",
+    "it": "Italiano"
   },
   "GENERAL": {
     "MENU": "Menu",
@@ -134,6 +135,8 @@
     "BUTTON_CANCEL": "Anuluj",
     "NO_TOKEN_TOOLTIP": "Aby włączyć przesyłanie danych, podaj hasło w opcji Hasło w menu.",
     "WRONG_EXERCISE_TOOLTIP": "Ta sesja nie jest przeznaczona dla tego ćwiczenia.",
+    "DEMO_DATASET_TOOLTIP": "Wyników z zestawu Demo nie można wysłać - najpierw wybierz właściwy zestaw danych.",
+    "PBPB_DATASET_TOOLTIP": "Wyników z zestawu Pb-Pb event nie można wysłać - najpierw wybierz zestaw warsztatowy.",
     "UPLOADING": "Przesyłanie danych...",
     "COMPLETED": "Przesyłanie zakończone!",
     "UPLOAD_ERROR": "Nie udało się przesłać wyników. Spróbuj ponownie.",
@@ -741,6 +744,17 @@
       "UPLOAD_SUCCESS": "Wyniki zostały przesłane do nauczyciela.",
       "UPLOAD_ERROR": "Nie udało się przesłać wyników. Spróbuj ponownie."
     },
+    "RAA": {
+      "TITLE": "Wyniki",
+      "PLOT_TITLE": "Obliczone R_AA",
+      "NO_PARTICIPANTS": "Uczestnicy",
+      "NO_EVENTS": "Zdarzenia",
+      "EFFICIENCY": "Wydajność detekcji",
+      "EFFICIENCY_TOOLTIP": "Akceptancja x wydajność:",
+      "YIELD": "Wydajność (yield)",
+      "X_AXIS": "Liczba uczestników",
+      "Y_AXIS": "R_AA"
+    },
     "WELCOME": {
       "TITLE": "Szukamy cząstki J/psi",
       "P1": "J/psi to rzadka cząstka zbudowana z kwarka powabnego i jego antykwarka. Żyje ułamek sekundy i czasem rozpada się na elektron i pozyton.",
@@ -782,6 +796,8 @@
       "STEP_ACCEPT_BODY": "<strong>Zaakceptuj wynik</strong> zapisuje ten pomiar w twojej tabeli. Zawsze możesz zmienić okno i zaakceptować ponownie.",
       "STEP_RESULTS_TITLE": "Twoje wyniki",
       "STEP_RESULTS_BODY": "Każde zaakceptowane dopasowanie pojawia się tu jako wiersz z sygnałem, tłem i metrykami jakości. Możesz usunąć wiersz i zaakceptować ponownie, jeśli chcesz lepsze okno.",
+      "STEP_RAA_PLOT_TITLE": "R_AA vs. liczba uczestników",
+      "STEP_RAA_PLOT_BODY": "Każda zaakceptowana centralność Pb-Pb pojawia się też tutaj jako punkt: R_AA w zestawieniu z liczbą uczestników zderzenia. Punkt poniżej przerywanej linii na poziomie 1 oznacza, że w danym zderzeniu przetrwało mniej J/psi, niż przewidywałoby to proste skalowanie z pp.",
       "STEP_DATASET_TITLE": "Drugi układ zderzenia",
       "STEP_DATASET_BODY": "Teraz przełącz się na proton-ołów i powtórz całą analizę. Twoja praca nad zderzeniami proton-proton zostaje dokładnie tam, gdzie ją zostawiłeś."
     },

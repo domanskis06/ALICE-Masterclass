@@ -1,0 +1,36 @@
+<mat-card appearance="outlined" fxFill fxLayout="column" id="jpsi-demo-raa-plot">
+  <mat-card-title class="title">{{ 'JPSI.RAA.PLOT_TITLE' | translate }}</mat-card-title>
+  <mat-card-content fxFlex="grow" fxLayout="column">
+    <div class="plot-frame" #plotFrame>
+      <svg attr.viewBox="0 0 {{ SVG.W }} {{ SVG.H }}" preserveAspectRatio="xMidYMid meet">
+        <g id="yAxisLabel" attr.transform="translate({{ MARGIN.LEFT_YLABEL }}, {{ MARGIN.TOP }}) rotate(-90)" text-anchor="end">
+          <svg:text>{{ 'JPSI.RAA.Y_AXIS' | translate }}</svg:text>
+        </g>
+        <g id="contentArea" attr.transform="translate({{ CONTENT_AREA.X }}, {{ CONTENT_AREA.Y }})">
+          <defs>
+            <clipPath id="jpsi-raa-clip">
+              <rect x="0" y="0" attr.width="{{ CONTENT_AREA.W }}" attr.height="{{ CONTENT_AREA.H }}"></rect>
+            </clipPath>
+          </defs>
+          <g id="yAxis" #yAxis></g>
+          <g id="xAxis" #xAxis attr.transform="translate(0, {{ CONTENT_AREA.H }})"></g>
+          <g id="mainArea" clip-path="url(#jpsi-raa-clip)">
+            <line id="referenceLine" #referenceLine></line>
+            <g id="errorBars" #errorBars></g>
+            <g id="dots" #dots></g>
+          </g>
+        </g>
+        <g id="xAxisLabel" attr.transform="translate({{ CONTENT_AREA.X + CONTENT_AREA.W }}, {{ SVG.H - MARGIN.BOTTOM_TEXT }})" text-anchor="end">
+          <svg:text>{{ 'JPSI.RAA.X_AXIS' | translate }}</svg:text>
+        </g>
+      </svg>
+      @if (tooltipVisible && tooltipEntry) {
+        <div class="plot-tooltip" [style.left.px]="tooltipX" [style.top.px]="tooltipY">
+          <div class="plot-tooltip__title">{{ tooltipEntry.centralityLabel }}</div>
+          <div>{{ 'JPSI.RAA.NO_PARTICIPANTS' | translate }}: {{ tooltipEntry.nParticipants | number: '1.0-1' }}</div>
+          <div>R<sub>AA</sub>: {{ tooltipEntry.raa | number: '1.3-3' }} &plusmn; {{ tooltipEntry.raaError | number: '1.3-3' }}</div>
+        </div>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

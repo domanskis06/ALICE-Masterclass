@@ -34,7 +34,7 @@ export class AppComponent implements AfterViewInit {
   /** Keyframe offset where the ball sits on the destination bin (then fades out). */
   private static readonly FLIGHT_LAND_OFFSET = 0.88;
 
-  readonly LANGUAGES: Array<string> = ['en', 'pl', 'de', 'fr']; // 'es' omitted: assets/i18n/es.json is empty
+  readonly LANGUAGES: Array<string> = ['en', 'pl', 'de', 'fr', 'it']; // 'es' omitted: assets/i18n/es.json is empty
   readonly languageKey: string = 'language';
 
   /** Exposed for template color binding while a flight is active. */

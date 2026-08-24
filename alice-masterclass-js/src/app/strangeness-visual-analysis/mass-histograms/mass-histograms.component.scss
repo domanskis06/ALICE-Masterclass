@@ -25,6 +25,31 @@
   padding-left: 16px;
 }
 
+.hist-card-title-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.histogram-info-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  line-height: 28px;
+
+  ::ng-deep .mat-mdc-button-touch-target {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.histogram-info-button mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+}
+
 .hist-card-title {
   flex: 0 0 auto;
   gap: 8px;

@@ -84,6 +84,10 @@ export class MassHistogramsComponent implements OnInit {
   @Input()
   uploadDisabled: boolean = false;
 
+  /** Translation key explaining why the currently selected dataset can't be submitted, when `uploadDisabled` is true. */
+  @Input()
+  uploadDisabledTooltipKey: string | null = null;
+
   /** True once the student is logged into a session whose event is not `strangeness` - VA
    * submissions to it would be rejected server-side anyway (`Event.kind` guard). */
   get wrongExerciseKind(): boolean {
@@ -92,6 +96,20 @@ export class MassHistogramsComponent implements OnInit {
 
   get uploadButtonDisabled(): boolean {
     return !this.apiService.isAuthenticated || this.uploadDisabled || this.wrongExerciseKind;
+  }
+
+  /** Translation key for the disabled-upload tooltip, or `null` when the button needs none. */
+  get uploadTooltipKey(): string | null {
+    if (!this.apiService.isAuthenticated) {
+      return 'PASSWORD.NO_TOKEN_TOOLTIP';
+    }
+    if (this.wrongExerciseKind) {
+      return 'PASSWORD.WRONG_EXERCISE_TOOLTIP';
+    }
+    if (this.uploadDisabled) {
+      return this.uploadDisabledTooltipKey ?? 'PASSWORD.DEMO_DATASET_TOOLTIP';
+    }
+    return null;
   }
 
   @Input()
@@ -138,6 +156,10 @@ export class MassHistogramsComponent implements OnInit {
   @Output()
   uploadResultsEvent: EventEmitter<any> = new EventEmitter();
 
+  /** "What is a histogram?" info button next to the card title, re-opens the info dialog on demand. */
+  @Output()
+  infoButtonClicked: EventEmitter<void> = new EventEmitter();
+
   constructor(public apiService: ApiService) { }
 
   ngOnInit(): void {
@@ -145,6 +167,10 @@ export class MassHistogramsComponent implements OnInit {
 
   onUploadButtonClicked(): void {
     this.uploadResultsEvent.emit();
+  }
+
+  onInfoButtonClicked(): void {
+    this.infoButtonClicked.emit();
   }
 
   onBinsInput(value: number | string | null): void {

@@ -261,7 +261,10 @@ export class StrangenessDataService {
   }
 
   submitVisualAnalysisResults(datasetID: number): Observable<any> {
-    return this.apiService.submitVisualAnalysisResults(this.visualAnalysisResults, datasetID);
+    // datasetID may be a UI picker sentinel (demo/full-event) - resolve to the real
+    // server-side dataset number before it goes into the URL (negative IDs don't
+    // match Django's <int:dataset> route).
+    return this.apiService.submitVisualAnalysisResults(this.visualAnalysisResults, this.resolveDatasetNum(datasetID));
   }
 
   get largeScaleAnalysisResults(): Map<string, LargeScaleAnalysisResultsEntry> { return this._lsaResults; }

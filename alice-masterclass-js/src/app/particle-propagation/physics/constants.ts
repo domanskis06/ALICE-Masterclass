@@ -41,7 +41,7 @@ export const FIELD_SCALE = 0.1;
 export const NOMINAL_SOLENOID_B_T = 0.5;
 
 /** Inclusive UI range for the magnetic-field strength slider (Tesla). */
-export const FIELD_STRENGTH_MIN_T = 0.5;
+export const FIELD_STRENGTH_MIN_T = 0;
 export const FIELD_STRENGTH_MAX_T = 4;
 export const FIELD_STRENGTH_STEP_T = 0.1;
 /** Default slider / initial strength (matches the nominal map). */

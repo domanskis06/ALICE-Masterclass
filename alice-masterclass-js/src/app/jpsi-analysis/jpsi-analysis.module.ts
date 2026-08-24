@@ -14,6 +14,8 @@ import { PidReferenceDialogComponent } from './components/pid-reference-dialog/p
 import { ResultsTableComponent } from './components/results-table/results-table.component';
 import { InstructionsComponent } from './instructions/instructions.component';
 import { JpsiAnalysisComponent } from './jpsi-analysis.component';
+import { JpsiRaaPlotComponent } from './raa-plot/jpsi-raa-plot.component';
+import { JpsiRaaResultsComponent } from './raa-results/jpsi-raa-results.component';
 import { JpsiAnalysisStateService } from './services/jpsi-analysis-state.service';
 import { JpsiDataService } from './services/jpsi-data.service';
 import { JpsiMinvDataService } from './services/jpsi-minv-data.service';
@@ -35,6 +37,8 @@ import { JpsiWelcomeDialogComponent } from './welcome/jpsi-welcome-dialog.compon
     MassPanelComponent,
     ResultsTableComponent,
     PbPbResultsComponent,
+    JpsiRaaResultsComponent,
+    JpsiRaaPlotComponent,
   ],
   imports: [
     CommonModule,

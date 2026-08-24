@@ -274,9 +274,11 @@
     <app-mass-histograms
       #massHistograms
       class="va-histograms"
-      [uploadDisabled]="uploadDisabledDatasets.includes(datasetID)"
+      [uploadDisabled]="uploadDisabledDatasetTooltips.has(datasetID)"
+      [uploadDisabledTooltipKey]="uploadDisabledDatasetTooltips.get(datasetID)"
       [results]="dataService.visualAnalysisResults"
       (uploadResultsEvent)="onUploadResults()"
+      (infoButtonClicked)="onHistogramInfoButtonClicked()"
     ></app-mass-histograms>
 
   </div>

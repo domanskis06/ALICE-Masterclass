@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 
+import { DemoResultsStore } from '../../shared/demo/demo-results-store.service';
 import {
   createPbPbCentralityState,
   defaultPbPbSignalWindow,
@@ -43,8 +44,18 @@ export class PbPbMinvStateService {
 
   constructor(
     private readonly data: JpsiMinvDataService,
-    private readonly residualFit: JpsiResidualFitService
+    private readonly residualFit: JpsiResidualFitService,
+    private readonly demoStore: DemoResultsStore
   ) {
+    // Demo build only: restore accepted Pb-Pb rows from a previous page load in this tab, so the
+    // R_AA results table/plot survive a refresh (see `JpsiRaaService`/`persistDemo`).
+    const restored = this.demoStore.loadJpsiPbPb();
+    if (restored !== null) {
+      for (const [id, row] of Array.from(restored.entries())) {
+        this.states[id].tableRow = row;
+      }
+    }
+
     // Both files are tiny (a few KB) — load both up front so the dropdown never blocks.
     this.preload();
   }
@@ -238,12 +249,29 @@ export class PbPbMinvStateService {
       published: histogram.published,
       acceptedAt: Date.now(),
     };
+    this.persistDemo();
     this.emit();
   }
 
   removeResult(id: PbPbCentralityId): void {
     this.states[id].tableRow = null;
+    this.persistDemo();
     this.emit();
+  }
+
+  /** No-op outside the demo build (`DemoResultsStore.enabled` gate). */
+  private persistDemo(): void {
+    if (!this.demoStore.enabled) {
+      return;
+    }
+    const results = new Map<PbPbCentralityId, PbPbYieldRow>();
+    for (const id of PBPB_CENTRALITY_IDS) {
+      const row = this.states[id].tableRow;
+      if (row !== null) {
+        results.set(id, row);
+      }
+    }
+    this.demoStore.saveJpsiPbPb(results);
   }
 
   /** Drops the current fit curve/result without touching the histogram or accepted rows. */

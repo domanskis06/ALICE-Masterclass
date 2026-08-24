@@ -8,3 +8,16 @@
   padding-left: 16px;
   padding-right: 16px;
 }
+
+// Pb-Pb layout: the R_AA card itself spans the full row width (like the panels above it), but
+// the chart inside is capped to the same size the teacher app uses (svg { width: 60vw } in
+// raa-plot.component.scss there) and centred, instead of stretching to the card's full width.
+// `::ng-deep` placed after the anchor class (rather than at the start) keeps this component's
+// own scoping attribute on `.jpsi-raa-plot-standalone`, which gives this rule higher specificity
+// than the child's own unscoped `svg { width: 100% }` — needed since an unscoped `::ng-deep`
+// selector only wins by source order, which isn't guaranteed against the child's own stylesheet.
+.jpsi-raa-plot-standalone ::ng-deep svg {
+  width: 60vw;
+  max-width: 100%;
+  margin: 0 auto;
+}

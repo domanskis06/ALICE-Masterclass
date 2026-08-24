@@ -25,7 +25,9 @@ mat-sidenav-content > div {
 .sticky {
   position: sticky;
   top: 0;
-  z-index: 2;
+  // Above in-page positioned elements (e.g. ngx-slider thumbs reach z-index 3/4) so the header
+  // never gets painted under page content once it's scrolled underneath the sticky bar.
+  z-index: 10;
 }
 
 #buttons {
