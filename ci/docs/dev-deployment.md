@@ -193,6 +193,12 @@ Do **not** store `CLIENT_SECRET` in GitLab CI variables. The teacher SPA only ne
 `CLIENT_ID`; Django reads the confidential secret from OKD secret
 `oidc-app-credentials` (see §5.2).
 
+Django `settings.py` has **no** committed default for `CLIENT_SECRET` (empty locally;
+required in production via `REQUIRED_PRODUCTION_VARS`). If you ever find a UUID-looking
+default next to `webframeworks-paas-alice-masterclass2` in git history, treat it as
+compromised for that Application Portal app until you verify/rotate (§ below: “OAuth
+client secret hygiene”).
+
 > `API_URL` must end with `/api/v1/`: both SPAs append endpoint paths without that prefix.
 > Leave **Expand variable reference** unchecked for all of the above (raw URL/token strings).
 
@@ -534,6 +540,48 @@ oc rollout status dc/alice-masterclass-django -n alice-web-masterclass-dev
 oc logs -n alice-web-masterclass-dev dc/alice-masterclass-django
 oc get dc alice-masterclass-django -o jsonpath='{range .spec.template.spec.containers[0].env[*]}{.name}{" -> "}{.valueFrom.secretKeyRef.name}{"/"}{.valueFrom.secretKeyRef.key}{"\n"}{end}' | grep -iE 'client|redirect|frontend'
 ```
+
+### OAuth client secret hygiene
+
+Two different Application Portal apps matter:
+
+| App (Client ID) | Where used | Secret source |
+|-----------------|------------|---------------|
+| `alice-masterclass-dev` | OKD **dev** (`alice-web-masterclass-dev`) | OKD `oidc-app-credentials` / `clientSecret` |
+| `webframeworks-paas-alice-masterclass2` | Local defaults / older prod-style naming | Must live only in OKD / Portal — **not** in git |
+
+**Is rotation required?** Only if a leaked UUID is still the **active** secret for that Portal app.
+
+1. On a machine with `oc` access to the right namespace, print the live secret and
+   compare (do not paste it into chat/git):
+
+   ```bash
+   # DEV
+   oc get secret oidc-app-credentials -n alice-web-masterclass-dev \
+     -o jsonpath='{.data.clientSecret}' | base64 -d; echo
+   oc exec dc/alice-masterclass-django -n alice-web-masterclass-dev -- printenv CLIENT_ID
+   # expect CLIENT_ID=alice-masterclass-dev — if secret ≠ any value from git history, DEV is fine
+   ```
+
+2. In [CERN Application Portal](https://application-portal.web.cern.ch/), open the app
+   whose Client ID matches the leak context (often the older
+   `webframeworks-paas-alice-masterclass2`). If that app still exists and is used by
+   prod/legacy, **regenerate** the client secret there, then update the OKD secret that
+   Django reads (`oidc-app-credentials` or the prod equivalent) and roll Django:
+
+   ```bash
+   oc create secret generic oidc-app-credentials -n <namespace> \
+     --from-literal=clientID='<portal-client-id>' \
+     --from-literal=clientSecret='<new-portal-client-secret>' \
+     --dry-run=client -o yaml | oc apply -f -
+   oc rollout latest dc/alice-masterclass-django -n <namespace>
+   ```
+
+3. If the Portal app is retired / unused, or the live OKD secret already differs from
+   anything in git history → **no rotation needed** for that environment; removing the
+   hardcoded default from `settings.py` is enough going forward.
+
+Never commit the new secret. Never put it in GitLab CI variables.
 
 ---
 

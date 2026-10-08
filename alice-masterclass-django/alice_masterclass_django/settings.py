@@ -60,6 +60,8 @@ REQUIRED_PRODUCTION_VARS = (
     'ALLOWED_HOSTS',
     'CORS_ALLOWED_ORIGINS',
     'DJANGO_SECRET_KEY',
+    'CLIENT_ID',
+    'CLIENT_SECRET',
 )
 
 if IS_PRODUCTION:
@@ -114,8 +116,11 @@ if IS_PRODUCTION:
         INFO_URL = data['userinfo_endpoint']
 
 REDIRECT_URI = os.getenv('REDIRECT_URI', 'http://localhost:8000/oauth')
+# CLIENT_ID is a public identifier (also in the teacher SPA). Not a secret.
 CLIENT_ID = os.getenv('CLIENT_ID', 'webframeworks-paas-alice-masterclass2')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET', '7b051f9c-3c07-4a30-9bd1-83a491c504bf')
+# Confidential OAuth secret: never commit a real value. Local/dummy-auth does not
+# need it; production/OpenShift must set CLIENT_SECRET via OKD (see ci/docs/dev-deployment.md).
+CLIENT_SECRET = os.getenv('CLIENT_SECRET', '')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:4201/login')
 
 # Expiration time for the access tokens
