@@ -22,6 +22,10 @@ The project is a **monorepo** containing three components plus a database:
 
 ### Environments and endpoints (dev)
 
+Routes are **public on the Internet** (no IP allowlist / no browser tunnel). See
+[`dev-remote-access.md`](dev-remote-access.md). The OKD *cluster* API
+(`api.paas.okd.cern.ch`) remains CERN-network / tunnel for `oc`.
+
 | Service | URL |
 |---------|-----|
 | Student app | `https://alice-web-masterclass-dev.app.cern.ch` |

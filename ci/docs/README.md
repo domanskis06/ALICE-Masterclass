@@ -1,12 +1,12 @@
 # Documentation index
 
-Entry point for the monorepo: [`../../README.md`](../../README.md).
+Portfolio / GitHub landing page: [`../../README.md`](../../README.md).
 
 ## Local development
 
 | Doc | Topic |
 | --- | --- |
-| [`../../README.md`](../../README.md) | Run Django + student + teacher locally |
+| [`local-development.md`](local-development.md) | Run Django + student + teacher locally (former root README) |
 | [`../../alice-masterclass-django/README.md`](../../alice-masterclass-django/README.md) | API setup / `venv` / `runserver` |
 | [`../../alice-masterclass-js/README.md`](../../alice-masterclass-js/README.md) | Student app (`npm start`, build) |
 | [`../../alice-masterclass-teacher/README.md`](../../alice-masterclass-teacher/README.md) | Teacher app (`:4201`) |
@@ -45,7 +45,7 @@ Entry point for the monorepo: [`../../README.md`](../../README.md).
 | --- | --- |
 | [`dev-deployment.md`](dev-deployment.md) | Dev OpenShift / CI deploy — **redeploy via `v*-dev` tag**: §7.1 |
 | [`demo-app.md`](demo-app.md) | Demo OpenShift / CI — **redeploy via `v*-demo` tag**: §5 |
-| [`dev-remote-access.md`](dev-remote-access.md) | Dev app from outside CERN — SSH SOCKS tunnel + Firefox |
+| [`dev-remote-access.md`](dev-remote-access.md) | Dev Routes are **public**; tunnel only for `oc` / OKD API from outside CERN |
 | [`prod-database.md`](prod-database.md) | Production database notes |
 | [`../../openshift/dev/README.md`](../../openshift/dev/README.md) | OpenShift dev cluster helpers |
 | [`../../openshift/demo/README.md`](../../openshift/demo/README.md) | OpenShift demo manifests (SPA only) |
